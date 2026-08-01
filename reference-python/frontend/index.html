@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>Robot Arm Path Planner</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 1.5rem;
+      background: #1e1e24;
+      color: #e8e8ec;
+    }
+    h1 {
+      font-size: 1.3rem;
+      margin: 0 0 1rem;
+    }
+    .layout {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    canvas {
+      background: #101014;
+      border: 1px solid #3a3a45;
+      border-radius: 4px;
+      cursor: crosshair;
+    }
+    .panel {
+      min-width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    fieldset {
+      border: 1px solid #3a3a45;
+      border-radius: 4px;
+    }
+    legend {
+      padding: 0 0.4rem;
+      color: #a8a8b3;
+      font-size: 0.85rem;
+    }
+    label {
+      display: block;
+      margin: 0.3rem 0;
+      font-size: 0.9rem;
+    }
+    button, select {
+      font-size: 0.9rem;
+      padding: 0.4rem 0.6rem;
+      border-radius: 4px;
+      border: 1px solid #3a3a45;
+      background: #2a2a33;
+      color: inherit;
+      cursor: pointer;
+    }
+    button.primary {
+      background: #3b6fd6;
+      border-color: #3b6fd6;
+    }
+    button:hover {
+      filter: brightness(1.15);
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.85rem;
+    }
+    th, td {
+      border: 1px solid #3a3a45;
+      padding: 0.3rem 0.5rem;
+      text-align: right;
+    }
+    th:first-child, td:first-child {
+      text-align: left;
+    }
+    #status {
+      font-size: 0.85rem;
+      color: #d68b8b;
+      min-height: 1.2em;
+    }
+    .legend-swatch {
+      display: inline-block;
+      width: 0.8em;
+      height: 0.8em;
+      border-radius: 50%;
+      margin-right: 0.4em;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <h1>Robot Arm Path Planner</h1>
+  <div class="layout">
+    <canvas id="scene" width="560" height="560"></canvas>
+    <div class="panel">
+      <fieldset>
+        <legend>Tıklama modu</legend>
+        <label><input type="radio" name="mode" value="goal" checked> Hedef belirle</label>
+        <label><input type="radio" name="mode" value="start"> Başlangıç belirle</label>
+        <label><input type="radio" name="mode" value="obstacle_sphere"> Engel ekle (küre)</label>
+        <label><input type="radio" name="mode" value="obstacle_box"> Engel ekle (kutu)</label>
+        <p style="font-size:0.8rem;color:#a8a8b3;margin:0.4rem 0 0">Sağ tık: en yakın engeli sil</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Algoritma</legend>
+        <select id="algorithm"></select>
+        <div style="display:flex;gap:0.5rem;margin-top:0.6rem">
+          <button id="plan-btn" class="primary">Planla</button>
+          <button id="compare-btn">3'ünü karşılaştır</button>
+          <button id="clear-btn">Engelleri temizle</button>
+        </div>
+      </fieldset>
+
+      <div id="status"></div>
+
+      <div id="legend"></div>
+      <table id="metrics">
+        <thead>
+          <tr><th>Algoritma</th><th>Başarı</th><th>Süre (s)</th><th>Yol uzunluğu</th><th>Düğüm</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:8000";
+    const CANVAS_SIZE = 560;
+    const WORLD_MIN = -0.8;
+    const WORLD_MAX = 0.8;
+    const Z_PLANE = 0.3;
+
+    const ALGORITHM_COLORS = {
+      astar: "#e2b63b",
+      rrt: "#5bc0be",
+      rrt_star: "#c25be2",
+    };
+
+    const canvas = document.getElementById("scene");
+    const ctx = canvas.getContext("2d");
+    const statusEl = document.getElementById("status");
+    const algorithmSelect = document.getElementById("algorithm");
+    const metricsBody = document.querySelector("#metrics tbody");
+    const legendEl = document.getElementById("legend");
+
+    let start = [-0.6, 0.0, Z_PLANE];
+    let goal = [0.6, 0.0, Z_PLANE];
+    let obstacles = [];
+    let currentMode = "goal";
+    let results = {};
+
+    function worldToCanvas(x, y) {
+      const scale = CANVAS_SIZE / (WORLD_MAX - WORLD_MIN);
+      return [
+        (x - WORLD_MIN) * scale,
+        CANVAS_SIZE - (y - WORLD_MIN) * scale,
+      ];
+    }
+
+    function canvasToWorld(px, py) {
+      const scale = (WORLD_MAX - WORLD_MIN) / CANVAS_SIZE;
+      return [WORLD_MIN + px * scale, WORLD_MIN + (CANVAS_SIZE - py) * scale];
+    }
+
+    function drawGrid() {
+      ctx.strokeStyle = "#26262e";
+      ctx.lineWidth = 1;
+      const step = 0.2;
+      for (let v = WORLD_MIN; v <= WORLD_MAX + 1e-9; v += step) {
+        const [x0, y0] = worldToCanvas(v, WORLD_MIN);
+        const [x1, y1] = worldToCanvas(v, WORLD_MAX);
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.stroke();
+
+        const [xa, ya] = worldToCanvas(WORLD_MIN, v);
+        const [xb, yb] = worldToCanvas(WORLD_MAX, v);
+        ctx.beginPath();
+        ctx.moveTo(xa, ya);
+        ctx.lineTo(xb, yb);
+        ctx.stroke();
+      }
+    }
+
+    function drawObstacles() {
+      for (const obstacle of obstacles) {
+        const [cx, cy] = worldToCanvas(obstacle.center[0], obstacle.center[1]);
+        const scale = CANVAS_SIZE / (WORLD_MAX - WORLD_MIN);
+        ctx.fillStyle = "rgba(214, 90, 90, 0.55)";
+        ctx.strokeStyle = "#d65a5a";
+        if (obstacle.kind === "sphere") {
+          const r = obstacle.size[0] * scale;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          const hw = obstacle.size[0] * scale;
+          const hh = obstacle.size[1] * scale;
+          ctx.fillRect(cx - hw, cy - hh, hw * 2, hh * 2);
+          ctx.strokeRect(cx - hw, cy - hh, hw * 2, hh * 2);
+        }
+      }
+    }
+
+    function drawMarker(point, color, label) {
+      const [x, y] = worldToCanvas(point[0], point[1]);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#e8e8ec";
+      ctx.font = "11px sans-serif";
+      ctx.fillText(label, x + 9, y - 9);
+    }
+
+    function drawPaths() {
+      for (const [algorithm, data] of Object.entries(results)) {
+        if (!data || !data.success) continue;
+        ctx.strokeStyle = ALGORITHM_COLORS[algorithm] || "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        data.path.forEach((point, index) => {
+          const [x, y] = worldToCanvas(point[0], point[1]);
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+      drawGrid();
+      drawObstacles();
+      drawPaths();
+      drawMarker(start, "#4caf50", "start");
+      drawMarker(goal, "#e05252", "goal");
+    }
+
+    function renderLegend() {
+      legendEl.innerHTML = Object.keys(results)
+        .map(
+          (algorithm) =>
+            `<span><span class="legend-swatch" style="background:${ALGORITHM_COLORS[algorithm]}"></span>${algorithm}</span>`
+        )
+        .join(" &nbsp; ");
+    }
+
+    function renderMetrics() {
+      metricsBody.innerHTML = "";
+      for (const [algorithm, data] of Object.entries(results)) {
+        const row = document.createElement("tr");
+        if (!data) {
+          row.innerHTML = `<td>${algorithm}</td><td colspan="4">hata</td>`;
+        } else {
+          row.innerHTML = `
+            <td>${algorithm}</td>
+            <td>${data.success ? "evet" : "hayır"}</td>
+            <td>${data.elapsed_seconds.toFixed(4)}</td>
+            <td>${data.path_length.toFixed(3)}</td>
+            <td>${data.nodes_expanded}</td>
+          `;
+        }
+        metricsBody.appendChild(row);
+      }
+    }
+
+    function setStatus(message) {
+      statusEl.textContent = message;
+    }
+
+    async function fetchAlgorithms() {
+      try {
+        const response = await fetch(`${API_BASE}/algorithms`);
+        const names = await response.json();
+        algorithmSelect.innerHTML = names.map((name) => `<option value="${name}">${name}</option>`).join("");
+      } catch (error) {
+        algorithmSelect.innerHTML = ["astar", "rrt", "rrt_star"]
+          .map((name) => `<option value="${name}">${name}</option>`)
+          .join("");
+        setStatus("API'ye ulaşılamadı, algoritma listesi varsayılan olarak dolduruldu.");
+      }
+    }
+
+    async function requestPlan(algorithm) {
+      const response = await fetch(`${API_BASE}/plan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ start, goal, obstacles, algorithm }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.detail || `İstek başarısız: ${response.status}`);
+      }
+      return response.json();
+    }
+
+    async function planWithSelectedAlgorithm() {
+      const algorithm = algorithmSelect.value;
+      setStatus(`${algorithm} çalışıyor...`);
+      try {
+        const data = await requestPlan(algorithm);
+        results = { [algorithm]: data };
+        setStatus(data.success ? "" : "Yol bulunamadı.");
+      } catch (error) {
+        results = { [algorithm]: null };
+        setStatus(`Hata: ${error.message}. uvicorn backend.api.main:app --reload çalışıyor mu?`);
+      }
+      render();
+      renderLegend();
+      renderMetrics();
+    }
+
+    async function compareAllAlgorithms() {
+      setStatus("3 algoritma da çalışıyor...");
+      const algorithms = ["astar", "rrt", "rrt_star"];
+      const settled = await Promise.all(
+        algorithms.map((algorithm) => requestPlan(algorithm).catch(() => null))
+      );
+      results = Object.fromEntries(algorithms.map((name, i) => [name, settled[i]]));
+      setStatus(Object.values(results).some((r) => r) ? "" : "Hiçbir algoritma yol bulamadı veya API'ye ulaşılamadı.");
+      render();
+      renderLegend();
+      renderMetrics();
+    }
+
+    canvas.addEventListener("click", (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const [x, y] = canvasToWorld(event.clientX - rect.left, event.clientY - rect.top);
+      const point = [x, y, Z_PLANE];
+
+      if (currentMode === "start") start = point;
+      else if (currentMode === "goal") goal = point;
+      else if (currentMode === "obstacle_sphere") obstacles.push({ center: point, kind: "sphere", size: [0.08] });
+      else if (currentMode === "obstacle_box") obstacles.push({ center: point, kind: "box", size: [0.08, 0.08, 0.08] });
+
+      render();
+    });
+
+    canvas.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const [x, y] = canvasToWorld(event.clientX - rect.left, event.clientY - rect.top);
+
+      let nearestIndex = -1;
+      let nearestDistance = Infinity;
+      obstacles.forEach((obstacle, index) => {
+        const dx = obstacle.center[0] - x;
+        const dy = obstacle.center[1] - y;
+        const distance = Math.hypot(dx, dy);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestIndex = index;
+        }
+      });
+      if (nearestIndex >= 0 && nearestDistance < 0.15) {
+        obstacles.splice(nearestIndex, 1);
+        render();
+      }
+    });
+
+    document.querySelectorAll('input[name="mode"]').forEach((input) => {
+      input.addEventListener("change", (event) => {
+        currentMode = event.target.value;
+      });
+    });
+
+    document.getElementById("plan-btn").addEventListener("click", planWithSelectedAlgorithm);
+    document.getElementById("compare-btn").addEventListener("click", compareAllAlgorithms);
+    document.getElementById("clear-btn").addEventListener("click", () => {
+      obstacles = [];
+      results = {};
+      render();
+      renderLegend();
+      renderMetrics();
+    });
+
+    fetchAlgorithms();
+    render();
+  </script>
+</body>
+</html>

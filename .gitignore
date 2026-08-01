@@ -20,7 +20,3 @@ coverage/
 .DS_Store
 Thumbs.db
 
-# reference-python kendi git deposuna sahip (bkz. reference-python/.git);
-# buraya gömülü repo olarak eklenmesin. Ayrı bir mimari kararla (submodule
-# veya geçmişin birleştirilmesi) ele alınacak.
-reference-python/
