@@ -180,11 +180,12 @@ düşünsün çalışır — reddedebilir bile.
 
 ### Bu proje için planlanan hook
 
-**Kaynak zorunluluğu kontrolü** (Faz 1'de, ilk ders yazılırken kurulacak)
+**Kaynak zorunluluğu kontrolü** (Faz 1'de kuruldu — `.claude/settings.json`
++ `.claude/hooks/check-lesson-frontmatter.mjs`)
 
 `docs/06-kalite-ve-topluluk.md`'deki kural — `kaynaklar` boşken
 `durum: yayinda` olamaz — artık "hatırlanması gereken bir kural" değil,
-otomatik reddedilen bir durum olacak:
+otomatik reddedilen bir durum:
 
 ```json
 {
@@ -195,7 +196,7 @@ otomatik reddedilen bir durum olacak:
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-lesson-frontmatter.sh"
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-lesson-frontmatter.mjs\""
           }
         ]
       }
@@ -204,9 +205,13 @@ otomatik reddedilen bir durum olacak:
 }
 ```
 
-Script mantığı: eğer değiştirilen dosya `content/**/*.mdx` ise VE
-`durum: yayinda` yazıyorsa VE `kaynaklar:` boşsa veya `incelendi_tarafindan:`
-boşsa → çık kodu 2 (engelle), sebebini Claude'a bildir.
+Bash betiği yerine Node (`.mjs`) kullanıldı — proje zaten `gray-matter`'a
+bağımlı, frontmatter'ı elle regex'lemek yerine aynı ayrıştırıcıyı burada da
+kullanmak daha güvenilir. Script mantığı: eğer değiştirilen dosya
+`content/**/*.mdx` ise VE (Write ise `content`, Edit ise mevcut dosya +
+`old_string`→`new_string` uygulanarak yeniden kurulan) sonuç içerik
+`durum: yayinda` yazıyorsa VE `kaynaklar` boşsa veya `incelendi_tarafindan`/
+`incelendi_tarih` boşsa → çık kodu 2 (engelle), sebebini Claude'a bildir.
 
 **Korumalı dosyalar** (Faz 0'da kurulabilir)
 `reference-python/` klasörünün yanlışlıkla silinmesini/bozulmasını
@@ -258,8 +263,9 @@ erken optimizasyon olur — henüz doğrulanacak yeterli düğüm yok.
 | `fixture-generator` subagent | Faz 0 sonu | Python↔TS doğrulaması tam o an gerekiyor |
 | `.claude/rules/` (içerik kuralları) | Faz 1 | İçerik yazımı asıl o zaman başlıyor |
 | `/yeni-ders` skill'i | Faz 1 | İlk ders yazılırken şablon ihtiyacı doğar |
-| `ders-yazari`, `kalite-denetci` subagent'ları | Faz 1 | Birkaç dersi elle yazıp süreci görmeden tanımlamak riskli |
-| Kaynak-zorunluluğu hook'u | Faz 1 | İlk unutulan `kaynaklar` alanı görülünce |
+| `kalite-denetci` subagent'ı | **Kuruldu (Faz 1)** | `.claude/agents/kalite-denetci.md` — 14 derse karşı çalıştırıldı |
+| `ders-yazari` subagent'ı | Faz 1/2 (henüz kurulmadı) | Bu fazda dersler elle yazıldı; sonraki ders üretiminde kurulacak |
+| Kaynak-zorunluluğu hook'u | **Kuruldu (Faz 1)** | `.claude/hooks/check-lesson-frontmatter.mjs` |
 | Graph doğrulama script'i | Faz 2 | Yeterli ders sayısı birikince anlamlı olur |
 
 Bu tabloyu `docs/03-yol-haritasi.md` ile birlikte oku — her faz bittiğinde

@@ -76,6 +76,34 @@ ama aynı zamanda bir risk yüzeyi. Kurallar:
   güvenilir/resmi kaynaklara (üretici siteleri, akademik yayınlar,
   standart kuruluşları) izin verilir.
 
+### MDX derleme ayarı: `blockJS` neden kapalı (Faz 1'de karar verildi)
+
+`next-mdx-remote`, MDX içeriğini varsayılan olarak `blockJS: true` ile
+derler — bu, `{...}` içindeki HER JS ifadesini (JSX prop'larındaki
+obje/array literal'lar dahil) sessizce siler. Bu varsayım, MDX içeriğinin
+**güvenilmeyen/üçüncü taraf** kaynaklı olabileceği senaryolar için var.
+
+Faz 1'de `Quiz` bileşenine `sorular={[...]}` gibi obje dizisi prop'u
+verilince bu filtre araya girdi ve prop'u sessizce `undefined` yaptı (uzun
+bir hata ayıklama sürecinin kök nedeni). Çözüm: `app/ders/[slug]/page.tsx`
+içindeki `compileMDX` çağrısında `blockJS: false` verildi;
+`blockDangerousJS` varsayılan **açık** bırakıldı (bu, `eval` gibi belirgin
+tehlikeli çağrıları hâlâ engeller).
+
+**Bunun güvenli olmasının dayanağı — şu an:** `content/` altındaki HER
+dosya birinci taraf içeriktir (bakımcı yazıyor, doğrudan repoya commit
+ediliyor). Dış katkı PR akışı (`06-kalite-ve-topluluk.md` §2, bu dosyanın
+üstündeki "PR inceleme kontrol listesi (içerik/MDX)") henüz devrede değil
+— henüz hiçbir dış katkı yok.
+
+**Dış katkı başladığında bu karar yeniden gözden geçirilmeli.** O noktada
+ya `blockJS: true`'ya dönülüp içerik yazarlarının prop verisini
+`export const` ile ayrı bir dosyadan/formattan vermesi istenir, ya da PR
+inceleme kontrol listesindeki MDX kurallarının (sadece önceden tanımlı
+bileşen, obje/array prop'larının içeriğinin gözden geçirilmesi) bu riski
+yeterince kapattığına karar verilip mevcut ayar korunur — ama bu karar
+tekrar bilinçli verilmeli, varsayılan olarak sürüklenmemeli.
+
 ### Otomatik önlemler
 
 - Yeni katkıcıların ilk PR'ı otomatik olarak "onay bekliyor" statüsünde
