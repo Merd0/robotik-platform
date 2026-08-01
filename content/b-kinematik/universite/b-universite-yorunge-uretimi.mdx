@@ -43,6 +43,26 @@ ayrı bir ters kinematik çözümü gerekir. Yol öngörülebilir ama hesaplama
 maliyeti daha yüksektir ve yol bir tekillikten geçerse çözüm patlayabilir
 (önceki ders).
 
+Her iki yaklaşım da aynı ayrıştırmayı kullanır: **yol (path)** ile **zaman
+ölçeklemesi (time scaling)** ayrı ayrı tanımlanır. Yol, nereden geçileceğini
+(geometriyi) belirler; zaman ölçeklemesi `s(t)` (0'dan 1'e giden, zamanla
+artan bir fonksiyon), o yol üzerinde ne zaman nerede olunacağını belirler:
+
+```
+Eklem uzayı:  θ(t) = θ_baslangic + s(t)·(θ_bitis − θ_baslangic)
+Kartezyen (doğrusal):  p(t) = p_baslangic + s(t)·(p_bitis − p_baslangic)
+```
+
+Dairesel bir yörüngede yol, merkez `c` ve yarıçap `r` ile tanımlanır; `s(t)`
+bu sefer açıyı sürer:
+
+```
+p(t) = c + r·(cos(s(t)·Δφ), sin(s(t)·Δφ))
+```
+
+Burada `Δφ`, başlangıç ve bitiş arasındaki toplam açı. `s(t)`'nin kendisi
+(sabit hız mı, yumuşak mı hızlanıp yavaşlayacak) sıradaki dersin konusu.
+
 Yukarıdaki sahnede yeşil hedefi yavaşça düz bir çizgi boyunca sürüklersen,
 her karede yeni bir ters kinematik çözümü hesaplanıyor — bu, Kartezyen
 yörünge üretiminin küçük ölçekte canlı hâli. Fare senin "yol planlayıcın",

@@ -39,13 +39,26 @@ hız
 ```
 
 Üç aşama vardır: sabit ivmeyle hızlanma, sabit hızda seyir, sabit ivmeyle
-yavaşlama. Basit ve hesaplaması ucuzdur, ama ivme aniden değiştiği
-noktalarda (köşelerde) sarsıntı (jerk — ivmenin türevi) sonsuza sıçrar.
+yavaşlama. `a` sabit ivme, `v_maks` seyir hızı, `t1` hızlanmanın bittiği an,
+`t2` yavaşlamanın başladığı an, `T` toplam süre olsun:
 
-**S-eğrisi profili.** İvmenin kendisi de yumuşak geçer (ivme-zaman grafiği
-bir yamuk, hız-zaman grafiği S harfine benzer bir eğri olur). Köşelerdeki
-ani ivme değişimi ortadan kalkar, hareket daha yumuşak hissettirir ama
-profili hesaplamak ve ayarlamak daha karmaşıktır.
+```
+v(t) = a·t                    , 0 ≤ t ≤ t1      (hızlan)
+v(t) = v_maks                  , t1 ≤ t ≤ t2      (sabit hız)
+v(t) = v_maks − a·(t − t2)      , t2 ≤ t ≤ T       (yavaşla)
+```
+
+Basit ve hesaplaması ucuzdur, ama ivme aniden değiştiği köşelerde (t1 ve t2
+anlarında) sarsıntı (jerk — ivmenin türevi, `j = da/dt`) matematiksel olarak
+sonsuza sıçrar (ivme grafiği orada süreksiz/dik bir basamak yapar).
+
+**S-eğrisi profili.** Fikir basit: yamuk profildeki köşeleri yok etmek için,
+bu sefer **ivmenin kendisini** yamuk yaptır (sarsıntı `j` sabit ve sınırlı
+kalır, aniden sıçramaz). İvme yamuk olduğunda onun integrali olan hız,
+S harfine benzer bir eğri çizer — hızlanma başında ve sonunda yumuşak geçiş
+olur. Köşelerdeki ani ivme değişimi ortadan kalkar, hareket daha yumuşak
+hissettirir ama profili hesaplamak ve ayarlamak (jerk sınırı, 7 aşamalı
+zamanlama) daha karmaşıktır.
 
 ```
 hız
