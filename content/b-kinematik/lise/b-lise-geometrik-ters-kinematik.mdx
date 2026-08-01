@@ -1,0 +1,81 @@
+---
+id: b-lise-geometrik-ters-kinematik
+baslik: Geometrik ters kinematik — dirsek yukarı, dirsek aşağı
+hat: b-kinematik
+seviye: lise
+sure: 18
+sira: 2
+onkosul:
+  - b-lise-ileri-kinematik
+  - b-ortaokul-birden-fazla-yol
+kazanimlar:
+  - Kosinüs teoremiyle iki eklemli bir kolun ters kinematiğini hesaplayabilme
+  - İki çözümün (dirsek yukarı/aşağı) nereden geldiğini formülle açıklayabilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 6"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - IkTarget
+durum: taslak
+---
+
+## Kanca
+
+Önceki derste açılardan konuma gittin. Şimdi tersini yapacaksın: hedefin
+(x, y) konumunu biliyorsun, açıları sen bulacaksın — kâğıt üzerinde, kolun
+sana söylemesini beklemeden.
+
+<IkTarget robot="generic-2dof" />
+
+## Ne oldu
+
+Kolun iki parçası (a1, a2) ve hedef (x, y) ile θ1, θ2'yi bulmanın yolu
+kosinüs teoreminden geçer:
+
+```
+cos(θ2) = (x² + y² − a1² − a2²) / (2·a1·a2)
+θ1 = atan2(y, x) − atan2(a2·sin(θ2), a1 + a2·cos(θ2))
+```
+
+Burada kritik nokta: cos(θ2) tek bir değer verir, ama bir açının kosinüsü
+hem pozitif hem negatif açı için aynı sonucu verebilir (cos(60°) = cos(−60°)).
+Bu yüzden θ2 için iki çözüm çıkar — biri "dirsek yukarı", diğeri "dirsek
+aşağı". İkisi de aynı (x, y) hedefine ulaşır, farklı bir duruşla.
+
+Yukarıdaki sahnede "Dirsek" düğmesine bastığında gördüğün değişim, tam
+olarak θ2'nin işaret değiştirmesi.
+
+## Gerçek dünyada
+
+Bir robot programcısı, hedefe iki yoldan da ulaşılabildiğinde hangisini
+seçeceğine engellerin konumuna göre karar verir — biri masaya çarpabilir,
+diğeri çarpmaz. Bu seçim çevrim dışı programlama yazılımlarında elle veya
+otomatik yapılır.
+
+## Dene
+
+Hedefi kolun tam önüne, kola yakın bir noktaya götür. Dirsek düğmesine bas
+ve iki duruşun ne kadar farklı göründüğünü karşılaştır. Sonra hedefi
+kolun erişebileceği en uzak noktaya götür — iki duruş neredeyse aynı hale
+gelir. Neden?
+
+<Quiz
+  sorular={[
+    {
+      soru: "İki farklı eklem çözümü (dirsek yukarı/aşağı) neden ortaya çıkar?",
+      secenekler: [
+        "Robotun motoru arızalı olduğu için",
+        "cos(θ2) aynı değeri iki farklı açı için verdiği için",
+        "Hedef nokta yanlış girildiği için",
+      ],
+      dogru: 1,
+      aciklama: "Kosinüs fonksiyonu çift fonksiyondur: cos(θ) = cos(−θ). Bu matematiksel özellik iki çözüme yol açar.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Şimdiye kadar açılar hep derece cinsindendi. Sıradaki ders neden robot
+kodunun içinde radyan kullanıldığını açıklıyor.

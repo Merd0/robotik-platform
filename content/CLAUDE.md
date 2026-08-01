@@ -4,6 +4,8 @@
 özel, sık unutulan noktalar.
 
 - Her dosya `<hat>/<seviye>/<id>.mdx` yolunda, şablondaki frontmatter ile başlar.
+- `sira` alanı aynı hat+seviye içindeki öğretim sırasını belirler (1'den başlar).
+  Ön koşul zinciri ve önceki/sonraki gezinmesi buna göre kurulur.
 - `kaynaklar` boşken `durum: yayinda` olamaz. `durum: yayinda` için
   `incelendi_tarafindan` ve `incelendi_tarih` de dolu olmalı — bkz.
   `docs/06-kalite-ve-topluluk.md`.

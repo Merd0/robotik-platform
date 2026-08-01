@@ -1,0 +1,87 @@
+---
+id: b-universite-tekillik
+baslik: Tekillik — nedir, neden tehlikelidir, nasıl kaçınılır
+hat: b-kinematik
+seviye: universite
+sure: 20
+sira: 4
+onkosul:
+  - b-universite-jacobian
+kazanimlar:
+  - Tekilliği Jacobian'ın rank kaybı olarak tanımlayabilme
+  - Tekilliğin pratikte neden tehlikeli olduğunu (sonsuz eklem hızı ihtiyacı) açıklayabilme
+  - Manipülabilite ölçüsüyle tekilliğe yaklaşımı sayısal olarak tespit edebilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 5"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JacobianViz
+durum: taslak
+---
+
+## Kanca
+
+Bir kolu tam açık (dirsek düz) konuma getirirsen, uç noktayı kola doğru
+yaklaştırma yönünde hareket ettiremezsin — eklemler ne kadar hızlı dönerse
+dönsün. Bu bir tekillik (singularity).
+
+<JacobianViz robot="generic-2dof" />
+
+## Ne oldu
+
+Tekillik, Jacobian'ın rank kaybettiği konfigürasyonlardır. `generic-2dof`
+için manipülabilite ölçüsü kapalı formülle şudur:
+
+```
+manipülabilite = |det(J)| = |a1·a2·sin(θ2)|
+```
+
+θ2 = 0° (tam açık) veya θ2 = 180° (tam katlı) olduğunda sin(θ2) = 0 olur ve
+manipülabilite sıfıra iner. Bu konumlarda Jacobian'ın belirli yönlerdeki
+"tersi" sonsuza gider — yani o yönde sonlu eklem hızıyla hiçbir doğrusal uç
+hızı üretilemez.
+
+**Neden tehlikeli:** Bir yörünge tekilliğe yakın bir noktadan geçiyorsa,
+sayısal ters kinematik çözücü o bölgede çok büyük eklem hızları hesaplar
+(gerçek donanımda bu, motor limitlerini aşan komutlar veya ani sarsıntı
+demektir). Sönümlü en küçük kareler (önceki ders) bu patlamayı matematiksel
+olarak yumuşatır ama fiziksel sorunu ortadan kaldırmaz — yörünge planlaması
+tekillikten kaçınmalıdır.
+
+**Nasıl kaçınılır:** Yörünge planlarken manipülabilite eşiğinin altına
+inen konfigürasyonlar taranır (bu platformdaki `isNearSingularity`
+fonksiyonu tam bunu yapar); gerekirse yörünge yeniden planlanır veya
+robotun o bölgeden farklı bir duruşla geçmesi sağlanır.
+
+## Gerçek dünyada
+
+Endüstriyel robot kontrolörleri "tekillik uyarısı" verir ve bazı
+konfigürasyonlarda hareketi durdurur. Kaynak yapan bir robotun düz bir dikiş
+boyunca hareket etmesi gerekiyorsa ve bu çizgi bir tekillikten geçiyorsa,
+programcı robotun başlangıç duruşunu değiştirerek bu bölgeyi bertaraf eder.
+
+## Dene
+
+Eklem 2'yi 0°'ye ve sonra 180°'ye getir, manipülabilite değerinin nasıl
+sıfıra yaklaştığını izle. Kırmızı uyarının çıktığı eşiği not et.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Tekillik konumunda kol hangi yönde hareket edemez?",
+      secenekler: [
+        "Hiçbir yönde",
+        "Jacobian'ın rank kaybettiği belirli bir yönde",
+        "Sadece yukarı yönde",
+      ],
+      dogru: 1,
+      aciklama: "Tekillik yön-spesifiktir: Jacobian belirli bir doğrusal hız yönünü üretemez hale gelir, diğer yönler etkilenmeyebilir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Şimdiye kadar tek bir hedefe ulaşmayı gördün. Sıradaki ders, bir hedeften
+diğerine giden yolun (yörüngenin) nasıl üretildiğini ele alıyor.

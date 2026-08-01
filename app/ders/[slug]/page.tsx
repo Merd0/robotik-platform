@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
-import { getAllLessons, getLessonBySlug } from "@/lib/content";
+import { getAdjacentLessons, getAllLessons, getLessonBySlug, getPrerequisites } from "@/lib/content";
 import { mdxComponents } from "@/components/interactive";
+import { LessonNav } from "@/components/ui/LessonNav";
+import { CompleteLessonButton } from "@/components/ui/CompleteLessonButton";
 
 export function generateStaticParams() {
   return getAllLessons().map((lesson) => ({ slug: lesson.slug }));
@@ -19,8 +21,17 @@ export default async function DersPage({ params }: DersPageProps) {
   const { content } = await compileMDX({
     source: lesson.body,
     components: mdxComponents,
-    options: { parseFrontmatter: false },
+    // blockJS varsayılanı MDX'teki tüm JS ifadelerini (obje/array prop'ları
+    // dahil) siler — bu, üçüncü taraf/kullanıcı girdisi MDX'i için bir
+    // güvenlik varsayılanı. Bizim içeriğimiz güvenilir (yazan biziz, PR
+    // incelemesinden geçiyor, bkz. docs/08-guvenlik-sertlestirme.md), o
+    // yüzden kapatıyoruz. blockDangerousJS varsayılan açık kalır (eval vb.
+    // hâlâ engellenir).
+    options: { parseFrontmatter: false, blockJS: false },
   });
+
+  const prerequisites = getPrerequisites(lesson);
+  const { previous, next } = getAdjacentLessons(lesson);
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
@@ -31,6 +42,12 @@ export default async function DersPage({ params }: DersPageProps) {
         {lesson.frontmatter.baslik}
       </h1>
       <article className="ders-icerik mt-8 flex flex-col gap-5">{content}</article>
+
+      <div className="mt-8">
+        <CompleteLessonButton slug={lesson.slug} />
+      </div>
+
+      <LessonNav prerequisites={prerequisites} previous={previous} next={next} />
     </main>
   );
 }

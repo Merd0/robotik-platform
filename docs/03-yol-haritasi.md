@@ -22,7 +22,7 @@ Faz 0'ın sonu bile gösterilebilir bir şeydir; panik yok.
 - [x] `components/scene/RobotArm.tsx` — Three.js ile basit robot kolu çizimi
 - [x] `JointSliders` bileşeni — kaydırıcı oynat, robot hareket etsin
 - [x] İlk ders yazıldı: **B / Ortaokul — eklemleri oynat**
-- [ ] Vercel'e yayınlandı, gerçek URL'de çalışıyor
+- [x] Vercel'e yayınlandı, gerçek URL'de çalışıyor
 
 **Çıktı:** İnternette, telefondan açılabilen, tek dersi olan çalışan bir site.
 
@@ -32,16 +32,16 @@ Faz 0'ın sonu bile gösterilebilir bir şeydir; panik yok.
 
 **Amaç:** bir konu, üç seviyede de eksiksiz. Seviye sisteminin işe yaradığını kanıtla.
 
-- [ ] IK implementasyonu (analitik 2-DOF + sayısal genel)
-- [ ] `IkTarget` bileşeni — hedefi sürükle, robot uzansın
-- [ ] Jacobian ve tekillik görselleştirmesi
-- [ ] Ders: B / Ortaokul (3 ders)
-- [ ] Ders: B / Lise (4 ders)
-- [ ] Ders: B / Üniversite (7 ders)
-- [ ] `Quiz` bileşeni ve her derse alıştırma
-- [ ] Ön koşul zinciri ve "sonraki ders" gezinmesi
-- [ ] İlerleme takibi (tarayıcı belleğinde, hesap yok)
-- [ ] Ana sayfa ve seviye giriş sayfaları
+- [x] IK implementasyonu (analitik 2-DOF + sayısal genel)
+- [x] `IkTarget` bileşeni — hedefi sürükle, robot uzansın
+- [x] Jacobian ve tekillik görselleştirmesi
+- [x] Ders: B / Ortaokul (3 ders)
+- [x] Ders: B / Lise (4 ders)
+- [x] Ders: B / Üniversite (7 ders)
+- [x] `Quiz` bileşeni ve her derse alıştırma
+- [x] Ön koşul zinciri ve "sonraki ders" gezinmesi
+- [x] İlerleme takibi (tarayıcı belleğinde, hesap yok)
+- [x] Ana sayfa ve seviye giriş sayfaları
 
 **Çıktı:** ~14 dersle, gerçekten öğreten bir kinematik kursu. **Staj için
 gösterilecek sürüm bu.**

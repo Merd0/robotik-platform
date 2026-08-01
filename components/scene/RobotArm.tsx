@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Cylinder, Sphere, Grid } from "@react-three/drei";
 import * as THREE from "three";
@@ -10,6 +10,8 @@ import type { Vec3 } from "@/lib/robotics/transform";
 interface RobotArmProps {
   robot: RobotSpec;
   jointAngles: number[];
+  /** Sahneye eklenecek ek öğeler (ör. IkTarget'ın sürüklenebilir hedefi). */
+  children?: ReactNode;
 }
 
 const ACCENT_COLOR = "#0ea5a0";
@@ -69,7 +71,7 @@ function ArmModel({ robot, jointAngles }: RobotArmProps) {
 }
 
 /** Basit, düzlemsel robot kolu çizimi. Kamera sabit — kullanıcı sahneyi bozamaz. */
-export function RobotArm({ robot, jointAngles }: RobotArmProps) {
+export function RobotArm({ robot, jointAngles, children }: RobotArmProps) {
   return (
     <Canvas
       camera={{ position: [0, 0.4, 4.6], fov: 50 }}
@@ -86,6 +88,7 @@ export function RobotArm({ robot, jointAngles }: RobotArmProps) {
         fadeDistance={8}
       />
       <ArmModel robot={robot} jointAngles={jointAngles} />
+      {children}
     </Canvas>
   );
 }

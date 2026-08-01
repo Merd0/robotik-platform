@@ -1,0 +1,71 @@
+---
+id: b-lise-aci-birimleri
+baslik: Açı birimleri — radyan ve derece
+hat: b-kinematik
+seviye: lise
+sure: 10
+sira: 3
+onkosul:
+  - b-lise-ileri-kinematik
+kazanimlar:
+  - Radyan ve derece arasında dönüşüm yapabilme
+  - Robot kodunun içinde neden radyan kullanıldığını açıklayabilme
+kaynaklar:
+  - "ISO 80000-3, Nicelikler ve birimler — Uzay ve zaman (radyan tanımı)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Az önceki derste kaydırıcılar hep derece gösterdi (0°, 90°...). Ama az önce
+kullandığın `Math.cos`, `Math.sin` gibi fonksiyonlar aslında dereceyi hiç
+tanımaz — onlar radyan bekler. Peki kaydırıcı nasıl doğru çalışıyor?
+
+<JointSliders robot="generic-2dof" />
+
+## Ne oldu
+
+Radyan, bir çemberin yarıçapı kadar uzunluktaki yayın gördüğü açıdır. Tam
+tur (360°) = 2π radyan olduğundan dönüşüm şöyle:
+
+```
+radyan = derece × (π / 180)
+derece = radyan × (180 / π)
+```
+
+Yukarıdaki sahnede sen kaydırıcıyı derece cinsinden oynatıyorsun, ama
+perde arkasında her açı radyana çevrilip `cos`/`sin` fonksiyonlarına öyle
+veriliyor. Sayı sana derece görünüyor, hesap radyanla yapılıyor — ikisi
+aynı açının iki farklı yazımı.
+
+## Gerçek dünyada
+
+Neredeyse her programlama dili ve robot kontrolör yazılımı trigonometri
+fonksiyonlarında radyan bekler. Ama insan operatörler ekranda genelde
+dereceyi görür, çünkü 90° demek 1.5708 radyan demekten daha sezgiseldir.
+Arayüz yazılımı bu dönüşümü senin yerine yapar.
+
+## Dene
+
+Kaydırıcıyı 180°'ye getir. Bu kaç radyan eder? Sonra 45° için aynı
+hesabı yap.
+
+<Quiz
+  sorular={[
+    {
+      soru: "180° kaç radyandır?",
+      secenekler: ["π", "2π", "π/2"],
+      dogru: 0,
+      aciklama: "Tam tur 2π radyandır; yarım tur (180°) bunun yarısı, yani π radyandır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Kaydırıcının gidebildiği aralık sonsuz değil — sıradaki ders eklem
+limitlerinin nereden geldiğini anlatıyor.

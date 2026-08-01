@@ -21,6 +21,8 @@ TEST_CASES_DEG = [
     (180, -90),
     (30, -120),
     (-90, -90),
+    (60, 0),  # tekillik: tam acik (theta2=0)
+    (60, 180),  # tekillik: tam katli (theta2=180)
 ]
 
 
@@ -35,6 +37,25 @@ def forward_kinematics(theta1: float, theta2: float) -> dict:
     }
 
 
+def jacobian(theta1: float, theta2: float) -> dict:
+    """Analitik 2x2 Jacobian (ucun x,y hizi = J * eklem hizlari).
+
+    TS tarafindaki geometrik Jacobian (crossProduct tabanli) ile BAGIMSIZ
+    bir formul: dogrudan x=a1*cos(t1)+a2*cos(t1+t2) fonksiyonlarinin kismi
+    turevleri. Manipulabilite = |det(J)| = |a1*a2*sin(theta2)| (klasik
+    2 baglantili kol sonucu).
+    """
+    s1, c1 = math.sin(theta1), math.cos(theta1)
+    s12, c12 = math.sin(theta1 + theta2), math.cos(theta1 + theta2)
+
+    j = [
+        [-A1 * s1 - A2 * s12, -A2 * s12],
+        [A1 * c1 + A2 * c12, A2 * c12],
+    ]
+    manipulability = abs(j[0][0] * j[1][1] - j[0][1] * j[1][0])
+    return {"matrix": j, "manipulability": manipulability}
+
+
 def main() -> None:
     cases = []
     for theta1_deg, theta2_deg in TEST_CASES_DEG:
@@ -46,6 +67,7 @@ def main() -> None:
                 "jointAnglesDeg": [theta1_deg, theta2_deg],
                 "jointAnglesRad": [theta1, theta2],
                 **result,
+                "jacobian": jacobian(theta1, theta2),
             }
         )
 

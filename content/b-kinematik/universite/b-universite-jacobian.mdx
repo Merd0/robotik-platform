@@ -1,0 +1,88 @@
+---
+id: b-universite-jacobian
+baslik: Jacobian matrisi — eklem hızı ile uç hızı ilişkisi
+hat: b-kinematik
+seviye: universite
+sure: 25
+sira: 3
+onkosul:
+  - b-universite-dh-ileri-kinematik
+kazanimlar:
+  - Geometrik Jacobian'ın sütunlarını eklem eksenlerinden kurabilme
+  - Jacobian'ın eklem hızlarını uç nokta hızına eşleyen doğrusal dönüşüm olduğunu açıklayabilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 5"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JacobianViz
+durum: taslak
+---
+
+## Kanca
+
+İleri kinematik sana konumu veriyor: "eklemler şu açılardayken uç nokta
+burada." Ama bir robotu gerçek zamanlı sürerken asıl soru genelde şu:
+"eklemler şu anda şu hızda dönüyorsa, uç nokta hangi yönde ve ne hızda
+hareket ediyor?" Bu sorunun cevabı Jacobian matrisi.
+
+<JacobianViz robot="generic-2dof" />
+
+## Ne oldu
+
+Jacobian, eklem hızlarını uç nokta hızına eşleyen doğrusal dönüşümdür:
+
+```
+v = J(θ) · θ̇
+```
+
+Burada `v` uç noktanın doğrusal hızı, `θ̇` eklem açısal hızları vektörü.
+`J`'nin i'inci sütunu, sadece i'inci eklemin birim hızla döndüğü (diğerleri
+sabit) durumda uç noktanın hangi yönde hareket edeceğini gösterir:
+
+```
+J_i = z_(i-1) × (p_uç − p_(i-1))
+```
+
+`z_(i-1)`, eklem i'nin döndüğü eksen (bir önceki çerçevenin Z ekseni);
+`p_(i-1)`, o eklemin konumu; `p_uç`, uç noktanın konumu. Bu, dönme
+hareketinin temel tanımından gelir: bir eksen etrafında dönen bir noktanın
+hızı, açısal hız ile o noktanın eksene olan konum vektörünün çapraz
+çarpımıdır.
+
+Yukarıdaki sahnede renkli çizgiler tam olarak bu sütunları gösteriyor:
+her renk bir eklemin birim hızının uç noktada ürettiği hız yönü. Gri elips
+ise ikisinin tüm kombinasyonlarının süpürdüğü alan — manipülabilite elipsi.
+
+## Gerçek dünyada
+
+Bir robotu ucundan tutup istediğin yöne "sürüklemek" istediğinde (ör. bir
+kobotu elle programlarken), kontrolör senin uyguladığın kuvveti Jacobian'ın
+tersini kullanarak eklem hızlarına çevirir. Jacobian olmadan bu tür
+sezgisel kontrol mümkün değildir.
+
+## Dene
+
+Eklem 2'yi 0°'ye getir (kolu tam aç). Turuncu çizginin (eklem 2'nin hız
+yönü) ne kadar kısaldığını gözlemle — bu, sıradaki dersin konusu olan
+tekilliğin habercisi.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Jacobian'ın i'inci sütunu ne anlama gelir?",
+      secenekler: [
+        "i'inci eklemin konumu",
+        "Sadece i'inci eklem birim hızla dönerse uç noktanın hareket yönü ve hızı",
+        "i'inci eklemin açı limiti",
+      ],
+      dogru: 1,
+      aciklama: "Her sütun, o eklemin izole hareketinin uç noktada ürettiği hız katkısıdır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Elipsin bir çizgiye daralması ne anlama geliyor? Sıradaki ders tekilliği
+ele alıyor.

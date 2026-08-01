@@ -1,0 +1,70 @@
+---
+id: b-ortaokul-birden-fazla-yol
+baslik: Robot bir noktaya birden fazla şekilde uzanabilir
+hat: b-kinematik
+seviye: ortaokul
+sure: 8
+sira: 2
+onkosul:
+  - b-ortaokul-eklemleri-oynat
+kazanimlar:
+  - Aynı hedefe farklı eklem kombinasyonlarıyla ulaşılabileceğini gözlemleyebilme
+  - Dirsek yukarı ve dirsek aşağı gibi iki farklı duruşu ayırt edebilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 6 (Ters Kinematik)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - IkTarget
+durum: taslak
+---
+
+## Kanca
+
+Bu sefer eklemleri değil, hedefi sen sürüklüyorsun. Yeşil noktayı bir yere
+götür — kol oraya nasıl ulaşacağına kendisi karar veriyor. Ama dikkat: aynı
+noktaya iki farklı şekilde de uzanabilir.
+
+<IkTarget robot="generic-2dof" />
+
+## Ne oldu
+
+Yeşil noktayı sürüklediğinde kol otomatik olarak oraya uzandı — bu ters
+kinematik (inverse kinematics): "buraya git" dedin, eklem açılarını kol
+kendisi hesapladı.
+
+"Dirsek" düğmesine bas. Aynı nokta, aynı yeşil hedef, ama kolun duruşu
+değişti. Dirseğini yukarı ya da aşağı kırarak aynı yere iki farklı yoldan
+ulaşabiliyor.
+
+## Gerçek dünyada
+
+Bir montaj hattındaki robot kolu, bir parçayı alırken bazen dirseğini
+yukarı, bazen aşağı kırar — hangisi o an daha güvenliyse, çarpışmadan kaçan
+duruş odur. Programcı bu iki seçenekten birini bilerek seçer.
+
+## Dene
+
+Yeşil noktayı sabit bir yerde tutarak dirsek düğmesine birkaç kez bas.
+Kolun ucu hiç kıpırdamazken kolun kendisinin nasıl şekil değiştirdiğini
+izle.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Dirsek düğmesine basınca ne değişir?",
+      secenekler: [
+        "Yeşil hedefin konumu",
+        "Kolun aynı hedefe ulaşma şekli (duruşu)",
+        "Kolun uzunluğu",
+      ],
+      dogru: 1,
+      aciklama: "Hedef aynı kalıyor, sadece eklemlerin aldığı açı kombinasyonu değişiyor.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Peki her nokta ulaşılabilir mi? Sıradaki derste kolun uzanamadığı yerleri
+göreceksin.

@@ -1,0 +1,97 @@
+---
+id: b-universite-dh-ileri-kinematik
+baslik: DH parametreleriyle ileri kinematik — genel çözüm
+hat: b-kinematik
+seviye: universite
+sure: 25
+sira: 1
+onkosul:
+  - b-lise-ileri-kinematik
+kazanimlar:
+  - Denavit-Hartenberg (DH) parametrelerinden homojen dönüşüm matrisini kurabilme
+  - n eklemli bir açık kinematik zincirin uç çerçevesini matris çarpımıyla bulabilme
+  - Lise seviyesindeki trigonometrik çözümün DH yönteminin özel bir durumu olduğunu görebilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 4"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Lise dersinde iki eklemli düzlemsel bir kol için elle türetilmiş bir formül
+gördün. Bu formül işe yarıyor çünkü kol düzlemsel ve basit. Altı eklemli,
+üç boyutlu bir endüstriyel kolda aynı şeyi elle türetmek pratik değil.
+Denavit-Hartenberg (DH) gösterimi, herhangi bir açık kinematik zincir için
+bu türetmeyi sistematik hale getirir.
+
+<JointSliders robot="generic-2dof" />
+
+## Ne oldu
+
+Her eklem dört sayıyla tanımlanır: bağlantı uzunluğu `a`, bağlantı bükülmesi
+`α`, ofset `d`, eklem açısı `θ`. Çerçeve i-1'den çerçeve i'ye dönüşüm
+(klasik/standart DH kuralı):
+
+```
+A_i =
+[ cosθ   -sinθ·cosα    sinθ·sinα    a·cosθ ]
+[ sinθ    cosθ·cosα   -cosθ·sinα    a·sinθ ]
+[ 0       sinα          cosα         d     ]
+[ 0       0             0            1     ]
+```
+
+Bu matrisin anlamı: önce Z ekseninde θ kadar dön ve d kadar ötelen, sonra X
+ekseninde a kadar ötelen ve α kadar dön. Zincirdeki tüm eklemler için bu
+matrisler sırayla çarpılır:
+
+```
+T_uç = A_1 · A_2 · ... · A_n
+```
+
+Sonuç matrisin son sütunu, uç noktanın taban çerçevesine göre (x, y, z)
+konumunu verir — tıpkı lise dersindeki formülün yaptığı gibi, ama artık
+düzlemsel olmayan, n eklemli herhangi bir kol için.
+
+**Lise formülüyle bağlantı:** yukarıdaki sahnedeki `generic-2dof` robotu
+aslında iki DH çerçevesinden oluşur, ikisinde de α = 0 ve d = 0. Bu özel
+durumu genel matriste yerine koyarsan (α = 0 → sinα = 0, cosα = 1), matris
+tam olarak lise dersindeki x = a·cos(θ), y = a·sin(θ) toplamına indirgenir.
+Lise formülü, DH yönteminin düzlemsel özel durumudur — yeni bir kural değil.
+
+## Gerçek dünyada
+
+Bir robot üreticisi teknik veri sayfasında her eklem için dört DH
+parametresini verir. Kontrolör yazılımı, kaç eklem olursa olsun aynı matris
+çarpımını çalıştırır — kod eklem sayısına göre değişmez, sadece döngü sayısı
+değişir.
+
+## Dene
+
+`lib/robotics/kinematics.ts` içindeki `forwardKinematics` fonksiyonu tam
+olarak yukarıdaki matris çarpımını yapıyor. Yukarıdaki kaydırıcıları
+oynatıp `dhTransform` fonksiyonunun her adımda ne hesapladığını (a=1.0,
+α=0, d=0, θ=kaydırıcı değeri) düşün.
+
+<Quiz
+  sorular={[
+    {
+      soru: "generic-2dof robotunda α = 0 olması pratikte ne anlama gelir?",
+      secenekler: [
+        "Robotun hiç hareket edemeyeceği",
+        "Ardışık eklem eksenlerinin birbirine paralel olduğu (düzlemsel kol)",
+        "Eklem limitlerinin sıfır olduğu",
+      ],
+      dogru: 1,
+      aciklama: "α, ardışık eklem eksenleri arasındaki açıdır. α = 0 tüm eksenlerin paralel olduğu, yani kolun tek bir düzlemde hareket ettiği anlamına gelir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+İleri kinematik uç noktayı buluyor. Sıradaki ders bunun tersini — hedeften
+açılara gitmeyi — genel (n eklemli) durumda ele alıyor.

@@ -59,3 +59,250 @@ export function forwardKinematics(robot: RobotSpec, jointAngles: number[]): Forw
     endEffector: jointPositions[jointPositions.length - 1],
   };
 }
+
+function withinLimits(robot: RobotSpec, angles: number[]): boolean {
+  return robot.joints.every((joint, i) => angles[i] >= joint.limits.min && angles[i] <= joint.limits.max);
+}
+
+export type Elbow = "up" | "down";
+
+/**
+ * İki eklemli düzlemsel kol için kapalı form (analitik) ters kinematik.
+ * Kosinüs teoremiyle theta2, sonra theta1 çözülür — iki çözüm ("dirsek
+ * yukarı"/"dirsek aşağı") cos(theta2)'nin işaretinden değil, sin(theta2)'nin
+ * işaretinden gelir. Bkz. docs/04-icerik-rehberi.md lise seviyesi örneği.
+ */
+export function inverseKinematicsAnalytical2Dof(
+  robot: RobotSpec,
+  target: { x: number; y: number },
+  elbow: Elbow = "up",
+): number[] | null {
+  if (robot.joints.length !== 2) {
+    throw new Error("Analitik 2-DOF ters kinematik sadece iki eklemli düzlemsel kollar için tanımlı.");
+  }
+
+  const a1 = robot.joints[0].dhParams.a;
+  const a2 = robot.joints[1].dhParams.a;
+  const r2 = target.x * target.x + target.y * target.y;
+  const cosTheta2 = (r2 - a1 * a1 - a2 * a2) / (2 * a1 * a2);
+
+  if (cosTheta2 < -1 || cosTheta2 > 1) return null;
+
+  const sinTheta2Magnitude = Math.sqrt(1 - cosTheta2 * cosTheta2);
+  const theta2 =
+    elbow === "up"
+      ? Math.atan2(sinTheta2Magnitude, cosTheta2)
+      : Math.atan2(-sinTheta2Magnitude, cosTheta2);
+  const theta1 =
+    Math.atan2(target.y, target.x) - Math.atan2(a2 * Math.sin(theta2), a1 + a2 * Math.cos(theta2));
+
+  const angles = [theta1, theta2];
+  return withinLimits(robot, angles) ? angles : null;
+}
+
+// --- Jacobian ---------------------------------------------------------
+
+export interface JacobianResult {
+  /** Her eklem için dünya çerçevesinde doğrusal hız Jacobian sütunu. */
+  columns: Vec3[];
+  /** Yoshikawa manipülabilite ölçüsü: sqrt(det(J J^T)). Sıfıra yaklaşınca tekillik. */
+  manipulability: number;
+}
+
+function crossProduct(a: Vec3, b: Vec3): Vec3 {
+  return {
+    x: a.y * b.z - a.z * b.y,
+    y: a.z * b.x - a.x * b.z,
+    z: a.x * b.y - a.y * b.x,
+  };
+}
+
+function subtractVec(a: Vec3, b: Vec3): Vec3 {
+  return { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
+}
+
+function zAxisOf(m: Mat4): Vec3 {
+  return { x: m[0][2], y: m[1][2], z: m[2][2] };
+}
+
+const WORLD_Z: Vec3 = { x: 0, y: 0, z: 1 };
+
+type Mat3 = [[number, number, number], [number, number, number], [number, number, number]];
+
+function jjtMatrix(columns: Vec3[]): Mat3 {
+  const axes: (keyof Vec3)[] = ["x", "y", "z"];
+  return axes.map((a) =>
+    axes.map((b) => columns.reduce((sum, col) => sum + col[a] * col[b], 0)),
+  ) as Mat3;
+}
+
+function mat3Determinant(m: Mat3): number {
+  return (
+    m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
+    m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
+    m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])
+  );
+}
+
+function mat3AddDiagonal(m: Mat3, value: number): Mat3 {
+  return [
+    [m[0][0] + value, m[0][1], m[0][2]],
+    [m[1][0], m[1][1] + value, m[1][2]],
+    [m[2][0], m[2][1], m[2][2] + value],
+  ];
+}
+
+/** Adjugate/determinant yöntemiyle 3x3 matris tersi. */
+function mat3Inverse(m: Mat3): Mat3 {
+  const det = mat3Determinant(m);
+  const cofactor = (r0: number, r1: number, c0: number, c1: number) =>
+    m[r0][c0] * m[r1][c1] - m[r0][c1] * m[r1][c0];
+
+  const adjugateTransposed: Mat3 = [
+    [cofactor(1, 2, 1, 2), -cofactor(0, 2, 1, 2), cofactor(0, 1, 1, 2)],
+    [-cofactor(1, 2, 0, 2), cofactor(0, 2, 0, 2), -cofactor(0, 1, 0, 2)],
+    [cofactor(1, 2, 0, 1), -cofactor(0, 2, 0, 1), cofactor(0, 1, 0, 1)],
+  ];
+
+  return adjugateTransposed.map((row) => row.map((value) => value / det)) as Mat3;
+}
+
+function mat3TimesVec3(m: Mat3, v: Vec3): Vec3 {
+  return {
+    x: m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z,
+    y: m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z,
+    z: m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z,
+  };
+}
+
+/**
+ * Geometrik Jacobian (sadece doğrusal hız kısmı; yönelim izlenmiyor).
+ * Eklem i'nin ekseni "çerçeve i-1"in Z ekseni, o çerçevenin orijininde —
+ * bkz. Lynch & Park, Modern Robotics, Bölüm 5.
+ */
+export function computeJacobian(robot: RobotSpec, jointAngles: number[]): JacobianResult {
+  const { jointPositions, jointTransforms } = forwardKinematics(robot, jointAngles);
+  const endEffector = jointPositions[jointPositions.length - 1];
+
+  const columns = robot.joints.map((joint, index) => {
+    const framePrevOrigin = jointPositions[index];
+    const framePrevZ = index === 0 ? WORLD_Z : zAxisOf(jointTransforms[index - 1]);
+
+    if (joint.type === "prismatic") return framePrevZ;
+    return crossProduct(framePrevZ, subtractVec(endEffector, framePrevOrigin));
+  });
+
+  return { columns, manipulability: manipulabilityOf(columns) };
+}
+
+function dot(a: Vec3, b: Vec3): number {
+  return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+/** n×n matris için kofaktör açılımıyla determinant (n küçük olduğu sürece, eklem sayısı gibi). */
+function determinant(matrix: number[][]): number {
+  const n = matrix.length;
+  if (n === 1) return matrix[0][0];
+  if (n === 2) return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+
+  let result = 0;
+  for (let col = 0; col < n; col++) {
+    const minor = matrix.slice(1).map((row) => row.filter((_, c) => c !== col));
+    result += (col % 2 === 0 ? 1 : -1) * matrix[0][col] * determinant(minor);
+  }
+  return result;
+}
+
+/**
+ * Yoshikawa manipülabilitesi. Eklem sayısı (n) konum boyutundan (3) azsa
+ * J J^T (3x3) her zaman tekildir (rank ≤ n < 3) — bu yüzden n <= 3 iken
+ * Gram matrisi J^T J (n×n) kullanılır; n > 3 (fazladan eklemli/redundant
+ * kol) olursa klasik J J^T (3x3) kullanılır.
+ */
+function manipulabilityOf(columns: Vec3[]): number {
+  const n = columns.length;
+  if (n === 0) return 0;
+  if (n <= 3) {
+    const gram = columns.map((a) => columns.map((b) => dot(a, b)));
+    return Math.sqrt(Math.max(determinant(gram), 0));
+  }
+  return Math.sqrt(Math.max(mat3Determinant(jjtMatrix(columns)), 0));
+}
+
+export const SINGULARITY_THRESHOLD = 1e-3;
+
+export function isNearSingularity(manipulability: number): boolean {
+  return manipulability < SINGULARITY_THRESHOLD;
+}
+
+// --- Sayısal (genel) ters kinematik -----------------------------------
+
+export interface NumericalIkOptions {
+  maxIterations?: number;
+  tolerance?: number;
+  damping?: number;
+  /** Tek iterasyonda izin verilen en büyük açı adımı (radyan). */
+  maxStep?: number;
+  initialGuess?: number[];
+}
+
+export interface NumericalIkResult {
+  angles: number[] | null;
+  converged: boolean;
+  iterations: number;
+}
+
+/**
+ * Sönümlü en küçük kareler (damped least squares) ile sayısal ters kinematik.
+ * dtheta = J^T (J J^T + lambda^2 I)^-1 * hata. Tekillik yakınında da kararlı
+ * kalır çünkü lambda, J J^T'yi tersine çevrilemez olmaktan çıkarır —
+ * bkz. docs/01-mufredat.md "sayısal ters kinematik".
+ */
+export function inverseKinematicsNumerical(
+  robot: RobotSpec,
+  target: Vec3,
+  options: NumericalIkOptions = {},
+): NumericalIkResult {
+  const maxIterations = options.maxIterations ?? 100;
+  const tolerance = options.tolerance ?? 1e-4;
+  const damping = options.damping ?? 0.05;
+
+  let angles = options.initialGuess ? [...options.initialGuess] : robot.joints.map(() => 0.1);
+
+  for (let iteration = 0; iteration < maxIterations; iteration++) {
+    const { jointPositions } = forwardKinematics(robot, angles);
+    const current = jointPositions[jointPositions.length - 1];
+    const error = subtractVec(target, current);
+    const errorNorm = Math.hypot(error.x, error.y, error.z);
+
+    if (errorNorm < tolerance) {
+      if (!withinLimits(robot, angles)) return { angles: null, converged: false, iterations: iteration };
+      return { angles, converged: true, iterations: iteration };
+    }
+
+    const { columns } = computeJacobian(robot, angles);
+    const damped = mat3AddDiagonal(jjtMatrix(columns), damping * damping);
+    const y = mat3TimesVec3(mat3Inverse(damped), error);
+    const dtheta = columns.map((col) => col.x * y.x + col.y * y.y + col.z * y.z);
+
+    // Adım boyu kırpma: büyük başlangıç hatalarında tek adımda aşırı sıçrama
+    // olmasın diye (aksi halde iki nokta arasında sonsuz salınabilir).
+    const dthetaNorm = Math.hypot(...dtheta);
+    const maxStep = options.maxStep ?? 0.3;
+    const scale = dthetaNorm > maxStep ? maxStep / dthetaNorm : 1;
+
+    angles = angles.map((angle, i) => {
+      const next = angle + dtheta[i] * scale;
+      return robot.joints[i].type === "revolute" ? normalizeAngle(next) : next;
+    });
+  }
+
+  return { angles: null, converged: false, iterations: maxIterations };
+}
+
+/** Açıyı (-π, π] aralığına indirger; dönel eklemler için limit kontrolü bu aralığa göre tanımlı. */
+function normalizeAngle(angle: number): number {
+  const twoPi = 2 * Math.PI;
+  const wrapped = ((angle + Math.PI) % twoPi + twoPi) % twoPi - Math.PI;
+  return wrapped === -Math.PI ? Math.PI : wrapped;
+}

@@ -1,0 +1,81 @@
+---
+id: b-universite-movej-movel
+baslik: MoveJ ve MoveL farkı — ne zaman hangisi
+hat: b-kinematik
+seviye: universite
+sure: 15
+sira: 7
+onkosul:
+  - b-universite-yorunge-uretimi
+kazanimlar:
+  - MoveJ ve MoveL komutlarının hangi uzayda interpolasyon yaptığını ayırt edebilme
+  - Bir görev için doğru hareket komutunu seçebilme
+kaynaklar:
+  - "ABB RAPID Instructions, Functions and Data Types Reference Manual — MoveJ/MoveL talimatları"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - IkTarget
+durum: taslak
+---
+
+## Kanca
+
+ABB'nin RAPID dilinde bir robotu hareket ettirmenin iki temel komutu var:
+`MoveJ` ve `MoveL`. İkisi de "şu noktaya git" diyor, ama oraya gidiş
+şekilleri tamamen farklı.
+
+<IkTarget robot="generic-2dof" />
+
+## Ne oldu
+
+**MoveJ (joint move).** Eklem uzayında interpolasyon yapar (bu hattın
+"yörünge üretimi" dersindeki birinci yöntem). Her eklem kendi başlangıç ve
+bitiş açısı arasında yumuşak bir profille hareket eder. Uç noktanın izlediği
+yol eğridir ve önceden tahmin edilemez — ama hareket genelde en hızlısıdır
+ve bir tekillikten geçme riski daha düşüktür.
+
+**MoveL (linear move).** Uç noktayı Kartezyen uzayda düz bir çizgide
+hareket ettirir. Yol öngörülebilir ve kontrol edilebilir, ama her ara nokta
+için ters kinematik çözülmesi gerekir (bu hattın "analitik ve sayısal ters
+kinematik" dersi) — yol bir tekillikten veya eklem limitinden geçerse
+hareket hata verip durabilir.
+
+Yukarıdaki sahnede yeşil hedefi düz bir çizgi boyunca sürüklemen, MoveL'in
+davranışına benzer: uç nokta senin çizdiğin yolu izliyor, her adımda IK
+yeniden çözülüyor.
+
+## Gerçek dünyada
+
+| Görev | Doğru seçim | Neden |
+|---|---|---|
+| Bir parçayı A'dan B'ye taşı, arada engel yok | MoveJ | Yol önemsiz, hız önemli |
+| Düz bir kaynak dikişi çek | MoveL | Yolun şekli işin kalitesini belirliyor |
+| Dairesel bir kaynak (ör. bir flanş çevresi) | MoveC (dairesel) | Yol bir yay olmalı |
+
+KUKA'da aynı ayrım `PTP` (point-to-point, MoveJ'e karşılık) ve `LIN`
+(linear, MoveL'e karşılık) olarak adlandırılır — isimler farklı, mantık
+aynıdır.
+
+## Dene
+
+Yukarıdaki sahnede hedefi engelmiş gibi düşündüğün bir noktanın etrafından
+dolandırarak sürükle. Bu, bir MoveL programcısının neden ara noktalar
+(waypoint) eklediğini gösterir — düz bir MoveL, engelin içinden geçerdi.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Düz bir kaynak dikişi çekerken hangi komut kullanılmalı?",
+      secenekler: ["MoveJ", "MoveL", "İkisi de fark etmez"],
+      dogru: 1,
+      aciklama: "Kaynak dikişinin şekli önemli olduğu için uç noktanın Kartezyen uzayda düz gitmesi gerekir — bu MoveL'in işi.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu hattın üniversite dersleri burada tamamlanıyor. Diğer hatlardaki (yol
+planlama, robot programlama dilleri) üniversite dersleri ileriki fazlarda
+ekleniyor.

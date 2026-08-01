@@ -1,0 +1,82 @@
+---
+id: b-universite-yorunge-uretimi
+baslik: Yörünge üretimi — nokta-nokta, doğrusal, dairesel hareket
+hat: b-kinematik
+seviye: universite
+sure: 20
+sira: 5
+onkosul:
+  - b-universite-ters-kinematik
+kazanimlar:
+  - Eklem uzayı ve Kartezyen uzay yörünge üretimi arasındaki farkı açıklayabilme
+  - Doğrusal (Kartezyen) bir yörüngenin her adımda ters kinematik gerektirdiğini kavrayabilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 9"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - IkTarget
+durum: taslak
+---
+
+## Kanca
+
+Robota "A noktasından B noktasına git" dediğinde, aradaki yol tek bir
+şekilde belirlenmiş değildir. Kolun ucu düz bir çizgi mi izlemeli, yoksa
+her eklem kendi hızında mı dönmeli? Cevap, uygulamaya göre değişir.
+
+<IkTarget robot="generic-2dof" />
+
+## Ne oldu
+
+İki temel yaklaşım var:
+
+**Eklem uzayında interpolasyon.** Başlangıç ve bitiş açıları arasında her
+eklem doğrusal (veya yumuşatılmış) olarak enterpole edilir. Uç noktanın
+Kartezyen uzaydaki izlediği yol öngörülemez bir eğridir — ama hesaplama
+ucuzdur, tek bir ters kinematik çözümü yeterlidir (sadece bitiş noktası
+için).
+
+**Kartezyen uzayda interpolasyon (doğrusal/dairesel).** Uç noktanın izleyeceği
+yol (düz çizgi, yay) önceden tanımlanır; yol üzerindeki HER ara nokta için
+ayrı bir ters kinematik çözümü gerekir. Yol öngörülebilir ama hesaplama
+maliyeti daha yüksektir ve yol bir tekillikten geçerse çözüm patlayabilir
+(önceki ders).
+
+Yukarıdaki sahnede yeşil hedefi yavaşça düz bir çizgi boyunca sürüklersen,
+her karede yeni bir ters kinematik çözümü hesaplanıyor — bu, Kartezyen
+yörünge üretiminin küçük ölçekte canlı hâli. Fare senin "yol planlayıcın",
+IK çözücü her adımda "eklem açılarını yeniden hesaplayan kontrolör".
+
+## Gerçek dünyada
+
+Bir kaynak robotu düz bir dikiş boyunca hareket etmeli — burada Kartezyen
+(doğrusal) yörünge zorunludur, yol kalitesi işin kalitesini belirler. Ama
+bir robot sadece bir kutuyu A noktasından B noktasına taşıyorsa, aradaki
+yolun şekli önemsizdir — eklem uzayında hareket daha hızlı ve enerji
+tasarruflu olur.
+
+## Dene
+
+Yeşil hedefi önce çok yavaş, sonra hızlı sürükle. Kolun ucunun sürüklediğin
+yolu ne kadar yakından takip ettiğini karşılaştır.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Kartezyen uzayda düz bir yörünge neden eklem uzayına göre daha maliyetlidir?",
+      secenekler: [
+        "Robot daha ağır çalıştığı için",
+        "Yol üzerindeki her ara nokta için ayrı bir ters kinematik çözümü gerektiği için",
+        "Daha fazla elektrik harcadığı için",
+      ],
+      dogru: 1,
+      aciklama: "Eklem uzayında sadece bitiş noktası için IK çözülür; Kartezyen yörüngede yol üzerindeki her nokta için ayrı ayrı çözülmesi gerekir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Yörüngenin şekli bir mesele, hızının zaman içinde nasıl değiştiği başka bir
+mesele. Sıradaki ders hız ve ivme profillerini ele alıyor.

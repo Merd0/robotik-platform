@@ -7,12 +7,21 @@ const CONTENT_DIR = path.join(process.cwd(), "content");
 export type Seviye = "ortaokul" | "lise" | "universite";
 export type DersDurum = "taslak" | "inceleme" | "yayinda";
 
+const SEVIYE_ORDER: Seviye[] = ["ortaokul", "lise", "universite"];
+export const SEVIYE_ETIKET: Record<Seviye, string> = {
+  ortaokul: "Ortaokul",
+  lise: "Lise",
+  universite: "Üniversite",
+};
+
 export interface DersFrontmatter {
   id: string;
   baslik: string;
   hat: string;
   seviye: Seviye;
   sure: number;
+  /** Aynı hat + seviye içindeki öğretim sırası. Belirtilmezse 0 kabul edilir. */
+  sira?: number;
   onkosul: string[];
   kazanimlar: string[];
   kaynaklar: string[];
@@ -49,4 +58,50 @@ export function getAllLessons(): Lesson[] {
 
 export function getLessonBySlug(slug: string): Lesson | undefined {
   return getAllLessons().find((lesson) => lesson.slug === slug);
+}
+
+export function getLessonsByLevel(seviye: Seviye): Lesson[] {
+  return getAllLessons()
+    .filter((lesson) => lesson.frontmatter.seviye === seviye)
+    .sort((a, b) => (a.frontmatter.sira ?? 0) - (b.frontmatter.sira ?? 0));
+}
+
+/** Aynı hat + seviye içindeki dersler, öğretim sırasına göre. */
+export function getOrderedLessons(hat: string, seviye: Seviye): Lesson[] {
+  return getAllLessons()
+    .filter((lesson) => lesson.frontmatter.hat === hat && lesson.frontmatter.seviye === seviye)
+    .sort((a, b) => (a.frontmatter.sira ?? 0) - (b.frontmatter.sira ?? 0));
+}
+
+export function getPrerequisites(lesson: Lesson): Lesson[] {
+  const allLessons = getAllLessons();
+  return lesson.frontmatter.onkosul
+    .map((id) => allLessons.find((candidate) => candidate.slug === id))
+    .filter((candidate): candidate is Lesson => candidate !== undefined);
+}
+
+/**
+ * Aynı hat içinde bir önceki/sonraki ders. Seviyenin son dersindeyse bir üst
+ * seviyenin ilk dersine, ilk dersindeyse bir alt seviyenin son dersine
+ * atlar — bkz. docs/01-mufredat.md "ders yapısı: sonraki adım".
+ */
+export function getAdjacentLessons(lesson: Lesson): { previous: Lesson | null; next: Lesson | null } {
+  const { hat, seviye } = lesson.frontmatter;
+  const sameTrack = getOrderedLessons(hat, seviye);
+  const index = sameTrack.findIndex((candidate) => candidate.slug === lesson.slug);
+  const seviyeIndex = SEVIYE_ORDER.indexOf(seviye);
+
+  let previous = index > 0 ? sameTrack[index - 1] : null;
+  if (!previous && seviyeIndex > 0) {
+    const lowerTrack = getOrderedLessons(hat, SEVIYE_ORDER[seviyeIndex - 1]);
+    previous = lowerTrack.length > 0 ? lowerTrack[lowerTrack.length - 1] : null;
+  }
+
+  let next = index < sameTrack.length - 1 ? sameTrack[index + 1] : null;
+  if (!next && seviyeIndex < SEVIYE_ORDER.length - 1) {
+    const higherTrack = getOrderedLessons(hat, SEVIYE_ORDER[seviyeIndex + 1]);
+    next = higherTrack.length > 0 ? higherTrack[0] : null;
+  }
+
+  return { previous, next };
 }

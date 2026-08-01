@@ -1,0 +1,73 @@
+---
+id: b-lise-ileri-kinematik
+baslik: İki eklemli kolda ileri kinematik
+hat: b-kinematik
+seviye: lise
+sure: 15
+sira: 1
+onkosul:
+  - b-ortaokul-eklemleri-oynat
+kazanimlar:
+  - Eklem açılarından uç nokta konumunu trigonometri ile hesaplayabilme
+  - Açı değişiminin uç noktayı nasıl etkilediğini formülle açıklayabilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 4"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Ortaokul dersinde kaydırıcıyı oynatıp kolun ucunun nereye gittiğini gözle
+gördün. Şimdi aynı şeyi hesapla: eklem açılarını bilsen, uç noktanın (x, y)
+konumunu kâğıt üzerinde bulabilir misin?
+
+<JointSliders robot="generic-2dof" />
+
+## Ne oldu
+
+İki eklemli bir kolda, birinci eklemin açısı θ₁ ve ikinci eklemin açısı θ₂
+ise (ikinci açı birinciye göre ölçülür), uç noktanın konumu şu formülle
+bulunur:
+
+```
+x = a1·cos(θ1) + a2·cos(θ1 + θ2)
+y = a1·sin(θ1) + a2·sin(θ1 + θ2)
+```
+
+Burada a1 ve a2 kolun iki parçasının uzunluğu. İlk terim birinci eklemin
+ucunu bulur, ikinci terim ondan itibaren ikinci parçanın nereye gittiğini
+ekler — tıpkı iki vektörü uç uca eklemek gibi.
+
+Yukarıdaki sahnede kaydırıcıyı 90°'ye getirirsen, cos(90°) = 0 ve
+sin(90°) = 1 olduğundan hesap kafanda da doğrulanabilir.
+
+## Gerçek dünyada
+
+Bir robot kontrolörü her döngüde tam olarak bu hesabı yapar — sadece iki
+değil, altı-yedi eklem için, üç boyutta. Prensip aynı kalır: eklem
+açılarından uç noktanın konumunu bulmak.
+
+## Dene
+
+Kaydırıcıları θ1 = 90°, θ2 = 0° yap. Sonra yukarıdaki formülle x ve y'yi
+elle hesapla, ekrandaki "Uç nokta" değeriyle karşılaştır.
+
+<Quiz
+  sorular={[
+    {
+      soru: "θ1 = 0°, θ2 = 0° iken uç noktanın x konumu nedir (a1 = 1, a2 = 0.8)?",
+      secenekler: ["0", "1.8", "0.8"],
+      dogru: 1,
+      aciklama: "cos(0°) = 1 olduğundan x = a1 + a2 = 1.8 çıkar.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Formül sana uç noktayı veriyor. Peki tersi mümkün mü — hedefi bilip açıları
+bulmak? Sıradaki ders tam bunu ele alıyor.

@@ -1,0 +1,90 @@
+---
+id: b-universite-hiz-ivme-profilleri
+baslik: Hız ve ivme profilleri — yamuk profil, S-eğrisi
+hat: b-kinematik
+seviye: universite
+sure: 15
+sira: 6
+onkosul:
+  - b-universite-yorunge-uretimi
+kazanimlar:
+  - Yamuk hız profilinin üç aşamasını (hızlanma, sabit hız, yavaşlama) açıklayabilme
+  - S-eğrisi profilinin yamuk profile göre neden daha az sarsıntı ürettiğini kavrayabilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 9"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli: []
+durum: taslak
+---
+
+## Kanca
+
+Bir yörüngenin uçları (A ve B) belli. Ama robot A'dan B'ye giderken hızı
+zamanla nasıl değişmeli? Aniden tam hızla başlayıp aniden durmak, robotun
+gövdesini sarsar. Cevap bir hız profili tanımlamaktan geçer.
+
+## Ne oldu
+
+**Yamuk (trapezoidal) profil.** Hız-zaman grafiği bir yamuğa benzer:
+
+```
+hız
+ |      ______________
+ |     /              \
+ |    /                \
+ |   /                  \
+ |__/____________________\____ zaman
+   hızlan   sabit hız   yavaşla
+```
+
+Üç aşama vardır: sabit ivmeyle hızlanma, sabit hızda seyir, sabit ivmeyle
+yavaşlama. Basit ve hesaplaması ucuzdur, ama ivme aniden değiştiği
+noktalarda (köşelerde) sarsıntı (jerk — ivmenin türevi) sonsuza sıçrar.
+
+**S-eğrisi profili.** İvmenin kendisi de yumuşak geçer (ivme-zaman grafiği
+bir yamuk, hız-zaman grafiği S harfine benzer bir eğri olur). Köşelerdeki
+ani ivme değişimi ortadan kalkar, hareket daha yumuşak hissettirir ama
+profili hesaplamak ve ayarlamak daha karmaşıktır.
+
+```
+hız
+ |        ________
+ |      /          \
+ |    /              \
+ |  /                  \
+ |_/____________________\____ zaman
+     (köşeler yuvarlatılmış)
+```
+
+## Gerçek dünyada
+
+Hassas parça taşıyan bir robotta (ör. yarı iletken üretiminde) ani ivme
+değişimleri parçanın kaymasına veya titreşime yol açabilir — bu tür
+uygulamalarda S-eğrisi tercih edilir. Basit malzeme taşıma gibi işlerde
+yamuk profil, hız ve maliyet avantajı sağladığı için yeterlidir.
+
+## Dene
+
+Bir sonraki derste (MoveJ/MoveL) hareket komutlarını incelerken, çoğu robot
+dilinin hız/ivme profilini ayrı bir parametre olarak (ör. "hızlanma yüzdesi")
+sunduğunu göreceksin — bu ders o parametrenin ne anlama geldiğini açıklıyor.
+
+<Quiz
+  sorular={[
+    {
+      soru: "S-eğrisi profili yamuk profile göre neyi azaltır?",
+      secenekler: [
+        "Toplam hareket süresini",
+        "Ani ivme değişimini (sarsıntıyı)",
+        "Robotun ağırlığını",
+      ],
+      dogru: 1,
+      aciklama: "S-eğrisinde ivme de yumuşak geçtiği için sarsıntı (jerk) yamuk profile göre çok daha düşüktür.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Şimdi bu kavramları gerçek robot komutlarında göreceksin: MoveJ ve MoveL.

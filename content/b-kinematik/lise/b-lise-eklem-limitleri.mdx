@@ -1,0 +1,72 @@
+---
+id: b-lise-eklem-limitleri
+baslik: Eklem limitleri ve neden var oldukları
+hat: b-kinematik
+seviye: lise
+sure: 10
+sira: 4
+onkosul:
+  - b-lise-ileri-kinematik
+kazanimlar:
+  - Eklem limitlerinin mekanik ve elektriksel nedenlerini açıklayabilme
+  - Bir hedefin matematiksel olarak ulaşılabilir ama limit dışı olabileceğini kavrayabilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 2 (konfigürasyon uzayı ve eklem limitleri)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Kaydırıcıyı sonuna kadar götürmeyi dene — bir noktada durur, öteye
+gitmez. Bu bir yazılım hatası değil, gerçek robotların da aynı sınırı var.
+
+<JointSliders robot="generic-2dof" />
+
+## Ne oldu
+
+Her eklemin bir minimum ve maksimum açısı vardır (`limits.min`,
+`limits.max`). Kaydırıcı bu aralığın dışına çıkamıyor çünkü gerçek bir
+robotta da eklem o kadar dönemez. Üç sebebi var:
+
+1. **Mekanik.** Kablolar ve gövde parçaları birbirine çarpmadan ancak belli
+   bir açıya kadar dönebilir.
+2. **Elektriksel.** Motora giden kablo demeti sonsuz dönemez, bir sınırda
+   kopar.
+3. **Güvenlik.** Bazı açılar robotu kendi gövdesiyle veya çevresindeki
+   ekipmanla çarpıştırır; üretici bu açıları yazılımsal olarak da kapatır.
+
+## Gerçek dünyada
+
+Bir robot üreticisi teknik veri sayfasında her eklem için "±170°" gibi bir
+aralık verir. Programcı bu aralığın dışında bir hedef girerse, kolun
+matematiksel olarak oraya ulaşabilecek uzunlukta olsa bile robot "hayır"
+der.
+
+## Dene
+
+Kaydırıcıyı bir ucuna götür, sonra elle biraz daha ileri sürüklemeyi dene.
+Sayının sınırda durduğunu, geçmediğini gözlemle.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir hedef, kolun toplam uzunluğu içindeyken neden hâlâ ulaşılamaz olabilir?",
+      secenekler: [
+        "Hedef rengi yanlış olduğu için",
+        "Gerekli açı, eklemin izin verilen aralığının dışında kalabildiği için",
+        "Robot çok yavaş hareket ettiği için",
+      ],
+      dogru: 1,
+      aciklama: "Erişim alanı sadece uzunluğa değil, eklem limitlerine de bağlıdır — ikisi ayrı kısıtlardır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu hattın üniversite dersleri, aynı kavramları genel (n eklemli) durumda ve
+sayısal yöntemlerle ele alıyor.

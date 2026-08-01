@@ -1,0 +1,86 @@
+---
+id: b-universite-ters-kinematik
+baslik: Analitik ve sayısal ters kinematik
+hat: b-kinematik
+seviye: universite
+sure: 25
+sira: 2
+onkosul:
+  - b-universite-dh-ileri-kinematik
+  - b-lise-geometrik-ters-kinematik
+kazanimlar:
+  - Genel bir robotun neden çoğunlukla kapalı form ters kinematik çözümü olmadığını açıklayabilme
+  - Sönümlü en küçük kareler (damped least squares) yönteminin çalışma mantığını kavrayabilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 6"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - IkTarget
+durum: taslak
+---
+
+## Kanca
+
+Lise dersindeki kosinüs teoremi çözümü, sadece iki eklemli düzlemsel bir kol
+için işe yarıyordu. Altı eklemli bir endüstriyel kolda aynı kapalı form
+formülü genelde yoktur. Peki kontrolör hedefe nasıl ulaşıyor?
+
+<IkTarget robot="generic-2dof" />
+
+## Ne oldu
+
+İki yaklaşım var:
+
+**Analitik (kapalı form).** Belirli geometrilerde (ör. son üç eklem
+ekseninin tek noktada kesiştiği "küresel bilek" tasarımı) problem konum ve
+yönelim olarak ikiye ayrılabilir, kapalı formül bulunabilir. Bizim
+`generic-2dof` robotumuz da (düzlemsel, iki eklem) bu ayrıcalıklı
+durumlardan biri — bu yüzden lise dersinde kapalı formül vardı.
+
+**Sayısal (yinelemeli).** Genel durumda kapalı formül yoktur; hedefe
+adım adım yaklaşılır. Bu platformun sayısal çözücüsü sönümlü en küçük
+kareler (damped least squares) kullanır:
+
+```
+Δθ = J^T · (J·J^T + λ²·I)^-1 · hata
+θ_yeni = θ_eski + Δθ
+```
+
+Burada `J` Jacobian matrisi (sıradaki derste), `hata` mevcut uç nokta ile
+hedef arasındaki fark, `λ` sönümleme katsayısı. Bu adım hata yeterince
+küçülene kadar (veya iterasyon sınırına ulaşana kadar) tekrarlanır.
+Sönümleme (λ) olmadan yöntem tekilliklere yakın kararsızlaşır — bu yüzden
+"sönümlü".
+
+## Gerçek dünyada
+
+Çoğu ticari robot kontrolörü hem analitik hem sayısal çözücü barındırır:
+mümkünse hızlı analitik formül kullanılır, karmaşık veya artık serbestlik
+dereceli (redundant) kollarda sayısal yönteme düşülür.
+
+## Dene
+
+Yukarıdaki sahnede yeşil noktayı hızlıca farklı yerlere sürükle. Kolun her
+karede yeni bir hedefe "yakınsadığını", sıçramadan yumuşak geçiş
+yaptığını gözlemle — bu, sayısal çözücünün her karede birkaç iterasyonla
+hedefe ulaşmasının sonucu.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Sönümlü en küçük kareler yönteminde λ (lambda) neden var?",
+      secenekler: [
+        "Hesabı yavaşlatmak için",
+        "Tekillik yakınında matrisin tersinin alınabilir kalmasını sağlamak için",
+        "Eklem limitlerini uygulamak için",
+      ],
+      dogru: 1,
+      aciklama: "λ olmadan J·J^T tekillik yakınında tersinemez hale gelebilir; λ bu matrisi her zaman tersinebilir tutar.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Δθ hesabının kalbinde Jacobian matrisi var. Sıradaki ders onu tanıtıyor.

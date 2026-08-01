@@ -1,0 +1,68 @@
+---
+id: b-ortaokul-erisemedigi-noktalar
+baslik: Neden bazı noktalara uzanamaz
+hat: b-kinematik
+seviye: ortaokul
+sure: 8
+sira: 3
+onkosul:
+  - b-ortaokul-birden-fazla-yol
+kazanimlar:
+  - Bir robot kolunun erişebildiği alanın sınırlı olduğunu gözlemleyebilme
+  - Kolun neden çok uzak veya çok yakın noktalara uzanamadığını açıklayabilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 4 (çalışma uzayı/workspace kavramı)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - IkTarget
+durum: taslak
+---
+
+## Kanca
+
+Yeşil noktayı kolun çok uzağına, ekranın kenarına doğru sürüklemeyi dene.
+Ne oluyor?
+
+<IkTarget robot="generic-2dof" />
+
+## Ne oldu
+
+Nokta kırmızıya döndüğünde kol oraya ulaşamıyor demektir. Kolun iki parçası
+var ve ikisi birlikte açılsa bile belirli bir uzunluğu geçemezler — tıpkı
+senin kolun gibi, ne kadar gerinsen de bir sınırı var.
+
+Kırmızı noktayı kola çok yaklaştırmayı da dene. Bazen çok yakın noktalara da
+uzanamaz, çünkü eklemler birbirinin içine giremez.
+
+## Gerçek dünyada
+
+Bir robot kolu satın alırken üreticiler "erişim alanı" (workspace) diye bir
+çizim verir — kolun uzanabildiği bölgeyi gösteren bir daire ya da yarım
+daire. Bir fabrika hattı kurulurken robot, parçaların hep bu alanın içinde
+kalacağı şekilde yerleştirilir.
+
+## Dene
+
+Yeşil noktayı kolun tam ortasından başlayıp yavaşça dışarı doğru sürükle.
+Kırmızıya döndüğü anı yakala — orası erişim alanının sınırı.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Kol neden bazı uzak noktalara ulaşamıyor?",
+      secenekler: [
+        "Eklemler yeterince hızlı dönmüyor",
+        "İki parçanın toplam uzunluğu sınırlı",
+        "Kaydırıcı bozuk",
+      ],
+      dogru: 1,
+      aciklama: "Kolun erişimi, parçalarının toplam uzunluğuyla sınırlıdır — bu bir hız sorunu değil.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu hattın lise dersleri bu gördüklerini sayılarla (trigonometriyle)
+açıklamaya başlıyor.
