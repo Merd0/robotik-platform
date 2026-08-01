@@ -114,7 +114,34 @@ belirsiz bloglar, forum gönderileri.
 Bu kural hem akademik dürüstlük hem de gizlilik koruması. Kaynağı
 gösterilemeyen bilgi yayınlanmaz.
 
-## Ders yazma iş akışı
+## Kanca çeşitliliği (tekrar eden retorik kalıptan kaçınma)
+
+Her dersin bir "kanca" ile açılması kural, ama **kancanın hep aynı retorik
+şekle bürünmesi** ayrı bir sorun ve fark edilmesi zor çünkü her ders tek
+başına makul görünür. Özellikle şu kalıptan kaçının: "[bir durum kur] →
+'Ama/Ancak ...' (çelişki) → 'Peki ...?' (soru ile bitir)." Bu kalıp bir kez
+iyi çalışır, arka arkaya on dört kez kullanılınca okuyucuya "hep aynı
+numara" hissi verir.
+
+Bunun yerine, birbirinden gerçekten farklı açılış biçimleri kullanın —
+aşağıdakiler örnek, tek liste değil:
+
+- **Şaşırtıcı gözlem:** "Bir robotun kolu, aynı noktaya iki farklı şekilde
+  uzanabilir. İkisi de doğru."
+- **Mini senaryo:** "Kontrolör ekranında sadece altı sayı var: eklem
+  açıları. Robot kolu hedefine ulaştı. Bu altı sayı nereden geldi?"
+- **Yanlış cevap tuzağı:** "Çoğu kişi tekilliğe yaklaşınca robotun
+  'yavaşladığını' düşünür. Aslında olan şey daha ilginç."
+- **Doğrudan meydan okuma:** "Şu formülü ezbere uygulama — önce neden işe
+  yaradığını gör."
+- **Karşılaştırma açılışı:** "İki robot aynı hedefe gidiyor, biri 2 saniyede,
+  diğeri 5 saniyede. İkisi de 'doğru' hareket ediyor."
+
+Bir ders yazılırken, bir önceki 2-3 dersin kanca cümlesine bakılır; aynı
+"Ama...Peki...?" iskeletine düşülüyorsa farklı bir açılış biçimi seçilir.
+Bu kontrol `kalite-denetci` subagent'ının denetim kapsamına da eklenir
+(bkz. `06-kalite-ve-topluluk.md`) — sadece doğruluk değil, retorik çeşitlilik
+de kontrol edilir.
 
 1. `content/<hat>/<seviye>/<id>.mdx` dosyasını şablondan oluştur
 2. Önce `kazanimlar` yaz — bu ders bitince öğrenci ne yapabilecek

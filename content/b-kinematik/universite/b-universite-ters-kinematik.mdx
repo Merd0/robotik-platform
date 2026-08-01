@@ -13,18 +13,20 @@ kazanimlar:
   - Sönümlü en küçük kareler (damped least squares) yönteminin çalışma mantığını kavrayabilme
 kaynaklar:
   - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 6"
-incelendi_tarafindan: ""
-incelendi_tarih: ""
+incelendi_tarafindan: "Mert"
+incelendi_tarih: "2026-08-01"
 etkilesimli:
   - IkTarget
-durum: taslak
+durum: yayinda
 ---
 
 ## Kanca
 
-Lise dersindeki kosinüs teoremi çözümü, sadece iki eklemli düzlemsel bir kol
-için işe yarıyordu. Altı eklemli bir endüstriyel kolda aynı kapalı form
-formülü genelde yoktur. Peki kontrolör hedefe nasıl ulaşıyor?
+Genel bir robot için ters kinematiğin hazır bir kapalı formülü olduğunu
+düşünme. Lise dersindeki kosinüs teoremi çözümü sadece iki eklemli
+düzlemsel bir kol için işe yarıyordu; altı eklemli bir endüstriyel kolda
+böyle bir formül genelde yok — kontrolör hedefe adım adım yaklaşarak
+ulaşır.
 
 <IkTarget robot="generic-2dof" />
 

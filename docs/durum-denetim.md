@@ -64,3 +64,46 @@ sayfaları sadece `durum: yayinda` dersleri listelediği için hiçbiri
 inceleyip `yayinda` yapmak istediğine karar verecek — bu doküman ve
 yukarıdaki bulgu tablosu o incelemeye başlangıç noktası olsun diye
 yazıldı.
+
+---
+
+## Güncelleme — Kanca çeşitliliği ve ilk yayın (2026-08-01)
+
+`docs/04-icerik-rehberi.md`'ye "Kanca çeşitliliği" bölümü eklendi:
+14 dersin hepsi tekrar edilen bir retorik kalıba ("[durum kur] → 'Ama/Ancak
+...' → 'Peki ...?'") düşüp düşmediği kontrol edildi.
+
+### Kalıba düşen 4 ders — yeniden yazıldı
+
+| Ders | Eski açılış kalıbı | Yeni biçim |
+|---|---|---|
+| `b-ortaokul-eklemleri-oynat` | Tam kalıp ("Ama...Peki...?") | Şaşırtıcı gözlem |
+| `b-lise-aci-birimleri` | Tam kalıp ("Ama...Peki...?") | Yanlış cevap tuzağı |
+| `b-universite-ters-kinematik` | Kısmi ("Peki...?" ile bitiş) | Doğrudan meydan okuma |
+| `b-universite-hiz-ivme-profilleri` | Kısmi ("Ama...nasıl değişmeli?") | Mini senaryo |
+
+Her düzeltmede sadece açılış paragrafı değişti; kazanımlar, formüller,
+sayısal örnekler, kaynaklar ve sonraki bölümler aynı kaldı. Diğer 10 ders
+zaten farklı açılış biçimleri kullanıyordu, dokunulmadı. Hiçbir ders artık
+aynı "Ama...Peki...?" iskeletini ikinci kez kullanmıyor.
+
+### İlk yayınlanan ders
+
+`b-universite-ters-kinematik`, proje sahibi tarafından bizzat incelenip
+onaylandı. Frontmatter'ı güncellendi:
+
+```yaml
+incelendi_tarafindan: "Mert"
+incelendi_tarih: "2026-08-01"
+durum: yayinda
+```
+
+Bu, docs/06 Katman 3'ün ("insan gözden geçirmesi") ilk kez fiilen
+karşılandığı derstir — önceki turda ben bu alanları kasıtlı boş
+bırakmıştım, çünkü inceleyen ben değildim. Diğer 13 ders `durum: taslak`
+olarak kaldı, dokunulmadı.
+
+Tüm değişiklikler sonrası `npx tsx scripts/check-content.ts`, `npx vitest
+run` (31/31), `npx tsc --noEmit`, `npx eslint .` ve `npx next build`
+tekrar çalıştırıldı; hepsi temiz. 4 yeniden yazılan Kanca ve yayınlanan
+ders tarayıcıda görsel olarak da doğrulandı.
