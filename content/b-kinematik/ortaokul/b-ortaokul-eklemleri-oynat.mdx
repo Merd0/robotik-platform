@@ -1,0 +1,54 @@
+---
+id: b-ortaokul-eklemleri-oynat
+baslik: Eklemleri oynat, ucun nereye gittiğini gör
+hat: b-kinematik
+seviye: ortaokul
+sure: 8
+onkosul: []
+kazanimlar:
+  - Bir robot kolunun eklemlerini oynatınca uç noktanın nasıl hareket ettiğini gözlemleyebilme
+  - Aynı noktaya birden fazla eklem açısı kombinasyonuyla ulaşılabileceğini fark edebilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 4 (İleri Kinematik)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Bir robot kolunun ucunu bir noktaya götürmek istiyorsun. Ama sen doğrudan ucu
+değil, eklemleri döndürebiliyorsun. Peki eklemler hangi açıda olursa ucu tam
+istediğin yere gider?
+
+<JointSliders robot="generic-2dof" />
+
+## Ne oldu
+
+Yukarıdaki kolda iki eklem var. Her kaydırıcı bir eklemi döndürüyor. İkisini
+birlikte oynattığında kolun ucu (yeşil nokta) farklı yerlere gidiyor — buna
+ileri kinematik (forward kinematics) denir: eklem açılarından uç noktanın
+konumunu bulma.
+
+Aynı noktaya bazen iki farklı eklem kombinasyonuyla da ulaşabilirsin. Dirseği
+yukarı kırarak ya da aşağı kırarak dene, ikisi de aynı yere gidebilir.
+
+## Gerçek dünyada
+
+Fabrikalardaki robot kolları (ör. ABB, KUKA, Mecademic) da tam olarak böyle
+çalışır: kontrolör eklem açılarını ayarlar, kolun ucu o açılara göre bir yere
+gider. Bir robot parçayı tam istenen noktaya bırakabiliyorsa, arkasında bu
+derste gördüğün hesap var.
+
+## Dene
+
+Kaydırıcıları kullanarak kolun ucunu ekranın sağ üst köşesine götürmeye
+çalış. Sonra aynı noktaya farklı bir eklem kombinasyonuyla ulaşıp
+ulaşamayacağını dene.
+
+## Sonraki
+
+Bu hattın lise ve üniversite dersleri, ve komşu hatların ortaokul dersleri
+yakında eklenecek.

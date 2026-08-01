@@ -1,0 +1,17 @@
+# content/ — ders yazma kuralları
+
+Şablon ve tam süreç: `docs/04-icerik-rehberi.md`. Burada sadece bu klasöre
+özel, sık unutulan noktalar.
+
+- Her dosya `<hat>/<seviye>/<id>.mdx` yolunda, şablondaki frontmatter ile başlar.
+- `kaynaklar` boşken `durum: yayinda` olamaz. `durum: yayinda` için
+  `incelendi_tarafindan` ve `incelendi_tarih` de dolu olmalı — bkz.
+  `docs/06-kalite-ve-topluluk.md`.
+- Sadece `components/interactive/` altında zaten tanımlı bileşenler kullanılır.
+  Yeni bir bileşeni MDX içinde icat etme; önce bileşeni yaz, ayrı incelensin
+  (bkz. `docs/08-guvenlik-sertlestirme.md`).
+- Seviye kalibrasyonu: ortaokulda formül yok, lisede formül var ama türetme
+  yok, üniversitede türetme ve sınırlar var. Aynı kavramı üç kez farklı
+  derinlikte anlat, kopyalayıp hafifletme.
+- İş yerinden hiçbir bilgi girmez; kaynağı gösterilemeyen iddia yazılmaz
+  (bkz. `docs/00-vizyon.md` "kritik kısıt").
