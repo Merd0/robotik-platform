@@ -6,6 +6,9 @@ import { CodeRunner } from "./CodeRunner";
 import { Quiz } from "./Quiz";
 import { BlockEditor } from "./BlockEditor";
 import { SignalTimeline } from "./SignalTimeline";
+import { PixelToWorld } from "./PixelToWorld";
+import { ThresholdViewer } from "./ThresholdViewer";
+import { ScanPath } from "./ScanPath";
 
 /**
  * MDX'e açılan bileşenlerin TEK listesi. Bir ders dosyası burada olmayan bir
@@ -21,4 +24,7 @@ export const mdxComponents = {
   Quiz,
   BlockEditor,
   SignalTimeline,
+  PixelToWorld,
+  ThresholdViewer,
+  ScanPath,
 };
