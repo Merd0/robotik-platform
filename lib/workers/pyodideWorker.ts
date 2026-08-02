@@ -8,9 +8,15 @@ import { loadPyodide, type PyodideAPI } from "pyodide";
  * adımızdan servis edilir (bkz. scripts/copy-pyodide-assets.mjs) — dış CDN
  * kullanılmaz (docs/08 "Dış kaynak yok").
  *
- * `jsglobals` kısıtlanmış bir nesne: Python tarafındaki `import js` ile
- * gerçek `self`/`fetch`/`XMLHttpRequest`'e erişilemez — kullanıcı kodu
- * dışarıya ağ isteği atamaz (docs/08 "fetch/XHR devre dışı").
+ * Bu worker MODÜL worker olarak yüklenmeli (`new Worker(url, { type:
+ * "module" })`, bkz. CodeRunner.tsx ve scripts/build-worker.mjs) —
+ * pyodide.mjs, klasik (module olmayan) bir worker içinde çalıştığını
+ * tespit ederse kendi içinde bilinçli olarak hata fırlatıyor.
+ *
+ * Ağ erişimi kısıtlaması `loadPyodide()` ÇAĞRISINDA değil, YÜKLEME
+ * BİTTİKTEN SONRA uygulanır — `jsglobals` seçeneğine kısıtlı bir nesne
+ * vermek Pyodide'in kendi başlatma sürecini bozuyordu (bkz.
+ * docs/durum-denetim.md Faz 3 kontrol noktası).
  */
 
 export interface PyodideWorkerRequest {
@@ -33,20 +39,22 @@ export interface PyodideWorkerResponse {
 
 let pyodidePromise: Promise<PyodideAPI> | null = null;
 
-function getPyodide(): Promise<PyodideAPI> {
-  if (!pyodidePromise) {
-    pyodidePromise = loadPyodide({
-      indexURL: "/pyodide/",
-      jsglobals: { console: { log: () => {}, error: () => {}, warn: () => {} } },
-    });
-  }
-  return pyodidePromise;
-}
-
 const ctx = self as unknown as {
   postMessage: (message: PyodideWorkerResponse) => void;
   onmessage: ((event: MessageEvent<PyodideWorkerRequest>) => void) | null;
 };
+
+function getPyodide(): Promise<PyodideAPI> {
+  if (!pyodidePromise) {
+    pyodidePromise = loadPyodide({ indexURL: "/pyodide/" }).then((pyodide) => {
+      const workerGlobal = self as unknown as Record<string, unknown>;
+      delete workerGlobal.fetch;
+      delete workerGlobal.XMLHttpRequest;
+      return pyodide;
+    });
+  }
+  return pyodidePromise;
+}
 
 ctx.onmessage = async (event) => {
   const { requestId, code, jointCount } = event.data;

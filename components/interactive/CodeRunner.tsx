@@ -71,7 +71,15 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
 
   function ensureWorker(): Worker {
     if (!workerRef.current) {
-      workerRef.current = new Worker("/workers/pyodide-worker.js");
+      // type: "module" zorunlu — pyodide.mjs klasik worker'larda çalışmayı
+      // reddediyor (bkz. scripts/build-worker.mjs üstündeki not).
+      const worker = new Worker("/workers/pyodide-worker.js", { type: "module" });
+      // Worker top-level'da senkron bir hata atarsa "message" değil "error"
+      // olayı gelir — sessizce yutulmasın diye logluyoruz.
+      worker.addEventListener("error", (event) => {
+        console.error("[CodeRunner] worker hatası:", event.message);
+      });
+      workerRef.current = worker;
     }
     return workerRef.current;
   }

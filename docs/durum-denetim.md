@@ -438,3 +438,59 @@ açıp "Çalıştır"a basmak.**
    kök nedeni bul.
 3. Çalışıyorsa: Hat D'nin kalan 10 dersine, blok editöre ve Hat G'ye
    geç (görev listesi: TaskList, #19-#28 numaralı görevler).
+
+---
+
+## Güncelleme — CodeRunner tarayıcıda doğrulandı, kök neden bulundu (2026-08-02)
+
+Bir önceki oturumdan iki dosyada commit'lenmemiş değişiklik bulundu
+(`CodeRunner.tsx`, `pyodideWorker.ts`) — bunlar yukarıdaki kontrol
+listesinin 1-2. maddelerine tam uyan, `jsglobals` kısıtlamasını
+gevşetip teşhis amaçlı `status` mesajları ekleyen bir ilk deneme
+girişimiydi. Çakışan/atılması gereken bir şey değildi, doğru yöndeydi;
+üzerine inşa edildi.
+
+**Kök neden bulundu:** Hata `jsglobals` değil, tamamen başka bir
+şeydi. `node_modules/pyodide/pyodide.mjs`, kendi içinde
+`isClassicWorker()` kontrolü yapıyor (`WorkerGlobalScope` + çalışan
+`importScripts` = klasik worker sinyali) ve klasik bir worker içinde
+çalıştığını tespit ederse **bilinçli olarak** `"Classic web workers
+are not supported"` hatası fırlatıyor. `scripts/build-worker.mjs`
+worker'ları `format: "iife"` (klasik script) olarak derliyordu ve
+`CodeRunner.tsx` da `new Worker(url)`'ü module tipi belirtmeden
+çağırıyordu — bu ikisi birlikte pyodide'in reddettiği tam senaryoyu
+oluşturuyordu. Hata `loadPyodide()` içinde bile değil, worker script'i
+DAHA YÜKLENIRKEN, senkron ve "error" event'i olarak geliyordu — bu
+yüzden önceki oturumun `message` event dinleyicisi bunu hiç görmedi
+(sessizce yutuldu).
+
+**Düzeltme:**
+- `scripts/build-worker.mjs`: `pyodide-worker.js` artık `format: "esm"`
+  ile derleniyor (planner-worker `iife` olarak kaldı, pyodide
+  kullanmıyor).
+- `components/interactive/CodeRunner.tsx`: `new Worker(url, { type:
+  "module" })` — modül worker olarak başlatılıyor.
+- Teşhis için eklenen `status` postMessage kanalı ve konsol log'ları,
+  kök neden bulunup doğrulandıktan sonra kaldırıldı (gürültüydü,
+  kalıcı bir ihtiyaç değildi). Worker'ın `error` event dinleyicisi
+  (senkron/top-level hataları yakalar) kalıcı olarak bırakıldı —
+  gerçek hata tam da bu sayede görülebildi.
+
+**Doğrulama — gerçek tarayıcıda (Claude in Chrome):**
+`d-lise-python-komut-dizisi` dersi açıldı, "Çalıştır"a basıldı.
+Pyodide ~5 saniyede yüklendi, `robot.eklem_ac(0, 45)` /
+`robot.eklem_ac(1, 30)` çalıştı, `print()` çıktısı
+("Robot hazır konuma geldi.") ekranda göründü VE 3D sahnedeki robot
+kolu görsel olarak büküldü (yatay çizgiden dirsekli poza geçti) —
+yani Python → worker → `jointTrace` → React state → Three.js sahne
+zinciri uçtan uca çalışıyor. Temizlik sonrası ikinci bir çalıştırmayla
+da (yeni hata yok) doğrulandı.
+
+Ayrıca `npx tsc --noEmit`, `npx eslint .`, `npx vitest run` (55/55),
+`npx tsx scripts/check-content.ts` (40 ders), `npx tsx
+scripts/validate-content-graph.ts`, `npx next build` (46 sayfa)
+tekrar çalıştırıldı; hepsi temiz.
+
+**Sonraki oturum için:** Faz 3 kontrol listesinin 3. maddesine
+geçilebilir — Hat D'nin kalan 10 dersi, blok tabanlı editör (ortaokul),
+Hat G'nin 8 dersi, indirilebilir Python deposu.
