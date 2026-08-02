@@ -1,0 +1,78 @@
+---
+id: d-ortaokul-sirali-tekrar-kosul
+baslik: Sıralı komut, tekrar, koşul
+hat: d-programlama
+seviye: ortaokul
+sure: 10
+sira: 2
+onkosul:
+  - d-ortaokul-blok-komutlar
+kazanimlar:
+  - Tekrarla bloğuyla bir hareket grubunu birden çok kez tekrar ettirebilme
+  - Eğer bloğuyla robotun duruma göre iki farklı hareket kümesinden birini seçmesini sağlayabilme
+  - Bu iki bloğun gerçek robot dillerindeki karşılıklarının döngü ve koşul olduğunu söyleyebilme
+kaynaklar:
+  - "ABB RAPID Instructions, Functions and Data Types Reference Manual — FOR ve IF...THEN...ENDIF talimatları"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - BlockEditor
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi robota "bunu 5 kez yap" demenin, aynı hareket bloğunu 5 kez
+art arda eklemek olduğunu düşünür. Aslında tek bir blok yeterli —
+robota "bunu 5 kez yap" diye ayrıca söyleyebilirsin.
+
+<BlockEditor robot="generic-2dof" />
+
+## Ne oldu
+
+"Tekrarla" bloğu, içine koyduğun blokları senin belirlediğin sayı
+kadar art arda çalıştırır. Beş hareket bloğu eklemek yerine, tek bir
+hareket bloğunu bir "Tekrarla 5 kez" bloğunun içine koyabilirsin —
+sonuç aynıdır, ama liste çok daha kısadır.
+
+"Eğer" bloğu farklı bir şey yapar: robot, "Engel var" anahtarına
+bakarak İKİ ayrı blok grubundan birini seçer. Anahtar açıksa üstteki
+grup, kapalıysa alttaki ("Değilse") grup çalışır — aynı anda ikisi
+birden değil.
+
+## Gerçek dünyada
+
+Gerçek robot dillerinde bu iki fikrin de birer karşılığı var. ABB'nin
+RAPID dilinde `FOR` talimatı bir blok komutu tekrar tekrar çalıştırır,
+`IF...THEN...ENDIF` talimatı ise bir koşula göre iki farklı komut
+grubundan birini seçer. "Tekrarla" bloğun `FOR`'a, "Eğer" bloğun
+`IF...THEN...ENDIF`'e karşılık geliyor.
+
+## Dene
+
+Bir "Tekrarla" bloğu ekle, içine tek bir hareket bloğu koy (Eklem 1'i
+30°'ye döndürsün), tekrar sayısını 3 yap ve çalıştır — robotun aynı
+hareketi üç kez yaptığını izle. Sonra bir "Eğer" bloğu ekle, üst
+gruba bir hareket, alt gruba ("Değilse") farklı bir hareket koy.
+"Engel var" anahtarını önce kapalı, sonra açık bırakarak iki kez
+çalıştır — robot her seferinde hangi grubu seçiyor?
+
+<Quiz
+  sorular={[
+    {
+      soru: "\"Eğer\" bloğunda \"Engel var\" anahtarı KAPALIYKEN çalıştırırsan hangi blok grubu çalışır?",
+      secenekler: [
+        "Üstteki grup",
+        "Alttaki (\"Değilse\") grup",
+        "İkisi birden, sırayla",
+      ],
+      dogru: 1,
+      aciklama: "Anahtar kapalıyken koşul sağlanmadığı için robot \"Değilse\" grubundaki blokları çalıştırır, üsttekini atlar.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu hattın lise seviyesinde artık blok yerine gerçek Python kodu
+yazarak aynı fikirleri (sıralı komut, tekrar, koşul) ifade edeceksin.

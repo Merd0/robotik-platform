@@ -1,0 +1,75 @@
+---
+id: d-ortaokul-blok-komutlar
+baslik: Blok tabanlı komutlarla robotu hareket ettirme
+hat: d-programlama
+seviye: ortaokul
+sure: 8
+sira: 1
+onkosul:
+  - b-ortaokul-eklemleri-oynat
+kazanimlar:
+  - Bir robotu blok tabanlı komutlarla, hiç yazı yazmadan, sırayla hareket ettirebilme
+  - Blokların ekleniş sırasının robotun izlediği yolu belirlediğini fark edebilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 1 (giriş — robot programlamanın komut dizisi doğası)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - BlockEditor
+durum: taslak
+---
+
+## Kanca
+
+Gerçek bir fabrika robotuna görev veren kişi çoğu zaman hiç yazı yazmaz.
+Ekrandaki hazır parçaları birbirine tıklayarak sıraya dizer, robot da o
+sırayı harfiyen izler.
+
+<BlockEditor robot="generic-2dof" allowedBlocks={["move"]} />
+
+## Ne oldu
+
+"Hareket ekle" düğmesine her bastığında listeye yeni bir blok katıldı.
+Her blok, seçtiğin eklemi seçtiğin dereceye döndürüyor. "Çalıştır"a
+basınca robot blokları YUKARIDAN AŞAĞIYA, tam eklediğin sırayla uyguladı.
+
+Blokların sırasını değiştirirsen robotun izlediği yol da değişir. Aynı
+iki blok, farklı sırada eklenince robotu farklı bir yoldan geçirir —
+bazen aynı son noktaya varsa bile, oraya farklı bir şekilde ulaşır.
+
+## Gerçek dünyada
+
+Fabrikalardaki gerçek robot kontrolörlerinde de mantık aynıdır: bir
+hareket programı, satır satır yazılmış bir komut listesidir (ABB'de
+RAPID, KUKA'da KRL — bunları ileride göreceksin). Sen bloklarla
+sürüklüyorsun, gerçek bir robot programcısı bunları yazıyla yazıyor —
+ama ikisi de robotu aynı şekilde, sırayla yönetiyor.
+
+## Dene
+
+İki hareket bloğu ekle: önce Eklem 1'i 60°'ye, sonra Eklem 2'yi 40°'ye
+götüren blok. Çalıştır ve robotun izlediği yolu izle. Şimdi ikinci
+bloğu sil, yerine ÖNCE Eklem 2'yi, SONRA Eklem 1'i döndüren iki yeni
+blok ekle. Robot aynı son noktaya mı varıyor, yoksa yol farklı mı
+görünüyor?
+
+<Quiz
+  sorular={[
+    {
+      soru: "İki hareket bloğunun sırasını değiştirirsen ne olabilir?",
+      secenekler: [
+        "Hiçbir şey — bloklar hep aynı sonucu verir",
+        "Robot farklı bir yoldan geçebilir, bazen farklı bir son noktaya da varabilir",
+        "Robot çalışmayı reddeder",
+      ],
+      dogru: 1,
+      aciklama: "Robot blokları tam eklediğin sırayla uygular. Farklı eklemleri hedefleyen bloklar bile sırası değişince robotu farklı bir yoldan geçirebilir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki ders aynı blokların yanına iki yeni parça ekliyor: bir grup
+bloğu birden çok kez tekrar ettiren "Tekrarla" ve duruma göre farklı
+bloklar çalıştıran "Eğer".

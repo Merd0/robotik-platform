@@ -1,0 +1,114 @@
+---
+id: d-universite-abb-rapid
+baslik: "ABB RAPID: modül yapısı, hedef tanımlama ve iş nesnesi"
+hat: d-programlama
+seviye: universite
+sure: 15
+sira: 1
+onkosul:
+  - b-universite-movej-movel
+kazanimlar:
+  - Bir RAPID modülünün temel yapısını (MODULE, PROC main) okuyabilme
+  - robtarget veri tipinin bir konumu koordinat VE kol konfigürasyonuyla birlikte nasıl tanımladığını açıklayabilme
+  - Bir iş nesnesinin (wobj) neden gerekli olduğunu, hangi problemi çözdüğünü açıklayabilme
+kaynaklar:
+  - "ABB RAPID Instructions, Functions and Data Types Reference Manual, doküman no. 3HAC16581-1 — robtarget, wobjdata, MODULE/PROC yapısı (https://library.e.abb.com/public/688894b98123f87bc1257cc50044e809/Technical%20reference%20manual_RAPID_3HAC16581-1_revJ_en.pdf)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Bir ABB `robtarget` değişkenine bakarsan, x, y, z koordinatının hemen
+yanında dört tam sayı daha durur: `cf1, cf4, cf6, cfx`. Bunlar konum
+değil. Kolun o noktaya HANGİ konfigürasyonda ulaştığını kaydederler —
+dirsek yukarıda mı aşağıda mı, bilek nasıl kıvrılmış. Aynı x, y, z için
+bu dört sayı değişirse, robot fiziksel olarak tamamen farklı bir duruşa
+geçer.
+
+## Ne oldu
+
+Bir RAPID programının iskeleti şuna benzer:
+
+```rapid
+MODULE MainModule
+    PROC main()
+        MoveJ p10, v1000, z50, tool0 \WObj:=wobj0;
+        MoveL p20, v500, fine, tool0 \WObj:=wobj0;
+    ENDPROC
+ENDMODULE
+```
+
+`MODULE...ENDMODULE` bir kod dosyasının sınırlarını çizer, `PROC
+main()...ENDPROC` çalışmanın başlayacağı prosedürdür — bu hattın lise
+seviyesinde gördüğün "komutlar yukarıdan aşağıya sırayla çalışır"
+kuralı burada da geçerli, sadece artık gerçek bir kontrolör
+sözdiziminde.
+
+**Hedef tanımlama.** `p10` ve `p20` birer `robtarget`. Bir `robtarget`
+tek bir konum değil, dört parçadan oluşan bir yapıdır:
+
+- `trans` — x, y, z konumu (mm)
+- `rot` — yönelim, kuaterniyon olarak (q1, q2, q3, q4)
+- `robconf` — kolun konfigürasyonu: `cf1, cf4, cf6, cfx` (hangi eklem
+  aralığında olduğunu gösteren tam sayılar)
+- `extax` — varsa harici eksenlerin (döner tabla, ray) konumu
+
+`robconf` alanının var olma nedeni bu hattın ters kinematik dersinde
+gördüğün şey: aynı x, y, z noktasına kol birden fazla şekilde
+uzanabilir (dirsek yukarı / dirsek aşağı). Sadece x, y, z verilseydi,
+kontrolör hangi çözümü seçeceğini bilemezdi — `robconf` bu belirsizliği
+ortadan kaldırır.
+
+**İş nesnesi (work object, `wobj`).** `\WObj:=wobj0` ifadesi, `p10` ve
+`p20`'nin HANGİ koordinat çerçevesine göre tanımlandığını söyler.
+`wobj0` robotun kendi tabanı; ama bir `wobjdata` tanımlayıp bunu bir
+tezgahın, bir paletin veya döner bir fikstürün üzerine oturtabilirsin.
+Böylece hedef noktaları o parçaya göre yazarsın — parça 90° döndüğünde
+tüm `robtarget` değerlerini elle yeniden hesaplamana gerek kalmaz,
+sadece iş nesnesinin çerçevesi güncellenir.
+
+## Gerçek dünyada
+
+Bir gövde kaynak hücresinde aynı parça, konveyör üzerinde hafif kayıyor
+olabilir. Sabit bir `robtarget` seti bu kaymayı hesaba katmaz. İş
+nesnesini konveyörün hareketine bağlarsan (RAPID'de "conveyor
+tracking" işlevi), robot hareket eden parçayı takip eder — kayan şey
+`wobj`'dur, `robtarget`'ların kendisi değişmez. Bu, iş nesnesi
+soyutlamasının pratikte neden var olduğunu gösteren tipik bir örnek.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir robtarget'ta cf1, cf4, cf6, cfx alanları neyi tanımlar?",
+      secenekler: [
+        "Robotun hızını",
+        "Kolun hangi konfigürasyonda (dirsek yukarı/aşağı gibi) o noktaya ulaştığını",
+        "Hedefin hangi iş nesnesine ait olduğunu",
+      ],
+      dogru: 1,
+      aciklama: "trans ve rot konumu ve yönelimi verir, ama aynı konuma birden fazla kol duruşuyla ulaşılabilir — robconf (cf1,cf4,cf6,cfx) bu duruşu belirtir.",
+    },
+    {
+      soru: "Bir parça tezgah üzerinde 45° döndürülürse, tüm robtarget noktalarını elle yeniden mi hesaplaman gerekir?",
+      secenekler: [
+        "Evet, her hedefi tek tek düzeltmelisin",
+        "Hayır, sadece o parçayı temsil eden iş nesnesinin (wobj) çerçevesini güncellersin",
+        "Hayır, RAPID bunu otomatik olarak asla desteklemez",
+      ],
+      dogru: 1,
+      aciklama: "Hedefler iş nesnesine göre tanımlandığı için, iş nesnesinin çerçevesini güncellemek tüm hedefleri birlikte taşır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki ders aynı görevleri KUKA'nın kendi diliyle (KRL) yazıyor —
+komut isimleri değişiyor ama bazı kararlar (dosyayı ikiye bölmek gibi)
+RAPID'den daha köklü şekilde farklılaşıyor.

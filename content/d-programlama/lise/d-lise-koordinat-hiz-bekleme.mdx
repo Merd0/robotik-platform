@@ -1,0 +1,103 @@
+---
+id: d-lise-koordinat-hiz-bekleme
+baslik: Koordinat girme, hız ve bekleme
+hat: d-programlama
+seviye: lise
+sure: 12
+sira: 3
+onkosul:
+  - d-lise-hareket-komutlari
+kazanimlar:
+  - Bir hareket komutunda koordinatla birlikte hız ve bekleme süresinin de tanımlanabildiğini açıklayabilme
+  - Birden fazla `hedefe_git` çağrısını sırayla vererek basit bir rota oluşturabilme
+  - Bu ortamdaki kod çalıştırmanın anlık sonuç ürettiğini, gerçek zamanlı bir hız/bekleme simülasyonu olmadığını ayırt edebilme
+kaynaklar:
+  - "ABB RAPID Instructions, Functions and Data Types Reference Manual — speeddata veri tipi ve WaitTime talimatı"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+durum: taslak
+---
+
+## Kanca
+
+Bir kurye şoförüne sadece adresi vermek yetmez; ne kadar hızlı gideceğini
+ve kapıda kaç dakika bekleyeceğini de söylersin. Robot hareket komutları
+da aynı üç bilgiyi taşır: nereye, ne hızla, ne kadar bekleyerek.
+
+<CodeRunner
+  robot="generic-2dof"
+  theme="lise"
+  initialCode={`# Gerçek robot kodunda hedefin yanında hız ve bekleme süresi de yazılır.
+hiz = 200    # mm/saniye (RAPID'de v200 gibi önceden tanımlı bir hız)
+bekle = 0.5  # saniye (RAPID'de WaitTime 0.5)
+
+rota = [(1.2, 0.5), (0.3, 1.4), (-1.0, 0.8)]
+
+for x, y in rota:
+    basarili = robot.hedefe_git(x, y)
+    print(f"Hedef ({x}, {y}) -> hiz={hiz} mm/s, bekle={bekle} sn, ulasildi={basarili}")`}
+/>
+
+## Ne oldu
+
+Kod üç hedefi sırayla dener; her satırda `hiz` ve `bekle` değerlerini de
+yazdırıyorsun ama bunlar burada sadece birer Python sayısı — hedefe_git'in
+KENDİSİ hızdan veya bekleme süresinden etkilenmiyor, sadece koordinatı
+kullanıyor.
+
+Bunun nedeni dürüst bir sınırlama: bu platformdaki `CodeRunner`, kodun
+tamamını çalıştırıp bitirdikten sonra sahnede SADECE son eklem açılarını
+gösteriyor (bkz. `components/interactive/CodeRunner.tsx`) — kare kare,
+gerçek zamanlı bir animasyon oynatmıyor. Yani `hiz` değerini 2000 yapsan
+da, `bekle` değerini 10 yapsan da sahnede hiçbir yavaşlama görmezsin;
+sadece rotanın son noktasındaki duruşu görürsün. Gerçek bir robot
+kontrolöründe ise bu iki sayı gerçekten hareketin süresini belirler.
+
+## Gerçek dünyada
+
+ABB'nin RAPID dilinde bir hareket komutu hem hedefi hem hızı hem de (ayrı
+bir satırda) bekleme süresini taşır:
+
+```
+MoveL p1, v200, z10, tool0;
+WaitTime 0.5;
+MoveL p2, v100, z10, tool0;
+```
+
+`v200`, önceden tanımlı bir `speeddata` değeri — TCP'nin (alet merkez
+noktası) saniyede 200 milimetre hareket etmesini ister. `WaitTime 0.5`,
+programın bir sonraki satıra geçmeden önce 0.5 saniye beklemesini sağlar
+— örneğin bir tutucunun parçayı bırakması için gereken süre. Yukarıdaki
+kodundaki `hiz` ve `bekle` değişkenleri, bu iki gerçek RAPID kavramının
+basitleştirilmiş bir karşılığı.
+
+## Dene
+
+`rota` listesine kendi seçtiğin bir dördüncü nokta ekle (kolun erişim
+aralığı 0.2 ile 1.8 birim arası, önceki dersten hatırla). Sonra
+listedeki noktalardan birini kolun erişemeyeceği kadar uzak bir değerle
+değiştir (ör. `(5, 5)`) ve çalıştır — o satırın `ulasildi=False`
+bastığını ama döngünün durmadan devam ettiğini gözlemle.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Yukarıdaki kodda hiz değerini 2000 yapıp çalıştırırsan sahnede ne değişir?",
+      secenekler: [
+        "Robot gözle görülür şekilde daha hızlı hareket eder",
+        "Hiçbir şey — sahne sadece son duruşu gösterir, gerçek zamanlı hız simülasyonu yok",
+        "Program hata verir çünkü hız çok yüksek",
+      ],
+      dogru: 1,
+      aciklama: "CodeRunner, kodun tamamı bittikten sonra sadece SON eklem açılarını gösterir; hiz ve bekle burada sadece yazdırdığın sayılar, sahneyi sürmüyor.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Hat D'nin üniversite dersleri, ABB RAPID ve KUKA KRL'de bu komutların tam
+sözdizimini ve gerçek robot kontrolöründe hızın nasıl uygulandığını ele
+alıyor.

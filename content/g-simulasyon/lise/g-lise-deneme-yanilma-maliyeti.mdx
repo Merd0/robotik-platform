@@ -1,0 +1,78 @@
+---
+id: g-lise-deneme-yanilma-maliyeti
+baslik: Simülasyonda deneme yanılma yapmanın maliyeti neden sıfırdır
+hat: g-simulasyon
+seviye: lise
+sure: 12
+sira: 2
+onkosul:
+  - g-lise-basit-sahne-kurma
+kazanimlar:
+  - Simülasyonda tekrarlanan bir denemenin maliyetiyle gerçek bir robotta aynı denemenin maliyetini karşılaştırabilme
+  - Erişilemeyen bir hedefin simülasyonda risksizce gözlemlenebileceğini fark edebilme
+kaynaklar:
+  - "RoboDK, Offline Programming (çevrim dışı programlama) resmi dokümantasyonu — https://robodk.com/offline-programming"
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 6 (ters kinematiğin her hedefte çözümü olmayabileceği)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - IkTarget
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi simülasyonda deneme yapmanın "ucuz" olduğunu düşünür. Aslında
+olan şey daha keskin: ucuz değil, bedelsiz.
+
+<IkTarget robot="generic-2dof" />
+
+## Ne oldu
+
+Hedefi erişilemeyecek kadar uzağa sürüklediğinde robot oraya
+ulaşamadı — ekranda kırmızı bir nokta gördün, o kadar. Bunu on kez, yüz
+kez tekrar edebilirsin; hiçbir sayaç işlemiyor, hiçbir motor
+zorlanmıyor.
+
+Her sürüklemede ters kinematik yeniden çözülüyor: çözüm varsa robot
+oraya uzanıyor, yoksa motor bunu basitçe "çözüm yok" diye bildiriyor
+(bkz. Modern Robotics, Bölüm 6) — robot hiçbir şeyi zorlamıyor,
+donanımda hiçbir iz bırakmıyor.
+
+## Gerçek dünyada
+
+Gerçek bir robot hücresinde aynı denemenin bir bedeli vardır: yeni bir
+program yüklemek, güvenlik prosedürünü tekrar çalıştırmak, üretim
+hattını durdurmak. RoboDK'nin kendi dokümantasyonu, çevrim dışı (sanal)
+programlamanın "üretim sahasında program yazmanın neden olduğu üretim
+kaybını ortadan kaldırdığını" ve yeni bir programın devreye alınma
+süresinin "haftalardan bir güne" indiğini belirtir. Simülasyonda bu
+süre, tek bir sürükleme kadar kısadır.
+
+## Dene
+
+Hedefi robotun erişemeyeceği kadar uzağa götür, sonra hemen
+erişebileceği bir noktaya geri getir. Aradaki "maliyeti" (bekleme,
+onay, güvenlik kontrolü) saymaya çalış — kaç tane buldun?
+
+<Quiz
+  sorular={[
+    {
+      soru: "Simülasyonda erişilemeyen bir hedefi denemenin gerçek bir maliyeti var mıdır?",
+      secenekler: [
+        "Evet, robot motoru her denemede biraz yıpranır",
+        "Hayır, sadece ekranda kırmızı bir nokta görürsün",
+        "Evet, simülasyon her denemede yeniden başlatılmalıdır",
+      ],
+      dogru: 1,
+      aciklama: "Simülasyonda donanım yok — 'erişilemez' sonucu sadece bir hesaplamanın sonucudur, hiçbir fiziksel iz bırakmaz.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu derste gördüğün ters kinematiği, formülleriyle birlikte
+"Geometrik ters kinematik" dersinde daha yakından inceleyebilirsin. Hat
+G'nin üniversite seviyesi (URDF ile modelleme, PyBullet ile sahne
+kurma) ileride bu platforma eklenecek.

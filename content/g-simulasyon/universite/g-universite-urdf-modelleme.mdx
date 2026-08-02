@@ -1,0 +1,121 @@
+---
+id: g-universite-urdf-modelleme
+baslik: URDF ile robot modelleme
+hat: g-simulasyon
+seviye: universite
+sure: 18
+sira: 1
+onkosul:
+  - a-universite-dh-parametreleri
+kazanimlar:
+  - "URDF'nin bir robotu link (bağlantı) ve joint (eklem) ağacı olarak nasıl tanımladığını açıklayabilme"
+  - "URDF eklem türlerini (revolute, continuous, prismatic, fixed) DH'deki eklem türleriyle ilişkilendirebilme"
+  - DH parametreleri ile URDF'nin aynı geometriyi neden farklı biçimde kodladığını ayırt edebilme
+kaynaklar:
+  - "ROS urdfdom projesi, URDF XML şeması: https://github.com/ros/urdfdom/blob/master/xsd/urdf.xsd"
+  - "ROS Wiki, URDF/XML/model dokümantasyonu: https://wiki.ros.org/urdf/XML/model"
+  - "J. Denavit & R. S. Hartenberg, 'A kinematic notation for lower-pair mechanisms based on matrices', ASME Journal of Applied Mechanics, 22(2), 1955"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Açık kaynaklı bir robot deposunu (repository) klonladığında, robot
+tanımının `.urdf` uzantılı tek bir XML dosyasında durduğunu görürsün.
+İçini açtığında `<link>` ve `<joint>` etiketleri art arda sıralanır — DH
+tablosundaki `a`, `α`, `d`, `θ` dörtlüsü burada hiç yok; onun yerine
+`origin` (konum-yönelim) ve `axis` (eksen) etiketleri var. Aynı robotu
+tarif eden iki bambaşka dil.
+
+<JointSliders robot="generic-6dof" />
+
+## Ne oldu
+
+URDF (Unified Robot Description Format), ROS ekosisteminin robot
+tanımlamak için kullandığı bir XML lehçesi. İki temel eleman etrafında
+kurulu:
+
+**`<link>`** — robotun katı bir parçası (bağlantı). Alt elemanları:
+`inertial` (kütle ve eylemsizlik), `visual` (görsel geometri), `collision`
+(çarpışma kontrolü için kullanılan, genelde daha basit bir geometri).
+
+**`<joint>`** — tam olarak iki `link`i (`parent`, `child`) birbirine
+bağlar. `type` özniteliği eklem türünü belirler:
+
+| URDF `type` | Anlamı | DH karşılığı |
+|---|---|---|
+| `revolute` | sınırlı açıyla döner, `limit` zorunlu | dönel eklem, `θ` canlı parametre |
+| `continuous` | sınırsız döner (limit yok) | dönel eklem, ama DH'de ayrı bir tür değil |
+| `prismatic` | doğrusal kayar, `limit` zorunlu | doğrusal eklem, `d` canlı parametre |
+| `fixed` | hiç hareket etmez | DH zincirinde genelde yer almaz |
+
+Her `joint`in `origin` elemanı, ebeveyn link çerçevesinden bu eklemin
+çerçevesine sabit bir dönüşümü (xyz + roll-pitch-yaw) taşır; `axis` ise
+dönme veya kayma yönünü tanımlar.
+
+**Kritik fark:** DH, ardışık İKİ eklem EKSENİ arasındaki ilişkiyi dört
+sayıyla (a, α, d, θ) özetleyen minimal, akademik bir gösterim —
+`b-universite-dh-ileri-kinematik` dersinde gördüğün gibi bu dörtlü
+matrise dönüşür. URDF ise her `link`e AÇIK bir koordinat çerçevesi
+iliştirir ve her `joint`in konumunu doğrudan ebeveyne göre tarif eder —
+daha uzun ama görsel/çarpışma geometrisini de aynı dosyada taşıyabilen,
+yazılım mühendisliği amaçlı bir format. İkisi de aynı açık kinematik
+zinciri tarif edebilir; DH matematiksel türetme için, URDF simülasyon ve
+görselleştirme yazılımları için optimize edilmiş.
+
+Yukarıdaki 6 eksenli robotun DH tanımına bak
+(`lib/robotics/robots/genericSixDof.ts`): birinci eklemin `alpha = π/2`
+olması, bir URDF dosyasında o eklemin `<origin rpy="1.5708 0 0">` gibi bir
+satıra karşılık geleceği anlamına gelir — aynı fiziksel dönüşü, farklı bir
+XML köşesinde taşırsın.
+
+## Gerçek dünyada
+
+Bu platformun `reference-python/` klasöründeki PyBullet tabanlı projesi
+gerçek bir URDF dosyasıyla çalışıyor: `load_robot()` fonksiyonu KUKA iiwa
+robotunu `p.loadURDF("kuka_iiwa/model.urdf", useFixedBase=True)` çağrısıyla
+yükler; `joint_info()` fonksiyonu ise her eklemin URDF'ten gelen tipini
+(`JOINT_REVOLUTE`, `JOINT_PRISMATIC`, `JOINT_FIXED` vb.) okuyup insan
+tarafından okunabilir bir isme çevirir. Yani PyBullet, DH değil URDF'i
+"anadili" olarak konuşur — bu yüzden bu hattın (Hat G) geri kalanında
+URDF sürekli karşına çıkacak.
+
+## Dene
+
+`genericSixDofRobot`'un altı ekleminin `alpha` değerlerine bak (kod
+içinde: π/2, 0, π/2, −π/2, π/2, 0). Kaydırıcıları oynatırken, bu
+dönüşlerden her birinin bir URDF dosyasında `<joint><origin rpy="...">`
+şeklinde nasıl yazılacağını zihninde canlandırmaya çalış — sayı aynı,
+gösterim farklı.
+
+<Quiz
+  sorular={[
+    {
+      soru: "URDF'te 'sınırsız dönebilen' bir eklem türü hangisidir?",
+      secenekler: ["revolute", "continuous", "fixed"],
+      dogru: 1,
+      aciklama: "revolute türünde limit zorunludur (açı sınırlı); continuous türünde limit yoktur, eklem sınırsız döner.",
+    },
+    {
+      soru: "DH ile URDF arasındaki temel fark nedir?",
+      secenekler: [
+        "DH sadece prizmatik eklemleri, URDF sadece dönel eklemleri tanımlayabilir",
+        "DH ardışık eklem eksenleri arasındaki ilişkiyi dört sayıyla özetler, URDF her bağlantıya açık bir koordinat çerçevesi ve görsel/çarpışma geometrisi ekler",
+        "İkisi de birebir aynı XML formatını kullanır",
+      ],
+      dogru: 1,
+      aciklama: "DH minimal ve matematiksel türetmeye uygundur; URDF daha ayrıntılı, simülasyon ve görselleştirme yazılımlarının doğrudan kullanabileceği bir formattır.",
+    },
+  ]}
+/>
+
+**Kaynak kodu:** [`load_robot`](https://github.com/Merd0/robotik-platform/blob/main/reference-python/backend/simulation/scene.py#L28), [`genericSixDofRobot`](https://github.com/Merd0/robotik-platform/blob/main/lib/robotics/robots/genericSixDof.ts#L12)
+
+## Sonraki
+
+Bir sonraki ders, bu URDF dosyasının PyBullet içinde nasıl fiziksel bir
+sahneye (yerçekimi, çarpışma, engeller) dönüştüğünü ele alıyor.

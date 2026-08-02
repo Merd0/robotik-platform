@@ -1,0 +1,127 @@
+---
+id: g-universite-cevrimdisi-programin-dogrulanmasi
+baslik: Çevrim dışı programın doğrulanması
+hat: g-simulasyon
+seviye: universite
+sure: 20
+sira: 5
+onkosul:
+  - g-universite-sim-to-real-farki
+kazanimlar:
+  - "Çevrim dışı programlamanın (offline programming, OLP) doğrudan robota yükleme yerine neden önce simülasyonda doğrulama gerektirdiğini açıklayabilme"
+  - "Basit bir hareket programını simülasyonda çalıştırıp, hedefin erişilebilir olup olmadığını robota göndermeden önce kontrol edebilme"
+kaynaklar:
+  - "Zengxi Pan, Joseph Polden, Nathan Larkin, Stephen Van Duin & John Norrish, 'Recent progress on programming methods for industrial robots', Robotics and Computer-Integrated Manufacturing, 28(2), 87-94, 2012, DOI: 10.1016/j.rcim.2011.08.004"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+durum: taslak
+---
+
+## Kanca
+
+İki mühendis aynı hareket programını yazıyor. Biri kodu doğrudan robot
+kontrolörüne yüklüyor ve "Çalıştır"a basıyor. Diğeri önce aynı kodu bir
+simülasyonda çalıştırıp sonucu gözden geçiriyor, SONRA robota yüklüyor.
+İkisi de aynı programı yazdı — ama sadece biri üretim hattını durdurma
+riskini göze aldı.
+
+<CodeRunner
+  robot="generic-2dof"
+  theme="universite"
+  initialCode={`# Bu program simülasyonda çalışır. Gerçek bir robota gönderilmeden
+# önceki doğrulama adımı tam olarak budur: hedef erişilebilir mi,
+# eklemler beklenen açılara gidiyor mu?
+
+robot.eklem_ac(0, 20)
+robot.eklem_ac(1, -30)
+
+basarili = robot.hedefe_git(1.2, 0.6)
+print("Hedefe ulasildi mi:", basarili)
+`}
+/>
+
+## Ne oldu
+
+Çevrim dışı programlama (offline programming, OLP), bir robot programını
+gerçek donanımı meşgul etmeden, bir bilgisayarda (genelde bir simülasyon
+üzerinde) hazırlama yöntemidir — 2012 tarihli bir derleme makalenin
+sınıflandırdığı endüstriyel robot programlama yöntemlerinden biri, teach
+pendant ile "çevrim içi" (online) elle öğretmenin karşıtı. OLP'nin asıl
+değeri sadece "kod yazmak" değil, o kodu ÇALIŞTIRMADAN ÖNCE
+DOĞRULAMAKTIR:
+
+- Hedef konum robotun erişim alanı (workspace) içinde mi?
+- Yörünge bir engele veya robotun kendi gövdesine çarpıyor mu?
+- Program, üretim hattını gerçekten durdurmadan önce beklenen sonucu
+  veriyor mu?
+
+Yukarıdaki `CodeRunner` sahnesinde `robot.hedefe_git(x, y)` çağrısı tam
+bu doğrulamayı model alıyor: fonksiyon, hedefe analitik ters kinematikle
+ulaşmayı DENER ve başarısızsa `False` döner — gerçek robota hiçbir komut
+gitmeden, hedefin erişilemez olduğunu ÖNCEDEN öğrenirsin. Yukarıdaki kodda
+hedefi (`1.2, 0.6`) değiştirip robotun erişim sınırlarının (bkz.
+`generic-2dof` için toplam kol uzunluğu 1.8, minimum erişim 0.2) dışına
+çıkardığında `hedefe_git` `False` döndürecek — bu, gerçek donanıma
+gönderilmeden yakalanan bir hata.
+
+## Gerçek dünyada
+
+Bu platformun `reference-python/` klasöründeki `backend/api/main.py`
+dosyasındaki `POST /plan` uç noktası da aynı ilkeyi izliyor: bir yol,
+robota hiç gönderilmeden önce `is_collision_free` ile doğrulanıp
+PLANLANIYOR, sonra sonuç (başarılı/başarısız, yol uzunluğu, düğüm sayısı)
+API üzerinden dönüyor. Endüstride ticari OLP yazılımları da (robot
+üreticilerinin kendi simülasyon araçları dahil) aynı adımı izler: program
+önce sanal ortamda çalıştırılır, erişilebilirlik ve çarpışma kontrolü
+geçerse gerçek kontrolöre aktarılır. `g-universite-sim-to-real-farki`
+dersinde gördüğün gibi, simülasyonda geçen bir doğrulama gerçek donanımda
+HALA ekstra bir kontrol (yavaş hızda ilk deneme, "dry run") gerektirir —
+OLP riski azaltır, sıfırlamaz.
+
+## Dene
+
+Yukarıdaki kodda hedef koordinatlarını değiştirerek robotun erişim
+alanının içinde ve dışında birer nokta dene. `hedefe_git`in `True`
+döndüğü durumda eklem açılarının robotu görsel olarak nereye
+götürdüğüne, `False` döndüğü durumda hiçbir hareketin gerçekleşmediğine
+dikkat et — bu ikinci durum, gerçek bir robotta ASLA gerçekleşmemesi
+gereken bir komuttur ve simülasyon onu ÜCRETSİZ yakalamış oldu.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Çevrim dışı programlamada (OLP) simülasyonda doğrulama adımının asıl amacı nedir?",
+      secenekler: [
+        "Programı daha hızlı yazmak",
+        "Hedefin erişilebilirliğini ve çarpışma riskini gerçek robota göndermeden önce tespit etmek",
+        "Robotun görünümünü daha gerçekçi hale getirmek",
+      ],
+      dogru: 1,
+      aciklama: "Doğrulamanın amacı, üretim hattını durdurabilecek veya donanıma zarar verebilecek hataları gerçek robota hiç komut gitmeden yakalamaktır.",
+    },
+    {
+      soru: "Yukarıdaki sahnede `robot.hedefe_git(x, y)` `False` döndürdüğünde ne olmuştur?",
+      secenekler: [
+        "Python kodunda bir sözdizimi hatası vardır",
+        "Hedef koordinat, robotun erişim alanının dışındadır ve ters kinematik çözüm bulunamamıştır",
+        "Robot hedefe ulaşmış ama yavaş hareket etmiştir",
+      ],
+      dogru: 1,
+      aciklama: "`hedefe_git`, analitik ters kinematik çözümü bulamazsa (hedef erişim dışıysa) `False` döner — bu tam olarak OLP'nin yakalamak istediği türde bir hatadır.",
+    },
+  ]}
+/>
+
+**Kaynak kodu:** [`inverseKinematicsAnalytical2Dof`](https://github.com/Merd0/robotik-platform/blob/main/lib/robotics/kinematics.ts#L75), [`create_plan`](https://github.com/Merd0/robotik-platform/blob/main/reference-python/backend/api/main.py#L64)
+
+## Sonraki
+
+Hat G burada tamamlanıyor: URDF ile bir robotu tanımladın, PyBullet ile
+onu fiziksel bir sahneye yerleştirdin, dijital ikiz ile simülasyonun
+sınırlarını gördün, sim-to-real farkı ile bu sınırların nereden geldiğini
+öğrendin, ve son olarak bir programı gerçek donanıma göndermeden önce
+nasıl doğruladığını gördün. Hat D'deki (robot programlama dilleri)
+dersler, bu doğrulanmış programın gerçek bir robot kontrolöründe (RAPID,
+KRL, ROS 2) nasıl ifade edildiğini ele alıyor.

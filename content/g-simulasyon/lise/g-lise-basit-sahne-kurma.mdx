@@ -1,0 +1,83 @@
+---
+id: g-lise-basit-sahne-kurma
+baslik: "Basit sahne kurma: robot, masa, engel"
+hat: g-simulasyon
+seviye: lise
+sure: 12
+sira: 1
+onkosul:
+  - g-ortaokul-simulasyon-nedir
+kazanimlar:
+  - Bir simülasyon sahnesinin robot, sabit nesneler (ör. masa) ve bir hedeften oluştuğunu açıklayabilme
+  - Sahneye eklenen bir nesnenin planlanan yolu nasıl değiştirdiğini gözlemleyebilme
+kaynaklar:
+  - "RoboDK, Offline Programming (çevrim dışı programlama) resmi dokümantasyonu — https://robodk.com/offline-programming"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+Gerçek bir üretim hücresinde bir masayı yarım metre kaydırmak; cetvel,
+izin ve belki de üretimi durdurmak demektir. Aşağıdaki sahnede aynı
+değişikliği parmağınla, saniyeler içinde yapabilirsin.
+
+<PlannerRace
+  algorithms={["astar"]}
+  allowObstacleEdit={true}
+  theme="lise"
+  extent={3}
+  initialObstacles={[
+    { kind: "box", center: { x: 0, y: 0, z: 0 }, size: [0.4, 0.15, 0.4] },
+  ]}
+/>
+
+## Ne oldu
+
+Bu sahnede üç temel öğe var: yeşil nokta (robot), kırmızı nokta (hedef)
+ve ortadaki kutu (bir masa gibi düşün). Bu üçü birlikte basit bir
+simülasyon sahnesi kurar — gerçek bir hücrenin küçültülmüş,
+sadeleştirilmiş hali.
+
+Sahneye dokunarak kendi engellerini (küre olarak) ekledin. Her ekleme,
+robotun hesapladığı yolu değiştirdi — motor arka planda
+`lib/robotics/collision.ts` içindeki testlerle "bu nokta dolu mu" diye
+tekrar tekrar sordu, tıpkı önceki derste gördüğün gibi.
+
+## Gerçek dünyada
+
+RoboDK gibi çevrim dışı programlama yazılımlarında mühendisler nesneleri
+sürükleyip bırakarak bir hücre düzeni kurar (RoboDK'nin kendi
+dokümantasyonundaki ifadeyle, "click and drag objects to create your
+layout") — masa, palet, engel, robot hepsi önce sanal sahnede
+yerleştirilir, sonra program bu sahne üzerinde test edilir.
+
+## Dene
+
+Kutunun (masanın) etrafına birkaç küre engel daha ekle, robotun yine de
+bir yol bulup bulamadığını gözlemle. Sonra tüm engelleri temizleyip
+sadece kutuyu bırak — yol nasıl değişiyor?
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bu sahnedeki kutu neyi temsil ediyor?",
+      secenekler: [
+        "Robotun kendisini",
+        "Sahnedeki sabit bir nesneyi (ör. bir masa)",
+        "Hedef noktayı",
+      ],
+      dogru: 1,
+      aciklama: "Yeşil nokta robotu, kırmızı nokta hedefi temsil ediyor. Kutu ise sahnedeki sabit bir nesne — bir masa, bir raf, ne dersen.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki derste, bu sahnede istediğin kadar deneme yapmanın gerçek bir
+robotta yapmaktan neden tamamen farklı bir maliyeti olduğunu
+göreceksin.

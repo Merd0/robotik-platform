@@ -1,0 +1,106 @@
+---
+id: d-universite-offline-programlama
+baslik: "Çevrim dışı programlama (offline programming) mantığı"
+hat: d-programlama
+seviye: universite
+sure: 15
+sira: 5
+onkosul:
+  - d-universite-fanuc-karsilastirma
+kazanimlar:
+  - Çevrim dışı programlamanın (OLP) çevrim içi (online, teach pendant üzerinde) programlamadan farkını açıklayabilme
+  - OLP'nin üretim kaybını neden azalttığını açıklayabilme
+  - Bu platformdaki CodeRunner'ın küçük ölçekte bir OLP ortamı olarak nasıl çalıştığını gösterebilme
+kaynaklar:
+  - "Pan, Z., Polden, J., Larkin, N., Van Duin, S., Norrish, J. (2012). Recent progress on programming methods for industrial robots. Robotics and Computer-Integrated Manufacturing, 28(2), 87-94. DOI: 10.1016/j.rcim.2011.08.004"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Bir üretim hattındaki robot, üretime devam ederken bile yeni bir
+program için hazırlanabilir. Robotun kendisi hiç durmaz, hiçbir hareket
+ıskalanmaz. Bu nasıl mümkün?
+
+## Ne oldu
+
+Önceki derste gördüğün dört dilin (RAPID, KRL, Mecademic komutları,
+FANUC TP) ortak bir zayıflığı var: dördü de sonunda GERÇEK robotu
+hareket ettirir. Bir programı teach pendant üzerinde satır satır
+oluşturmak veya robotu elle bir noktaya götürüp "burayı kaydet" demek
+— buna **çevrim içi programlama (online programming)** denir — robotu
+o süre boyunca üretimden alıkoyar.
+
+**Çevrim dışı programlama (offline programming, OLP)**, aynı programı
+robotun KOPYASI üzerinde, ayrı bir bilgisayarda, genelde hücrenin CAD
+modelinden yola çıkarak hazırlar. Pan ve arkadaşlarının 2012 tarihli
+gözden geçirme makalesinin çerçevelediği gibi, endüstriyel robot
+programlama üç ana yaklaşıma ayrılır: çevrim içi programlama, çevrim
+dışı programlama (OLP) ve artırılmış gerçeklik tabanlı programlama.
+OLP'nin temel vaadi, programı geliştirme süresinin üretim durma
+süresinden AYRILMASI — program hazırlanırken gerçek robot çalışmaya
+devam edebilir.
+
+Program hazır olduğunda, gerçek hücreye indirilir; genelde küçük bir
+"rötuş" (touch-up) kalibrasyonu gerekir çünkü sanal hücre ile gerçek
+hücre arasında küçük ölçüm farkları olur — bu farkın kendisi, bu
+platformun ilerideki simülasyon hattında (Hat G) "sim-to-real farkı"
+başlığı altında ayrıca ele alınıyor.
+
+## Bu platformla bağlantısı
+
+Bu platformdaki `CodeRunner` bileşeni, küçük ölçekte tam olarak bu
+mantıkla çalışıyor: kodunu ÖNCE bir simülasyonda (tarayıcındaki 3D
+sahnede) deniyorsun, gerçek bir robota hiç dokunmadan. Aşağıdaki kodu
+çalıştır — hiçbir robot durmuyor, hiçbir üretim hattı etkilenmiyor,
+çünkü ortada gerçek bir robot yok, sadece doğrulanmış bir simülasyon
+var. Bu platform zaten hiçbir zaman gerçek bir robota bağlanmıyor
+(bkz. `docs/00-vizyon.md`) — bu, OLP'nin "önce simülasyonda dene"
+ilkesinin platformun kendisine gömülü hali.
+
+<CodeRunner
+  robot="generic-2dof"
+  theme="universite"
+  initialCode={`# Bu kodu robotu DURDURMADAN, simülasyonda deniyorsun -- gercek
+# cevrim disi programlamanin (OLP) kucuk olcekli hali.
+robot.eklem_ac(0, 30)
+robot.eklem_ac(1, -45)
+print("Program simulasyonda dogrulandi, gercek robota hic dokunulmadi.")`}
+/>
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "OLP'nin (çevrim dışı programlama) temel vaadi nedir?",
+      secenekler: [
+        "Robotu daha hızlı hareket ettirmek",
+        "Program geliştirme süresini, gerçek robotun üretimden alıkonduğu süreden ayırmak",
+        "Robotun eklem limitlerini artırmak",
+      ],
+      dogru: 1,
+      aciklama: "Program bir CAD modeli/simülasyon üzerinde hazırlanır; gerçek robot bu süre boyunca üretime devam edebilir.",
+    },
+    {
+      soru: "Sanal hücrede hazırlanan bir OLP programı gerçek hücreye indirildiğinde genelde ne yapılır?",
+      secenekler: [
+        "Hiçbir şey, program birebir aynı çalışır",
+        "Küçük bir rötuş (touch-up) kalibrasyonu — sanal ve gerçek hücre arasındaki ölçüm farkını düzeltmek için",
+        "Program tamamen sıfırdan yeniden yazılır",
+      ],
+      dogru: 1,
+      aciklama: "Sanal model ile gerçek hücre arasında küçük ölçüm farkları olur; bu yüzden indirilen program genelde bir dokunuşla düzeltilir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Hat D'nin bu son üniversite dersi, tek bir robotun değil, robotlar
+ARASI ortak bir yazılım dilini — ROS 2'yi — ele alıyor.

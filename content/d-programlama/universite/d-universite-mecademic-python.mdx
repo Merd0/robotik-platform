@@ -1,0 +1,134 @@
+---
+id: d-universite-mecademic-python
+baslik: "Mecademic: TCP/IP komut protokolü ve Python API"
+hat: d-programlama
+seviye: universite
+sure: 15
+sira: 3
+onkosul:
+  - d-lise-python-komut-dizisi
+  - d-universite-abb-rapid
+kazanimlar:
+  - Mecademic robotlarının kendi bir programlama diline sahip olmadığını, düz metin (ASCII) komutları TCP/IP üzerinden aldığını açıklayabilme
+  - Bir Python API çağrısının arkasında hangi metin komutunun üretildiğini gösterebilme
+  - Bu platformdaki simülasyonun neden gerçek bir robota ağ bağlantısı KURMADIĞINI açıklayabilme
+kaynaklar:
+  - "github.com/Mecademic/mecademicpy — Mecademic'in resmi Python API deposu (\"the same function names and arguments as the robot's native text-based (TCP/IP) API\")"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Meca500'ün ne bir RAPID'i ne bir KRL'si var. Robotu iki şekilde
+sürebilirsin: bir terminalden düz metin komutları göndererek, ya da
+aynı metinleri senin yerine üreten bir Python kütüphanesiyle. İkisi de
+aynı yere varır.
+
+## Ne oldu
+
+ABB'nin RAPID'i ve KUKA'nın KRL'si dosyaya yazılıp robot kontrolörüne
+yüklenen birer PROGRAMLAMA DİLİ. Mecademic farklı bir yol seçmiş:
+robot, bir TCP/IP soketi üzerinden ASCII metin komutları dinleyen bir
+sunucu çalıştırır. `MoveJoints(0,-60,60,0,0,0)` gibi bir metin satırı
+gönderirsin, robot onu okur ve hareket eder. Dil yok, dosya yok — sadece
+bir komut-yanıt döngüsü.
+
+Mecademic'in resmi `mecademicpy` Python kütüphanesi bu metin
+protokolünü SARAR: `robot.MoveJoints(0, -60, 60, 0, 0, 0)` gibi bir
+Python çağrısı yazarsın, kütüphane arka planda tam olarak yukarıdaki
+metni oluşturup soketten gönderir. Kütüphanenin kendi belgelerinde bu
+açıkça söyleniyor: Python API, robotun "native metin tabanlı (TCP/IP)
+API'siyle aynı fonksiyon isimlerini ve argümanlarını" kullanıyor.
+
+Aşağıdaki kod, gerçek bir Meca500'e gönderilecek metni üretiyor ve
+aynı hareketi bu sahnedeki simüle kolda gösteriyor — ama bir ağ soketi
+AÇMIYOR. Bu platform hiçbir zaman gerçek bir robota bağlanmaz (bkz.
+`docs/00-vizyon.md`); gerçek bir Meca500'le konuşmak istersen bu kodu
+kendi bilgisayarında, `mecademicpy` kurulu, robotla aynı ağda
+çalıştırman gerekir.
+
+<CodeRunner
+  robot="generic-6dof"
+  theme="universite"
+  initialCode={`# Gerçek bir Meca500, bu satırları TCP/IP soketinden ASCII metin
+# olarak okur: "MoveJoints(j1,j2,j3,j4,j5,j6)" gibi. Burada soket
+# açmıyoruz, sadece robotun alacağı metni üretip görüyoruz.
+
+def move_joints_command(j1, j2, j3, j4, j5, j6):
+    return f"MoveJoints({j1},{j2},{j3},{j4},{j5},{j6})"
+
+komut = move_joints_command(0, -60, 60, 0, 0, 0)
+print("Robota gidecek metin:", komut)
+
+# Aynı hareketi bu sahnedeki simülasyonda da görebilmen için
+# eklemleri sırayla ayarlıyoruz:
+robot.eklem_ac(0, 0)
+robot.eklem_ac(1, -60)
+robot.eklem_ac(2, 60)
+robot.eklem_ac(3, 0)
+robot.eklem_ac(4, 0)
+robot.eklem_ac(5, 0)`}
+/>
+
+## Gerçek dünyada
+
+`mecademicpy`'nin gerçek kullanımında bir bağlantı adımı da var:
+
+```python
+from mecademicpy.robot import Robot
+
+robot = Robot()
+robot.Connect(address="192.168.0.100")
+robot.ActivateRobot()
+robot.Home()
+robot.MoveJoints(0, -60, 60, 0, 0, 0)
+robot.WaitIdle()
+```
+
+`Connect` gerçek bir ağ bağlantısı açar — bu satır bu platformda hiç
+çalıştırılmaz, sadece burada METİN olarak gösteriliyor. Bu, Hat D'nin
+diğer dillerinden (RAPID, KRL) farklı bir mühendislik kararını
+gösteriyor: robotu kontrol eden mantığı, robotun kendi belleğine
+yüklenen bir dosya yerine, dışarıdaki bir bilgisayarda (PC, PLC, hatta
+bir Raspberry Pi) çalışan bir Python sürecine taşımak. Bu, laboratuvar
+ve küçük ölçekli hassas otomasyon uygulamalarında tercih edilen bir
+yaklaşım çünkü robotu bir üretim hattı PLC'siyle veya görüntü işleme
+koduyla aynı Python sürecinden yönetmeyi kolaylaştırır.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Mecademic robotları programlamak için RAPID veya KRL gibi kendi programlama dillerini mi kullanır?",
+      secenekler: [
+        "Evet, Mecademic'in kendi 'MecaScript' dili var",
+        "Hayır, robot TCP/IP soketi üzerinden düz metin (ASCII) komutları dinler",
+        "Hayır, sadece teach pendant üzerinden programlanabilir",
+      ],
+      dogru: 1,
+      aciklama: "Robot bir metin komut sunucusu çalıştırır; Python API bu metinleri senin yerine üretip gönderen bir sarmalayıcıdır (wrapper).",
+    },
+    {
+      soru: "Bu derste CodeRunner içinde robot.Connect(...) satırı neden çalıştırılmıyor?",
+      secenekler: [
+        "Pyodide bu fonksiyonu desteklemediği için",
+        "Bu platform hiçbir zaman gerçek bir robota ağ bağlantısı kurmaz — bu bilinçli bir tasarım kararı",
+        "mecademicpy kütüphanesi ücretli olduğu için",
+      ],
+      dogru: 1,
+      aciklama: "Platform statik ve sunucusuz çalışır, gerçek robota bağlanan bir kontrol yazılımı değildir (bkz. docs/00-vizyon.md) — bu güvenlik ve sorumluluk açısından bilinçli bir sınırdır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki ders, şimdiye kadar gördüğün üç yaklaşımı (RAPID, KRL,
+Mecademic) bir tabloda karşılaştırıp dördüncü bir yaklaşımı —
+FANUC'un teach pendant tabanlı, satır numaralı programlarını — ekliyor.
