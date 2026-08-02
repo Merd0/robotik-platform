@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tip kontrolü
+        run: npx tsc
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Testler
+        run: npm test
+
+      - name: İçerik doğrulaması (frontmatter, kaynaklar)
+        run: npx tsx scripts/check-content.ts
+
+      - name: Ön koşul grafiği doğrulaması
+        run: npx tsx scripts/validate-content-graph.ts
+
+      # docs/08-guvenlik-sertlestirme.md "Otomatik zafiyet taraması"
+      # kuralı: yüksek/kritik zafiyet varsa build kırılır.
+      - name: Bağımlılık güvenlik taraması
+        run: npm audit --audit-level=high

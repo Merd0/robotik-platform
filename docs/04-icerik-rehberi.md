@@ -143,6 +143,8 @@ Bu kontrol `kalite-denetci` subagent'ının denetim kapsamına da eklenir
 (bkz. `06-kalite-ve-topluluk.md`) — sadece doğruluk değil, retorik çeşitlilik
 de kontrol edilir.
 
+## Ders yazma iş akışı
+
 1. `content/<hat>/<seviye>/<id>.mdx` dosyasını şablondan oluştur
 2. Önce `kazanimlar` yaz — bu ders bitince öğrenci ne yapabilecek
 3. Kancayı yaz
@@ -153,6 +155,32 @@ de kontrol edilir.
 8. Yüksek sesle oku — takıldığın her cümle yeniden yazılmalı
 9. Mümkünse hedef seviyeden birine okut
 10. `durum: yayinda`
+
+## Üniversite seviyesinde gerçek koda bağlantı
+
+Üniversite seviyesindeki bir dersin anlattığı formül/algoritma, bu
+platformda (`lib/robotics/` altında) gerçekten çalışan bir
+implementasyona karşılık geliyorsa, dersin sonuna (genelde "Dene"
+bölümünden hemen önce veya sonra) TEK SATIRLIK bir "Kaynak kodu" satırı
+eklenir: ilgili dosyanın/fonksiyonun GitHub linki
+(`github.com/Merd0/robotik-platform` üzerinden, mümkünse satır
+numarasıyla).
+
+```
+**Kaynak kodu:** [`computeJacobian`](https://github.com/Merd0/robotik-platform/blob/main/lib/robotics/kinematics.ts#L183)
+```
+
+Kurallar:
+
+- **Uydurma link yazma.** Dersteki formül gerçekten o dosyada
+  çalışmıyorsa (ör. henüz implementasyonu yoksa) bu satır hiç eklenmez
+  — "yakında" veya varsayımsal bir link yerine, satırın kendisi
+  atlanır.
+- Tek satır — ders bunun için uzamaz, ekstra açıklama gerekmez, sadece
+  bağlantı.
+- Bu, Hat D'nin (robot programlama dilleri) kapsamlı, adım adım kod
+  derslerinin yerine geçmez — Hat D ayrı kalır, bu sadece "bu formülü
+  gerçekten çalıştıran kod burada" işaretidir.
 
 ## Ders ne zaman çok büyük
 

@@ -7,6 +7,11 @@ Tek sabit tarih: **21 Ağustos 2026** — staj için gösterilecek bir şey olma
 gereken gün. Faz 1'in sonu buraya denk gelecek şekilde planlandı. Yetişmezse
 Faz 0'ın sonu bile gösterilebilir bir şeydir; panik yok.
 
+**Bilinçli erteleme:** Tasarım/görsel cila, ders akıcılığı iyileştirmeleri ve
+etkileşim zenginleştirmeleri bilinçli olarak ertelendi — Faz 5 sonrası ayrı
+bir "cila" fazında ele alınacak. Şu an öncelik: içerik kapsamı (8 hat) ve
+altyapı sağlamlığı (CI, hook, graph doğrulama).
+
 ---
 
 ## Faz 0 — İskelet ve ilk sahne

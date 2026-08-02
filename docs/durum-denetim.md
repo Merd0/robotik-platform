@@ -260,3 +260,89 @@ gerekiyor. İleride yeni bir kalite turu yapılırsa, bu 30 ders de
 zamanla tek tek gerçek incelemeden geçirilebilir; şimdilik otomatik
 denetimin bulduğu "sıfır matematik hatası" sonucuna güvenilerek
 yayınlandılar.
+
+---
+
+## Güncelleme — Kaynak kodu bağlantıları, CI, homepage kontrolü (2026-08-02)
+
+Dört ayrı iş yapıldı:
+
+### 1. `docs/04-icerik-rehberi.md` — eksik başlık ve yeni kural
+
+"Ders yazma iş akışı" numaralı listesi dosyada başlıksız duruyordu
+(bir önceki düzenlemede başlık kaybolmuş) — düzeltildi. Ayrıca yeni bir
+bölüm eklendi: **"Üniversite seviyesinde gerçek koda bağlantı"** — bir
+dersin anlattığı formül/algoritmanın arkasında `lib/robotics/` içinde
+gerçek bir implementasyon varsa, dersin sonuna tek satırlık bir
+"Kaynak kodu" linki eklenmesini zorunlu kılıyor. Uydurma link yasak;
+implementasyon yoksa satır hiç eklenmiyor.
+
+Bu kural, üniversite seviyesindeki 14 derse (kullanıcının belirttiği
+liste) uygulandı — **12'sine link eklendi, 2'sine eklenemedi:**
+
+| Ders | Kaynak kodu |
+|---|---|
+| `b-universite-dh-ileri-kinematik` | `transform.ts` `dhTransform` |
+| `b-universite-ters-kinematik` | `kinematics.ts` `inverseKinematicsNumerical` |
+| `b-universite-jacobian` | `kinematics.ts` `computeJacobian` |
+| `b-universite-tekillik` | `kinematics.ts` `isNearSingularity` |
+| `b-universite-yorunge-uretimi` | **eklenmedi** — yörünge/zaman ölçekleme kodu `lib/robotics/`'ta yok |
+| `b-universite-hiz-ivme-profilleri` | **eklenmedi** — yamuk profil/S-eğrisi kodu `lib/robotics/`'ta yok |
+| `c-universite-rrt-rrt-star-prm` | `planners/rrt.ts` `RrtPlanner`, `planners/rrtStar.ts` `RrtStarPlanner` |
+| `c-universite-carpisma-kontrolu` | `collision.ts` `isPointFree`/`isSegmentFree` |
+| `c-universite-optimallik-hiz-odunlesimi` | `planners/base.ts` `Planner` arayüzü |
+| `a-universite-dh-parametreleri` | `robots/genericSixDof.ts` `genericSixDofRobot` |
+| `a-universite-homojen-donusum` | `transform.ts` `multiply` |
+| `a-universite-robot-mimarileri` | `kinematics.ts` `RobotSpec` |
+| `a-universite-poz-gosterimleri` | `transform.ts` `rotationX`/`rotationY`/`rotationZ` |
+| `c-universite-c-space` | `planners/base.ts` `Planner` arayüzü |
+
+**Yörünge üretimi ve hız/ivme profilleri dersleri hâlâ tamamen
+kavramsal** — bu iki ders formülleri anlatıyor ama platformda çalışan
+bir implementasyon yok (Hat B'nin "sürekli işler" kapsamına, Faz 3+'ta
+gerçek bir implementasyon eklenirse buraya link dönebilir).
+
+### 2. Ana sayfa "1 ders gösteriyor" bulgusu — kod hatası DEĞİL
+
+`app/page.tsx` incelendi: `getAllLessons().filter(durum === "yayinda")`
+zaten tam dinamik, hiçbir hardcoded link/liste yok. Yerel build
+(`out/index.html`) 39 dersin hepsini doğru listeliyor. GitHub API
+üzerinden kontrol edilince, son publish commit'inin (`38c6d58`) Vercel'e
+otomatik deploy olduğu ve deploy'un `success` durumunda tamamlandığı
+görüldü.
+
+**Muhtemel gerçek sebep:** Vercel her deploy'a KENDİNE ÖZGÜ, değişmez
+bir URL veriyor (ör. `robotik-platform-<hash>-...vercel.app`); bu
+URL'lerden biri bir yerde (sekme, yer imi) açık kalmışsa, o sekme SONSUZA
+KADAR o deploy anındaki hâli gösterir — proje güncellense bile. Gerçek
+"canlı" adres proje panelindeki asıl production alan adı/alias'ıdır, o
+her zaman en son deploy'a işaret eder. Mert'in Vercel panelinden
+"Visit" ile açtığı adresin güncel olup olmadığını kontrol etmesi
+öneriliyor; kod tarafında düzeltilecek bir şey bulunamadı.
+
+### 3. CI pipeline kuruldu
+
+`.github/workflows/ci.yml` — her push (main) ve her PR'da otomatik
+çalışıyor: `npm ci` → `npx tsc` → `npm run lint` → `npm test` →
+`npx tsx scripts/check-content.ts` → `npx tsx
+scripts/validate-content-graph.ts` → `npm audit --audit-level=high`
+(bu son adım istenen 5 komuta ek — `docs/08-guvenlik-sertlestirme.md`'nin
+"Otomatik zafiyet taraması" kuralı zaten böyle tanımlanmıştı, CI ilk
+kez kurulurken devreye alındı). Node 20 kullanılıyor (yerel geliştirme
+ortamıyla aynı sürüm). `npm audit` yerelde de temiz (0 zafiyet).
+
+`next build` bilinçli olarak CI'ya eklenmedi — istenen liste sadece bu
+5 komuttu; ileride eklenmek istenirse ayrı bir karar.
+
+### 4. `docs/03-yol-haritasi.md` — cila ertelemesi notu
+
+Dosyanın başına, tüm fazları kapsayan bir not eklendi: görsel
+cila/etkileşim zenginleştirmesi bilinçli olarak Faz 5 sonrasına
+erteleniyor, şu anki öncelik içerik kapsamı ve altyapı sağlamlığı.
+
+Tüm değişiklikler sonrası `npx tsc --noEmit`, `npx eslint .`, `npx
+vitest run` (55/55), `npx tsx scripts/check-content.ts`, `npx tsx
+scripts/validate-content-graph.ts` ve `npx next build` tekrar
+çalıştırıldı; hepsi temiz. Eklenen "Kaynak kodu" linklerinin build
+çıktısında doğru render olduğu (`out/ders/b-universite-jacobian.html`
+üzerinden) doğrulandı.
