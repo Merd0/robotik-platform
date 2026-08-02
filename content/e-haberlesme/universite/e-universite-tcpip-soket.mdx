@@ -1,0 +1,143 @@
+---
+id: e-universite-tcpip-soket
+baslik: "TCP/IP soket haberleşmesi, komut-yanıt döngüsü"
+hat: e-haberlesme
+seviye: universite
+sure: 15
+sira: 1
+onkosul:
+  - e-lise-el-sikisma
+kazanimlar:
+  - "TCP soketinde istemci-sunucu (client-server) modelinin temel adımlarını (connect, send, recv) açıklayabilme"
+  - "Endüstriyel bir robotla haberleşmede 'komut-yanıt döngüsü' (command-response loop) kavramını, gönderilen metin ile alınan yanıt arasındaki ilişkiyi göstererek açıklayabilme"
+  - "Bu platformdaki simülasyonun neden gerçek bir ağ soketi AÇMADIĞINI açıklayabilme"
+kaynaklar:
+  - "Python Software Foundation, socket — Low-level networking interface, resmi Python belgeleri (docs.python.org/3/library/socket.html) — connect()/send()/recv() (istemci) ve bind()/listen()/accept() (sunucu) tanımları"
+  - "github.com/Mecademic/mecademicpy — Mecademic'in resmi Python API deposu; robotun ASCII metin komutlarını bir TCP soketi üzerinden dinlediğini gösteren gerçek bir endüstriyel örnek (bkz. d-universite-mecademic-python)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Bir TCP soketi, telefon hattı gibi çalışmaz: karşı taraf konuşmayı
+bitirdiğinde otomatik olarak "şimdi senin sıran" demez. TCP, iki yön
+arasında güvenilir bir bayt akışı garanti eder, hepsi bu. Yine de robot
+kontrol yazılımının neredeyse tamamı bu akışı bir "sıra" varmış gibi
+kullanır: komut gönder, yanıtı bekle, sonra bir sonraki komuta geç. Bu
+disiplin soketin kendisinden gelmiyor — üstüne biz koyuyoruz.
+
+## Ne oldu
+
+TCP/IP, iki bilgisayar arasında IP adresi ve port numarasıyla tanımlanan
+bir bağlantı üzerinden, sırası bozulmadan ve kaybolmadan ileten bir bayt
+akışı sağlar. Python'ın resmi `socket` belgeleri bu modeli şöyle özetliyor:
+istemci tarafı `connect()` ile bağlanır, `send()` ile veri gönderir,
+`recv()` ile veri okur; sunucu tarafı ise `bind()` ile bir adrese bağlanır,
+`listen()` ile bağlantı bekler, `accept()` ile gelen bağlantıyı kabul eder.
+
+Soketin kendisi "önce sen konuş, sonra ben" demiyor — TCP tam çift yönlü
+(full-duplex), istersen iki taraf da aynı anda yazabilir. Ama endüstriyel
+robot kontrolü bunu neredeyse hiç kullanmaz. Bunun yerine bir DİSİPLİN
+uygulanır: istemci bir komut metni gönderir, sonra `recv()` çağrısında
+BEKLER, robot komutu işleyip bir yanıt metni gönderene kadar bir sonraki
+komutu göndermez. Mecademic'in gerçek Meca500 protokolü tam olarak bu
+şekilde çalışır (bkz. `d-universite-mecademic-python`): robot bir TCP
+soketi üzerinden ASCII metin komutları dinler, her komutu işledikten sonra
+metin bir yanıt döner.
+
+Aşağıdaki kod bir soket AÇMIYOR — Pyodide çalışma ortamında ağ erişimi
+bilerek kapalı (bkz. `docs/08-guvenlik-sertlestirme.md` "İstemci tarafı
+çalıştırma izolasyonu"). Bunun yerine, gerçek bir soketten gidecek ve
+gelecek METİNLERİ üretip okuyoruz; bu platformun iki eklemli robotuna
+uyacak şekilde basitleştirilmiş bir komut biçimi kullanıyoruz (gerçek
+Meca500 protokolü altı eklem argümanı alır).
+
+<CodeRunner
+  robot="generic-2dof"
+  theme="universite"
+  initialCode={`# Gercek bir soket burada ACILMIYOR. Bunun yerine, TCP soketinden
+# gidecek/gelecek METINLERI uretip okuyoruz (comut-yanit dongusu).
+
+def komut_uret(j1, j2):
+    # Gercek Mecademic protokolu 6 eklem argumani alir (bkz.
+    # d-universite-mecademic-python); burada bu platformun iki eklemli
+    # robotuna uyacak sekilde basitlestirdik.
+    return f"MoveJoints({j1},{j2})"
+
+def sunucudan_yanit_oku():
+    # Gercek bir soket burada recv() cagirirdi. Biz sahte, temsili
+    # bir yanit uretiyoruz.
+    return "[SIMULASYON] hareket tamamlandi"
+
+komut = komut_uret(30, -45)
+print("Soketten gidecek metin:", komut)
+
+yanit = sunucudan_yanit_oku()
+print("Soketten gelen metin:", yanit)
+
+robot.eklem_ac(0, 30)
+robot.eklem_ac(1, -45)`}
+/>
+
+## Gerçek dünyada
+
+Gerçek bir Python sürecinde yukarıdaki `komut_uret`/`sunucudan_yanit_oku`
+çiftinin yerini gerçek bir soket alır:
+
+```python
+import socket
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(("192.168.0.100", 10000))
+s.sendall(b"MoveJoints(30,-45,0,0,0,0)\n")
+yanit = s.recv(1024)
+```
+
+`connect()` bağlantıyı kurar, `sendall()` komut metnini gönderir, `recv()`
+ise robotun yanıtı gönderene kadar BLOKE olur — yani program o satırda
+bekler. Bu bekleme, bir sonraki dersin konusu olan "döngü süresi" ve
+"zaman aşımı" kavramlarının neden önemli olduğunu gösteriyor: `recv()`
+sonsuza kadar beklerse, program da sonsuza kadar takılı kalır.
+
+Bu satırların hiçbiri bu platformda çalıştırılmaz — `connect()` gerçek bir
+ağ bağlantısı açar ve bu platform hiçbir zaman gerçek bir robota bağlanmaz
+(bkz. `docs/00-vizyon.md`).
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "TCP soketinde bir bağlantıyı BAŞLATAN taraf hangi çağrıyı kullanır?",
+      secenekler: [
+        "İstemci `connect()` çağırır",
+        "Sunucu `connect()` çağırır",
+        "İkisi de aynı anda `accept()` çağırır",
+      ],
+      dogru: 0,
+      aciklama: "İstemci `connect()` ile bağlanır; sunucu `bind()`+`listen()` ile bekler, `accept()` ile bağlantıyı kabul eder (bkz. Python socket belgeleri).",
+    },
+    {
+      soru: "Pyodide çalışma ortamında `fetch` ve `XMLHttpRequest` bilerek kaldırılıyor (bkz. lib/workers/pyodideWorker.ts). Bunun sebebi nedir?",
+      secenekler: [
+        "Bu fonksiyonlar Python'da zaten yok",
+        "Kullanıcının kendi yazdığı kod bile dışarıya ağ isteği atamasın diye — Pyodide kum havuzu izolasyonunun bir parçası",
+        "Tarayıcı performansını artırmak için",
+      ],
+      dogru: 1,
+      aciklama: "docs/08-guvenlik-sertlestirme.md 'İstemci tarafı çalıştırma izolasyonu': kullanıcı kodu WebAssembly kum havuzunda çalışır ve ağ erişimi verilmez.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+TCP tek başına bir "her zaman aynı sürede yanıt gelir" garantisi vermez.
+Endüstriyel otomasyon bu yüzden TCP/IP'nin üzerine (veya bazen tamamen
+farklı bir katmana) kendi protokollerini kurar. Sıradaki ders üç büyük
+örneği — EtherCAT, PROFINET, EtherNet/IP — karşılaştırıyor.

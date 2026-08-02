@@ -1,0 +1,83 @@
+---
+id: e-lise-dijital-giris-cikis
+baslik: "Dijital giriş-çıkış (I/O), sinyal zamanlaması"
+hat: e-haberlesme
+seviye: lise
+sure: 10
+sira: 1
+onkosul:
+  - e-ortaokul-sinyal-var-yok
+kazanimlar:
+  - Dijital bir giriş ve çıkış sinyalinin sadece iki durumdan (açık/kapalı, 1/0) oluştuğunu açıklayabilme
+  - Bir giriş sinyaliyle ona bağlı çıkış sinyali arasında neden küçük bir gecikme olabileceğini açıklayabilme
+  - Dijital I/O'nun bir robot kontrolöründe hangi gerçek talimatlarla (ör. SetDO, WaitDI) karşılığını bulduğunu tanıyabilme
+kaynaklar:
+  - "Wikipedia katkıcıları, 'Programmable logic controller' maddesi — dijital giriş/çıkış sinyalleri ve tarama döngüsü (scan cycle) süresi (onlarca milisaniye), https://en.wikipedia.org/wiki/Programmable_logic_controller"
+  - "IEC 61131-2, Programmable controllers — Part 2: Equipment requirements and tests (dijital I/O donanım gereksinimleri)"
+  - "ABB RAPID Instructions, Functions and Data Types Reference Manual — SetDO ve WaitDI talimatları (dijital çıkış/giriş sinyalleri)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SignalTimeline
+durum: taslak
+---
+
+## Kanca
+
+"Giriş" ve "çıkış" kelimeleri kulağa karmaşık gelebilir ama bir robot
+kontrolöründe ikisi de aynı basit şeyi taşır: sadece iki durum. Açık ya da
+kapalı, 1 ya da 0 — üçüncü bir seçenek yok.
+
+<SignalTimeline signals={["Giriş", "Çıkış"]} theme="lise" />
+
+## Ne oldu
+
+Az önce iki satırlık bir zaman ekseninde oynadın. Her kutucuk bir anı,
+"açık" (dolu) ya da "kapalı" (boş) durumunu temsil ediyor. Bu, dijital
+giriş-çıkışın (digital I/O) kendisi: bir sensörden gelen "Giriş" sinyali ve
+buna karşılık bir aktüatöre giden "Çıkış" sinyali, ikisi de sadece iki
+değer alabilir. Ara bir değer, "biraz açık" gibi bir şey yok.
+
+Gerçek bir kontrolörde bu kutucuklar anlık değişmez. Giriş açıldığında
+kontrolör bunu hemen fark etmeyebilir — çünkü çoğu kontrolör girişleri
+sürekli değil, düzenli aralıklarla (tarama döngüsü / scan cycle) okur. Bu
+döngü tipik olarak onlarca milisaniye sürer. Yani "Giriş" açılıp "Çıkış"
+tepki verene kadar küçük ama gerçek bir gecikme olabilir.
+
+## Gerçek dünyada
+
+ABB'nin robot kontrolörlerinde bu kavramın karşılığı doğrudan iki RAPID
+talimatıdır: `SetDO` bir dijital çıkışı açar/kapatır, `WaitDI` ise bir
+dijital girişin belirli bir değere gelmesini bekler. Bir robot programı
+örneğin bir sensörün "parça var" girişini (`WaitDI`) bekleyip, sonra
+tutucuyu kapatan çıkışı (`SetDO`) açabilir. IEC 61131-2 standardı da PLC
+donanımında dijital I/O modülleri için bu tür fonksiyonel gereksinimleri
+tanımlar.
+
+## Dene
+
+İki sinyali de sıfırla. "Giriş" satırında 2. adımı aç. "Çıkış" satırında
+ise aynı adımı değil, 4. adımı aç — yani gerçek bir gecikmeyi simüle et.
+Oynat'a bas, okuma başının önce boş bir "Giriş" karesinden geçip birkaç
+adım sonra "Çıkış"ın da açıldığı kareye ulaştığını izle.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir sensörün 'Giriş' sinyali açıldığı anda kontrolörün buna bağlı 'Çıkış' sinyalini vermesi neden anında olmayabilir?",
+      secenekler: [
+        "Sinyaller kablo içinde kaybolduğu için",
+        "Kontrolör girişleri sürekli değil, düzenli aralıklarla (tarama döngüsü) okuduğu için",
+        "Dijital sinyaller yavaş elektrik akımı taşıdığı için",
+      ],
+      dogru: 1,
+      aciklama: "Kontrolörün girişleri ne sıklıkla okuduğunu düşün — bu okuma anlık değil, tekrar eden bir döngü.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki derste, iki tarafın (ör. robot ve PLC) bu tür sinyalleri belirli
+bir sırayla değiştirerek nasıl "anlaştığını" — el sıkışma (handshake)
+mantığını göreceksin.

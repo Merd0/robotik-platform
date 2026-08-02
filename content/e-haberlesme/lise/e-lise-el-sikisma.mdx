@@ -1,0 +1,85 @@
+---
+id: e-lise-el-sikisma
+baslik: "El sıkışma (handshake) mantığı: 'hazırım' / 'aldım'"
+hat: e-haberlesme
+seviye: lise
+sure: 12
+sira: 2
+onkosul:
+  - e-lise-dijital-giris-cikis
+kazanimlar:
+  - El sıkışma (handshake) protokolünde iki sinyalin hangi sırayla ilerlediğini açıklayabilme
+  - Aldım sinyalinin hazırım sinyalinden önce gelmesinin neden anlamsız bir onay olduğunu fark edebilme
+  - Basit bir el sıkışma düzenini SignalTimeline üzerinde doğru sırayla kurabilme
+kaynaklar:
+  - "M. Morris Mano, Computer System Architecture, 3. baskı, 'Input-Output Organization' bölümü — asenkron veri aktarımında strobe kontrolü ve el sıkışma (handshaking) yöntemleri"
+  - "ABB RAPID Instructions, Functions and Data Types Reference Manual — SetDO ve WaitDI talimatları"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SignalTimeline
+durum: taslak
+---
+
+## Kanca
+
+Kapıda duran iki görevliyi düşün: biri paketi uzatmadan önce "hazırım"
+demeli, diğeri paketi eline aldığında "aldım" demeli. Sıra karışırsa biri
+boş havaya paket uzatır, öbürü de almadığı bir şeyi "aldım" sanır.
+
+<SignalTimeline signals={["Robot: Hazırım", "PLC: Aldım"]} theme="lise" />
+
+## Ne oldu
+
+Bu, el sıkışma (handshake) mantığının tam iskeleti. İki taraf var — burada
+robot ve PLC — ve ikisi de birbirinin sinyaline bakarak karar veriyor:
+
+1. Robot işini bitirir, "Hazırım" sinyalini açar.
+2. PLC bu sinyali görür, kendi işini yapar (ör. parçayı alır) ve "Aldım"
+   sinyalini açar.
+3. Robot "Aldım"ı görünce "Hazırım"ı kapatır, bir sonraki işe geçer.
+
+Kritik nokta sıradır: "Aldım" sinyali ancak "Hazırım" sinyali görüldükten
+sonra anlamlıdır. Sıra tersine dönerse — PLC, "Hazırım" hiç açılmamışken
+"Aldım" derse — bu sinyal boş bir onaydan ibaret kalır, çünkü ortada henüz
+alınacak bir şey yoktur.
+
+## Gerçek dünyada
+
+Bu iki sinyalli yapı, ders kitaplarında "el sıkışma" (handshaking) olarak
+adlandırılan, iki bağımsız birim arasındaki asenkron veri aktarımının
+standart yöntemidir. Tek bir sinyalle ("strobe") yapılan basit bir uyarı,
+alıcının veriyi gerçekten alıp almadığını göndericiye söylemez; el sıkışma
+bunun için ikinci bir onay sinyali ekler. Bir robot hücresinde bu, örneğin
+robot tarafında `SetDO doHazirim, 1;` ile açılan bir çıkışın, PLC
+tarafından `WaitDI diHazirim, 1;` ile beklenmesi ve ardından PLC'nin kendi
+onay çıkışını açması şeklinde kurulur.
+
+## Dene
+
+Önce yanlış sırayı kur: sadece "PLC: Aldım" satırında 2. adımı aç, "Robot:
+Hazırım" satırına hiç dokunma. Oynat'a bas, "Aldım" sinyalinin karşılığında
+hiçbir "Hazırım" olmadığını gözlemle. Sonra Sıfırla'ya bas ve doğru sırayla
+dene: "Robot: Hazırım"ı 2. adımda aç, "PLC: Aldım"ı ise 4. adımda (birkaç
+adım sonra) aç. İki denemenin okuma başında nasıl farklı "hissettirdiğini"
+karşılaştır.
+
+<Quiz
+  sorular={[
+    {
+      soru: "PLC, 'Robot: Hazırım' sinyali hiç açılmamışken 'Aldım' sinyalini açarsa, bu ne anlama gelir?",
+      secenekler: [
+        "Robotun daha hızlı çalıştığı anlamına gelir",
+        "Henüz gönderilmemiş bir şeyin alındığını iddia eden, anlamsız bir onay demektir",
+        "PLC'nin otomatik olarak hata verdiği anlamına gelir",
+      ],
+      dogru: 1,
+      aciklama: "'Aldım' sinyali sadece 'Hazırım'dan SONRA anlamlıdır — öncesinde açılırsa ortada henüz alınacak bir şey yoktur.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bir sonraki derste bu sırayı kasıtlı olarak bozup neler olabileceğine —
+zamanlamanın neden sadece bir "detay" olmadığına — bakacaksın.

@@ -1,0 +1,108 @@
+---
+id: e-universite-plc-master-slave
+baslik: "PLC ile robot entegrasyonu, kim usta kim köle (master/slave)"
+hat: e-haberlesme
+seviye: universite
+sure: 15
+sira: 4
+onkosul:
+  - e-universite-cycle-time-jitter
+kazanimlar:
+  - "Bir PLC-robot hücresinde hangi tarafın (genelde PLC) döngüyü/veri alışverişini başlattığını, hangi tarafın (robot kontrolörü) buna yanıt verdiğini açıklayabilme"
+  - "Usta/köle (master/slave) ilişkisini SignalTimeline sahnesinde kurup 'kim başlatır, kim yanıtlar' ayrımını gösterebilme"
+  - "Bu ilişkinin endüstriyel ağ protokollerinde (PROFINET IO Controller/IO Device, EtherCAT MainDevice/SubDevice) nasıl karşılığını bulduğunu örnekleyebilme"
+kaynaklar:
+  - "PROFIBUS & PROFINET International (PI), 'PROFINET Technology' (us.profinet.com/technology/profinet/) — 'Controllers can be PLCs, DCSs, IPCs, or PACs'; 'The controller sets the update cycle time'"
+  - "EtherCAT Technology Group, 'EtherCAT Technology' (ethercat.org/en/technology.html) — 'The EtherCAT MainDevice sends a telegram that passes through each node. Each EtherCAT SubDevice reads the data addressed to it on the fly'"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SignalTimeline
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi bir robot hücresinde robotun "beyin", PLC'nin ise yalnızca
+kapı sensörünü izleyen basit bir yardımcı olduğunu düşünür. Ağ
+haberleşmesi açısından çoğu zaman tam tersi doğrudur: veri alışverişinin
+NE ZAMAN olacağına PLC karar verir, robot kontrolörü sadece buna yanıt
+verir.
+
+## Ne oldu
+
+"Usta/köle" (master/slave), iki tarafın eşit olmadığı bir ilişkiyi
+tanımlar: usta veri alışverişini BAŞLATIR, köle sadece gelen isteğe
+YANIT verir — kendiliğinden konuşmaya başlamaz. PI'nin (PROFINET
+International) kendi teknik açıklamasına göre bir PROFINET ağındaki
+IO Controller (genelde bir PLC, DCS, IPC veya PAC) döngü zamanını
+KENDİSİ belirler: "The controller sets the update cycle time." Ağdaki
+diğer taraf — bir I/O bloğu, bir sürücü veya bir robot kontrolörü olabilir
+— IO Device rolündedir ve bu döngüye göre veri alışverişine katılır.
+
+EtherCAT'te aynı ilişki farklı bir mekanizmayla kurulur: EtherCAT
+Technology Group'un tanımıyla "MainDevice bir telgraf gönderir, bu
+telgraf her düğümden geçer. Her SubDevice kendisine ait veriyi
+'geçerken' okur ve kendi verisini çerçeveye ekler." MainDevice'ı çalıştıran
+taraf (çoğu zaman bir PLC veya endüstriyel PC) telgrafı ne zaman
+göndereceğine karar verir; SubDevice'lar (bir robot kontrolörü SubDevice
+olabilir) bu telgrafa göre hareket eder, kendiliğinden bir telgraf
+başlatmaz.
+
+Bunun somut sonucu: bir PLC-robot hücresinde robot genellikle "bana ne
+zaman veri geleceğini SEN belirle" konumundadır. PLC "başla" sinyalini
+gönderir, robot hareketi tamamlayınca "bitti" sinyaliyle yanıt verir —
+sıra hep PLC'den başlar.
+
+<SignalTimeline signals={["PLC (usta)", "Robot (köle)"]} theme="universite" />
+
+## Gerçek dünyada
+
+Yukarıdaki sahnede "PLC (usta)" satırında bir adımı AÇIK yap, birkaç adım
+sonra "Robot (köle)" satırında bir adımı AÇIK yap — PLC'nin sinyali
+başlattığını, robotun ona YANIT olarak kendi sinyalini verdiğini temsil
+edecek şekilde. Bileşen hangi düzenin "doğru" bir usta/köle ilişkisi
+olduğuna karar vermez; bunu değerlendiren sensin: robotun sinyali PLC'nin
+sinyalinden ÖNCE gelirse, bu artık bir usta/köle ilişkisi değildir — robot
+kendiliğinden konuşmuş, PLC'nin döngüsünü beklememiş olur.
+
+Bu ayrım pratik sonuç doğurur: bir robot hücresi tasarlayan mühendis,
+hangi tarafın ağ üzerinde usta olacağına baştan karar vermek zorundadır.
+PROFINET ve EtherCAT gibi protokollerde bu rol isimlendirilmiştir (IO
+Controller/IO Device, MainDevice/SubDevice); rol yanlış atanırsa (ör. iki
+cihaz da veri alışverişini kendiliğinden başlatmaya çalışırsa) ağ kurulumu
+çalışmaz.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "PROFINET ağında güncelleme (update) döngü süresini hangi taraf belirler?",
+      secenekler: [
+        "IO Device (ör. robot kontrolörü)",
+        "IO Controller (genellikle bir PLC/DCS/IPC/PAC)",
+        "İkisi ortak karar verir",
+      ],
+      dogru: 1,
+      aciklama: "PI'nin kendi ifadesiyle 'The controller sets the update cycle time' — döngüyü belirleyen taraf IO Controller'dır, IO Device buna göre yanıt verir.",
+    },
+    {
+      soru: "Usta/köle (master/slave) ilişkisinde köle tarafın davranışı nasıldır?",
+      secenekler: [
+        "Kendiliğinden, istediği an veri alışverişi başlatır",
+        "Sadece ustadan gelen isteğe yanıt verir, kendiliğinden başlatmaz",
+        "Ustayla aynı anda, bağımsız bir döngüde çalışır",
+      ],
+      dogru: 1,
+      aciklama: "EtherCAT'te SubDevice, MainDevice'ın gönderdiği telgrafa 'geçerken' yanıt verir; kendi başına bir telgraf başlatmaz. Bu, usta/köle ilişkisinin tanımlayıcı özelliğidir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Peki usta bekliyor ama köleden hiç yanıt gelmezse ne olur? Sıradaki ve son
+ders, zaman aşımı, bağlantı kopması ve güvenli durma kavramlarını —
+gerçek bir robotta bunun neden hayati bir güvenlik konusu olduğunu —
+ele alıyor.
