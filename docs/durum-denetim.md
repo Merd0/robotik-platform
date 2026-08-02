@@ -591,3 +591,76 @@ okunup `yayinda` yapılacağına karar vermek kullanıcıya (Mert) ait.
 Faz 3 tamamlandı. Faz 4 (Hat E — haberleşme, Hat F — algılama) henüz
 başlamadı; CLAUDE.md kuralı gereği yeni faz kapsamı kullanıcı onayı
 gerektirir.
+
+---
+
+## Faz 4 — Hat E tamamlandı (2026-08-02)
+
+Kullanıcı "Faz 4'e geç: Hat E'nin haberleşme dersleri" diyerek onay
+verdi. Aynı oturumda (Faz 3'ün hemen ardından) Hat E'nin 10 dersinin
+tamamı yazıldı.
+
+### Altyapı — `SignalTimeline` bileşeni
+
+`components/interactive/SignalTimeline.tsx` — bir veya birden fazla
+sinyalin zaman içindeki AÇIK/KAPALI durumunu tıkla-ayarla + "Oynat"
+düğmesiyle 500ms/adım playhead animasyonu. `BlockEditor`'dan farklı
+olarak ayrı bir `lib/robotics/` yorumlayıcısı YOK — bu bilinçli bir
+karar: bileşende test edilmesi gereken bir "hesaplama/algoritma" yok,
+sadece UI durumu (JointSliders/IkTarget'ın yaptığı gibi). Doğru/yanlış
+sinyal deseni bileşende değil, ders metninde/Quiz'de ele alınıyor —
+`CodeRunner` gibi 3 temalı (`ortaokul`/`lise`/`universite`),
+`JointSliders`/`IkTarget` gibi seviyeden bağımsız. Tarayıcıda el sıkışma
+deseniyle (toggle + oynat + sıfırla) test edildi, `index.ts`'e kaydedildi.
+
+### İçerik — 3 paralel `ders-yazari` subagent'ı ile 10 ders
+
+| Grup | Ders sayısı | Bileşen(ler) |
+|---|---|---|
+| Hat E / Ortaokul | 2 | `SignalTimeline` |
+| Hat E / Lise | 3 | `SignalTimeline` (3 dersde de farklı sinyal seti/görev) |
+| Hat E / Üniversite | 5 | `SignalTimeline`, `CodeRunner`, `Quiz` |
+
+Hat E artık 10/10 — toplam 68 ders dosyası.
+
+**Paralel yazımın yan etkisi:** Ortaokul/lise/üniversite ajanları aynı
+anda çalıştığı için ikisi (`e-lise-dijital-giris-cikis`,
+`e-universite-tcpip-soket`) henüz yazılmamış kardeş derslere onkosul
+veremedi, `onkosul: []` bıraktı. Doğrulama sırasında elle
+`e-ortaokul-sinyal-var-yok` ve `e-lise-el-sikisma`'ya bağlandı.
+
+**docs/05 Bölüm 2.3 güvenlik notu:** `e-universite-hata-durumlari.mdx`
+belirgin bir "## Güvenlik notu" bölümü taşıyor — gerçek bir robotta
+haberleşme koptuğunda "belki birazdan gelir" varsayımıyla harekete
+devam etmenin neden tehlikeli olduğunu, ISO 10218-2/OSHA atıflarıyla
+anlatıyor; platformun "gerçek robota bağlanmaz" duruşunu (docs/00)
+tekrar vurguluyor.
+
+### Yazım sırasında bulunan/düzeltilen hata
+
+- `e-lise-el-sikisma.mdx`: bir `kazanimlar` satırı `- "Aldım" sinyalinin
+  "hazırım" sinyalinden...` şeklinde kısmi tırnaklıydı (aynı YAML "bad
+  indentation of a sequence entry" hatası, Faz 3'te de görülmüştü) —
+  iç tırnaklar kaldırıldı.
+
+### Doğrulama
+
+`npx tsc --noEmit`, `npx eslint .`, `npx vitest run` (61/61), `npx tsx
+scripts/check-content.ts` (68 ders), `npx tsx
+scripts/validate-content-graph.ts` (68 ders, döngü/eksik referans yok),
+`npx next build` (74 sayfa) — hepsi temiz. Tarayıcıda: `SignalTimeline`
+(toggle + oynat, geçici test dersiyle), `e-lise-el-sikisma` (el sıkışma
+sahnesi görsel olarak doğru) ve `e-universite-hata-durumlari`
+(`CodeRunner` ile `hedefe_git(5,5)` → `False` → "haberleşme hatası"
+senaryosu doğru çalıştı) test edildi.
+
+### Yapılmayan adım — yine `durum: yayinda` işaretlemesi
+
+Faz 1/2/3'teki gibi: 10 yeni ders `durum: taslak` kaldı — yapay zeka
+yazım/incelemesiydi, docs/06 Katman 3'ün istediği insan gözden
+geçirmesi değil.
+
+### Sonraki için not
+
+Hat E tamamlandı. Faz 4'ün geri kalanı — Hat F (algılama, 8 ders) —
+henüz başlamadı; kullanıcı onayı bekliyor.
