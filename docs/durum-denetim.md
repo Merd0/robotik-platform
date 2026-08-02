@@ -178,12 +178,85 @@ Tüm düzeltmeler sonrası `npx tsc --noEmit`, `npx tsx scripts/check-content.ts
 `npx tsx scripts/validate-content-graph.ts`, `npx eslint .`, `npx vitest run`
 (55/55) ve `npx next build` tekrar çalıştırıldı; hepsi temiz.
 
-### Yapılmayan adım — yine `durum: yayinda` işaretlemesi
+### O zamanki adım — yine `durum: yayinda` işaretlemesi bekliyordu
 
 Faz 1'deki gibi: bu tur da bir **yapay zeka** incelemesiydi (5 paralel
 ajan + benim gözden geçirmem), `docs/06`'nın ısrar ettiği "insan gözden
-geçirmesi" değil. 39 dersin 38'i hâlâ `durum: taslak` (`b-universite-ters-kinematik`
-Faz 1'de zaten insan tarafından incelenip yayınlanmıştı). Hangi
-derslerin okunup `yayinda` yapılacağına karar vermek kullanıcıya
-(Mert) ait — bu doküman ve yukarıdaki bulgu tablosu o incelemeye
-başlangıç noktası.
+geçirmesi" değil. 39 dersin 38'i o an hâlâ `durum: taslak`
+(`b-universite-ters-kinematik` Faz 1'de zaten insan tarafından
+incelenip yayınlanmıştı). Hangi derslerin okunup `yayinda` yapılacağına
+karar vermek kullanıcıya (Mert) aitti — bu doküman ve yukarıdaki bulgu
+tablosu o incelemeye başlangıç noktası olarak yazıldı.
+
+---
+
+## Güncelleme — 39 dersin tamamı yayınlandı (2026-08-02)
+
+Yukarıdaki bulgu tablosundan 9 ders örnek olarak seçildi (her hattın her
+seviyesinden bir tane: A/ortaokul, A/lise, A/üniversite, B/ortaokul,
+B/lise, B/üniversite, C/ortaokul, C/lise, C/üniversite — beşi az önce
+düzeltilen derslerden). Bu 9 ders **Mert tarafından bizzat, tarayıcıda
+açılıp incelendi** — docs/06 Katman 3'ün istediği gerçek insan
+gözden geçirmesi bu 9 ders için fiilen gerçekleşti.
+
+Kalan 30 ders için Mert şu kararı verdi: hepsi aynı otomatik denetim
+turundan (5 paralel `kalite-denetci` taraması + bu turdaki düzeltmeler)
+geçtiği ve o taramada sıfır matematik/kod hatası bulunduğu için, tek
+tek açıp okumadan **toplu onay** verildi.
+
+**Bu ayrım önemli ve ileride kaybolmamalı:** 39 dersin `incelendi_tarafindan`
+alanının hepsinde artık "Mert" yazıyor, ama bu tek bir anlama gelmiyor:
+
+- **9 ders** (aşağıda listeli) — gerçekten satır satır, kaynağıyla
+  karşılaştırılarak, etkileşimli sahnesi oynanarak incelendi.
+- **30 ders** — otomatik denetimden geçti (sıfır hata bulundu) ve
+  toplu onaylandı; tek tek insan gözüyle okunmadı.
+
+Bu, docs/06'daki "insan gözden geçirmesi" tanımının tam anlamıyla
+karşılanmadığı, bilinçli bir kısayoldur — proje sahibinin kendi kararı,
+şeffaf şekilde burada kayıt altına alınıyor.
+
+### Bizzat incelenen 9 ders
+
+- `a-ortaokul-robot-nedir` (A/ortaokul)
+- `a-lise-koordinat-sistemleri` (A/lise)
+- `a-universite-dh-parametreleri` (A/üniversite)
+- `b-ortaokul-eklemleri-oynat` (B/ortaokul)
+- `b-lise-geometrik-ters-kinematik` (B/lise)
+- `b-universite-ters-kinematik` (B/üniversite — Faz 1'den beri zaten yayında)
+- `c-ortaokul-en-kisa-yol-her-zaman-en-iyi-mi` (C/ortaokul)
+- `c-lise-a-yildiz-sezgisel` (C/lise)
+- `c-universite-rrt-rrt-star-prm` (C/üniversite)
+
+### Toplu onaylanan 30 ders
+
+`a-lise-calisma-uzayi`, `a-lise-doner-dogrusal-eklemler`,
+`a-lise-serbestlik-derecesi`, `a-lise-tcp-kavrami`,
+`a-ortaokul-eksen-ne-demek`, `a-ortaokul-robot-ile-makine-farki`,
+`a-ortaokul-robot-turleri`, `a-universite-homojen-donusum`,
+`a-universite-kinematik-zincir`, `a-universite-poz-gosterimleri`,
+`a-universite-robot-mimarileri`, `b-lise-aci-birimleri`,
+`b-lise-eklem-limitleri`, `b-lise-ileri-kinematik`,
+`b-ortaokul-birden-fazla-yol`, `b-ortaokul-erisemedigi-noktalar`,
+`b-universite-dh-ileri-kinematik`, `b-universite-hiz-ivme-profilleri`,
+`b-universite-jacobian`, `b-universite-movej-movel`,
+`b-universite-tekillik`, `b-universite-yorunge-uretimi`,
+`c-lise-engelden-kacinma`, `c-lise-grid-arama-maliyet`,
+`c-ortaokul-labirentte-yol-bulma`, `c-universite-algoritma-karsilastirma-deneyi`,
+`c-universite-c-space`, `c-universite-carpisma-kontrolu`,
+`c-universite-optimallik-hiz-odunlesimi`, `c-universite-yol-duzlestirme`
+
+Tüm 39 dosyada `incelendi_tarafindan: "Mert"`, `incelendi_tarih:
+"2026-08-02"` (yalnız `b-universite-ters-kinematik`'te tarih Faz 1'den
+kalma `"2026-08-01"`), `durum: yayinda`. Değişiklik sonrası `npx tsc
+--noEmit`, `npx tsx scripts/check-content.ts`, `npx tsx
+scripts/validate-content-graph.ts`, `npx eslint .`, `npx vitest run`
+(55/55) ve `npx next build` tekrar çalıştırıldı; hepsi temiz.
+
+**Sonraki için not:** Bu projede artık "yayında" statüsü tek başına
+"bir insan bunu satır satır okudu" garantisi vermiyor — kimin gerçekten
+okunduğunu görmek için bu dosyaya (yukarıdaki iki listeye) bakmak
+gerekiyor. İleride yeni bir kalite turu yapılırsa, bu 30 ders de
+zamanla tek tek gerçek incelemeden geçirilebilir; şimdilik otomatik
+denetimin bulduğu "sıfır matematik hatası" sonucuna güvenilerek
+yayınlandılar.
