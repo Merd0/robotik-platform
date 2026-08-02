@@ -50,13 +50,25 @@ gösterilecek sürüm bu.**
 
 ## Faz 2 — Planlama ve temeller
 
-- [ ] A*, RRT, RRT* TypeScript portu + Web Worker
-- [ ] `PlannerRace` bileşeni — algoritmaları aynı sahnede yarıştır
-- [ ] Kullanıcı kendi engel düzenini kurabilsin
-- [ ] Hat C tamamı (3 seviye, ~11 ders)
-- [ ] Hat A tamamı (3 seviye, ~14 ders)
+- [x] A*, RRT, RRT* TypeScript portu + Web Worker
+- [x] `PlannerRace` bileşeni — algoritmaları aynı sahnede yarıştır
+- [x] Kullanıcı kendi engel düzenini kurabilsin
+- [x] Hat C tamamı (3 seviye, 11 ders — taslak, insan incelemesi bekliyor)
+- [x] Hat A tamamı (3 seviye, 14 ders — taslak, insan incelemesi bekliyor)
 
 **Çıktı:** Üç hat yayında. Site artık "bir kaynak" sayılır.
+
+**Not (2026-08-01):** "Yayında" burada teknik anlamda — dosyalar `content/`
+altında, testler/build/lint temiz, `durum: taslak`. Faz 1'deki gibi
+(`docs/durum-denetim.md`), `durum: yayinda` işaretlemesi ve
+`incelendi_tarafindan` doldurulması ayrı, insan tarafından yapılacak bir
+adım; bu faz onu kapsamıyor. RRT/RRT* Python fixture'ına karşı bit-bit
+doğrulanamadı (RNG farkı) — bunun yerine özellik testleriyle doğrulandı,
+bkz. `lib/robotics/planners/rrt.test.ts` başındaki not. `new Worker(new
+URL(...))` deseni bu projede (Next 16.2, hem Turbopack hem webpack) güvenilir
+çalışmadı — gerçek planlayıcı kodu derlenen worker chunk'ına hiç girmiyordu;
+çözüm `scripts/build-worker.mjs` ile esbuild üzerinden elle, önceden
+derleyip `public/workers/` altına koymak oldu (bkz. o script'in yorumu).
 
 ---
 
@@ -98,6 +110,8 @@ gösterilecek sürüm bu.**
 ## Sürekli işler (her fazda)
 
 - Her ders için `kaynaklar` doldurulmuş mu kontrolü
+- Ön koşul grafiğinin doğrulanması (`npm run validate-content-graph`) —
+  döngü, eksik referans, kopuk düğüm kontrolü (bkz. `docs/09-ai-muhendisligi.md` bölüm 5)
 - Gizlilik gözden geçirmesi: yayınlanan hiçbir şey iş yeri kaynaklı olmasın
 - Mobil test
 - Bir arkadaşa okutup "anladın mı" testi

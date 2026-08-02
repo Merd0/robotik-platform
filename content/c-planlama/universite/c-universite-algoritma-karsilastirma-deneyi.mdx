@@ -1,0 +1,81 @@
+---
+id: c-universite-algoritma-karsilastirma-deneyi
+baslik: Hangi görev için hangi algoritma — karşılaştırmalı deney
+hat: c-planlama
+seviye: universite
+sure: 20
+sira: 5
+onkosul:
+  - c-universite-optimallik-hiz-odunlesimi
+kazanimlar:
+  - Farklı engel yoğunluklarında algoritma performansını deneysel olarak ölçebilme
+  - Deney sonuçlarına dayanarak bir görev için algoritma seçimini gerekçelendirebilme
+kaynaklar:
+  - "Steven M. LaValle, Planning Algorithms, Cambridge University Press, 2006, Bölüm 5.5 (Which Approach Should Be Used?)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+Bir mühendis olarak yeni bir mobil robot hücresi için hareket
+planlayıcısı seçmen isteniyor. Hücrede bazen çok az engel var, bazen
+sıkışık bir raf düzeni. Tek bir algoritmayı mı seçersin, yoksa duruma
+göre mi değişir? Bunu varsayımla değil, deneyle cevapla.
+
+<PlannerRace algorithms={["astar", "rrt", "rrt_star"]} allowObstacleEdit={true} theme="universite" extent={3} />
+
+## Ne oldu
+
+Bu sahne artık bir ders anlatmıyor — bir deney düzeneği. Üç algoritma da
+`lib/robotics/planners/` içindeki gerçek koddan çalışıyor, Web Worker'da,
+tarayıcını kilitlemeden. `Planner.plan(start, goal, isFree)` sözleşmesi
+(bkz. docs/02-mimari.md) sayesinde üçü de birbirinin yerine geçebilir —
+sahne hangi algoritmanın çalıştığını bilmek zorunda değil.
+
+## Gerçek dünyada
+
+Robotik mühendisleri gerçek kararları da böyle verir: teorik özellikleri
+(bir önceki derste gördüğün tamlık/optimallik) bilmek yeterli değildir,
+belirli bir sahne için gerçek ölçüm gerekir. ROS'un MoveIt hareket
+planlama kütüphanesi, tam bu yüzden tek bir algoritma değil bir
+"planlayıcı ailesi" sunar — mühendis görev başına birini seçer veya
+birkaçını art arda dener (biri bulamazsa diğeri denenir).
+
+## Dene
+
+Üç senaryo kur ve her birinde üç algoritmayı da çalıştır, sonuçları not
+al:
+
+1. **Açık alan** — hiç engel yok
+2. **Seyrek engel** — 2-3 küçük engel, geniş boşluklar
+3. **Sıkışık koridor** — başlangıç ile hedef arasında dar, dolambaçlı
+   tek bir geçit bırakacak şekilde çok sayıda engel
+
+Her senaryoda hangi algoritmanın "kazandığını" (senin tanımına göre —
+hız mı, kısalık mı önemli) belirle. Sıkışık koridorda RRT'nin başarı
+oranı düşer mi? Neden olabilir (ipucu: rastgele örnekleme dar bir geçidi
+"bulma" şansı azalır)?
+
+<Quiz
+  sorular={[
+    {
+      soru: "Çok dar ve dolambaçlı bir geçitte RRT'nin başarısız olma ihtimali neden artar?",
+      secenekler: [
+        "RRT kodu dar geçitlerde hata verir",
+        "Rastgele örneklenen noktaların dar geçidin içine düşme olasılığı, geçit ne kadar darsa o kadar azalır",
+        "RRT sadece geniş alanlarda çalışacak şekilde tasarlanmıştır",
+      ],
+      dogru: 1,
+      aciklama: "RRT'nin gücü rastgele örneklemesinden gelir, ama bu aynı zamanda zayıf noktasıdır: dar bir geçidin içine düşen bir örnek nadir olduğu için ağaç o geçidi 'keşfetmekte' zorlanır. Bu, dar-geçit problemi (narrow passage problem) olarak bilinir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+RRT'nin bulduğu yolların neden zikzaklı göründüğünü ve bunun için ne
+yapılabileceğini son derste ele alıyoruz.

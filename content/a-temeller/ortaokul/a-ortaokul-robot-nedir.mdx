@@ -1,0 +1,59 @@
+---
+id: a-ortaokul-robot-nedir
+baslik: Robot nedir, çevremizde nerede
+hat: a-temeller
+seviye: ortaokul
+sure: 8
+sira: 1
+onkosul: []
+kazanimlar:
+  - Bir robotu basit bir makineden ayıran temel özellikleri (algılama, karar, hareket) sayabilme
+  - Günlük hayatta karşılaşılan robot örneklerini tanıyabilme
+kaynaklar:
+  - "ISO 8373:2021, Robots and robotic devices — Vocabulary, madde 3.1 (robot tanımı)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Bir arkadaşın sana "evimde bir robot var" dese, aklına ne gelir? Belki
+film robotları. Ama muhtemelen fark etmeden her gün birkaç robotun
+yanından geçiyorsun — bulaşık makinesi onlardan biri değil, ama
+otomatik süpürge robot sayılıyor. Aradaki fark nedir?
+
+<JointSliders robot="generic-2dof" />
+
+## Ne oldu
+
+Yukarıdaki kolu oynattın — sen bir komut verdin (kaydırıcıyı çektin),
+kol o komuta göre hareket etti. Uluslararası standart (ISO 8373) bir
+robotu şöyle tanımlar: **belirli bir görevi yerine getirmek için
+programlanabilen, iki veya daha fazla eksende hareket edebilen bir
+mekanizma.**
+
+Bunun kilit kelimeleri "programlanabilir" ve "hareket". Bir bulaşık
+makinesi de karmaşık bir programla çalışır ama YERİNDE durur, eksenler
+boyunca hareket etmez — bu yüzden robot sayılmaz. Yukarıdaki kol ise
+iki ekseninde (iki eklem) hareket edebiliyor, bu da onu (basitleştirilmiş
+de olsa) bir robot kolu yapıyor.
+
+## Gerçek dünyada
+
+Fabrikalarda parça taşıyan kollar, evlerde zemin süpüren robotlar,
+depo koridorlarında dolaşan taşıyıcılar — hepsi bu tanıma uyar: bir
+görevi yerine getirmek için programlanmış, hareket edebilen makineler.
+
+## Dene
+
+Kaydırıcıları oynatarak kolun ucunu farklı noktalara götür. Şimdi
+"Sıfırla"ya bas — kol hep aynı başlangıç konumuna döner, çünkü sen ne
+zaman ne yapacağını söylüyorsun.
+
+## Sonraki
+
+Kolun "iki eksende" hareket ettiğini söyledik. Sıradaki ders eksenin
+tam olarak ne demek olduğunu ele alıyor.

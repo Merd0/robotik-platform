@@ -1,0 +1,84 @@
+---
+id: c-lise-grid-arama-maliyet
+baslik: Grid üzerinde arama, maliyet kavramı
+hat: c-planlama
+seviye: lise
+sure: 12
+sira: 1
+onkosul:
+  - c-ortaokul-en-kisa-yol-her-zaman-en-iyi-mi
+kazanimlar:
+  - Sürekli bir alanın nasıl bir ızgaraya (grid) bölündüğünü açıklayabilme
+  - Bir yolun "maliyetini" (kat edilen mesafe) hesaplayabilme
+kaynaklar:
+  - "Steven M. LaValle, Planning Algorithms, Cambridge University Press, 2006, Bölüm 2.1-2.2 (Discrete Planning, Feasible Planning)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+Bir haritada iki nokta arasındaki mesafeyi cetvelle ölçmek kolaydır. Ama
+bir bilgisayara "buradan oraya git" dedirtmek için önce sonsuz sayıda
+olası noktayı SAYILABİLİR bir kümeye indirgemen gerekir. İşte grid tam
+bunu yapar.
+
+<PlannerRace algorithms={["astar"]} allowObstacleEdit={true} theme="lise" extent={3} />
+
+## Ne oldu
+
+`lib/robotics/planners/astar.ts` içindeki A* planlayıcısı, çalışma
+alanını sabit boyutlu küçük hücrelere (varsayılan 0.05 birim) böler.
+Her hücre bir "düğüm" olur. İki komşu hücre arasında geçiş yapmanın bir
+**maliyeti** vardır — düz komşuya geçmek 1 hücre-genişliği, çapraz
+komşuya geçmek √2 hücre-genişliği kadar maliyetlidir (Öklid mesafesi).
+
+Bir yolun toplam maliyeti, o yolu oluşturan tüm adımların maliyetlerinin
+toplamıdır:
+
+```
+maliyet(yol) = Σ mesafe(hücre[i], hücre[i+1])
+```
+
+Yukarıdaki sahnede "Yol uzunluğu" sütunu tam olarak bu toplamı gösteriyor.
+Hücre boyutu ne kadar küçük olursa yol o kadar gerçek düz çizgiye
+yaklaşır — ama hücre sayısı da o kadar artar, hesaplama o kadar yavaşlar.
+Bu bir ödünleşim (trade-off): hassasiyet ile hız arasında.
+
+## Gerçek dünyada
+
+Bir depoda robotların gezindiği zemin de aslında görünmez bir ızgaraya
+bölünmüştür — çevrim dışı programlama yazılımları haritayı hücrelere
+ayırıp planlamayı bu hücreler üzerinden yapar. Hücre boyutu ne kadar
+küçükse harita o kadar hassas ama planlama o kadar yavaş olur; mühendisler
+bu ikisi arasında bir denge noktası seçer.
+
+## Dene
+
+Başlangıç ile hedef arasına düz bir engel koy, robot çapraz mı yoksa
+düz mü hareket ederek dolanıyor gözlemle. Sonuç tablosundaki yol
+uzunluğunu, engel olmadan bulunan düz çizgi mesafesiyle (yaklaşık olarak
+gözünle) karşılaştır.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Çapraz bir hücreye geçmenin maliyeti neden düz bir hücreye geçmekten fazladır?",
+      secenekler: [
+        "Çapraz hareket yasak olduğu için aslında hiç kullanılmaz",
+        "Çapraz komşu daha uzakta olduğu için (Öklid mesafesi √2 kat)",
+        "Algoritma çapraz hareketi rastgele cezalandırdığı için",
+      ],
+      dogru: 1,
+      aciklama: "Bir hücrenin çapraz komşusu, düz komşusuna göre √2 ≈ 1.41 kat daha uzaktadır — maliyet gerçek mesafeyi yansıtır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Grid ve maliyeti gördün. Sıradaki ders, A*'ın bu maliyeti kullanarak
+gereksiz hücreleri nasıl atladığını (sezgisel fonksiyon) anlatıyor.

@@ -1,0 +1,81 @@
+---
+id: a-lise-doner-dogrusal-eklemler
+baslik: Döner (revolute) ve doğrusal (prismatic) eklemler
+hat: a-temeller
+seviye: lise
+sure: 10
+sira: 3
+onkosul:
+  - a-lise-koordinat-sistemleri
+kazanimlar:
+  - Döner ve doğrusal eklem arasındaki hareket farkını açıklayabilme
+  - Bir eklemin türünü, ürettiği hareketi gözlemleyerek belirleyebilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 2.2 (Degrees of Freedom of a Robot)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Bir kapı menteşesi ile bir çekmece, ikisi de "bir eksende" hareket eder
+— ama biri döner, diğeri kayar. Robot eklemleri de tam olarak bu iki
+aileden birine girer.
+
+<JointSliders robot="generic-prismatic" />
+
+## Ne oldu
+
+İki eklem türü vardır:
+
+- **Döner (revolute):** bir eksen etrafında AÇI değiştirir (derece/radyan
+  cinsinden ölçülür). Menteşe gibi. Bu platformdaki `generic-2dof`
+  kolunun her iki eklemi de döner.
+- **Doğrusal (prismatic):** düz bir hat boyunca UZUNLUK değiştirir
+  (metre cinsinden ölçülür). Çekmece gibi. Yukarıdaki kolun ikinci
+  eklemi doğrusal — birinci eklem onu döndürürken, ikinci eklem o
+  yönde ötelenir.
+
+Fark sadece görünüşte değil, ÖLÇÜ BİRİMİNDE de kendini gösterir:
+döner eklem kaydırıcısı derece gösterir, doğrusal eklem kaydırıcısı
+metre gösterir (yukarıdaki ikinci kaydırıcıya bak). Bu, sayının FİZİKSEL
+anlamının eklem türüne göre değiştiğini gösterir — 0.3 derece ile 0.3
+metre çok farklı şeylerdir.
+
+## Gerçek dünyada
+
+Çoğu endüstriyel kol (kaynak, boyama, montaj) tamamen dönel eklemlerden
+oluşur çünkü dönel motorlar daha kompakt ve dayanıklıdır. Ama kartezyen
+robotlar (bir önceki hattaki "robot türleri" dersini hatırla) tamamen
+doğrusal eklemlerden oluşur — 3B yazıcı kafası tam olarak böyle
+hareket eder, üç doğrusal eksende kayarak.
+
+## Dene
+
+Önce sadece birinci (döner) kaydırıcıyı oynat, kolun nasıl döndüğünü
+izle. Sonra sadece ikinci (doğrusal) kaydırıcıyı oynat — bu sefer ikinci
+parça, birinci parçaya DİK bir doğru boyunca uzayıp kısalıyor. İkisini
+birlikte oynatarak ucu istediğin bir noktaya götürmeyi dene.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Doğrusal (prismatic) bir eklemin kaydırıcısı neden derece değil metre gösterir?",
+      secenekler: [
+        "Rastgele bir tasarım tercihi olduğu için",
+        "Doğrusal eklem açı değil, düz bir hat boyunca uzunluk değiştirdiği için",
+        "Metre göstermek daha kolay hesaplandığı için",
+      ],
+      dogru: 1,
+      aciklama: "Doğrusal eklemin hareketi bir öteleme (translation) olduğu için doğal birimi uzunluktur (metre); açı, sadece döner eklemler için anlamlıdır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Eklem türlerini gördün. Sıradaki ders, tüm bu eklemlerin sonunda
+birleştiği tek bir noktayı — alet merkez noktasını (TCP) — tanıtıyor.

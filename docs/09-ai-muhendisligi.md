@@ -261,12 +261,12 @@ erken optimizasyon olur — henüz doğrulanacak yeterli düğüm yok.
 | Katmanlı CLAUDE.md (`content/`, `lib/robotics/`) | Faz 0 | Klasörler zaten oluşuyor, maliyeti yok |
 | `/plan-durumu` skill'i | Faz 0 | Her oturumda işe yarar, basit |
 | `fixture-generator` subagent | Faz 0 sonu | Python↔TS doğrulaması tam o an gerekiyor |
-| `.claude/rules/` (içerik kuralları) | Faz 1 | İçerik yazımı asıl o zaman başlıyor |
-| `/yeni-ders` skill'i | Faz 1 | İlk ders yazılırken şablon ihtiyacı doğar |
+| `.claude/rules/` (içerik kuralları) | **Kuruldu (Faz 2)** | `.claude/rules/content.md` — Faz 1'de planlanmıştı, fiilen Faz 2'de (25 yeni ders yazılırken) kuruldu |
+| `/yeni-ders` skill'i | **Kuruldu (Faz 2)** | `.claude/skills/yeni-ders/SKILL.md` |
 | `kalite-denetci` subagent'ı | **Kuruldu (Faz 1)** | `.claude/agents/kalite-denetci.md` — 14 derse karşı çalıştırıldı |
-| `ders-yazari` subagent'ı | Faz 1/2 (henüz kurulmadı) | Bu fazda dersler elle yazıldı; sonraki ders üretiminde kurulacak |
+| `ders-yazari` subagent'ı | **Kuruldu (Faz 2)** | `.claude/agents/ders-yazari.md` — Faz 2'nin 25 dersi yine elle yazıldı (motor + bileşen doğruluğu için sıkı kontrol gerekiyordu), ama subagent artık sonraki fazlar için hazır |
 | Kaynak-zorunluluğu hook'u | **Kuruldu (Faz 1)** | `.claude/hooks/check-lesson-frontmatter.mjs` |
-| Graph doğrulama script'i | Faz 2 | Yeterli ders sayısı birikince anlamlı olur |
+| Graph doğrulama script'i | **Kuruldu (Faz 2)** | `scripts/validate-content-graph.ts` — 39 dersle (14+11+14) ilk kez anlamlı hale geldi |
 
 Bu tabloyu `docs/03-yol-haritasi.md` ile birlikte oku — her faz bittiğinde
 bu doküman da güncellenir, hangi pratiğin gerçekten işe yaradığı, hangisinin

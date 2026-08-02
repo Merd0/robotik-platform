@@ -1,0 +1,84 @@
+---
+id: c-lise-engelden-kacinma
+baslik: Engelden kaçınmanın temel mantığı
+hat: c-planlama
+seviye: lise
+sure: 12
+sira: 3
+onkosul:
+  - c-lise-a-yildiz-sezgisel
+kazanimlar:
+  - Bir hücrenin "engelli" sayılması için hangi kontrolün yapıldığını açıklayabilme
+  - Engelin şeklinin (küre/kutu) çarpışma kontrolünü nasıl değiştirdiğini açıklayabilme
+kaynaklar:
+  - "Steven M. LaValle, Planning Algorithms, Cambridge University Press, 2006, Bölüm 5.3 (Collision Detection)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+Bir robota "şu noktaya git" demek kolay. Zor olan kısım, gitmesi
+YASAK olan noktaları tanımlamak — ve robotun bunu her adımda,
+saniyede binlerce kez kontrol etmesi.
+
+<PlannerRace algorithms={["astar"]} allowObstacleEdit={true} theme="lise" extent={3} />
+
+## Ne oldu
+
+`lib/robotics/collision.ts` içindeki `isPointFree` fonksiyonu tam olarak
+bu kontrolü yapar: bir nokta verildiğinde, sahnedeki her engeli tek tek
+kontrol eder.
+
+- **Küre engel:** noktanın engelin merkezine olan mesafesi yarıçaptan
+  küçük veya eşitse, nokta engelin içindedir.
+- **Kutu engel:** noktanın her ekseninde (x, y, z), merkeze olan
+  mesafenin o eksendeki yarı-genişlikten küçük veya eşit olması
+  gerekir — üçü BİRDEN sağlanırsa nokta kutunun içindedir.
+
+A*, ızgaradaki her hücreyi bu fonksiyonla test eder; sonuç "hayır, burada
+engel var" ise o hücreyi hiç değerlendirmez. Yukarıdaki sahnede
+eklediğin her engel, aslında arka planda bu iki kontrolden birine
+dönüşüyor.
+
+## Gerçek dünyada
+
+Endüstriyel robot hücrelerinde çarpışma kontrolü çok daha karmaşık
+şekiller (gerçek 3B mesh'ler) üzerinden yapılır, ama temel fikir aynıdır:
+"bu nokta/segment güvenli bölgede mi?" sorusu her zaman geometrik bir
+teste indirgenir. Basit şekiller (küre, kutu, silindir) gerçek zamanlı
+kontrolü hızlı tutmak için tercih edilir — karmaşık bir mesh'i her adımda
+test etmek çok daha yavaştır.
+
+## Dene
+
+Bu sahnede dokunarak eklediğin engellerin hepsi küre — çünkü tek
+tıklamayla yerleştirilebilen en basit şekil bu. (Kutu engeller de
+motorda tanımlı, ileri derslerde göreceksin.) Farklı büyüklükte bir
+"duvar" oluşturmak için art arda birkaç küre yerleştir, aralarında hiç
+boşluk kalmayacak şekilde bitiştir — A*'ın bunu tek parça bir engel gibi
+mi yoksa ayrı engeller gibi mi ele aldığını gözlemle.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir noktanın kutu engelin içinde sayılması için ne gerekir?",
+      secenekler: [
+        "Sadece bir eksende merkeze yakın olması",
+        "Her üç eksende de merkeze yarı-genişlikten daha yakın olması",
+        "Engelin tam merkezinde olması",
+      ],
+      dogru: 1,
+      aciklama: "Kutu testi üç eksenin HEPSİNİ birden kontrol eder (mantıksal VE) — biri bile sağlanmazsa nokta kutunun dışındadır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Şimdiye kadar hep 2 boyutlu bir düzlemde çalıştın. Üniversite
+seviyesinde bu düzlemin aslında ne temsil ettiğini — konfigürasyon
+uzayını — ele alacaksın.

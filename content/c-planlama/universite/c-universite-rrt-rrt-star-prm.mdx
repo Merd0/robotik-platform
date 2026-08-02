@@ -1,0 +1,110 @@
+---
+id: c-universite-rrt-rrt-star-prm
+baslik: "RRT, RRT*, PRM: örneklemeli planlama"
+hat: c-planlama
+seviye: universite
+sure: 20
+sira: 3
+onkosul:
+  - c-universite-carpisma-kontrolu
+kazanimlar:
+  - RRT'nin rastgele ağaç genişletmesinin nasıl çalıştığını açıklayabilme
+  - RRT*'ın rewire adımıyla yol maliyetini nasıl düşürdüğünü açıklayabilme
+  - PRM'in RRT'den farkını (önce yol haritası kurma, sonra sorgulama) ayırt edebilme
+kaynaklar:
+  - "Steven M. LaValle, Planning Algorithms, Cambridge University Press, 2006, Bölüm 5 (Sampling-Based Motion Planning)"
+  - "S. Karaman & E. Frazzoli, 'Sampling-based algorithms for optimal motion planning', The International Journal of Robotics Research, 2011 (RRT*)"
+  - "L. E. Kavraki, P. Svestka, J.-C. Latombe, M. H. Overmars, 'Probabilistic roadmaps for path planning in high-dimensional configuration spaces', IEEE Transactions on Robotics and Automation, 1996 (PRM)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+RRT'ye "en kısa yolu bul" demezsin — "rastgele dene, dene, dene, sonunda
+bir yol bulursan bul" dersin. Garip bir strateji gibi görünür. Ama yüksek
+boyutlu uzaylarda (bir robot kolunun 6 eklemi gibi) A*'ın ızgarası
+patlarken, bu "rastgele deneme" stratejisi hâlâ çalışır.
+
+<PlannerRace algorithms={["rrt", "rrt_star"]} theme="universite" extent={3} />
+
+## Ne oldu
+
+**RRT (Rapidly-exploring Random Tree):** start noktasından bir ağaç
+büyütür. Her adımda:
+
+1. Uzayda rastgele bir nokta örnekle (küçük bir olasılıkla doğrudan hedefi seç — `goalBias`)
+2. Ağaçtaki en yakın düğümü bul
+3. O düğümden örneklenen noktaya doğru sabit bir adım (`stepSize`) kadar ilerle
+4. Yeni nokta ve oraya giden segment çarpışmasızsa ağaca ekle
+5. Yeni düğüm hedefe yeterince yakınsa (`goalTolerance`) bitir
+
+Bu, `lib/robotics/planners/rrt.ts` içindeki `plan()` fonksiyonunun birebir
+akışı. Bulduğu yol genelde **verimsiz** görünür — zikzaklı, gereksiz uzun.
+Çünkü RRT optimal yolu değil, *bir* yolu arar, mümkün olduğunca hızlı.
+
+**RRT\*:** Aynı rastgele genişlemeyi yapar, ama iki ek adımla yolu
+zamanla kısaltır:
+
+- Yeni düğümü eklerken, en yakın komşu yerine **en düşük maliyetli**
+  komşuyu ebeveyn seçer (`rewireRadius` içindeki komşular taranır)
+- Ekledikten sonra, o komşulardan hangileri yeni düğüm üzerinden daha
+  ucuza bağlanabilir diye kontrol eder ve gerekirse onları **yeniden
+  bağlar (rewire)**
+
+RRT hedefe ulaşır ulaşmaz durur. RRT* hedefe ulaştıktan SONRA da aramaya
+devam eder — amaç artık "bir yol" değil, "giderek kısalan bir yol". Yukarıdaki
+sahnede iki algoritmayı aynı engel düzeninde çalıştırıp sonuç tablosundaki
+"Yol uzunluğu" sütununu karşılaştır.
+
+**PRM (Probabilistic Roadmap):** RRT/RRT* "tek seferlik" planlayıcılardır —
+her start/goal çifti için ağacı baştan kurarlar. PRM farklı çalışır: önce
+uzayda rastgele çok sayıda nokta örnekleyip birbirine yakın olanları
+çarpışmasız kenarlarla bağlayarak bir "yol haritası" (roadmap) kurar —
+bu kurulum pahalıdır ama BİR KERE yapılır. Sonra herhangi bir start/goal
+çifti için bu hazır haritada en kısa yolu arar (A*'a benzer bir arama ile).
+Aynı sahnede çok sayıda farklı start/goal sorgusu yapılacaksa PRM RRT'den
+daha verimlidir; tek bir sorgu için RRT genelde daha hızlıdır. Bu platform
+şu an PRM'i çalıştırılabilir bir sahne olarak sunmuyor (bkz.
+`docs/03-yol-haritasi.md` Faz 2 kapsamı) — burada sadece RRT ailesiyle
+karşılaştırmalı olarak tanımı veriliyor.
+
+## Gerçek dünyada
+
+Yüksek serbestlik dereceli robotlar (6-7 eksenli kollar) için konfigürasyon
+uzayı 6-7 boyutludur; A*'ın grid'i bu boyutta pratik olarak kurulamaz
+(hücre sayısı boyutla üstel artar). Endüstriyel çevrim dışı programlama
+yazılımları ve ROS'un MoveIt hareket planlama kütüphanesi bu yüzden
+RRT/RRT* ailesini varsayılan planlayıcı olarak kullanır.
+
+## Dene
+
+Sahneye birkaç engel yerleştir (aralarında dar bir geçit bırak), sonra
+"Yarıştır"a bas. RRT'nin yolunun ne kadar zikzaklı olduğuna, RRT*'ınkinin
+ise daha düz bir çizgiye yaklaştığına dikkat et. Şimdi engelleri temizleyip
+tekrar yarıştır — açık alanda iki algoritma arasındaki fark küçülür mü,
+büyür mü? Neden?
+
+<Quiz
+  sorular={[
+    {
+      soru: "RRT* neden RRT'den daha uzun sürer ama genelde daha kısa bir yol bulur?",
+      secenekler: [
+        "RRT* daha fazla rastgele sayı ürettiği için",
+        "RRT* hedefe ulaştıktan sonra da aramaya devam edip komşuları yeniden bağladığı (rewire) için",
+        "RRT* farklı bir çarpışma kontrolü kullandığı için",
+      ],
+      dogru: 1,
+      aciklama: "RRT ilk çözümü bulunca durur. RRT* durmaz; giderek daha ucuz bağlantılar bularak yolu iyileştirir — bu ekstra iş zaman alır ama yol kalitesini artırır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+RRT ve RRT*'ı aynı sahnede çalıştırdın, birinin hızlı-kaba diğerinin
+yavaş-iyi olduğunu gördün. Sıradaki ders bu ödünleşimi (trade-off) daha
+sistemli ele alıyor: A*'ı da tabloya katıp üç algoritmayı birden karşılaştırıyor.

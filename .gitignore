@@ -7,6 +7,9 @@ out/
 next-env.d.ts
 *.tsbuildinfo
 
+# scripts/build-worker.mjs tarafından üretilir, kaynak değil
+public/workers/
+
 # Test/araç önbellekleri
 .turbo/
 coverage/

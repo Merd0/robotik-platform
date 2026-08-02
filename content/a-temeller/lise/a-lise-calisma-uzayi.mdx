@@ -1,0 +1,82 @@
+---
+id: a-lise-calisma-uzayi
+baslik: "Çalışma uzayı (workspace): robot nereye uzanabilir"
+hat: a-temeller
+seviye: lise
+sure: 12
+sira: 5
+onkosul:
+  - a-lise-tcp-kavrami
+  - b-ortaokul-erisemedigi-noktalar
+kazanimlar:
+  - Çalışma uzayının bir robotun TCP'sinin ulaşabildiği tüm noktaların kümesi olduğunu açıklayabilme
+  - Bir robotun çalışma uzayının şeklini (iç ve dış sınır) gözlemleyerek tarif edebilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 2 (konfigürasyon uzayı ve erişilebilir çalışma uzayı kavramı)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - IkTarget
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi bir robot kolunun "her yere" uzanabileceğini düşünür. Oysa
+her robotun görünmez bir sınırı vardır — hem çok uzak hem ŞAŞIRTICI
+ŞEKİLDE çok yakın noktalara ulaşamaz.
+
+<IkTarget robot="generic-2dof" />
+
+## Ne oldu
+
+**Çalışma uzayı (workspace)**, TCP'nin ulaşabildiği TÜM noktaların
+kümesidir. Bu kümenin iki sınırı vardır:
+
+- **Dış sınır:** kolun tam açıldığında (tüm bağlantılar düz bir
+  çizgide) ulaşabildiği en uzak nokta — bağlantı uzunluklarının toplamı
+  (`a1 + a2`)
+- **İç sınır:** kolun tam katlandığında bile geçemediği, robota çok
+  YAKIN bir bölge — iki bağlantı üst üste geldiğinde `|a1 − a2|` kadar
+  bir yarıçaplı, TCP'nin asla giremediği bir "delik"
+
+Yukarıdaki sahnede hedefi (kırmızı/turkuaz nokta) çok uzağa veya
+robotun tam merkezine yakın bir yere sürüklemeyi dene — nokta kırmızıya
+dönüp "ulaşılamıyor" der. Çalışma uzayı düz bir daire değil, bu iki
+sınır arasında kalan bir HALKA şeklindedir.
+
+## Gerçek dünyada
+
+Bir robot hücresi tasarlanırken, parçaların ve sabitleme noktalarının
+robotun çalışma uzayının İÇİNDE (ama iç sınırın da dışında) kalması
+gerekir. Bir mühendis parçayı robota çok yakın yerleştirirse, robot
+teorik olarak "o yöne bakıyor" olsa bile fiziksel olarak oraya
+ulaşamayabilir — tam da iç sınır boşluğu yüzünden.
+
+## Dene
+
+Hedefi robotun tam üzerine (merkeze çok yakın) götürmeye çalış — kırmızı
+uyarıyı gör. Şimdi hedefi kolun toplam uzunluğundan biraz daha uzağa
+götür — yine ulaşılamaz. İkisi de "ulaşılamıyor" diyor ama sebepleri
+farklı; hangisi hangisi?
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir robot kolunun TAM MERKEZİNE çok yakın noktalara neden ulaşılamayabilir?",
+      secenekler: [
+        "Motor orada çalışmadığı için",
+        "Bağlantılar üst üste gelse bile aralarındaki fark kadar bir iç boşluk (iç sınır) kaldığı için",
+        "Güvenlik yazılımı o bölgeyi engellediği için",
+      ],
+      dogru: 1,
+      aciklama: "İki bağlantı birbirine ne kadar yaklaşırsa yaklaşsın, uzunlukları farklıysa (a1 ≠ a2) TCP merkeze |a1−a2| kadar bir mesafeden daha fazla yaklaşamaz.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Ortaokul ve lise seviyesinde robotun eksenlerini, eklemlerini ve
+sınırlarını sezgisel olarak gördün. Üniversite seviyesinde bunların
+hepsini matematiksel bir zincir (kinematik zincir) olarak birleştireceksin.

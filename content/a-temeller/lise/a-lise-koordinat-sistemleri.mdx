@@ -1,0 +1,83 @@
+---
+id: a-lise-koordinat-sistemleri
+baslik: "Koordinat sistemleri: dünya, taban, alet"
+hat: a-temeller
+seviye: lise
+sure: 12
+sira: 2
+onkosul:
+  - a-lise-serbestlik-derecesi
+kazanimlar:
+  - Dünya, taban ve alet koordinat sistemlerini birbirinden ayırt edebilme
+  - Bir konumun hangi çerçeveye göre verildiğinin neden önemli olduğunu açıklayabilme
+kaynaklar:
+  - "ABB RAPID Instructions, Functions and Data Types Reference Manual — koordinat sistemleri (world, base, tool) bölümü"
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 3.1 (Rigid-Body Motions)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+"Kutuyu 30 santim ileri götür" dedin. Ama İLERİ neye göre? Senin
+baktığın yöne göre mi, kutunun kendi yönüne göre mi, yoksa odanın
+duvarına göre mi? Bir robota konum söylerken bu soru asla atlanamaz.
+
+<JointSliders robot="generic-6dof" />
+
+## Ne oldu
+
+Robotik kodda (ör. ABB RAPID) konumlar hep bir **çerçeveye (frame)**
+göre verilir, üç tanesi en sık kullanılır:
+
+- **Dünya (world) çerçevesi:** sahnedeki SABİT referans, genelde
+  robotun kurulduğu zeminin bir köşesi. Değişmez.
+- **Taban (base) çerçevesi:** robotun kendi tabanına bağlı çerçeve.
+  Robot hareket ettirilirse (raya bindirilmiş bir robotsa) dünya
+  çerçevesine göre kayar, ama robotun EKLEMLERİNE göre sabittir.
+- **Alet (tool) çerçevesi:** robotun ucuna takılı aletin (kaynak
+  ucu, tutucu vb.) kendi çerçevesi — robot hareket ettikçe dünyaya
+  göre sürekli değişir, ama alete göre sabittir.
+
+Yukarıdaki `forwardKinematics` fonksiyonunun döndürdüğü `jointPositions`,
+robotun TABAN çerçevesine göre hesaplanır — kaydırıcıları oynattığında
+gördüğün koordinatlar bu çerçeveye göredir.
+
+## Gerçek dünyada
+
+Bir kaynak robotuna "elektrotu 5 mm ileri it" komutu, alet çerçevesine
+göre verilirse robot elektrotun UCU yönünde ilerler — parça hangi açıda
+dursa dursun. Aynı komut dünya çerçevesine göre verilseydi, robot
+parçanın açısına göre YANLIŞ yöne gidebilirdi. Bu yüzden ABB RAPID gibi
+diller her hareket komutunda hangi çerçevenin kullanıldığını açıkça
+belirtir.
+
+## Dene
+
+Kolu oynat ve son eklemi (uç, alet çerçevesine en yakın eklem)
+izle — onun konumu her eklem değişiminde değişiyor. Şimdi ilk eklemi
+(taban çerçevesine en yakın) düşün: bu eklemin KENDİ konumu, diğer
+eklemler ne yaparsa yapsın hiç değişmiyor. Neden?
+
+<Quiz
+  sorular={[
+    {
+      soru: "Alet (tool) çerçevesine göre verilen bir hareket komutunun avantajı nedir?",
+      secenekler: [
+        "Robotun hızını otomatik artırır",
+        "Robot, aletin kendi yönüne göre hareket eder — parçanın dünyaya göre açısı fark etmez",
+        "Sadece dünya çerçevesinden daha az hesaplama gerektirir",
+      ],
+      dogru: 1,
+      aciklama: "Alet çerçevesi robotun ucuna bağlı olduğu için, komut hep aletin BAKTIĞI yöne göre yorumlanır — bu, açılı yüzeylerde çalışırken kritik bir avantajdır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Şimdiye kadar hep döner eklemleri oynattın. Sıradaki ders farklı bir
+eklem türünü — doğrusal (prismatic) eklemi — tanıtıyor.

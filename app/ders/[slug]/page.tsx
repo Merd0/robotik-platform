@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
+import remarkGfm from "remark-gfm";
 import { getAdjacentLessons, getAllLessons, getLessonBySlug, getPrerequisites } from "@/lib/content";
 import { mdxComponents } from "@/components/interactive";
 import { LessonNav } from "@/components/ui/LessonNav";
@@ -27,7 +28,11 @@ export default async function DersPage({ params }: DersPageProps) {
     // incelemesinden geçiyor, bkz. docs/08-guvenlik-sertlestirme.md), o
     // yüzden kapatıyoruz. blockDangerousJS varsayılan açık kalır (eval vb.
     // hâlâ engellenir).
-    options: { parseFrontmatter: false, blockJS: false },
+    options: {
+      parseFrontmatter: false,
+      blockJS: false,
+      mdxOptions: { remarkPlugins: [remarkGfm] },
+    },
   });
 
   const prerequisites = getPrerequisites(lesson);

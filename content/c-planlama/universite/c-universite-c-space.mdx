@@ -1,0 +1,91 @@
+---
+id: c-universite-c-space
+baslik: Konfigürasyon uzayı (C-space) ve neden gerekli
+hat: c-planlama
+seviye: universite
+sure: 16
+sira: 1
+onkosul:
+  - c-lise-engelden-kacinma
+kazanimlar:
+  - İş uzayı (workspace) ile konfigürasyon uzayı (C-space) arasındaki farkı açıklayabilme
+  - Bu platformdaki planlayıcıların neden doğrudan "nokta" üzerinde çalıştığını C-space kavramıyla ilişkilendirebilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 2 (Configuration Space)"
+  - "Steven M. LaValle, Planning Algorithms, Cambridge University Press, 2006, Bölüm 4 (The Configuration Space)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+Yukarıdaki sahnede planlanan şey aslında bir "nokta". Ama gerçek bir
+robot kolu bir nokta değil — gövdesi, kolları, eklemleri olan, hacim
+kaplayan bir nesnedir. O zaman bu platform boyunca neden hep basit bir
+nokta hareket ettirdik?
+
+<PlannerRace algorithms={["astar"]} allowObstacleEdit={true} theme="universite" extent={3} />
+
+## Ne oldu
+
+Burada bir kavram kaykırması var ve bilerek yapıldı: planlayıcılar
+**iş uzayında (workspace)** değil, **konfigürasyon uzayında (C-space)**
+çalışır. C-space'in her noktası, robotun TÜM eklemlerinin bir anlık
+durumunu (konfigürasyonunu) temsil eder — robotun kendisi bu uzayda tek
+bir noktadır, ne kadar karmaşık şekle sahip olursa olsun.
+
+- Bir düzlemsel 2 eklemli kol için C-space 2 boyutludur: (θ1, θ2).
+- Bir 6 eksenli endüstriyel kol için C-space 6 boyutludur.
+- Bu platformdaki `Vec3` tipi (x, y, z), C-space'i **3 boyuta kadar**
+  temsil edebilen genel bir gösterimdir — Hat C derslerinde x, y
+  doğrudan bir mobil robotun düzlemsel konumunu (veya basitleştirilmiş
+  bir 2-eklem konfigürasyonunu) temsil ediyor.
+
+Bu dönüşümün faydası şu: robotun gerçek geometrisi ne kadar karmaşık
+olursa olsun (kol, gövde, tekerlek fark etmez), PLANLAMA ALGORİTMASI
+her zaman aynı basit soruyu sorar: "bu nokta (konfigürasyon) serbest mi?"
+Geometrinin karmaşıklığı çarpışma kontrolüne (`isPointFree`) devredilir,
+planlayıcının kendisi hep aynı kalır — `lib/robotics/planners/base.ts`
+içindeki `Planner` arayüzünün `isFree: CollisionChecker` parametresi tam
+bunu sağlıyor.
+
+## Gerçek dünyada
+
+Bir 6 eksenli robot kolu için C-space 6 boyutludur; A*'ın ızgara
+yaklaşımı 6 boyutta pratik olarak kurulamaz (hücre sayısı üstel artar) —
+bu yüzden yüksek boyutlu C-space'lerde RRT/RRT* ailesi tercih edilir
+(bkz. bir sonraki dersler). Düşük boyutlu (2-3B) mobil robot
+planlamasında ise A*'ın ızgarası hâlâ pratiktir — bu platformun Hat C
+derslerinde A*'ı hep düşük boyutlu sahnelerde gördün, bu tesadüf değil.
+
+## Dene
+
+Sahnede "nokta"nın aslında neyi temsil ettiğini düşünerek bir engel
+düzeni kur: engelleri, gerçek bir odadaki mobilyalar gibi değil, bir
+robot kolunun İKİ EKLEMİNİN birlikte alamayacağı açı kombinasyonları
+gibi hayal etmeye çalış. Bu zihinsel sıçrama ilk seferde garip gelir —
+normaldir.
+
+<Quiz
+  sorular={[
+    {
+      soru: "C-space'in her noktası neyi temsil eder?",
+      secenekler: [
+        "Robotun uç noktasının 3B konumunu",
+        "Robotun TÜM eklemlerinin o andaki açı/konum kombinasyonunu",
+        "Sahnedeki bir engelin merkezini",
+      ],
+      dogru: 1,
+      aciklama: "C-space'te robot, ne kadar karmaşık olursa olsun, tek bir noktayla temsil edilir — o nokta tüm eklemlerin birlikte aldığı değerdir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+C-space'te bir noktanın "serbest" olup olmadığına nasıl karar
+verildiğini (nokta, segment ve hacim testleri) bir sonraki derste daha
+yakından göreceksin.

@@ -1,0 +1,66 @@
+---
+id: a-ortaokul-robot-ile-makine-farki
+baslik: Robot ile makine arasındaki fark
+hat: a-temeller
+seviye: ortaokul
+sure: 8
+sira: 4
+onkosul:
+  - a-ortaokul-robot-turleri
+kazanimlar:
+  - Programlanabilirlik ve çok eksenli hareketin robotu sıradan makineden ayıran özellikler olduğunu açıklayabilme
+  - Verilen bir örneğin robot sayılıp sayılmadığını bu kritere göre değerlendirebilme
+kaynaklar:
+  - "ISO 8373:2021, Robots and robotic devices — Vocabulary, madde 3.1 (robot tanımı)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi "makinesi olan her şey robottur" sanır. Bir çamaşır makinesini
+düşün: içinde motor var, program var, karmaşık bir döngü izliyor. Peki
+o bir robot mu?
+
+<JointSliders robot="generic-2dof" />
+
+## Ne oldu
+
+Hayır — çamaşır makinesi robot SAYILMAZ, çünkü tek bir sabit hareketi
+(tamburu döndürme) tekrarlar; farklı eksenler arasında YENİDEN
+PROGRAMLANABİLİR şekilde hareket etmez. Robotu tanımlayan iki şart
+birlikte gerekir:
+
+1. **Programlanabilirlik:** aynı donanımla farklı görevler/hareketler
+   tanımlanabilmeli (yukarıdaki kolu istediğin açılara götürebilmen gibi)
+2. **Çok eksenli hareket:** en az iki bağımsız eksende hareket
+   edebilmeli
+
+Çamaşır makinesi birinci şartı kısmen sağlar ama ikinciyi sağlamaz —
+tek bir dönme ekseni vardır ve o eksenin hareketi değiştirilemez, sadece
+hızı/süresi ayarlanır. Yukarıdaki kol ikisini de sağlar: iki ekseni var
+ve her ikisini de istediğin gibi programlayabiliyorsun (kaydırıcılarla).
+
+## Gerçek dünyada
+
+Bir CNC frezeleme makinesi de aslında bu tanıma uyar — üç veya daha
+fazla eksende programlanabilir şekilde hareket eder, bu yüzden birçok
+mühendis onu da bir robot (kartezyen tipte) sayar. Sınır çizgisi bazen
+tartışmalıdır, ama "programlanabilir + çok eksenli hareket" ölçütü iyi
+bir başlangıç noktasıdır.
+
+## Dene
+
+Şu üç şeyi düşün ve her biri için "robot mu, değil mi" karar ver:
+otomatik kapı, bir asansör, uzaktan kumandalı bir oyuncak araba. Hangisi
+her iki şartı da (programlanabilirlik + çok eksenli hareket)
+sağlıyor?
+
+## Sonraki
+
+Ortaokul seviyesinde robotun ne olduğunu, eksenleri ve türlerini
+gördün. Lise seviyesinde bu kavramları sayılarla (serbestlik derecesi,
+koordinat sistemleri) daha kesin hale getireceksin.

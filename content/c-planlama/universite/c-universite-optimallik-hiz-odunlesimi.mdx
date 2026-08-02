@@ -1,0 +1,92 @@
+---
+id: c-universite-optimallik-hiz-odunlesimi
+baslik: Optimallik ve hız arasındaki ödünleşim
+hat: c-planlama
+seviye: universite
+sure: 18
+sira: 4
+onkosul:
+  - c-universite-rrt-rrt-star-prm
+kazanimlar:
+  - "Tam (complete), optimal ve asimptotik optimal terimlerini planlama bağlamında ayırt edebilme"
+  - Üç algoritmanın (A*, RRT, RRT*) bu üç özellik açısından nasıl konumlandığını karşılaştırabilme
+kaynaklar:
+  - "S. Karaman & E. Frazzoli, 'Sampling-based algorithms for optimal motion planning', The International Journal of Robotics Research, 30(7), 2011"
+  - "Steven M. LaValle, Planning Algorithms, Cambridge University Press, 2006, Bölüm 5.5 (Which Approach Should Be Used?)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+Üç planlayıcıyı aynı sahnede çalıştırıp süre ve yol uzunluğu sütunlarını
+yan yana koyacaksın. "Hangisi en iyisi?" sorusunun tek bir cevabı yok —
+çünkü "iyi" üç farklı şeyi ölçebilir.
+
+<PlannerRace algorithms={["astar", "rrt", "rrt_star"]} allowObstacleEdit={true} theme="universite" extent={3} />
+
+## Ne oldu
+
+Planlama algoritmalarını karşılaştırırken üç ayrı özellik kullanılır:
+
+- **Tamlık (completeness):** çözüm varsa algoritma onu MUTLAKA bulur mu?
+  A*, ızgara çözünürlüğü sınırları içinde tamdır. RRT olasılıksal
+  tamdır (probabilistically complete) — iterasyon sayısı sonsuza
+  giderse çözümü bulma olasılığı 1'e yaklaşır, ama sonlu bir denemede
+  garanti yoktur.
+- **Optimallik:** bulunan yol, mümkün olan EN İYİ (en kısa/en ucuz) yol
+  mudur? A*, doğru bir sezgiselle (fazla iyimser olmayan) ızgara
+  çözünürlüğü dahilinde optimaldir. RRT optimal DEĞİLDİR — ilk bulduğu
+  yolda durur.
+- **Asimptotik optimallik:** RRT* tam anlamıyla optimal değildir ama
+  iterasyon sayısı arttıkça bulduğu yolun maliyeti optimal yola
+  YAKINSAR (Karaman & Frazzoli, 2011). Bu, RRT'nin RRT*'a neden rewire
+  adımıyla dönüştürüldüğünü açıklayan matematiksel garantidir.
+
+Sonuç tablosundaki sayılar bu üç kavramın somut karşılığı: A*'ın yol
+uzunluğu (verilen ızgara çözünürlüğünde) en kısa olacaktır; RRT en hızlı
+ama en uzun; RRT* ikisinin arasında, daha fazla iterasyon verirsen A*'a
+yaklaşacak bir sonuç üretir.
+
+## Gerçek dünyada
+
+Bir üretim hattında saniyeler içinde tekrar tekrar çalışan bir robot
+için yol uzunluğundaki her santimetre biriktikçe önemlidir — orada
+optimallik değerlidir, hesaplama süresi (offline yapıldığı için) daha az
+kritiktir. Ama bir mobil robotun ÇALIŞMA SIRASINDA aniden beliren bir
+engelden kaçması gerekiyorsa, "en iyi" yol değil "yeterince iyi ama
+HEMEN bulunan" yol hayat kurtarır. Bu yüzden gerçek sistemler genelde
+RRT ailesini "hızlı ilk tepki", A* benzeri yöntemleri "arka planda
+iyileştirme" için birlikte kullanır.
+
+## Dene
+
+Aynı engel düzeninde üç algoritmayı birkaç kez çalıştır. RRT*'ın yol
+uzunluğunun A*'ınkine ne kadar yaklaştığını not et. Şimdi zihninde bir
+deney kurgula: RRT*'ın iterasyon sayısı çok daha fazla olsaydı (bu
+sahnede sabit), yol uzunluğu A*'ınkine daha mı yaklaşırdı, yoksa hiç
+değişmez miydi?
+
+<Quiz
+  sorular={[
+    {
+      soru: "RRT'nin 'olasılıksal tam' (probabilistically complete) olması ne anlama gelir?",
+      secenekler: [
+        "Her zaman en kısa yolu bulur",
+        "Bir çözüm varsa, iterasyon sayısı arttıkça onu bulma olasılığı 1'e yaklaşır ama sonlu denemede garanti yoktur",
+        "Asla başarısız olmaz",
+      ],
+      dogru: 1,
+      aciklama: "Olasılıksal tamlık bir garanti değil, bir yakınsama özelliğidir — sonsuz zaman verilirse çözüm bulunur, ama pratikte sınırlı iterasyonla (ör. çok az deneme hakkı verilirse) başarısızlık hâlâ mümkündür.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu üç kavramı (tamlık, optimallik, hız) somut bir deneyde birleştirip
+kendi engel düzenini kurarak hangi algoritmanın hangi görev için daha
+uygun olduğuna kendin karar vereceksin.

@@ -1,0 +1,90 @@
+---
+id: c-universite-yol-duzlestirme
+baslik: Yol düzleştirme (path smoothing)
+hat: c-planlama
+seviye: universite
+sure: 14
+sira: 6
+onkosul:
+  - c-universite-algoritma-karsilastirma-deneyi
+kazanimlar:
+  - RRT ailesinin ürettiği yolların neden doğası gereği zikzaklı olduğunu açıklayabilme
+  - Yol düzleştirmenin temel fikrini (kısayol/shortcutting) tarif edebilme
+kaynaklar:
+  - "Steven M. LaValle, Planning Algorithms, Cambridge University Press, 2006, Bölüm 5.5.2 (Path Smoothing)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+RRT'nin bulduğu yolu insan eliyle çizseydin, muhtemelen çok daha az
+köşeli, daha akıcı bir çizgi çizerdin. Bir insan neden bir algoritmadan
+daha "zevkli" bir yol çizer?
+
+<PlannerRace algorithms={["rrt"]} allowObstacleEdit={true} theme="universite" extent={3} />
+
+## Ne oldu
+
+RRT'nin ürettiği yol, ağacın nasıl büyüdüğünü birebir yansıtır: her
+düğüm, rastgele bir örneğe doğru sabit bir `stepSize` kadar atılan bir
+adımdır. Yol bu adımların ZİNCİRİDİR — ağacın kendisi optimum bir çizgi
+aramadığı için, yol da gereksiz sapmalar, küçük geri dönüşler içerebilir.
+
+Bu platform şu an bir düzleştirme algoritması ÇALIŞTIRMIYOR (bkz.
+`docs/03-yol-haritasi.md` Faz 2 kapsamı) — ama fikri basittir, **kısayol
+(shortcutting)** yöntemiyle özetlenebilir:
+
+1. Yoldaki iki rastgele noktayı (aralarında başka düğümler olsun) seç
+2. Bu iki nokta arasındaki DOĞRU çizginin çarpışmasız olup olmadığını
+   kontrol et (`isSegmentFree` ile — bir önceki derste gördüğün aynı test)
+3. Çarpışmasızsa, aradaki tüm zikzaklı düğümleri at, doğrudan bu iki
+   noktayı birleştir
+4. Bunu birçok kez tekrarla; yol giderek kısalır ve düzleşir
+
+RRT*'ın rewire adımı da benzer bir etki yaratır (gördüğün gibi RRT*'ın
+yolu RRT'ninkinden daha düzdü) ama düzleştirme AYRI bir son-işlem
+(post-processing) adımı olarak da uygulanabilir — hatta A*'ın ızgara
+kaynaklı "merdiven basamağı" görünümlü yollarına bile uygulanabilir.
+
+## Gerçek dünyada
+
+Bir robot koluna zikzaklı bir yörünge göndermek, gereksiz ivme
+değişimlerine (sarsıntıya) ve daha fazla enerji tüketimine yol açar.
+Endüstriyel offline programlama yazılımları, RRT benzeri bir planlayıcı
+bir yol bulduktan sonra bu yolu MUTLAKA düzleştirir/yumuşatır —
+`b-kinematik` hattındaki hız ve ivme profilleri dersinde gördüğün yamuk
+profil/S-eğrisi mantığı da aslında bu düzleştirmenin bir başka
+biçimidir: konumda değil hızda yumuşatma.
+
+## Dene
+
+Sahnede engelli bir düzende RRT çalıştır, yola bak: kaç tane "gereksiz"
+köşe sayabiliyorsun? Zihninde, yol üzerindeki uzak iki noktayı düz bir
+çizgiyle birleştirmeyi dene (kağıt-kalemle üstüne çizebilirsin) — çizgi
+bir engelin içinden mi geçiyor, yoksa güvenli mi?
+
+<Quiz
+  sorular={[
+    {
+      soru: "Kısayol (shortcutting) yöntemi bir yol segmentini ne zaman kısaltır?",
+      secenekler: [
+        "Her zaman, kontrol etmeden",
+        "İki nokta arasındaki doğru çizgi çarpışmasızsa",
+        "Sadece yolun başlangıcında",
+      ],
+      dogru: 1,
+      aciklama: "Kısayol, iki noktayı birleştiren doğrudan çizginin gerçekten güvenli olduğunu segment testiyle doğruladıktan SONRA aradaki zikzaklı düğümleri atar — kontrolsüz kısaltma çarpışmaya yol açabilir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Hat C burada tamamlanıyor — labirentte yol bulmaktan, C-space'e,
+örneklemeli planlamaya ve yol kalitesine kadar geldin. Hat A'da robotun
+KENDİSİNİN (eksenleri, koordinat sistemleri, mimarisi) temellerine
+dönebilirsin.

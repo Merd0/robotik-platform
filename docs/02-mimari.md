@@ -188,6 +188,17 @@ TypeScript matematiği doğru mu? Üç katman:
   malzeme kullan.
 - Planlama algoritmaları ana iş parçacığını (main thread) kilitlemesin;
   RRT gibi uzun sürenler Web Worker içinde çalışsın.
+
+  **Worker nasıl derleniyor (Faz 2'de karar verildi):** Next.js'in kendi
+  `new Worker(new URL('./x.ts', import.meta.url))` desteği bu projede (Next
+  16.2, hem Turbopack hem webpack) güvenilir değil — derlenen worker
+  chunk'ına gerçek kod hiç girmiyor, boş/eksik çıkıyordu (statik export'ta
+  worker isteği sonsuza kadar "pending" kalıyordu). Bunun yerine
+  `lib/workers/plannerWorker.ts`, `scripts/build-worker.mjs` içinde esbuild
+  ile önceden (dev/build başlamadan, `predev`/`prebuild` npm script'iyle)
+  tek bir klasik (non-module) script'e derlenip `public/workers/` altına
+  yazılıyor; bileşen ona sabit bir yoldan (`new Worker("/workers/planner-worker.js")`)
+  bağlanıyor. `public/workers/` gitignore'da — kaynak değil, üretilen dosya.
 - İlk yükleme 200 KB JS altında kalsın; 3D ve Pyodide tembel yüklensin.
 - Mobilde çalışmalı — Türkiye'de öğrencilerin çoğu telefondan girecek.
   Dokunmatik kontroller ilk sınıf vatandaş.

@@ -1,0 +1,81 @@
+---
+id: a-lise-tcp-kavrami
+baslik: Alet merkez noktası (TCP) kavramı
+hat: a-temeller
+seviye: lise
+sure: 10
+sira: 4
+onkosul:
+  - a-lise-doner-dogrusal-eklemler
+kazanimlar:
+  - TCP'nin (tool center point) robotun son ekleminden farklı bir nokta olabileceğini açıklayabilme
+  - TCP'nin neden görevden göreve değişebildiğini örneklerle açıklayabilme
+kaynaklar:
+  - "ABB RAPID Instructions, Functions and Data Types Reference Manual — tooldata ve TCP tanımı"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Yukarıdaki kolun ucundaki eklem (turkuaz nokta), robotun "eli" gibi
+düşünülebilir. Ama gerçek bir robota bir kaynak elektrotu, bir vakumlu
+tutucu ya da 40 santim uzunluğunda bir sprey tabancası taksan, işi
+YAPAN nokta artık o eklemin kendisi değildir.
+
+<JointSliders robot="generic-6dof" />
+
+## Ne oldu
+
+**Alet merkez noktası (Tool Center Point, TCP)**, robotun kontrol ettiği
+GERÇEK çalışma noktasıdır — genelde son eklemin kendisi değil, ona
+takılı aletin UCUDUR. Bu platformdaki `endEffector` değeri (yukarıda
+kaydırıcıların altında görebileceğin uç nokta), aleti olmayan "çıplak"
+bir robot için son eklemin konumuyla aynıdır. Ama gerçekte:
+
+- Boş bir flanş (alet takılı değil) için TCP = son eklemin konumu
+- 20 cm'lik bir tutucu takılıysa, TCP = son eklem konumu + 20 cm (aletin
+  uzattığı yönde)
+
+Bu yüzden bir robota program yazmadan önce **TCP tanımlama (tool
+calibration)** yapılır — robota "alet ucun, son eklemden şu kadar
+uzakta ve şu yönde" denir. Bu tanım yanlışsa, robot doğru açılara
+gitse bile GERÇEK alet ucu istenen noktaya varmaz.
+
+## Gerçek dünyada
+
+Bir kaynak hücresinde aynı robot, elektrot değiştirildiğinde (aşınıp
+yenisiyle değiştirildiğinde, ki uzunluğu birkaç milimetre farklı
+olabilir) TCP tanımı da güncellenir — aksi halde kaynak dikişi birkaç
+milimetre kayar. ABB RAPID'de bu `tooldata` adlı bir veri yapısıyla
+tanımlanır ve her hareket komutu hangi `tooldata`yı kullandığını belirtir.
+
+## Dene
+
+Kolu oynatıp uç noktanın konumuna bak. Şimdi zihninde bu uca 30 santim
+uzunluğunda düz bir çubuk ekle (aynı yönde uzasın) — çubuğun UCU şimdi
+nerede olurdu? Kolun açısı değiştikçe bu hayali nokta nasıl hareket
+ederdi?
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir robota uzun bir alet taktığında ne değişmelidir?",
+      secenekler: [
+        "Hiçbir şey, robot otomatik anlar",
+        "TCP tanımı — robota alet ucunun son eklemden ne kadar uzakta olduğu söylenmeli",
+        "Sadece eklem limitleri",
+      ],
+      dogru: 1,
+      aciklama: "Robot, alet takılı olduğunu KENDİLİĞİNDEN bilemez. TCP tanımı (tool calibration) yapılmazsa, robot doğru açılara gitse bile gerçek alet ucu yanlış yerde olur.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+TCP'nin robotun ULAŞABİLECEĞİ noktalarla sınırlı olduğunu biliyorsun.
+Sıradaki ders bu sınırı — çalışma uzayını — ele alıyor.

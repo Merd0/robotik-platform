@@ -1,0 +1,73 @@
+---
+id: c-ortaokul-labirentte-yol-bulma
+baslik: Labirentte yol bulma — robot nasıl karar verir
+hat: c-planlama
+seviye: ortaokul
+sure: 8
+sira: 1
+onkosul: []
+kazanimlar:
+  - Bir robotun engellerle dolu bir alanda hedefe giden bir yol aradığını gözlemleyebilme
+  - Robotun "engele değmeden ilerleme" kuralını uyguladığını fark edebilme
+kaynaklar:
+  - "Steven M. LaValle, Planning Algorithms, Cambridge University Press, 2006, Bölüm 2 (Discrete Planning)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+Bir arkadaşını gözlerini kapatıp bir odada yürüterek yönlendirdiğini
+düşün: "iki adım ileri, sağa dön, dur." Şimdi bunu bir robota yaptırmak
+istiyorsun — ama robot senin gibi odayı görüp anlık karar veremez. Önce
+BAŞTAN SONA bir plan çıkarması gerekiyor.
+
+<PlannerRace algorithms={["astar"]} allowObstacleEdit={true} theme="ortaokul" extent={2.6} />
+
+## Ne oldu
+
+Yeşil nokta robotun başlangıcı, kırmızı nokta hedefi. Sahneye dokunarak
+engel koydun, robot bunları görmeden önce yolunu hesapladı. Çizilen çizgi
+robotun bulduğu yol — engellere değmeden, adım adım hedefe giden bir
+rota.
+
+Robot bunu şansla bulmuyor: alanı küçük karelere böler, her karede
+"buradan geçebilir miyim?" diye sorar, sonra hedefe en makul şekilde
+ulaştıran kareleri birbirine bağlar. Bu yöntemin adı A* (okunuşu "A
+yıldız") — ileride bunu ayrıntılı göreceksin.
+
+## Gerçek dünyada
+
+Depo robotları (ör. Amazon'un raflar arasında dolaşan robotları) tam
+olarak bunu yapar: rafların arasındaki koridor haritasını bilirler, bir
+paketi almak için önce bir yol hesaplarlar, sonra o yolu izlerler. Yeni
+bir kutu koridora düşerse, robot yolunu yeniden hesaplar.
+
+## Dene
+
+Başlangıç ile hedef arasına, tek bir geçit bırakacak şekilde bir duvar
+öreriz gibi engeller diz. Robot geçidi bulabiliyor mu? Şimdi geçidi de
+kapat — "Çalıştır" düğmesine bas, ne olduğunu gözlemle.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Başlangıç ile hedef arasında hiçbir geçit yoksa (tamamen kapalı) ne olur?",
+      secenekler: [
+        "Robot duvarın içinden geçer",
+        "Sonuç tablosunda \"başarısız\" yazar, yol bulunamaz",
+        "Program çöker",
+      ],
+      dogru: 1,
+      aciklama: "Yol yoksa algoritma bunu dürüstçe bildirir: başarısız. Var olmayan bir yolu icat etmez.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Robot bir yol buldu — ama bulduğu yol her zaman EN KISA yol mu? Sıradaki
+ders tam bunu soruyor.

@@ -1,0 +1,261 @@
+{
+  "tolerance": 1e-09,
+  "cases": [
+    {
+      "name": "acik-alan",
+      "start": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "goal": [
+        0.3,
+        0.0,
+        0.0
+      ],
+      "obstacles": [],
+      "options": {
+        "resolution": 0.05,
+        "padding": 0.2,
+        "maxExpansions": 50000
+      },
+      "expected": {
+        "success": true,
+        "path": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.0,
+            0.0
+          ],
+          [
+            0.1,
+            0.0,
+            0.0
+          ],
+          [
+            0.15000000000000002,
+            0.0,
+            0.0
+          ],
+          [
+            0.2,
+            0.0,
+            0.0
+          ],
+          [
+            0.25,
+            0.0,
+            0.0
+          ],
+          [
+            0.3,
+            0.0,
+            0.0
+          ]
+        ],
+        "nodesExpanded": 7,
+        "algorithm": "astar"
+      }
+    },
+    {
+      "name": "kutu-etrafindan-dolan",
+      "start": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "goal": [
+        0.4,
+        0.0,
+        0.0
+      ],
+      "obstacles": [
+        {
+          "kind": "box",
+          "center": [
+            0.2,
+            0.0,
+            0.0
+          ],
+          "size": [
+            0.05,
+            0.15,
+            0.15
+          ]
+        }
+      ],
+      "options": {
+        "resolution": 0.05,
+        "padding": 0.2,
+        "maxExpansions": 50000
+      },
+      "expected": {
+        "success": true,
+        "path": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            -0.05,
+            0.0
+          ],
+          [
+            0.1,
+            -0.1,
+            0.0
+          ],
+          [
+            0.15000000000000002,
+            -0.15000000000000002,
+            0.0
+          ],
+          [
+            0.2,
+            -0.15000000000000002,
+            0.0
+          ],
+          [
+            0.25,
+            -0.15000000000000002,
+            0.0
+          ],
+          [
+            0.30000000000000004,
+            -0.1,
+            0.0
+          ],
+          [
+            0.35000000000000003,
+            -0.05,
+            0.0
+          ],
+          [
+            0.4,
+            0.0,
+            0.0
+          ]
+        ],
+        "nodesExpanded": 93,
+        "algorithm": "astar"
+      }
+    },
+    {
+      "name": "hedef-engelin-icinde",
+      "start": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "goal": [
+        0.2,
+        0.0,
+        0.0
+      ],
+      "obstacles": [
+        {
+          "kind": "sphere",
+          "center": [
+            0.2,
+            0.0,
+            0.0
+          ],
+          "size": [
+            0.1
+          ]
+        }
+      ],
+      "options": {
+        "resolution": 0.05,
+        "padding": 0.2,
+        "maxExpansions": 50000
+      },
+      "expected": {
+        "success": false,
+        "path": [],
+        "nodesExpanded": 0,
+        "algorithm": "astar"
+      }
+    },
+    {
+      "name": "kure-etrafindan-dolan",
+      "start": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "goal": [
+        0.3,
+        0.0,
+        0.0
+      ],
+      "obstacles": [
+        {
+          "kind": "sphere",
+          "center": [
+            0.15,
+            0.0,
+            0.0
+          ],
+          "size": [
+            0.08
+          ]
+        }
+      ],
+      "options": {
+        "resolution": 0.05,
+        "padding": 0.15,
+        "maxExpansions": 50000
+      },
+      "expected": {
+        "success": true,
+        "path": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            -0.05,
+            0.0
+          ],
+          [
+            0.1,
+            -0.1,
+            0.0
+          ],
+          [
+            0.15000000000000002,
+            -0.1,
+            0.0
+          ],
+          [
+            0.2,
+            -0.1,
+            0.0
+          ],
+          [
+            0.25,
+            -0.05,
+            0.0
+          ],
+          [
+            0.3,
+            0.0,
+            0.0
+          ]
+        ],
+        "nodesExpanded": 39,
+        "algorithm": "astar"
+      }
+    }
+  ]
+}

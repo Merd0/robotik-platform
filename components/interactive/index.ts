@@ -1,6 +1,7 @@
 import { JointSliders } from "./JointSliders";
 import { IkTarget } from "./IkTarget";
 import { JacobianViz } from "./JacobianViz";
+import { PlannerRace } from "./PlannerRace";
 import { Quiz } from "./Quiz";
 
 /**
@@ -12,5 +13,6 @@ export const mdxComponents = {
   JointSliders,
   IkTarget,
   JacobianViz,
+  PlannerRace,
   Quiz,
 };

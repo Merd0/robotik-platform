@@ -1,0 +1,96 @@
+---
+id: a-universite-poz-gosterimleri
+baslik: "Poz gösterimleri: Euler açıları, kuaterniyon, dönme matrisi"
+hat: a-temeller
+seviye: universite
+sure: 16
+sira: 5
+onkosul:
+  - a-universite-robot-mimarileri
+kazanimlar:
+  - Üç yönelim gösteriminin (Euler açıları, kuaterniyon, dönme matrisi) sayı sayısı ve zayıf noktalarını karşılaştırabilme
+  - Gimbal kilidinin (gimbal lock) Euler açılarında neden ortaya çıktığını açıklayabilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 3.2 (Rotations), Ek B (Euler Angles)"
+  - "James Diebel, 'Representing Attitude: Euler Angles, Unit Quaternions, and Rotation Vectors', Stanford University Technical Report, 2006"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi "3 boyutta yönelim = 3 açı" sanır ve orada durur. Ama üç açı
+kullanan en yaygın yöntem (Euler açıları), belirli bir konfigürasyonda
+BİR SERBESTLİK DERECESİNİ TAMAMEN KAYBEDER. Bu şaşırtıcı sonucun adı
+"gimbal kilidi" (gimbal lock).
+
+<JointSliders robot="generic-6dof" />
+
+## Ne oldu
+
+Bir katı cismin yönelimini sayılarla ifade etmenin üç ana yolu var,
+üçü de aynı gerçekliği farklı bedellerle taşır:
+
+**Euler açıları (3 sayı):** sırayla üç eksen etrafında dönme açısı
+(ör. roll-pitch-yaw). En sezgisel ve en kompakt gösterim. Ama bir
+sakıncası var: belirli açı kombinasyonlarında (ikinci eksen 90°'ye
+geldiğinde) birinci ve üçüncü eksenler ÇAKIŞIR — iki bağımsız dönme,
+tek bir dönmeye indirgenir ve bir serbestlik derecesi kaybolur. Buna
+**gimbal kilidi** denir.
+
+**Dönme matrisi (9 sayı):** `lib/robotics/transform.ts` içindeki
+`rotationX`, `rotationY`, `rotationZ` fonksiyonlarının ürettiği 3×3
+matrisler. Gimbal kilidi YOKTUR, matrisleri çarpmak (`multiply`) art
+arda dönmeleri birleştirmenin dogru yoludur. Bedeli: 3 serbestlik
+derecesi için 9 sayı taşınır — 6 sayı FAZLADAN (matrisin ortogonal
+kalması gerektiğinden gelen kısıtlar).
+
+**Kuaterniyon (4 sayı):** karmaşık sayıların genellemesi olan, tek bir
+"birim" kısıtına (uzunluğu 1) sahip 4 sayılık bir gösterim. Gimbal
+kilidi yoktur, dönme matrisinden daha az sayı taşır (4'e karşı 9), ve
+iki yönelim arasında YUMUŞAK ara değer (interpolasyon) almaya en uygun
+gösterimdir — bu yüzden animasyon ve robot yörünge yazılımlarında
+tercih edilir.
+
+## Gerçek dünyada
+
+Bir robot kontrolörü genelde İÇERİDE dönme matrisi veya kuaterniyon
+kullanır (hesaplama güvenilir olsun diye), ama kullanıcıya (programcıya)
+Euler açılarını GÖSTERİR — çünkü "X'e 30°, Y'ye 45°, Z'ye 0° dön" bir
+insana kuaterniyon bileşenlerinden çok daha anlamlı gelir. ABB ve KUKA
+gibi kontrolörlerin arayüzleri yönelimi Euler açılarıyla gösterir,
+robotun kendisi hesaplamaları arka planda dönme matrisleriyle yapar.
+
+## Dene
+
+`rotationZ(90°)`'yi zihninde uygula, sonra `rotationX(90°)`'yi UYGULA;
+şimdi sırayı DEĞİŞTİR — önce X sonra Z. `multiply()` değişmeli
+olmadığı için (bir önceki dersten hatırla) iki sıra FARKLI sonuç
+verecek. Bu, Euler açılarının neden "hangi sırada" sorusuna bu kadar
+duyarlı olduğunu gösteriyor.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Gimbal kilidi ne zaman ortaya çıkar?",
+      secenekler: [
+        "Robot çok hızlı hareket ettiğinde",
+        "Euler açılarından ikincisi, birinci ve üçüncü ekseni çakıştıracak bir değere (genelde 90°) ulaştığında",
+        "Kuaterniyon kullanıldığında",
+      ],
+      dogru: 1,
+      aciklama: "Gimbal kilidi Euler açılarına özgü bir durumdur — belirli bir ara açıda iki eksen çakışır ve bir serbestlik derecesi geçici olarak kaybolur. Kuaterniyon ve dönme matrisinde bu sorun yoktur.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Hat A burada tamamlanıyor — robotun ne olduğundan (ortaokul) DH
+parametrelerine ve yönelim gösterimlerine (üniversite) kadar geldin.
+Hat B ve Hat C'de bu temelleri gerçek hareket ve planlama problemlerine
+uyguladın; sıradaki hatlarda (programlama, algılama, haberleşme)
+robotu gerçekten çalıştırmayı göreceksin.

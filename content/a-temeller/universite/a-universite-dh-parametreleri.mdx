@@ -1,0 +1,96 @@
+---
+id: a-universite-dh-parametreleri
+baslik: Denavit-Hartenberg (DH) parametreleri
+hat: a-temeller
+seviye: universite
+sure: 18
+sira: 3
+onkosul:
+  - a-universite-homojen-donusum
+kazanimlar:
+  - "DH'nin dört parametresini (a, alpha, d, theta) fiziksel anlamlarıyla tanımlayabilme"
+  - Bir robotun eklem geometrisinden DH tablosunu okuyabilme
+kaynaklar:
+  - "J. Denavit & R. S. Hartenberg, 'A kinematic notation for lower-pair mechanisms based on matrices', ASME Journal of Applied Mechanics, 22(2), 1955"
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 4.1 (Denavit-Hartenberg Parameters)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Bir robot üreticisinin teknik veri sayfasında her eklem için dört sayı
+görürsün: `a`, `α`, `d`, `θ`. İlk bakışta anlamsız görünen bu dörtlü,
+aslında 1955'ten beri neredeyse her robotu tarif etmek için kullanılan
+ortak bir dildir.
+
+<JointSliders robot="generic-6dof" />
+
+## Ne oldu
+
+Bu dört parametrenin nasıl bir matrise dönüştüğünü (ve o matrisin nasıl
+zincirlendiğini) `b-kinematik` hattındaki "DH ile ileri kinematik"
+dersi ele alıyor — burada odak matrisin KENDİSİNDE değil, bu dört
+sayının robotun GEOMETRİSİNDE neyi ölçtüğünde:
+
+| Parametre | Adı | Neyi ölçer |
+|---|---|---|
+| `a` | bağlantı uzunluğu (link length) | ardışık iki eklem EKSENİ arasındaki en kısa mesafe |
+| `α` | bağlantı bükülmesi (link twist) | ardışık iki eklem ekseni arasındaki açı |
+| `d` | ofset (link offset) | bir önceki bağlantı boyunca kayma miktarı |
+| `θ` | eklem açısı (joint angle) | dönel eklemin DEĞİŞEN değeri (revolute için) |
+
+Kritik ayrım: dört parametreden ÜÇÜ (a, α ve — eklem türüne göre d
+YA DA θ) robotun SABİT geometrisini tarif eder, biri ise eklemin CANLI
+(hareket eden) değeridir. `lib/robotics/kinematics.ts` içindeki
+`JointSpec.dhParams` tam bu dörtlüyü taşır; `forwardKinematics`
+fonksiyonu ise dönel eklemler için `theta`ya, doğrusal eklemler için
+`d`ye kaydırıcıdan gelen değeri EKLER — geri kalan üç parametre sabit
+kalır.
+
+Yukarıdaki 6 eksenli robotun tanımına bak (`lib/robotics/robots/genericSixDof.ts`):
+ilk eklemin `alpha = 90°` olması, birinci ve ikinci eklem eksenlerinin
+birbirine DİK olduğu anlamına gelir — bu, "bel dönüşü" (yatayda döner)
+ile "omuz kaldırma" (dikeyde döner) hareketlerini birbirinden ayıran
+tam olarak bu açıdır.
+
+## Gerçek dünyada
+
+Bir robot simülasyon yazılımına yeni bir robot modeli eklerken,
+mühendis üreticinin verdiği DH tablosunu (veya CAD modelinden ölçtüğü
+a/α/d/θ değerlerini) doğrudan girer. Bu dörtlü, farklı üreticilerin
+robotlarını AYNI matematiksel çerçevede karşılaştırmayı mümkün kılan
+ortak bir "dil" işlevi görür — 1955'te Denavit ve Hartenberg'in
+önerdiği bu gösterim hâlâ endüstri standardı.
+
+## Dene
+
+`genericSixDofRobot`'un altı ekleminin `alpha` değerlerine bak (kod
+içinde: π/2, 0, π/2, −π/2, π/2, 0). Kaydırıcıları oynatırken, `alpha`sı
+sıfır OLMAYAN eklemlerin, kolun hareket DÜZLEMİNİ nasıl değiştirdiğini
+gözlemlemeye çalış — `alpha = 0` olan eklemler bir önceki düzlemde
+kalırken, olmayanlar yeni bir düzleme "atlar".
+
+<Quiz
+  sorular={[
+    {
+      soru: "DH parametrelerinden hangisi, döner bir eklemin ANLIK, değişen değeridir?",
+      secenekler: [
+        "a (bağlantı uzunluğu)",
+        "α (bağlantı bükülmesi)",
+        "θ (eklem açısı)",
+      ],
+      dogru: 2,
+      aciklama: "Döner eklemlerde a, α ve d robotun sabit geometrisidir; sadece θ kaydırıcıyla değişen canlı değerdir (doğrusal eklemlerde bu rol d'ye geçer).",
+    },
+  ]}
+/>
+
+## Sonraki
+
+DH parametreleri tek bir açık zincir mimarisini varsayar. Sıradaki
+ders, robotların DH'nin ötesinde ne kadar farklı mimarilerde
+kurulabileceğini (SCARA, delta, paralel) gösteriyor.

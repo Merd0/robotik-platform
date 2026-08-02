@@ -38,6 +38,24 @@ body {
   line-height: 1.7;
 }
 
+.ders-icerik table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.ders-icerik th,
+.ders-icerik td {
+  border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ders-icerik th {
+  font-weight: 600;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

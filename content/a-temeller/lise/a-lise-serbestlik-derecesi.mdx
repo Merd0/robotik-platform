@@ -1,0 +1,79 @@
+---
+id: a-lise-serbestlik-derecesi
+baslik: Serbestlik derecesi (DOF) ve neden 6 eksenin özel olduğu
+hat: a-temeller
+seviye: lise
+sure: 12
+sira: 1
+onkosul:
+  - a-ortaokul-robot-ile-makine-farki
+kazanimlar:
+  - Serbestlik derecesini (DOF) bağımsız hareket sayısı olarak tanımlayabilme
+  - "6 DOF'un 3B uzayda tam konum + yönelim kontrolü için neden yeterli olduğunu açıklayabilme"
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 2.1 (Degrees of Freedom of a Rigid Body)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Elindeki bir kalemi havada tut. Onu istediğin HER konuma, HER açıyla
+yönlendirebilir misin? Bunun için kaç sayıyı bağımsız olarak
+değiştirmen gerektiğini hiç saymadın belki — cevap tam olarak 6.
+
+<JointSliders robot="generic-6dof" />
+
+## Ne oldu
+
+**Serbestlik derecesi (degree of freedom, DOF)**, bir cismin bağımsız
+olarak değiştirilebilen konum/yönelim parametrelerinin sayısıdır. 3
+boyutlu uzayda serbest bir katı cismin (elindeki kalem gibi) tam 6 DOF'u
+vardır:
+
+- 3'ü **konum** (x, y, z — cismin nerede olduğu)
+- 3'ü **yönelim** (cismin hangi açıyla durduğu — döndürme)
+
+Yukarıdaki kol da 6 eklemli, yani 6 DOF'lu. Her eklem TAM OLARAK bir
+serbestlik derecesine karşılık geliyor. Bu tesadüf değil: bir robotun
+ucunu 3B uzayda hem istediğin NOKTAya hem istediğin AÇIYLA
+konumlandırabilmesi için en az 6 bağımsız eklem gerekir — 5 veya daha az
+eklemli bir kol, bazı konum-açı kombinasyonlarına asla ulaşamaz.
+
+## Gerçek dünyada
+
+Endüstriyel kaynak ve boyama robotlarının neredeyse hepsi 6 eksenlidir —
+tam da bu yüzden: parçanın her açısına, her yönelimle ulaşmaları
+gerekir. Daha basit görevler (sadece düz yukarı-aşağı kaldırma gibi) 4
+eksenli robotlarla da yapılabilir, çünkü o görev tam 6 DOF'a ihtiyaç
+duymaz.
+
+## Dene
+
+Kolun altıncı ekleminden başlayıp geriye doğru, her ekleme dokunmadan
+önce "bu eklem konumu mu yoksa yönelimi mi değiştirir" diye tahmin et.
+Sonra kaydırıcıyı oynatıp tahminini kontrol et.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir robot kolunun sadece 4 ekleni varsa ne olur?",
+      secenekler: [
+        "Hiçbir yere ulaşamaz",
+        "Bazı konum-yönelim kombinasyonlarına ulaşamaz, ama basit görevler için yeterli olabilir",
+        "Otomatik olarak 6 eksenli bir kola dönüşür",
+      ],
+      dogru: 1,
+      aciklama: "4 DOF, 6 DOF'un gerektirdiği tüm konum-yönelim kombinasyonlarını karşılayamaz — ama görev bu kombinasyonların hepsini gerektirmiyorsa (ör. hep aynı açıyla kaldırma) 4 eksen yeterli olabilir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+6 eksenli bu kolu oynatırken, hareketin "neye göre" ölçüldüğünü hiç
+sormadın. Sıradaki ders koordinat sistemlerini — dünya, taban, alet —
+tanıtıyor.

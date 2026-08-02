@@ -1,0 +1,57 @@
+---
+id: a-ortaokul-eksen-ne-demek
+baslik: "Eksen ne demek: bir robot kaç yöne hareket eder"
+hat: a-temeller
+seviye: ortaokul
+sure: 8
+sira: 2
+onkosul:
+  - a-ortaokul-robot-nedir
+kazanimlar:
+  - Bir eksenin bağımsız bir hareket yönü olduğunu açıklayabilme
+  - Bir robotun eksen sayısını sayarak tanımlayabilme
+kaynaklar:
+  - "ISO 8373:2021, Robots and robotic devices — Vocabulary, madde 3.5 (axis tanımı)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Kaydırıcılardan sadece birini oynat, diğerine dokunma. Kolun ucu yine de
+hareket ediyor — ama sadece BİR eklemin çizebileceği bir yay boyunca.
+İşte "eksen" tam olarak bu: bağımsız olarak oynatabildiğin her yön.
+
+<JointSliders robot="generic-2dof" />
+
+## Ne oldu
+
+Bu koldaki her kaydırıcı bir eksene karşılık geliyor. İlk kaydırıcı
+"eksen 1"i, ikincisi "eksen 2"yi oynatıyor. İkisi birbirinden
+BAĞIMSIZ — birini oynatmak diğerini değiştirmiyor. Bir robotun "eksen
+sayısı", onun kaç bağımsız kaydırıcıya (yani bağımsız hareket yönüne)
+sahip olduğunu söyler.
+
+Bu kol 2 eksenli. Fabrikalarda gördüğün büyük robot kolları genelde 6
+eksenlidir — bu platformda ileride 6 eksenli bir kolu da deneyeceksin.
+
+## Gerçek dünyada
+
+Bir robotun "kaç eksenli" olduğu, satıcı sayfalarında ve teknik veri
+sayfalarında hep ilk belirtilen özelliktir çünkü bir robotun neyi
+yapıp neyi yapamayacağını doğrudan belirler — az eksenli bir robot
+daha az yöne, daha basit hareketlerle ulaşabilir.
+
+## Dene
+
+Sadece eksen 1'i oynatarak kolun ucunun çizdiği şekli gözünle takip et
+(bir yay/daire parçası). Şimdi sadece eksen 2'yi oynat — bu sefer çizilen
+şekil neden farklı görünüyor (ipucu: dönme merkezi nerede)?
+
+## Sonraki
+
+Bu kol "kol tipi" bir robottu. Sıradaki ders farklı robot türlerini —
+kol, mobil, insansı, kartezyen — tanıtıyor.

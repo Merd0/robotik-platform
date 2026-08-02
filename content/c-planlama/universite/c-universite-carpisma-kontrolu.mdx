@@ -1,0 +1,100 @@
+---
+id: c-universite-carpisma-kontrolu
+baslik: "Çarpışma kontrolü: nokta, segment, hacim"
+hat: c-planlama
+seviye: universite
+sure: 16
+sira: 2
+onkosul:
+  - c-universite-c-space
+kazanimlar:
+  - Nokta ve segment çarpışma testleri arasındaki farkı açıklayabilme
+  - Segment örnekleme çözünürlüğünün doğruluk/hız ödünleşimini nasıl etkilediğini açıklayabilme
+kaynaklar:
+  - "Steven M. LaValle, Planning Algorithms, Cambridge University Press, 2006, Bölüm 5.3 (Collision Detection)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+Bir yolun iki ucu da çarpışmasız olsa bile, ARADAKİ kısım bir engelin
+içinden geçebilir — ince bir engeli "atlayabilirsin". Bu ders, planlama
+motorunun bunu nasıl engellediğini anlatıyor.
+
+<PlannerRace
+  algorithms={["astar"]}
+  allowObstacleEdit={true}
+  theme="universite"
+  extent={3}
+  initialObstacles={[
+    { kind: "sphere", center: { x: 0.3, y: 0.2, z: 0 }, size: [0.25] },
+    { kind: "box", center: { x: -0.4, y: -0.3, z: 0 }, size: [0.3, 0.15, 0.15] },
+  ]}
+/>
+
+## Ne oldu
+
+`lib/robotics/collision.ts` iki farklı testi ayırır:
+
+**Nokta testi (`isPointFree`)** — tek bir konfigürasyonun serbest olup
+olmadığını kontrol eder. Küre için merkeze uzaklık, kutu için üç eksenin
+HEPSİNDE yarı-genişlik karşılaştırması (yukarıda gördüğün kutu engel tam
+bunu kullanıyor).
+
+**Segment testi (`isSegmentFree`)** — iki nokta arasındaki YOLUN tamamının
+serbest olduğunu kontrol eder. Ama sonsuz sayıda ara nokta test edilemez;
+bunun yerine segment sabit bir `resolution` değerine göre örneklenir:
+
+```
+adım sayısı = round(mesafe / resolution)
+```
+
+Her adımda ara nokta hesaplanıp `isPointFree` ile test edilir. Bu, **hacim
+testi değil** — ince ve hızlı hareket eden bir engel, örnekleme
+aralıklarının arasından "sızabilir" (çözünürlük yeterince küçük değilse).
+A* için `resolution` ızgara hücresiyle aynı olduğundan bu risk yoktur
+(her hücre zaten tek tek test edilir); RRT/RRT* için ise `segmentResolution`
+parametresi bu riski kontrol eder — küçültmek doğruluğu artırır ama
+hesaplamayı yavaşlatır.
+
+## Gerçek dünyada
+
+Endüstriyel offline programlama yazılımları, bir hareket komutunu
+robota göndermeden önce TÜM yörünge boyunca (sadece başlangıç/bitiş
+değil) çarpışma simülasyonu çalıştırır — tam bu segment testinin çok
+daha yüksek çözünürlüklü ve gerçek 3B mesh'lerle yapılan hali. İnce
+parçalar (bir kaynak teli, bir sensör kablosu) için çözünürlük özellikle
+sıkı tutulur, çünkü kaba bir örnekleme onları atlayabilir.
+
+## Dene
+
+Sahnedeki küre engeli iyice küçültemezsin (boyutu sabit) ama ona çok
+yakın, dar bir geçitten geçen bir yol zorla: başlangıç ve hedefi
+kürenin hemen iki yanına denk gelecek şekilde hayal ederek engeller
+ekle. A*'ın bu dar geçidi bulup bulamadığını gözlemle — ızgara
+çözünürlüğü (0.05 birim) geçitten daha genişse ne olur dersin?
+
+<Quiz
+  sorular={[
+    {
+      soru: "Segment testinin çözünürlüğünü çok büyük (kaba) seçersek ne riski doğar?",
+      secenekler: [
+        "Hesaplama gereksiz yere yavaşlar",
+        "İki test noktası arasında kalan ince bir engel fark edilmeyebilir",
+        "Program hata verip durur",
+      ],
+      dogru: 1,
+      aciklama: "Segment testi sonlu sayıda örnek alır. Örnekler arasında kalan ince bir engel, hiç test edilmeden 'serbest' sayılabilir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Nokta ve segment testlerinin planlayıcılar tarafından NASIL kullanıldığını
+gördün. Sıradaki ders, bu testleri kullanan üç farklı örneklemeli
+yöntemi (RRT, RRT*, PRM) karşılaştırıyor.

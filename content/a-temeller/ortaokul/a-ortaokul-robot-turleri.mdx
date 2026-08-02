@@ -1,0 +1,63 @@
+---
+id: a-ortaokul-robot-turleri
+baslik: "Robot türleri: kol, mobil, insansı, kartezyen"
+hat: a-temeller
+seviye: ortaokul
+sure: 8
+sira: 3
+onkosul:
+  - a-ortaokul-eksen-ne-demek
+kazanimlar:
+  - Kol, mobil, insansı ve kartezyen robot türlerini birbirinden ayırt edebilme
+  - Bu platformdaki kolun hangi türe girdiğini söyleyebilme
+kaynaklar:
+  - "ISO 8373:2021, Robots and robotic devices — Vocabulary, madde 3.11-3.15 (robot türleri)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Bir fabrika robotu ile bir depo robotu, ikisi de "robot" ama birbirine
+hiç benzemiyor: biri yerinden kıpırdamadan kolunu sallıyor, diğeri
+tekerlekleriyle koridorlarda geziniyor. Robotları nasıl gruplarız?
+
+<JointSliders robot="generic-2dof" />
+
+## Ne oldu
+
+Az önce oynattığın şey bir **kol tipi (manipulator)** robot — sabit bir
+tabana bağlı, eklemleriyle bir hacim içinde hareket eder. Diğer yaygın
+türler:
+
+- **Mobil robot:** tekerlek veya paletle zemin üzerinde dolaşır (depo
+  taşıyıcıları, süpürge robotları). Kolu yok ama yer değiştirebilir.
+- **İnsansı (humanoid) robot:** insan vücuduna benzer yapıda, genelde
+  iki bacak ve iki kolla, dengede durarak hareket eder.
+- **Kartezyen robot:** eklemleri döner değil, doğrusal (raylar üzerinde
+  kayan) üç eksenden oluşur — bir 3B yazıcının kafası gibi düşünebilirsin.
+
+Yukarıdaki kol "kol tipi" grubuna girer; tabanı sabit, ucu bir yay
+üzerinde hareket eder.
+
+## Gerçek dünyada
+
+Bir otomobil fabrikasında kaynak yapan robotlar kol tipidir; aynı
+fabrikanın deposunda parça taşıyan robotlar mobildir; bir 3B yazıcının
+içindeki mekanizma kartezyendir. Aynı fabrikada üç tür de bir arada
+çalışabilir, her biri kendi işine uygun şekilde tasarlanmıştır.
+
+## Dene
+
+Yukarıdaki kolu tekrar oynat ve şunu düşün: bu kol bir tekerlek
+takılsaydı ne olurdu? Hâlâ "kol tipi" mi sayılırdı, yoksa hem kol hem
+mobil robot mu olurdu (ipucu: bazı gerçek robotlar tam olarak böyle —
+tekerlekli bir taban üzerine oturtulmuş bir kol).
+
+## Sonraki
+
+Robot türlerini gördün. Sıradaki ders, "robot" ile sıradan bir
+"makine" arasındaki farkı netleştiriyor.

@@ -1,0 +1,86 @@
+---
+id: c-lise-a-yildiz-sezgisel
+baslik: A* algoritması ve sezgisel (heuristic) fonksiyon
+hat: c-planlama
+seviye: lise
+sure: 14
+sira: 2
+onkosul:
+  - c-lise-grid-arama-maliyet
+kazanimlar:
+  - A*'ın hangi hücreleri önce keşfedeceğine nasıl karar verdiğini açıklayabilme
+  - Sezgisel (heuristic) fonksiyonun aramayı neden hızlandırdığını açıklayabilme
+kaynaklar:
+  - "P. E. Hart, N. J. Nilsson, B. Raphael, 'A Formal Basis for the Heuristic Determination of Minimum Cost Paths', IEEE Transactions on Systems Science and Cybernetics, SSC-4(2), 1968"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+Bir şehirde hedefine giderken, hangi sokağı deneyeceğine nasıl karar
+verirsin? Muhtemelen "hedefe daha yakın görünen" sokağı seçersin —
+tam mesafeyi bilmesen bile kuşbakışı bir tahminle. A* de tam olarak bunu
+yapar.
+
+<PlannerRace algorithms={["astar"]} allowObstacleEdit={true} theme="lise" extent={3} />
+
+## Ne oldu
+
+A*, her hücre için iki sayıyı toplar:
+
+```
+öncelik = g + h
+g = başlangıçtan bu hücreye kadar GERÇEKTEN kat edilen mesafe
+h = bu hücreden hedefe olan KUŞBAKIŞI (Öklid) mesafe — bu sezgisel (heuristic) fonksiyon
+```
+
+`lib/robotics/planners/astar.ts` içindeki `heuristic()` fonksiyonu tam
+olarak bunu hesaplar. A*, açık listedeki en düşük `g + h` değerine sahip
+hücreyi önce genişletir — yani "şimdiye kadar en ucuza gelen VE hedefe
+en yakın görünen" hücreyi. Bu, hedeften uzaklaşan yönleri gereksiz yere
+taramayı büyük ölçüde engeller.
+
+Eğer `h` fonksiyonu olmasaydı (sadece `g` kullanılsaydı), algoritma her
+yöne eşit şekilde yayılırdı — bu da Dijkstra algoritmasına dönüşürdü,
+doğru ama daha yavaş. `h` fonksiyonu, aramayı hedefe doğru "iter".
+
+## Gerçek dünyada
+
+Harita uygulamaları (yürüyüş/araç rotası) da benzer bir mantıkla çalışır:
+kuşbakışı mesafe veya tahmini süre, aramayı hedefe doğru yönlendiren bir
+sezgisel olarak kullanılır. Sezgisel gerçek mesafeyi ASLA abartmamalı
+(fazla iyimser olmamalı) — aksi halde A* yanlış (optimal olmayan) bir yol
+bulabilir.
+
+## Dene
+
+Önce hiç engel koymadan çalıştır, "Genişletilen düğüm" sayısına bak —
+küçük bir sayı görürsün çünkü sezgisel fonksiyon aramayı doğrudan hedefe
+iter. Şimdi başlangıçla hedef arasına, robotun büyük bir çevreleme
+yapmasını gerektirecek geniş bir engel duvarı koy ve tekrar çalıştır.
+Düğüm sayısı neden birdenbire artıyor?
+
+<Quiz
+  sorular={[
+    {
+      soru: "Sezgisel fonksiyon (h) olmasaydı A* algoritması ne olurdu?",
+      secenekler: [
+        "Çalışmayı durdururdu",
+        "Her yöne eşit yayılan, daha yavaş ama yine doğru bir aramaya (Dijkstra) dönüşürdü",
+        "Yanlış yollar üretmeye başlardı",
+      ],
+      dogru: 1,
+      aciklama: "h=0 olduğunda A*, Dijkstra algoritmasına eşdeğer olur: hâlâ en kısa yolu bulur ama hedef yönüne öncelik vermediği için daha çok hücre genişletir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+A*'ın ızgarada nasıl aradığını gördün. Sıradaki ders, engellerden
+kaçınmanın altındaki temel mantığı — bir hücrenin ne zaman "kapalı"
+sayıldığını — ele alıyor.

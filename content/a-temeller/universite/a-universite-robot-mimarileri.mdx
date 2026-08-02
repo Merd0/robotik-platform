@@ -1,0 +1,91 @@
+---
+id: a-universite-robot-mimarileri
+baslik: "Robot mimarileri: seri, SCARA, delta, kartezyen, paralel"
+hat: a-temeller
+seviye: universite
+sure: 16
+sira: 4
+onkosul:
+  - a-universite-dh-parametreleri
+kazanimlar:
+  - Beş yaygın robot mimarisini kinematik yapılarına göre ayırt edebilme
+  - Bir görev için mimari seçiminin hangi kısıtlara (hız, hassasiyet, çalışma uzayı) dayandığını açıklayabilme
+kaynaklar:
+  - "B. Siciliano, L. Sciavicco, L. Villani, G. Oriolo, Robotics: Modelling, Planning and Control, Springer, 2009, Bölüm 2 (Kinematics)"
+  - "ISO 8373:2021, Robots and robotic devices — Vocabulary, madde 3.11-3.15 (robot mimarisi türleri)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Bu platformda şimdiye kadar oynattığın her kol AYNI aileden: açık,
+seri bir zincir. Ama "6 eksenli robot kolu" dediğinde akla gelen tek
+mimari bu değil — her mimari farklı bir hız/hassasiyet/çalışma uzayı
+ödünleşimi sunar.
+
+<JointSliders robot="generic-6dof" />
+
+## Ne oldu
+
+Yukarıdaki kol **seri (serial)** mimaride: eklemler tek bir zincirde
+art arda dizili (bkz. "kinematik zincir" dersi). Endüstride yaygın
+diğer dört mimari:
+
+- **SCARA:** iki dönel eklem yatay düzlemde, bir doğrusal eklem dikeyde
+  hareket eder. Yatayda hızlı ama sadece SINIRLI bir yönelim
+  sağlayabilir — toplama-yerleştirme (pick-and-place) görevlerinde
+  yaygındır.
+- **Kartezyen:** üçü de doğrusal, birbirine dik üç eksen (bkz. "robot
+  türleri" dersi). Basit kontrol, yüksek hassasiyet, ama büyük ve
+  hantal bir çalışma hacmi gerektirir.
+- **Delta (paralel):** tepedeki sabit bir platformdan aşağıdaki hareketli
+  platforma üç kol paralel bağlanır — KAPALI bir kinematik zincir (bkz.
+  "kinematik zincir" dersi). Çok hafif hareketli parçalar sayesinde
+  olağanüstü hızlıdır, ama çalışma uzayı küçüktür.
+- **Paralel (genel):** delta'nın genellemesi — birden fazla kol aynı
+  platforma bağlanır. Yüksek sertlik (rijitlik) ve yük kapasitesi
+  sağlar (kuvvet kollara dağılır), ama ters kinematik hesaplaması
+  seri mimariden çok daha karmaşıktır.
+
+Seçim bir "hangisi daha iyi" sorusu değil, göreve göre değişen bir
+mühendislik kararıdır.
+
+## Gerçek dünyada
+
+Bir elektronik kartına küçük parçaları saniyede birkaç kez yerleştiren
+bir hat, delta robot kullanır (hız birincil öncelik). Bir otomobil
+gövdesini kaynak eden robot seri mimaridir (geniş çalışma uzayı ve
+esnek yönelim gerekir). Bir 3B yazıcı kartezyendir (basitlik ve
+hassasiyet yeterli, hız ikincil).
+
+## Dene
+
+Yukarıdaki seri kolu oynat ve şunu düşün: bu kolun ucu bir yöne
+giderken, TÜM eklemler bir miktar hareket etmek zorunda kalıyor mu,
+yoksa bazıları sabit kalabiliyor mu? Kartezyen bir robotta aynı hareket
+için sadece TEK bir eksenin hareket etmesi yeterli olurdu — bu fark,
+neden kartezyen robotların kontrolünün daha basit sayıldığını açıklar.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Delta (paralel) robotların çok hızlı olmasının temel nedeni nedir?",
+      secenekler: [
+        "Daha güçlü motorlar kullanmaları",
+        "Hareket eden platformun hafif olması ve kollara dağılan kuvvetin yüksek ivmeye izin vermesi",
+        "Daha az eklemleri olması",
+      ],
+      dogru: 1,
+      aciklama: "Paralel yapıda motorlar sabit tabanda durur, sadece hafif kollar ve platform hareket eder — düşük hareketli kütle, yüksek ivme demektir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Beş mimariyi de gördün. Son ders, bir robotun yönelimini (sadece konumu
+değil) sayılarla ifade etmenin farklı yollarını ele alıyor.

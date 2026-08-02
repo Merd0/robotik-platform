@@ -1,0 +1,89 @@
+---
+id: a-universite-homojen-donusum
+baslik: Homojen dönüşüm matrisleri, dönme ve öteleme
+hat: a-temeller
+seviye: universite
+sure: 16
+sira: 2
+onkosul:
+  - a-universite-kinematik-zincir
+kazanimlar:
+  - Bir katı cismin pozunu (konum + yönelim) tek bir 4x4 matriste birleştirmenin nedenini açıklayabilme
+  - İki dönüşümü art arda uygulamanın matris çarpımına karşılık geldiğini gösterebilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 3.2-3.3 (Rotations and Angular Velocities, Rigid-Body Motions)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Bir noktanın konumunu üç sayıyla (x, y, z) yazabilirsin. Ama bir katı
+cismin (bir robot linkinin) POZUNU tarif etmek için üç sayı yetmez —
+cismin NEREDE olduğu kadar, HANGİ AÇIYLA durduğu da gerekir. İkisini
+tek bir matematiksel nesnede taşımanın yolu homojen dönüşüm matrisidir.
+
+<JointSliders robot="generic-6dof" />
+
+## Ne oldu
+
+`lib/robotics/transform.ts` içindeki `Mat4` tipi, 4×4'lük bir matris —
+ama sadece sayı dizisi değil, iki parçadan oluşan anlamlı bir yapı:
+
+```
+T = [ R   p ]      R: 3x3 dönme matrisi (yönelim)
+    [ 0   1 ]      p: 3x1 öteleme vektörü (konum)
+```
+
+`rotationZ(theta)` fonksiyonu SADECE `R` kısmını dolduran bir matris
+üretir (öteleme sıfır); `translation(x, y, z)` SADECE `p` kısmını
+dolduran bir matris üretir (dönme kimlik matrisi). İkisini `multiply()`
+ile çarptığında, ÖNCE dönmüş SONRA ötelenmiş bir çerçeve elde edersin —
+sırayla uygulanan iki hareketin toplam etkisi tek bir matriste birleşir.
+
+**Somut örnek:** `rotationZ(90°)` ile `translation(1, 0, 0)`'ı çarpsan
+(bu sırayla), sonuç matrisin son sütunu (1, 0, 0) DEĞİL, (0, 1, 0)
+olur — çünkü öteleme, ÖNCE uygulanan dönmenin döndürdüğü eksene göre
+yorumlanır. Sıra önemlidir: `multiply(A, B) ≠ multiply(B, A)` (matris
+çarpımı değişmeli değildir), tıpkı önce dönüp sonra ilerlemenin, önce
+ilerleyip sonra dönmekle aynı sonucu vermemesi gibi.
+
+## Gerçek dünyada
+
+Bir robot kontrolörü, her eklemin çerçevesini, alet ucunun çerçevesini
+ve parçanın çerçevesini hep bu 4×4 matris biçiminde tutar — çünkü bu
+biçim hem konum hem yönelim taşır VE çerçeveler arası dönüşümler basit
+matris çarpımıyla birleştirilebilir. `forwardKinematics` fonksiyonundaki
+`accumulated = multiply(accumulated, step)` satırı, tam olarak bu
+birleştirmeyi yapıyor.
+
+## Dene
+
+Kaydırıcılardan birini oynat ve `jointTransforms` dizisindeki (kod
+içinde, ekranda göremesen de) matrislerden birinin son sütununun
+`jointPositions`'taki karşılık gelen noktayla AYNI olduğunu düşün —
+`translationOf()` fonksiyonu tam bunu okuyor: matrisin öteleme kısmını
+çıkarıyor.
+
+<Quiz
+  sorular={[
+    {
+      soru: "multiply(A, B) ile multiply(B, A) neden genelde farklı sonuç verir?",
+      secenekler: [
+        "Matris çarpımında bir hesaplama hatası olduğu için",
+        "Matris çarpımı değişmeli değildir — önce dönüp sonra ötelenmek, önce ötelenip sonra dönmekten farklıdır",
+        "Sadece 4x4 matrisler için bu geçerlidir, küçük matrislerde geçerli değildir",
+      ],
+      dogru: 1,
+      aciklama: "Matris çarpımının değişmeli olmaması matematiksel bir kuraldır (sadece 4x4'e özel değil) ve fiziksel olarak da mantıklıdır: iki hareketi uygulama SIRASI sonucu değiştirir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bir robotun her eklemi için bu dönüşüm matrisini SİSTEMATİK olarak nasıl
+kurduğumuzu (Denavit-Hartenberg parametreleri) sıradaki ders ele alıyor.

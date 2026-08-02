@@ -38,21 +38,40 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
       </div>
 
       <div className="flex flex-col gap-3">
-        {robot.joints.map((joint, index) => (
-          <label key={index} className="flex flex-col gap-1 text-sm">
-            <span>
-              Eklem {index + 1}: {round(toDegrees(jointAngles[index]))}°
-            </span>
-            <input
-              type="range"
-              className="h-11 touch-none accent-ortaokul-accent"
-              min={toDegrees(joint.limits.min)}
-              max={toDegrees(joint.limits.max)}
-              value={toDegrees(jointAngles[index])}
-              onChange={(event) => handleChange(index, Number(event.target.value))}
-            />
-          </label>
-        ))}
+        {robot.joints.map((joint, index) =>
+          joint.type === "prismatic" ? (
+            <label key={index} className="flex flex-col gap-1 text-sm">
+              <span>Eklem {index + 1} (öteleme): {round(jointAngles[index])} m</span>
+              <input
+                type="range"
+                className="h-11 touch-none accent-ortaokul-accent"
+                min={joint.limits.min}
+                max={joint.limits.max}
+                step={0.001}
+                value={jointAngles[index]}
+                onChange={(event) =>
+                  setJointAngles((prev) =>
+                    prev.map((v, i) => (i === index ? Number(event.target.value) : v)),
+                  )
+                }
+              />
+            </label>
+          ) : (
+            <label key={index} className="flex flex-col gap-1 text-sm">
+              <span>
+                Eklem {index + 1}: {round(toDegrees(jointAngles[index]))}°
+              </span>
+              <input
+                type="range"
+                className="h-11 touch-none accent-ortaokul-accent"
+                min={toDegrees(joint.limits.min)}
+                max={toDegrees(joint.limits.max)}
+                value={toDegrees(jointAngles[index])}
+                onChange={(event) => handleChange(index, Number(event.target.value))}
+              />
+            </label>
+          ),
+        )}
       </div>
 
       <div className="flex items-center justify-between text-sm">

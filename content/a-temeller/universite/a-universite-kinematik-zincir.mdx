@@ -1,0 +1,88 @@
+---
+id: a-universite-kinematik-zincir
+baslik: Kinematik zincir, açık ve kapalı zincir
+hat: a-temeller
+seviye: universite
+sure: 16
+sira: 1
+onkosul:
+  - a-lise-calisma-uzayi
+kazanimlar:
+  - Kinematik zinciri, katı cisimleri birbirine bağlayan eklemler dizisi olarak tanımlayabilme
+  - Açık ve kapalı kinematik zincir arasındaki yapısal farkı örneklerle açıklayabilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 2.2-2.3 (Robot Kinematic Chains, Grübler's Formula)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+`forwardKinematics` fonksiyonu, robotun eklemlerini `robot.joints`
+listesindeki SIRAYLA gezip her birinin dönüşümünü bir öncekine ekliyor
+(`accumulated = multiply(accumulated, step)`). Bu tek satırlık döngü,
+aslında "kinematik zincir" dediğimiz kavramın ta kendisi.
+
+<JointSliders robot="generic-6dof" />
+
+## Ne oldu
+
+Bir **kinematik zincir**, katı cisimlerin (linklerin) eklemlerle art
+arda bağlanmasıyla oluşan yapıdır. İki temel tür vardır:
+
+**Açık zincir (open chain):** her link, zincirde tam olarak bir sonraki
+ve bir önceki linke bağlıdır — taban ile uç arasında TEK bir yol vardır.
+Yukarıdaki 6 eksenli kol açık bir zincir: taban → eklem1 → link1 →
+eklem2 → ... → uç, dallanma yok, döngü yok. `forwardKinematics`'in
+matrisleri sırayla çarpması, bu tek-yol yapısı sayesinde mümkün —
+zincirde döngü olsaydı "sırayla çarp" yeterli olmazdı.
+
+**Kapalı zincir (closed chain):** en az bir link, birden fazla yoldan
+tabana bağlıdır — zincir bir DÖNGÜ oluşturur. Delta robotlar (paralel
+mimari) buna örnek: üç kol aynı anda tepedeki platforma bağlıdır, bu da
+platform ile taban arasında BİRDEN FAZLA bağımsız yol yaratır.
+
+Bu fark hesaplamayı doğrudan etkiler: açık zincirde ileri kinematik
+(FK) her zaman doğrudan bir matris çarpımıdır (yukarıdaki kod gibi).
+Kapalı zincirde eklemler birbirini KISITLAR (bir eklemin açısı
+diğerlerini otomatik belirler) — bu kısıtları çözmek FK'yı çok daha
+karmaşık hale getirir.
+
+## Gerçek dünyada
+
+Endüstriyel kol robotlarının neredeyse tamamı açık zincirdir — üretmesi
+ve kontrol etmesi daha kolaydır. Paralel/delta robotlar (yüksek hızlı
+toplama-yerleştirme hatlarında görülür) kapalı zincirdir; karmaşık
+matematiğe rağmen tercih edilirler çünkü kapalı yapı çok daha yüksek
+hız ve sertlik (rijitlik) sağlar — kuvvet birden fazla kola dağılır.
+
+## Dene
+
+Yukarıdaki kolun her eklemini tek tek oynat ve `jointPositions`
+dizisinin (uç noktanın üstünde göreceğin sayılar) SADECE o eklemden
+sonraki noktaları değiştirdiğini, ÖNCEKİ noktaları değiştirmediğini
+gözlemle — açık zincirin "tek yönlü etki" özelliğinin somut kanıtı bu.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Açık kinematik zincirde ileri kinematiğin basit bir matris çarpımı olmasının nedeni nedir?",
+      secenekler: [
+        "Robotun eklem sayısının az olması",
+        "Taban ile uç arasında tek bir yol olması, dallanma veya döngü olmaması",
+        "Tüm eklemlerin döner olması",
+      ],
+      dogru: 1,
+      aciklama: "Tek yol olduğu için her eklemin dönüşümü bir öncekine sırayla eklenebilir. Kapalı zincirde birden fazla yol olduğundan eklemler birbirini kısıtlar, basit sıralı çarpım yeterli olmaz.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu zincirdeki her bir "adımın" (her eklemin dönüşümünün) matematiksel
+olarak ne olduğunu — homojen dönüşüm matrislerini — sıradaki derste
+göreceksin.

@@ -1,0 +1,77 @@
+---
+id: c-ortaokul-en-kisa-yol-her-zaman-en-iyi-mi
+baslik: En kısa yol her zaman en iyi yol mudur
+hat: c-planlama
+seviye: ortaokul
+sure: 8
+sira: 2
+onkosul:
+  - c-ortaokul-labirentte-yol-bulma
+kazanimlar:
+  - En kısa yolu bulmakla en hızlı hesaplanan yolu bulmak arasındaki farkı fark edebilme
+  - İki farklı planlama yönteminin aynı problemde farklı yollar üretebileceğini gözlemleyebilme
+kaynaklar:
+  - "Steven M. LaValle, Planning Algorithms, Cambridge University Press, 2006, Bölüm 5 (Sampling-Based Motion Planning), giriş bölümü"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi "en iyi yol" derken "en kısa yol"u kastediyor sanır. Ama bir
+robotu düşün: yolu bulmak için 5 dakika hesap yapıp sonra 1 dakikada en
+kısa yoldan gidebilir, ya da 1 saniyede hesaplayıp biraz daha uzun bir
+yoldan 1.5 dakikada gidebilir. Hangisi "daha iyi"?
+
+<PlannerRace algorithms={["astar", "rrt"]} allowObstacleEdit={true} theme="ortaokul" extent={2.6} />
+
+## Ne oldu
+
+Sahnede iki farklı yöntem aynı anda çalıştı. Turkuaz çizgi (A*) genelde
+daha kısa ve daha düzgün bir yol bulur ama her kareyi tek tek kontrol
+ettiği için daha çok iş yapar. Turuncu çizgi (RRT) rastgele noktalar
+deneyerek daha hızlı bir sonuca ulaşabilir, ama yolu daha dolambaçlı
+olabilir.
+
+Sonuç tablosundaki "süre" ve "yol uzunluğu" sütunlarına bak: biri kısa
+sürede uzun bir yol, diğeri (biraz daha uzun sürede) daha kısa bir yol
+bulmuş olabilir. Hangisinin "kazandığını" söylemek göründüğü kadar basit
+değil.
+
+## Gerçek dünyada
+
+Bir depo robotunun yolu 2 metre uzun olsun ama yolu hesaplamak 3 saniye
+sürsün; başka bir yol 2.5 metre olsun ama hesaplaması 0.1 saniye sürsün.
+Robot saatte binlerce paket taşıyorsa, hesaplama süresindeki fark
+toplamda çok daha büyük bir zaman kaybına dönüşür. Gerçek robotlar bu
+yüzden sadece "en kısa" değil, "yeterince kısa ve yeterince hızlı
+hesaplanan" yolu tercih eder.
+
+## Dene
+
+Aynı engel düzeninde algoritmaları birkaç kez çalıştır. Turuncu çizginin
+(RRT) her seferinde biraz farklı bir yol çizdiğine dikkat et — neden
+sence aynı kalmıyor?
+
+<Quiz
+  sorular={[
+    {
+      soru: "RRT'nin bulduğu yol her çalıştırmada neden farklı olabilir?",
+      secenekler: [
+        "Program hatalı olduğu için",
+        "RRT rastgele noktalar deneyerek ilerlediği için",
+        "Engellerin yeri her seferinde değiştiği için",
+      ],
+      dogru: 1,
+      aciklama: "RRT her adımda rastgele bir nokta seçer; bu yüzden aynı sahnede bile her çalıştırmada biraz farklı bir yol bulabilir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bir üst seviyede bu iki yöntemin ızgara (grid) üzerinde nasıl çalıştığını
+ve maliyet kavramını daha yakından göreceksin.
