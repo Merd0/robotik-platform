@@ -10,7 +10,7 @@ kazanimlar:
   - Bir robotu basit bir makineden ayıran temel özellikleri (algılama, karar, hareket) sayabilme
   - Günlük hayatta karşılaşılan robot örneklerini tanıyabilme
 kaynaklar:
-  - "ISO 8373:2021, Robots and robotic devices — Vocabulary, madde 3.1 (robot tanımı)"
+  - "ISO 8373:2021, Robots and robotic devices — Vocabulary, madde 3.1 (robot tanımı) ve 'endüstriyel robot' tanımı"
 incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
@@ -20,26 +20,30 @@ durum: taslak
 
 ## Kanca
 
-Bir arkadaşın sana "evimde bir robot var" dese, aklına ne gelir? Belki
-film robotları. Ama muhtemelen fark etmeden her gün birkaç robotun
-yanından geçiyorsun — bulaşık makinesi onlardan biri değil, ama
-otomatik süpürge robot sayılıyor. Aradaki fark nedir?
+Diş fırçan titreşiyor, trafik ışığı yanıp sönüyor, otomatik kapı
+açılıp kapanıyor — üçü de kendi kendine hareket eden birer alet. Ama
+hiçbiri robot sayılmıyor. Bu dersin sonunda neden sayılmadıklarını
+göreceksin.
 
 <JointSliders robot="generic-2dof" />
 
 ## Ne oldu
 
 Yukarıdaki kolu oynattın — sen bir komut verdin (kaydırıcıyı çektin),
-kol o komuta göre hareket etti. Uluslararası standart (ISO 8373) bir
-robotu şöyle tanımlar: **belirli bir görevi yerine getirmek için
-programlanabilen, iki veya daha fazla eksende hareket edebilen bir
-mekanizma.**
+kol o komuta göre hareket etti. Uluslararası standart (ISO 8373), bir
+robotu genel olarak şöyle tanımlar: **bir dereceye kadar kendi kararını
+verebilen (özerk), önceden programlanmış, hareket/manipülasyon/
+konumlandırma yapabilen bir mekanizma.** Aynı standart, fabrikalarda
+kullanılan "endüstriyel robot"u ayrıca tanımlarken somut bir sayı da
+verir: üç veya daha fazla eksende programlanabilir olmalı.
 
-Bunun kilit kelimeleri "programlanabilir" ve "hareket". Bir bulaşık
-makinesi de karmaşık bir programla çalışır ama YERİNDE durur, eksenler
-boyunca hareket etmez — bu yüzden robot sayılmaz. Yukarıdaki kol ise
-iki ekseninde (iki eklem) hareket edebiliyor, bu da onu (basitleştirilmiş
-de olsa) bir robot kolu yapıyor.
+Bunun kilit kelimesi "programlanabilir". Bir bulaşık makinesi de
+karmaşık bir programla çalışır ama tek bir sabit hareketi (tamburu
+döndürme) tekrarlar, farklı eksenler arasında yeniden programlanamaz —
+bu yüzden robot sayılmaz. Yukarıdaki kol ise iki ekseninde istediğin
+gibi programlanabiliyor; gerçek bir endüstriyel robot kadar çok eksenli
+olmasa da, aynı temel fikri (programlanabilirlik + eksenler boyunca
+hareket) gösteriyor.
 
 ## Gerçek dünyada
 

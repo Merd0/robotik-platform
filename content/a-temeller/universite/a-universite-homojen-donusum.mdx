@@ -21,10 +21,10 @@ durum: taslak
 
 ## Kanca
 
-Bir noktanın konumunu üç sayıyla (x, y, z) yazabilirsin. Ama bir katı
-cismin (bir robot linkinin) POZUNU tarif etmek için üç sayı yetmez —
-cismin NEREDE olduğu kadar, HANGİ AÇIYLA durduğu da gerekir. İkisini
-tek bir matematiksel nesnede taşımanın yolu homojen dönüşüm matrisidir.
+`rotationZ(90°)` ile `translation(1, 0, 0)`'ı çarptığında sonuç
+(1, 0, 0) DEĞİL, (0, 1, 0) çıkar — çarpma sırası konumu değiştirir.
+Bu tuhaf görünen sonucun arkasında homojen dönüşüm matrislerinin nasıl
+birleştiği yatıyor.
 
 <JointSliders robot="generic-6dof" />
 

@@ -30,13 +30,15 @@ gitmez. Bu bir yazılım hatası değil, gerçek robotların da aynı sınırı 
 
 Her eklemin bir minimum ve maksimum açısı vardır (`limits.min`,
 `limits.max`). Kaydırıcı bu aralığın dışına çıkamıyor çünkü gerçek bir
-robotta da eklem o kadar dönemez. Üç sebebi var:
+robotta da eklem o kadar dönemez. İki sebebi var:
 
-1. **Mekanik.** Kablolar ve gövde parçaları birbirine çarpmadan ancak belli
-   bir açıya kadar dönebilir.
-2. **Elektriksel.** Motora giden kablo demeti sonsuz dönemez, bir sınırda
-   kopar.
-3. **Güvenlik.** Bazı açılar robotu kendi gövdesiyle veya çevresindeki
+1. **Mekanik.** Eklem limitleri genelde mekanik parçaların — kablolar,
+   contalar, gövde parçaları — zarar görmemesi için konur; bir eklem
+   sürekli aynı yönde dönebilseydi, o eklemden geçen kablo demeti
+   dolanır, aşınır veya koparabilirdi. Bazı ileri tasarımlarda (kayar
+   halka/slip ring gibi) bu sınır ortadan kaldırılabilir, ama çoğu
+   endüstriyel eklemde yok.
+2. **Güvenlik.** Bazı açılar robotu kendi gövdesiyle veya çevresindeki
    ekipmanla çarpıştırır; üretici bu açıları yazılımsal olarak da kapatır.
 
 ## Gerçek dünyada

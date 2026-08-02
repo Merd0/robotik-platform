@@ -11,7 +11,7 @@ kazanimlar:
   - Programlanabilirlik ve çok eksenli hareketin robotu sıradan makineden ayıran özellikler olduğunu açıklayabilme
   - Verilen bir örneğin robot sayılıp sayılmadığını bu kritere göre değerlendirebilme
 kaynaklar:
-  - "ISO 8373:2021, Robots and robotic devices — Vocabulary, madde 3.1 (robot tanımı)"
+  - "ISO 8373:2021, Robots and robotic devices — Vocabulary, madde 3.1 (robot tanımı) ve 'endüstriyel robot' tanımı"
 incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
@@ -21,9 +21,9 @@ durum: taslak
 
 ## Kanca
 
-Çoğu kişi "makinesi olan her şey robottur" sanır. Bir çamaşır makinesini
-düşün: içinde motor var, program var, karmaşık bir döngü izliyor. Peki
-o bir robot mu?
+Bir çamaşır makinesine "robot" deme — haklı bir itirazla karşılaşırsın.
+İçinde motor var, program var, karmaşık bir döngü izliyor; yine de
+robot sayılmıyor. Bu ders sana nedenini gösterecek.
 
 <JointSliders robot="generic-2dof" />
 
@@ -31,18 +31,21 @@ o bir robot mu?
 
 Hayır — çamaşır makinesi robot SAYILMAZ, çünkü tek bir sabit hareketi
 (tamburu döndürme) tekrarlar; farklı eksenler arasında YENİDEN
-PROGRAMLANABİLİR şekilde hareket etmez. Robotu tanımlayan iki şart
-birlikte gerekir:
+PROGRAMLANABİLİR şekilde hareket etmez. ISO 8373'e göre robotu
+tanımlayan iki şart birlikte gerekir:
 
 1. **Programlanabilirlik:** aynı donanımla farklı görevler/hareketler
    tanımlanabilmeli (yukarıdaki kolu istediğin açılara götürebilmen gibi)
-2. **Çok eksenli hareket:** en az iki bağımsız eksende hareket
-   edebilmeli
+2. **Eksenler boyunca hareket:** birden fazla eksende hareket
+   edebilmeli (standart, fabrikalarda kullanılan "endüstriyel robot"
+   için somut bir sayı verir: üç veya daha fazla)
 
 Çamaşır makinesi birinci şartı kısmen sağlar ama ikinciyi sağlamaz —
 tek bir dönme ekseni vardır ve o eksenin hareketi değiştirilemez, sadece
 hızı/süresi ayarlanır. Yukarıdaki kol ikisini de sağlar: iki ekseni var
-ve her ikisini de istediğin gibi programlayabiliyorsun (kaydırıcılarla).
+ve her ikisini de istediğin gibi programlayabiliyorsun (kaydırıcılarla)
+— gerçek bir endüstriyel robottan daha az eksenli olsa da, aynı temel
+niteliği taşıyor.
 
 ## Gerçek dünyada
 
