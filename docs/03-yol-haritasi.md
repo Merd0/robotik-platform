@@ -79,13 +79,20 @@ derleyip `public/workers/` altına koymak oldu (bkz. o script'in yorumu).
 
 ## Faz 3 — Programlama ve simülasyon
 
-- [ ] Pyodide entegrasyonu, `CodeRunner` bileşeni
-- [ ] Blok tabanlı editör (ortaokul seviyesi için)
-- [ ] Hat D tamamı — robot dilleri (RAPID, KRL, Mecademic, ROS 2)
-- [ ] Hat G tamamı — simülasyon ve dijital ikiz
-- [ ] İndirilebilir Python alıştırma deposu
+- [x] Pyodide entegrasyonu, `CodeRunner` bileşeni
+- [x] Blok tabanlı editör (ortaokul seviyesi için)
+- [x] Hat D tamamı — robot dilleri (RAPID, KRL, Mecademic, ROS 2) — 11 ders
+- [x] Hat G tamamı — simülasyon ve dijital ikiz — 8 ders
+- [x] İndirilebilir Python alıştırma deposu — `reference-python/` zaten
+      vardı, öğrenci odaklı alıştırma bölümü eklendi
 
 **Çıktı:** Öğrenci artık gerçekten kod yazıyor.
+
+**Not (2026-08-02):** Faz 2'deki gibi, "tamamlandı" burada teknik anlamda —
+19 yeni dosya (10 Hat D + 8 Hat G + 1 altyapı) `durum: taslak`, testler/
+build/lint temiz. `durum: yayinda` işaretlemesi ve `incelendi_tarafindan`
+doldurulması ayrı, insan tarafından yapılacak bir adım; bkz.
+`docs/durum-denetim.md` Faz 3 bölümü.
 
 ---
 

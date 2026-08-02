@@ -494,3 +494,100 @@ tekrar çalıştırıldı; hepsi temiz.
 **Sonraki oturum için:** Faz 3 kontrol listesinin 3. maddesine
 geçilebilir — Hat D'nin kalan 10 dersi, blok tabanlı editör (ortaokul),
 Hat G'nin 8 dersi, indirilebilir Python deposu.
+
+---
+
+## Faz 3 — tamamlandı (2026-08-02)
+
+Aynı oturumda devam edilip Faz 3'ün kalan tüm maddeleri bitirildi.
+
+### Altyapı (elle yazıldı, subagent kullanılmadı)
+
+- **`robot.hedefe_git(x, y)`** — `pyodideWorker.ts`'ye eklendi.
+  `CodeRunner`'a artık tam RobotSpec (`robotSpec`) da gönderiliyor;
+  robot 2 eklemliyse Python tarafına `hedefe_git` enjekte ediliyor,
+  içeride `lib/robotics/kinematics.ts`'teki (zaten fixture'a karşı
+  test edilmiş) `inverseKinematicsAnalytical2Dof` çağrılıyor. Erişilemeyen
+  noktada açılar değişmeden `False` döner. Tarayıcıda `hedefe_git(1,1)`
+  → `True`, `hedefe_git(100,100)` → `False` olarak doğrulandı.
+- **`BlockEditor` bileşeni** (`components/interactive/BlockEditor.tsx`) —
+  ortaokul Hat D için yeni bir bileşen. Saf yorumlayıcısı
+  `lib/robotics/blockProgram.ts`'te (DOM/React import yok, vitest ile
+  6/6 test), UI'ı tıkla-ekle blok ağacı (hareket / tekrarla / eğer-
+  değilse, iç içe geçebilir, "Engel var" anahtarıyla dallanma). "Çalıştır"
+  bloğu 600ms adımlarla oynatıp robotu 3D sahnede sürüyor. `allowedBlocks`
+  prop'uyla ders başına palette kısıtlanabiliyor (ör. ilk ders sadece
+  "hareket"). Tarayıcıda iç içe tekrarla bloğuyla uçtan uca test edildi.
+- `components/interactive/index.ts`'e `BlockEditor` eklendi.
+
+### İçerik — 5 paralel `ders-yazari` subagent'ı ile 18 ders
+
+Faz 1/2'deki gibi proje `.claude/agents/ders-yazari.md` bu oturumun araç
+kümesinde doğrudan proje subagent'ı olarak çağrılamadığı için, genel
+amaçlı `Agent` çağrıları `ders-yazari.md`'nin tam talimatını taşıyarak
+kullanıldı — her biri kendi hat+seviye grubunu yazdı, kaynaklarını
+WebFetch ile doğruladı:
+
+| Grup | Ders sayısı | Bileşen(ler) |
+|---|---|---|
+| Hat D / Ortaokul | 2 | `BlockEditor` |
+| Hat D / Lise (kalan) | 2 | `CodeRunner` (`hedefe_git` dahil) |
+| Hat D / Üniversite | 6 | `CodeRunner`, `Quiz` |
+| Hat G / Ortaokul + Lise | 3 | `JointSliders`, `PlannerRace`, `IkTarget` |
+| Hat G / Üniversite | 5 | `JointSliders`, `PlannerRace`, `IkTarget`, `JacobianViz`, `CodeRunner` |
+
+Hat D artık 11/11, Hat G 8/8 tamam — 58 ders dosyası toplamda.
+
+**Not — oturum limiti:** İlk 5 paralel ajan çağrısının 4'ü "session limit"
+hatasıyla başarısız oldu (sıfırlanma 20:10 Europe/Istanbul olarak
+bildirildi). `/loop 5m` ile bir yeniden-deneme cron'u kuruldu; ama sistem
+saati kontrol edilince (21:17, sıfırlanmadan sonra) limitin zaten açılmış
+olduğu anlaşıldı, cron silindi, 5 ajan da doğrudan yeniden başlatılıp
+başarıyla tamamlandı.
+
+### Yazım sırasında bulunan/düzeltilen 2 gerçek hata
+
+- `d-lise-hareket-komutlari.mdx`: `baslik` alanında tırnaksız iki nokta
+  üst üste (`baslik: X: Y`) YAML'ı bozuyordu — tırnaklandı.
+- `d-ortaokul-sirali-tekrar-kosul.mdx`: bir `kazanimlar` satırı
+  `- "Tekrarla" bloğuyla ...` şeklinde kısmi tırnaklıydı (YAML "bad
+  indentation of a sequence entry" hatası) — iç tırnaklar kaldırıldı.
+
+Bu ikisi `npx tsx scripts/check-content.ts` çalıştırılırken (js-yaml
+parse hatası, node process crash olarak) yakalandı, elle düzeltildi.
+
+### Diğer
+
+- `reference-python/README.md`'ye "Öğrenciler için" bölümü eklendi —
+  Hat G üniversite derslerinden depoya atıf yapıldığı için, depodan da
+  platforma dönük 3 somut alıştırma önerisi (yeni planlayıcı yaz, engel
+  senaryosu ekle, `p.GUI` ile 3D izle) eklendi.
+- Dev sunucusu bir ara PID çakışması yüzünden (aynı anda iki `next dev`
+  süreci) 500 hatası vermeye başladı — çakışan süreç `taskkill //PID ... //F`
+  ile (Git Bash'te `/PID` MSYS tarafından yol olarak yorumlandığı için
+  çift slash gerekiyor) sonlandırılıp tek sunucu ile temiz başlatıldı.
+
+### Doğrulama
+
+`npx tsc --noEmit`, `npx eslint .`, `npx vitest run` (61/61),
+`npx tsx scripts/check-content.ts` (58 ders), `npx tsx
+scripts/validate-content-graph.ts` (58 ders, döngü/eksik referans yok),
+`npx next build` (64 sayfa) — hepsi temiz. Tarayıcıda ayrıca:
+`d-ortaokul-blok-komutlar` (BlockEditor, `allowedBlocks={["move"]}`
+doğru kısıtlıyor), `d-lise-hareket-komutlari` (`hedefe_git` → `True`,
+robot kolu görsel olarak hedefe büküldü), `g-lise-basit-sahne-kurma`
+(`PlannerRace` + `initialObstacles` ile "masa" doğru render oldu) —
+üçü de gerçek tarayıcıda (Claude in Chrome) çalıştırılıp doğrulandı.
+
+### Yapılmayan adım — yine `durum: yayinda` işaretlemesi
+
+Faz 1/2'deki gibi: 18 yeni ders de dahil 58 dosyanın `durum: taslak`
+kalması bilinçli — bu bir **yapay zeka** yazım/incelemesiydi, docs/06
+Katman 3'ün istediği insan gözden geçirmesi değil. Hangi derslerin
+okunup `yayinda` yapılacağına karar vermek kullanıcıya (Mert) ait.
+
+### Sonraki için not
+
+Faz 3 tamamlandı. Faz 4 (Hat E — haberleşme, Hat F — algılama) henüz
+başlamadı; CLAUDE.md kuralı gereği yeni faz kapsamı kullanıcı onayı
+gerektirir.
