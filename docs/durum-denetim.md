@@ -346,3 +346,95 @@ scripts/validate-content-graph.ts` ve `npx next build` tekrar
 çalıştırıldı; hepsi temiz. Eklenen "Kaynak kodu" linklerinin build
 çıktısında doğru render olduğu (`out/ders/b-universite-jacobian.html`
 üzerinden) doğrulandı.
+
+---
+
+## Faz 3 — kontrol noktası (yarım kaldı, 2026-08-02)
+
+Faz 3'ün TAMAMI istendi (Pyodide, CodeRunner, blok editör, Hat D'nin ve
+Hat G'nin tam kapsamı, indirilebilir Python deposu), `faz-3-programlama-simulasyon`
+branch'inde çalışmaya başlandı. Tarayıcı testi kullanıcı tarafından
+durduruldu (tool-call reddi), iş bu noktada duraklatıldı. Aşağıda tam
+durum — ne bitti, ne yarım, hangi risk var.
+
+### Bitti ve commit'lendi (`879a126`, branch: `faz-3-programlama-simulasyon`)
+
+- `lib/workers/pyodideWorker.ts` — Python kodunu Pyodide (WASM CPython)
+  ile Web Worker içinde çalıştırıyor. `jsglobals` kısıtlanarak
+  Python'dan `import js` ile fetch/XHR erişimi engellendi (docs/08).
+  `robot.eklem_ac(index, derece)` API'si enjekte ediliyor, her çağrı
+  `jointTrace`'e kaydediliyor.
+- `scripts/copy-pyodide-assets.mjs` — Pyodide'in çekirdek dosyalarını
+  (`pyodide.mjs`, `.asm.mjs`, `.asm.wasm`, `python_stdlib.zip`,
+  `pyodide-lock.json` — 13 MB) `node_modules/pyodide`'den
+  `public/pyodide/`'a kopyalıyor; dış CDN kullanılmıyor (docs/08).
+  Ekstra bilimsel paketler (numpy vb.) BİLİNÇLİ OLARAK kopyalanmadı —
+  gerekirse ayrı bir kararla eklenir.
+- `scripts/build-worker.mjs` — artık `lib/workers/` altındaki birden
+  fazla worker'ı (planner + pyodide) ayrı ayrı esbuild ile derliyor.
+  `pyodide.mjs`'nin sadece Node'da çalışan (tarayıcıda hiç
+  yürütülmeyen) dinamik `node:*` importları build'i kırıyordu —
+  `external: ["node:*"]` ile çözüldü.
+- `components/interactive/CodeRunner.tsx` — kod editörü (textarea) +
+  Çalıştır/Durdur/Sıfırla; `robot` prop'u verilirse `RobotArm`'ı
+  Python'dan gelen `jointTrace`'in son durumuyla sürüyor. `mdxComponents`
+  listesine eklendi.
+- `content/d-programlama/lise/d-lise-python-komut-dizisi.mdx` — Hat
+  D'nin ilk dersi (`sira: 1`), `CodeRunner`'ı kullanıyor.
+- `eslint.config.mjs` — `public/pyodide/**` ve `public/workers/**`
+  ignore listesine eklendi (bunlar olmadan, kopyalanan üçüncü taraf
+  `pyodide.asm.mjs` dosyası lint hatası veriyordu — gerçek bir bug,
+  bu turda bulunup düzeltildi).
+
+**Doğrulama:** `npx tsc --noEmit`, `npx eslint .`, `npx vitest run`
+(55/55), `npx tsx scripts/check-content.ts` (40 ders), `npx tsx
+scripts/validate-content-graph.ts`, `npx next build` (46 sayfa) —
+hepsi temiz. Build çıktısında `/workers/pyodide-worker.js` ve
+`/pyodide/*` dosyalarının doğru üretildiği, ders sayfasının
+`robot.eklem_ac` içeren kodu doğru render ettiği dosya sistemi
+üzerinden doğrulandı.
+
+### YARIM / DOĞRULANMADI — önemli
+
+**CodeRunner'ın tarayıcıda GERÇEKTEN çalıştığı hiç doğrulanmadı.**
+Yukarıdaki "Doğrulama" sadece derleme/statik üretim katmanı — Pyodide'in
+tarayıcıda gerçekten yüklenip yüklenmediği, `robot.eklem_ac()`
+çağrısının işleyip işlemediği, stdout'un doğru yakalanıp yakalanmadığı,
+`jsglobals` kısıtlamasının Pyodide'in kendi iç başlatma sürecini
+bozup bozmadığı HİÇ test edilmedi — canlı tarayıcı testi tam bu adımda,
+kullanıcının tool-call'ı reddetmesiyle durduruldu. Bu, mimarideki en
+riskli varsayılan nokta: `jsglobals: { console: {...} }` gibi dar bir
+nesne vermek Pyodide'in kendi başlatma kodunun ihtiyaç duyduğu bir
+global'i kırabilir, bu durumda `loadPyodide()` hiç tamamlanmayabilir.
+**Bir sonraki oturumda ilk iş bu olmalı: gerçek tarayıcıda bir ders
+açıp "Çalıştır"a basmak.**
+
+### Hiç başlanmadı
+
+- Blok tabanlı editör (ortaokul Hat D)
+- Hat D içerik: ortaokul (2), lise (kalan 2/3), üniversite (6) — sadece
+  1/11 ders yazıldı
+- Hat G içeriği (8 ders, hiçbiri yok)
+- İndirilebilir Python alıştırma deposu düzenlemesi
+- Faz 4 (Hat E) — Faz 3 bitmeden başlanmayacak zaten
+
+### Cron/loop durumu
+
+- **Aktif**, ID `4cb1628e` — her 5 dakikada bir (`*/5 * * * *`)
+  tetikleniyor, "önce `/usage` kontrol et, limitliysen hiçbir şey
+  yapma" talimatını taşıyor.
+- **Session-only** — bu CLI oturumu kapanırsa iş de biter, diskte
+  kalıcı değil. Oturum yeniden başlarsa bu cron job'ı da kaybolur,
+  yeniden kurulması gerekir.
+- Durdurmak için: `/loop stop` (veya CronDelete `4cb1628e`).
+
+### Sonraki oturum için kontrol listesi
+
+1. Dev sunucusunu başlat, `d-lise-python-komut-dizisi` dersini aç,
+   "Çalıştır"a bas — Pyodide yüklenip robot hareket ediyor mu?
+2. Çalışmıyorsa: önce `jsglobals` kısıtlamasını gevşetip (`jsglobals`
+   parametresini hiç vermeden) dene — sorunun kaynağı bu mu anla.
+   Kesin yasak: sorunu "çözmek" için testi/doğrulamayı zayıflatma,
+   kök nedeni bul.
+3. Çalışıyorsa: Hat D'nin kalan 10 dersine, blok editöre ve Hat G'ye
+   geç (görev listesi: TaskList, #19-#28 numaralı görevler).
