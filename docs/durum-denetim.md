@@ -107,3 +107,83 @@ Tüm değişiklikler sonrası `npx tsx scripts/check-content.ts`, `npx vitest
 run` (31/31), `npx tsc --noEmit`, `npx eslint .` ve `npx next build`
 tekrar çalıştırıldı; hepsi temiz. 4 yeniden yazılan Kanca ve yayınlanan
 ders tarayıcıda görsel olarak da doğrulandı.
+
+---
+
+## Güncelleme — Faz 2 sonu: 39 dersin tamamının kalite denetimi (2026-08-02)
+
+Faz 2 (Hat A, 14 ders + Hat C, 11 ders) tamamlandıktan sonra, artık 39
+dersin tamamı tek seferde tarandı. Faz 1'deki gibi `kalite-denetci`
+görevi doğrudan proje subagent'ı olarak çağrılamadığı için (bu oturumun
+araç kümesinde proje `.claude/agents/` tanımları otomatik yüklenmiyor),
+5 paralel genel amaçlı ajan `kalite-denetci.md`'nin talimatlarını
+(salt-okunur, kaynakla karşılaştır, düzeltme yapma, sadece bulgu
+raporla) taşıyarak çalıştırıldı — her biri 7-9 dersten oluşan bir grubu
+inceledi (Hat A ortaokul+lise, Hat A üniversite+Hat C ortaokul, Hat C
+lise+üniversite, Hat B ortaokul+lise, Hat B üniversite). Sonuçlar tek
+bir tabloda birleştirilip kullanıcıya (Mert) sunuldu.
+
+### Sonuç
+
+**Sıfır matematik/kod hatası.** Tüm sayısal iddialar, formüller,
+fixture karşılaştırmaları, robot tanımları ve bileşen prop'ları kodla
+birebir doğrulandı — Faz 1'deki gibi bu turda da hesaplama katmanında
+hiçbir hata bulunmadı. 13/39 derste bulgu vardı, üçü gerçek kaynak
+sorunu, geri kalanı kanca (hook) çeşitliliği kalıp tekrarıydı.
+
+### Düzeltilen üç kaynak sorunu
+
+| Ders | Sorun | Düzeltme |
+|---|---|---|
+| `a-universite-dh-parametreleri`, `b-universite-dh-ileri-kinematik` | "Modern Robotics Bölüm 4" DH parametrelerine değil, kitabın product-of-exponentials (PoE) formülasyonuna ait — DH parametreleri kitapta **Appendix C**'de işleniyor | Kaynak ataması "Bölüm 4/4.1" → "Appendix C" olarak düzeltildi. Sayılar (α/a/d) zaten doğruydu, sadece atıf yanlıştı |
+| `b-lise-eklem-limitleri` | "Motora giden kablo demeti bir sınırda kopar" iddiası kaynaksızdı (Modern Robotics Bölüm 2'de böyle bir iddia yok) | Genel, kaynaksız-doğru bir ifadeye yumuşatıldı: "eklem limitleri genelde mekanik parçaların — kablolar, contalar — zarar görmemesi için konur" |
+| `a-ortaokul-robot-nedir`, `a-ortaokul-robot-ile-makine-farki` | ISO 8373:2021 madde 3.1 (genel "robot" tanımı) eksen sayısı belirtmiyor; "üç veya daha fazla eksen" kriteri ayrı bir madde olan "endüstriyel robot" tanımına ait | İki tanım ayrı ayrı, doğru madde/isimle atfedildi; ders metni de buna göre güncellendi (demo robotun 2 eksenli olup gerçek bir endüstriyel robottan daha az eksenli olduğu açıkça belirtildi) |
+
+### Kanca çeşitliliği — ikinci tur
+
+`docs/04-icerik-rehberi.md`'deki "Kanca çeşitliliği" denetimi bu kez
+**39 dersin tamamı yan yana konarak** yapıldı (Faz 1'de sadece 14 ders
+içindi). İki tekrarlayan kalıp bulundu:
+
+1. **"[durum kur] → Ama → Peki...?"** — klasik yasak iskelet, 6 derste
+2. **"Çoğu kişi ... sanır"** — ayrı bir kalıp ama aynı sorunu taşıyor (4 derste birebir aynı açılış cümlesi kalıbı)
+
+Toplam **10 ders** yeniden yazıldı (aşağıdaki listede toplandı, üçü her
+iki kalıba da giriyordu). Her ders için komşu/benzer derslerin kancasına
+bakılıp genuinely farklı bir açılış biçimi (mini senaryo, şaşırtıcı
+gözlem, karşılaştırma, doğrudan teknik çerçeve) seçildi. Sadece "Kanca"
+paragrafı değişti; kazanımlar, formüller, kaynaklar, sonraki bölümler
+aynı kaldı.
+
+| Ders | Eski kalıp | Yeni biçim |
+|---|---|---|
+| `a-ortaokul-robot-nedir` | Çift soru + Ama | Mini senaryo (gündelik nesneler) |
+| `a-ortaokul-robot-turleri` | robot-nedir ile aynı iskelet | Şaşırtıcı gözlem |
+| `a-ortaokul-robot-ile-makine-farki` | "Çoğu kişi...Peki...mu?" | Doğrudan meydan okuma |
+| `a-universite-homojen-donusum` | Ama→çözüm-adı (robot-mimarileri ile aynı) | Şaşırtıcı gözlem (somut sayısal örnek) |
+| `a-universite-robot-mimarileri` | homojen-donusum ile aynı iskelet | Karşılaştırma açılışı |
+| `a-universite-poz-gosterimleri` | "Çoğu kişi...sanır" | Mini senaryo (uçak/gimbal kilidi) |
+| `c-ortaokul-en-kisa-yol-her-zaman-en-iyi-mi` | poz-gosterimleri ile aynı kalıp | Mini senaryo (iki arkadaş) |
+| `a-lise-koordinat-sistemleri` | "Ama İLERİ neye göre?" | Mini senaryo (kaptan/gemi) |
+| `b-lise-geometrik-ters-kinematik` | "Önceki derste...Şimdi..." (b-lise-ileri-kinematik ile aynı) | Doğrudan teknik çerçeve |
+| `c-universite-c-space` | "Ama...neden hep nokta?" | Şaşırtıcı gözlem/doğrudan ifade |
+
+Bu turdan sonra 39 dersin açılışı tekrar yan yana kontrol edildi — hiçbir
+ikili aynı rhetorik iskeleti paylaşmıyor (bazı isimli biçimler —
+"karşılaştırma açılışı", "mini senaryo" — birden fazla derste kullanılıyor,
+ama bu docs/04'ün beklediği bir şey: farklı biçimlerin DÖNGÜSEL kullanımı,
+her birinin kelimesi kelimesine aynı olmaması).
+
+Tüm düzeltmeler sonrası `npx tsc --noEmit`, `npx tsx scripts/check-content.ts`,
+`npx tsx scripts/validate-content-graph.ts`, `npx eslint .`, `npx vitest run`
+(55/55) ve `npx next build` tekrar çalıştırıldı; hepsi temiz.
+
+### Yapılmayan adım — yine `durum: yayinda` işaretlemesi
+
+Faz 1'deki gibi: bu tur da bir **yapay zeka** incelemesiydi (5 paralel
+ajan + benim gözden geçirmem), `docs/06`'nın ısrar ettiği "insan gözden
+geçirmesi" değil. 39 dersin 38'i hâlâ `durum: taslak` (`b-universite-ters-kinematik`
+Faz 1'de zaten insan tarafından incelenip yayınlanmıştı). Hangi
+derslerin okunup `yayinda` yapılacağına karar vermek kullanıcıya
+(Mert) ait — bu doküman ve yukarıdaki bulgu tablosu o incelemeye
+başlangıç noktası.
