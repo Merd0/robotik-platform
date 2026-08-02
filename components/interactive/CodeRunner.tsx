@@ -107,7 +107,12 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
     }
     worker.addEventListener("message", onMessage);
 
-    const request: PyodideWorkerRequest = { requestId, code, jointCount: robot?.joints.length };
+    const request: PyodideWorkerRequest = {
+      requestId,
+      code,
+      jointCount: robot?.joints.length,
+      robotSpec: robot ?? undefined,
+    };
     worker.postMessage(request);
   }
 

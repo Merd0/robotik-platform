@@ -1,4 +1,5 @@
 import { loadPyodide, type PyodideAPI } from "pyodide";
+import { inverseKinematicsAnalytical2Dof, type RobotSpec } from "@/lib/robotics/kinematics";
 
 /**
  * Kullanıcının Python kodunu Pyodide (WebAssembly CPython) ile Web Worker
@@ -28,6 +29,12 @@ export interface PyodideWorkerRequest {
    * `jointTrace` olarak her çağrı sonrası tüm eklemlerin anlık durumu döner.
    */
   jointCount?: number;
+  /**
+   * Verilirse VE tam 2 eklemliyse, `robot.hedefe_git(x, y)` da enjekte
+   * edilir: analitik 2-DOF ters kinematik (bkz. kinematics.ts) ile hedef
+   * koordinata ulaşmayı dener, başarılıysa True/başarısızsa False döner.
+   */
+  robotSpec?: RobotSpec;
 }
 
 export interface PyodideWorkerResponse {
@@ -57,7 +64,7 @@ function getPyodide(): Promise<PyodideAPI> {
 }
 
 ctx.onmessage = async (event) => {
-  const { requestId, code, jointCount } = event.data;
+  const { requestId, code, jointCount, robotSpec } = event.data;
   const outputLines: string[] = [];
   const jointTrace: number[][] = [];
   let errorMessage: string | null = null;
@@ -73,10 +80,27 @@ ctx.onmessage = async (event) => {
         currentAngles[index] = (derece * Math.PI) / 180;
         jointTrace.push([...currentAngles]);
       });
+
+      const canUseIk = robotSpec && robotSpec.joints.length === 2;
+      if (canUseIk) {
+        pyodide.globals.set("_hedefe_git", (x: number, y: number) => {
+          const angles = inverseKinematicsAnalytical2Dof(robotSpec, { x, y });
+          if (!angles) return false;
+          currentAngles[0] = angles[0];
+          currentAngles[1] = angles[1];
+          jointTrace.push([...currentAngles]);
+          return true;
+        });
+      }
+
       await pyodide.runPythonAsync(
         "class _Robot:\n" +
           "    def eklem_ac(self, index, derece):\n" +
           "        _eklem_ac(index, derece)\n" +
+          (canUseIk
+            ? "    def hedefe_git(self, x, y):\n" +
+              "        return _hedefe_git(x, y)\n"
+            : "") +
           "robot = _Robot()\n",
       );
     }

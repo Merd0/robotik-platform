@@ -4,6 +4,7 @@ import { JacobianViz } from "./JacobianViz";
 import { PlannerRace } from "./PlannerRace";
 import { CodeRunner } from "./CodeRunner";
 import { Quiz } from "./Quiz";
+import { BlockEditor } from "./BlockEditor";
 
 /**
  * MDX'e açılan bileşenlerin TEK listesi. Bir ders dosyası burada olmayan bir
@@ -17,4 +18,5 @@ export const mdxComponents = {
   PlannerRace,
   CodeRunner,
   Quiz,
+  BlockEditor,
 };
