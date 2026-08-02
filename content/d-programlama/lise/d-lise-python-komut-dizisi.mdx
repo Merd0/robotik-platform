@@ -1,0 +1,85 @@
+---
+id: d-lise-python-komut-dizisi
+baslik: Python ile komut dizisi yazma
+hat: d-programlama
+seviye: lise
+sure: 15
+sira: 1
+onkosul:
+  - a-lise-doner-dogrusal-eklemler
+kazanimlar:
+  - Bir robotu sıralı Python komutlarıyla hareket ettirebilme
+  - Kod satırlarının robot üzerinde hangi sırayla etkili olduğunu açıklayabilme
+kaynaklar:
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 1 (giriş — robot programlamanın komut dizisi doğası)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+durum: taslak
+---
+
+## Kanca
+
+Kaydırıcıyla robotu oynatmak sezgiseldi — eli kolun üzerinde hissettin.
+Şimdi eli bırakıyorsun: robota ne yapacağını YAZILI olarak, satır satır
+söyleyeceksin. Bu, gerçek bir robot programcısının işidir.
+
+<CodeRunner
+  robot="generic-2dof"
+  theme="lise"
+  initialCode={`# robot.eklem_ac(eklem_no, derece) ile eklemleri sırayla döndür
+robot.eklem_ac(0, 45)
+robot.eklem_ac(1, 30)
+print("Robot hazır konuma geldi.")`}
+/>
+
+## Ne oldu
+
+Yukarıdaki kod gerçek bir Python yorumlayıcısında (Pyodide — tarayıcıda
+çalışan WebAssembly CPython) çalıştı, tarayıcı sekmenden hiç çıkmadan.
+`robot.eklem_ac(eklem_no, derece)` çağrısı iki şey yapıyor: hem robotu o
+açıya döndürüyor hem de her çağrıdan sonraki durumu kaydediyor —
+"Çalıştır"a bastığında gördüğün hareket, kodun SATIR SATIR yürütülmesinin
+sonucu.
+
+Sıra önemli: `eklem_ac(0, 45)` önce çalışırsa robot önce omuzunu döndürür,
+sonra dirseğini. Python'da kod yukarıdan aşağıya, yazdığın sırayla
+çalışır — bu robotik programlamanın en temel kuralıdır: **robot, ona
+söylediğin sırayla hareket eder, aklından geçeni değil.**
+
+## Gerçek dünyada
+
+Gerçek bir robot kontrolöründe de mantık aynıdır: bir hareket programı,
+komutların yazıldığı sırayla çalışan bir metin dosyasıdır (ABB'de
+RAPID, KUKA'da KRL — bunları üniversite seviyesinde göreceksin). Python,
+bu platformda öğrenmesi en kolay dil olduğu için başlangıç noktası, ama
+altındaki mantık (sıralı komut yürütme) endüstride kullanılan her dilde
+aynı.
+
+## Dene
+
+Yukarıdaki kodu değiştir: iki `eklem_ac` satırının SIRASINI değiştir
+(önce eklem 1'i, sonra eklem 0'ı döndür). Robotun son konumu değişiyor
+mu, yoksa aynı yere mi varıyor? Şimdi ikinci satırı tamamen sil,
+çalıştır — ne değişti?
+
+<Quiz
+  sorular={[
+    {
+      soru: "İki satır (eklem 0'ı 45°'ye, eklem 1'i 30°'ye ayarlama) farklı eklemleri hedefliyor. Sırasını değiştirirsen SON konum değişir mi?",
+      secenekler: [
+        "Hayır — ikisi farklı eklemleri hedeflediği için son durum aynı kalır",
+        "Evet — Python'da satır sırası her zaman son sonucu değiştirir",
+        "Robot hata verir, iki eklem aynı anda ayarlanamaz",
+      ],
+      dogru: 0,
+      aciklama: "Sıra, AYNI eklemi birden fazla kez ayarlarken kritik olur (son çağrı kazanır). Burada farklı eklemler hedeflendiği için sıra son konumu etkilemez — ama aynı eklemi iki kez farklı açılarla ayarlasaydın, sıra kesin belirleyici olurdu.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki ders, eklem açısı vermek yerine robota doğrudan bir HEDEF NOKTA
+(koordinat) vermeyi ve bunun eklem hareketinden farkını ele alıyor.
