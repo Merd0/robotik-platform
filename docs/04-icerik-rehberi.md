@@ -118,13 +118,28 @@ gösterilemeyen bilgi yayınlanmaz.
 
 Her dersin bir "kanca" ile açılması kural, ama **kancanın hep aynı retorik
 şekle bürünmesi** ayrı bir sorun ve fark edilmesi zor çünkü her ders tek
-başına makul görünür. Özellikle şu kalıptan kaçının: "[bir durum kur] →
-'Ama/Ancak ...' (çelişki) → 'Peki ...?' (soru ile bitir)." Bu kalıp bir kez
-iyi çalışır, arka arkaya on dört kez kullanılınca okuyucuya "hep aynı
-numara" hissi verir.
+başına makul görünür. Bir kalıp bir kez iyi çalışır, arka arkaya on dört kez
+kullanılınca okuyucuya "hep aynı numara" hissi verir.
 
-Bunun yerine, birbirinden gerçekten farklı açılış biçimleri kullanın —
-aşağıdakiler örnek, tek liste değil:
+**Genel ilke: hiçbir açılış kalıbı arka arkaya tekrar etmez.** Kural belirli
+bir kalıbı yasaklamak değil — herhangi bir retorik iskeletin sıradanlaşmasını
+engellemek. Yasak liste tutmak işe yaramaz, çünkü bir kalıptan kaçınıldığında
+yerini bir başkası alır ve o da aynı hızla aşınır.
+
+Şimdiye kadar aşınmış, dolayısıyla özellikle dikkat isteyen iki iskelet:
+
+- **"Ama...Peki...?"** — "[bir durum kur] → 'Ama/Ancak ...' (çelişki) →
+  'Peki ...?' (soru ile bitir)."
+- **"Çoğu kişi X sanır, aslında Y"** — "Çoğu kişi/mühendis [yaygın inanç]
+  düşünür/sanır. Aslında/Gerçekte [düzeltme]." (Faz 3+4 denetiminde yeni
+  40 dersin %25'inde çıktı, eski içerikte %5'ti — tam da "bir kalıptan
+  kaçınınca yerini başkası alır" durumunun örneği.)
+
+Bu ikisi yasak değil, **kotalı**: aşağıdaki ardışıklık kontrolüne tabidir ve
+bir hat+seviye içinde baskın hale gelmemelidir.
+
+Birbirinden gerçekten farklı açılış biçimleri kullanın — aşağıdakiler örnek,
+tek liste değil:
 
 - **Şaşırtıcı gözlem:** "Bir robotun kolu, aynı noktaya iki farklı şekilde
   uzanabilir. İkisi de doğru."
@@ -137,11 +152,27 @@ aşağıdakiler örnek, tek liste değil:
 - **Karşılaştırma açılışı:** "İki robot aynı hedefe gidiyor, biri 2 saniyede,
   diğeri 5 saniyede. İkisi de 'doğru' hareket ediyor."
 
-Bir ders yazılırken, bir önceki 2-3 dersin kanca cümlesine bakılır; aynı
-"Ama...Peki...?" iskeletine düşülüyorsa farklı bir açılış biçimi seçilir.
-Bu kontrol `kalite-denetci` subagent'ının denetim kapsamına da eklenir
+### Ardışıklık kontrolü (yazarken uygulanır)
+
+Bir ders yazılırken, aynı hat+seviyedeki **bir önceki 2-3 dersin kanca
+cümlesine** bakılır. Şu üç durumdan biri varsa farklı bir açılış biçimi
+seçilir:
+
+1. Aynı retorik iskelet arka arkaya iki kez kullanılmışsa (hangi iskelet
+   olduğu fark etmez — sadece yukarıdaki iki kalıp değil).
+2. Açılış cümlesi neredeyse birebir aynı yapıdaysa ("Yeşil noktayı ...
+   sürüklemeyi dene" gibi aynı emir kalıbının tekrarı).
+3. Aynı hat+seviyedeki derslerin yarısından fazlası tek bir kalıpta
+   toplanmışsa.
+
+Kalıbın adını koyamıyorsanız şu testi uygulayın: iki kancayı yan yana koyup
+ilk cümlelerin **gramer iskeletini** karşılaştırın. Konular farklı ama
+iskelet aynıysa, tekrar var demektir.
+
+Bu kontrol `kalite-denetci` subagent'ının denetim kapsamına da dahildir
 (bkz. `06-kalite-ve-topluluk.md`) — sadece doğruluk değil, retorik çeşitlilik
-de kontrol edilir.
+de kontrol edilir. Denetçi belirli bir kalıbı değil, **kalıp dağılımını**
+raporlar: hangi iskelet kaç derste, ardışık tekrar nerede.
 
 ## Ders yazma iş akışı
 

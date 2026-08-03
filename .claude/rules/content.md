@@ -19,8 +19,11 @@ gereken, sık unutulan noktalar.
   listeye ekle, MDX içinde icat etme.
 - Seviye kalibrasyonu: ortaokulda formül yok, lisede formül var ama türetme
   yok, üniversitede türetme ve sınırlar var.
-- Kanca çeşitliliği: bir önceki 2-3 dersin kanca cümlesine bak, aynı
-  "[durum kur] → Ama/Ancak → Peki...?" iskeletine düşme (bkz. `04` "Kanca
+- Kanca çeşitliliği: aynı hat+seviyedeki bir önceki 2-3 dersin kanca
+  cümlesine bak, **hangi olursa olsun** aynı retorik iskeleti tekrarlama.
+  Aşınmış iki kalıp özellikle dikkat ister: "[durum kur] → Ama/Ancak →
+  Peki...?" ve "Çoğu kişi X sanır, aslında Y". Kalıbın adını koyamıyorsan
+  ilk cümlelerin gramer iskeletini yan yana karşılaştır (bkz. `04` "Kanca
   çeşitliliği").
 - `sira` alanı 1'den başlar, aynı hat+seviye içindeki öğretim sırasını verir.
 - İş yerinden hiçbir bilgi girmez; kaynağı gösterilemeyen iddia yazılmaz.

@@ -734,3 +734,157 @@ geçirmesi değil.
 Hat H (güvenlik), arama, sözlük, katkı süreci, erişilebilirlik/performans
 denetimi. CLAUDE.md kuralı gereği yeni faz kapsamı kullanıcı onayı
 gerektirir.
+
+---
+
+## Faz 3+4 sonrası kalite denetimi (2026-08-03)
+
+Faz 3 ve Faz 4'ün main'e merge edilmesinden sonra, o iki fazda yazılan
+**40 dersin tamamı** `kalite-denetci` subagent'ıyla denetlendi (Hat D 11,
+Hat G 8, Hat E 10, Hat F 11). Ayrıca 79 dersin tamamı üzerinde ayrı bir
+kanca (hook) çeşitliliği denetimi yapıldı.
+
+### Denetimin kapsamı
+
+Üç odak: (1) `BlockEditor` ve `hedefe_git`/`eklem_ac` Python API'sinin
+öğrettiği şeyin `lib/robotics/blockProgram.ts` ve
+`lib/workers/pyodideWorker.ts`'teki gerçek davranışla eşleşmesi,
+(2) `SignalTimeline` / `PixelToWorld` / `ThresholdViewer` / `ScanPath`
+bileşenlerinin sayısal örneklerinin doğruluğu, (3) `docs/04`'teki kanca
+çeşitliliği kuralına uyum.
+
+### Sonuç: KRİTİK bulgu yok
+
+Hiçbir derste yanlış formül, çalışmayan örnek kod veya uydurma API
+bulunmadı. Özellikle doğrulananlar:
+
+- `eklem_ac(index, derece)`'in parametre sırası, derece birimi ve
+  **mutlak atama** davranışı derslerde doğru anlatılmış.
+- `hedefe_git` koda göre yalnızca `joints.length === 2` iken enjekte
+  ediliyor; dersler bu kısıta uymuş (6-DOF derslerinde hiç çağrılmamış).
+- Erişim aralığı örnekleri (a1=1.0, a2=0.8 → [0.2, 1.8]) gerçek IK
+  mantığıyla tutarlı.
+- Lazer üçgenleme (Z = b·tanθ), tarama örtüşmesi (s = W·(1−o)), ölçüm
+  belirsizliği (x̄=10,004 mm, s≈0,029 mm) elle yeniden hesaplandı, doğru.
+- URDF etiketleri ve PyBullet API çağrıları `reference-python/` içindeki
+  gerçek kodla eşleşiyor; derslerin bahsettiği hiçbir dosya/komut adı
+  uydurma değil.
+
+### Düzeltilen bulgular
+
+| Bulgu | Düzeltme |
+|---|---|
+| `PixelToWorld` prop'u `mmPerCell` adlanıyordu ama kod değeri **piksel** başına uyguluyordu (JSDoc "hücre" diyordu, 10× anlam farkı) | `mmPerPixel` olarak yeniden adlandırıldı; iki MDX kullanımı güncellendi. İçerikte yanlış sayı yoktu — dersler zaten mm/piksel diye doğru yorumlamıştı |
+| 74 ders `<Quiz>` kullanıyor ama sadece 15'i `etkilesimli:`'de listeliyordu; 15'inin tamamı Faz 3+4 üniversite dersiydi | 15 dosyadan `Quiz` çıkarıldı, 64 dersin konvansiyonuna hizalandı. `Quiz` tek girdi olan 5 dosyada `etkilesimli: []` yapıldı (`b-universite-hiz-ivme-profilleri` emsali) |
+| `f-universite-kamera-kalibrasyonu` ve `f-universite-lazer-profil-sensoru` ön koşulsuzdu (graph validator uyarısı) | Sırasıyla `f-lise-olcek-perspektif-hatasi` ve `f-lise-piksel-milimetre` ön koşul olarak eklendi. **Graph uyarıları 2 → 0** |
+| `g-universite-cevrimdisi-programin-dogrulanmasi` "Kaynak kodu" linki `main.py#L64`'e gidiyordu; L64 dekoratör, `def create_plan` L65'te | Link `#L65` yapıldı |
+| `f-lise-esikleme-nesne-bulma` "kabaca 82-188" diyordu, bileşenin gerçek aralığı 82-189 | 82-189 yapıldı |
+| `ScanPath.tsx`'te ölü kod: `Math.min(CELL_PX, rowHeightPx)` her zaman `CELL_PX` veriyordu | `rowHeightPx` kaldırıldı |
+| `e-lise-dijital-giris-cikis` "onlarca milisaniye" diyip bunu sahnede gösteriyordu, ama bileşen sabit 500 ms/adım | `e-universite-cycle-time-jitter`'daki gibi zamanlama sabiti açıkça belirtildi: adım bir sıra birimidir, gerçek zaman ölçeği değil |
+
+### Kanca çeşitliliği: kural genelleştirildi
+
+`docs/04`'ün **adıyla yasakladığı** "[durum] → Ama/Ancak → Peki...?"
+iskeleti 79 dersin hiçbirinde kullanılmamış (doğrulandı: `## Kanca`
+bölümlerinde "Peki" kelimesi hiç geçmiyor). Ama yerini başka bir kalıp
+almıştı: **"Çoğu kişi X sanır, aslında Y"** yeni 40 dersin %25'inde
+(10 ders), eski 39 dersin %5'inde (2 ders) kullanılıyordu. Ayrıca üç
+yerde ardışık tekrar vardı (E/üni sıra 3-4, F/üni sıra 4-5, G/üni
+sıra 4-5).
+
+Bu, "bir kalıbı yasaklayınca yerini başkası alır" durumunun somut
+örneği olduğu için kural genelleştirildi (`docs/04-icerik-rehberi.md`
+"Kanca çeşitliliği" + `.claude/rules/content.md`):
+
+- Genel ilke artık **hiçbir açılış kalıbı arka arkaya tekrar etmez** —
+  belirli bir kalıbı yasaklamak değil.
+- Aşınmış iki iskelet ("Ama...Peki...?" ve "Çoğu kişi...") yasak değil,
+  **kotalı** olarak işaretlendi.
+- Ardışıklık kontrolü üç maddeye bağlandı: aynı iskelet iki kez ardışık,
+  açılış cümlesinin birebir aynı yapıda olması, ya da bir hat+seviyenin
+  yarısından fazlasının tek kalıpta toplanması.
+- Kalıbın adı konamıyorsa uygulanacak test eklendi: iki kancanın ilk
+  cümlelerinin **gramer iskeletini** yan yana karşılaştır.
+
+Yeni kurala göre 8 kanca yeniden yazıldı (`d-ortaokul-sirali-tekrar-kosul`,
+`e-lise-zamanlama-neden-onemli`, `e-universite-plc-master-slave`,
+`f-ortaokul-goz-olmadan-is-yapmak`, `f-universite-nokta-bulutu-yuzey-muayenesi`,
+`g-lise-deneme-yanilma-maliyeti`, `g-universite-pybullet-sahne-fizik`,
+`g-universite-cevrimdisi-programin-dogrulanmasi`). Sonuç: "Çoğu kişi"
+kalıbı 10 → **3** derse indi (%25 → %7,5, eski içerikteki %5'e yakın),
+üç ardışık tekrarın hepsi kırıldı. Yeni kancalar komşu derslerin
+kalıbıyla çakışmayacak şekilde seçildi (mini senaryo, karşılaştırma,
+şaşırtıcı gözlem, doğrudan meydan okuma, teknik çerçeve).
+
+### Elle doğrulanması gereken kısım — kaynaklar
+
+Denetimin en zayıf tarafı bu. WebFetch ile erişilebilen kaynakların
+**hepsi** derslerdeki iddialarla birebir örtüştü (Mecademic
+`mecademicpy`, OpenCV kalibrasyon/eşikleme, Keyence vision/photoelectric,
+Wikipedia GSD, EtherCAT/PROFINET/EtherNet-IP, RoboDK, PyBullet,
+arXiv:2009.13303, NASA dijital ikiz). Ancak ~20 kaynağa hiç
+erişilemedi: ABB RAPID PDF'i bozuk metin verdi, `docs.ros.org` ve ROS
+Wiki bot korumasına (Anubis) takıldı, KUKA KSS ve FANUC TP kılavuzları
+kamuya açık değil, ISO/IEC standartları ve birkaç DOI paywall arkasında,
+5 ders kitabı çevrimiçi mevcut değil.
+
+Bunlar **"yanlış" değil, "teyit edilmedi"** olarak işaretlendi. docs/06
+Katman 3'ün insan tarafından yapılması gereken kısmı tam burası.
+Özellikle robot dili sözdizimi iddiaları taşıyan dersler (elle kontrol
+listesi):
+
+**ABB RAPID sözdizimi geçen dersler:**
+- `content/a-temeller/lise/a-lise-koordinat-sistemleri.mdx`
+- `content/a-temeller/lise/a-lise-tcp-kavrami.mdx`
+- `content/b-kinematik/universite/b-universite-hiz-ivme-profilleri.mdx`
+- `content/b-kinematik/universite/b-universite-movej-movel.mdx`
+- `content/d-programlama/ortaokul/d-ortaokul-blok-komutlar.mdx`
+- `content/d-programlama/ortaokul/d-ortaokul-sirali-tekrar-kosul.mdx`
+- `content/d-programlama/lise/d-lise-python-komut-dizisi.mdx`
+- `content/d-programlama/lise/d-lise-hareket-komutlari.mdx`
+- `content/d-programlama/lise/d-lise-koordinat-hiz-bekleme.mdx`
+- `content/d-programlama/universite/d-universite-abb-rapid.mdx` (en yoğun: `robtarget`, `wobjdata`, `PROC`/`ENDPROC`, `MoveJ`/`MoveL`)
+- `content/d-programlama/universite/d-universite-fanuc-karsilastirma.mdx`
+- `content/d-programlama/universite/d-universite-kuka-krl.mdx`
+- `content/d-programlama/universite/d-universite-mecademic-python.mdx`
+- `content/d-programlama/universite/d-universite-offline-programlama.mdx`
+- `content/d-programlama/universite/d-universite-ros2-temelleri.mdx`
+- `content/e-haberlesme/lise/e-lise-dijital-giris-cikis.mdx` (`SetDO`, `WaitDI`)
+- `content/e-haberlesme/lise/e-lise-el-sikisma.mdx` (`SetDO`, `WaitDI`)
+- `content/e-haberlesme/lise/e-lise-zamanlama-neden-onemli.mdx` (`SetDO`, `WaitDI`)
+- `content/g-simulasyon/universite/g-universite-cevrimdisi-programin-dogrulanmasi.mdx`
+
+**KUKA KRL sözdizimi geçen dersler:**
+- `content/b-kinematik/universite/b-universite-movej-movel.mdx` (`PTP`, `LIN`)
+- `content/d-programlama/ortaokul/d-ortaokul-blok-komutlar.mdx`
+- `content/d-programlama/lise/d-lise-python-komut-dizisi.mdx`
+- `content/d-programlama/lise/d-lise-koordinat-hiz-bekleme.mdx`
+- `content/d-programlama/universite/d-universite-abb-rapid.mdx`
+- `content/d-programlama/universite/d-universite-kuka-krl.mdx` (en yoğun: `PTP`/`LIN`/`CIRC`, `.src`/`.dat` ayrımı)
+- `content/d-programlama/universite/d-universite-fanuc-karsilastirma.mdx`
+- `content/d-programlama/universite/d-universite-mecademic-python.mdx`
+- `content/d-programlama/universite/d-universite-offline-programlama.mdx`
+- `content/d-programlama/universite/d-universite-ros2-temelleri.mdx`
+- `content/g-simulasyon/universite/g-universite-cevrimdisi-programin-dogrulanmasi.mdx`
+
+**FANUC TP sözdizimi geçen dersler:**
+- `content/d-programlama/universite/d-universite-fanuc-karsilastirma.mdx` (en yoğun: `J`/`L`, `FINE`/`CNT`, birim ayrımı)
+- `content/d-programlama/universite/d-universite-kuka-krl.mdx`
+- `content/d-programlama/universite/d-universite-abb-rapid.mdx`
+- `content/d-programlama/universite/d-universite-mecademic-python.mdx`
+- `content/d-programlama/universite/d-universite-offline-programlama.mdx`
+
+### Doğrulama
+
+`npx tsx scripts/check-content.ts` (79 ders, hata yok), `npm run
+validate-content-graph` (79 ders, **0 uyarı** — önceki 2 kök uyarısı
+ön koşul eklenerek kapatıldı), `npx eslint .`, `npx vitest run` (61/61),
+`npm run build` (85 sayfa) — her adımdan sonra ayrı ayrı koşuldu, hepsi
+temiz.
+
+### Yapılmayan adım — yine `durum: yayinda` işaretlemesi
+
+Denetim bir insan gözden geçirmesinin yerine geçmez. 40 ders
+`durum: taslak` kalmaya devam ediyor; `durum: yayinda` için docs/06
+Katman 3 (kaynakların elle karşılaştırılması — özellikle yukarıdaki
+RAPID/KRL/TP listesi) hâlâ gerekli.

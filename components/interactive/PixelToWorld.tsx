@@ -3,8 +3,8 @@
 import { useState } from "react";
 
 interface PixelToWorldProps {
-  /** Varsayılan kalibrasyon: 1 hücrenin gerçek dünyada kaç milimetreye karşılık geldiği. */
-  mmPerCell?: number;
+  /** Varsayılan kalibrasyon: 1 pikselin gerçek dünyada kaç milimetreye karşılık geldiği. */
+  mmPerPixel?: number;
   /** Kullanıcı kalibrasyon değerini kendi ayarlayabilsin mi. */
   adjustableCalibration?: boolean;
   /** "Perspektif hatası göster" anahtarını göster — merkezden uzaklaştıkça ölçüm kayması ekler. */
@@ -59,14 +59,14 @@ const round = (value: number) => Math.round(value * 100) / 100;
  * kullanmanın" neden hataya yol açabileceğini somutlaştırır.
  */
 export function PixelToWorld({
-  mmPerCell = 5,
+  mmPerPixel = 5,
   adjustableCalibration = false,
   allowPerspectiveDistortion = false,
   theme = "lise",
 }: PixelToWorldProps) {
   const t = THEME[theme];
   const [selected, setSelected] = useState<{ col: number; row: number } | null>(null);
-  const [calibration, setCalibration] = useState(mmPerCell);
+  const [calibration, setCalibration] = useState(mmPerPixel);
   const [showDistortion, setShowDistortion] = useState(false);
 
   function computeWorld(col: number, row: number) {

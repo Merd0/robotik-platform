@@ -5,7 +5,8 @@ hat: f-algilama
 seviye: universite
 sure: 20
 sira: 1
-onkosul: []
+onkosul:
+  - f-lise-olcek-perspektif-hatasi
 kazanimlar:
   - "Pinhole kamera modelindeki iç parametrelerin (odak uzaklığı fx/fy, optik merkez cx/cy) ve distorsiyon katsayılarının anlamını açıklayabilme"
   - "Dış parametrelerin (rotasyon R, öteleme t) kamera çerçevesini dünya/robot çerçevesine nasıl bağladığını açıklayabilme"
@@ -18,7 +19,6 @@ incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
   - PixelToWorld
-  - Quiz
 durum: taslak
 ---
 
@@ -29,7 +29,7 @@ hafifçe kavisli çıkabilir. Kamera bozuk değildir. Lens, ışığı merkezden
 uzaklaştıkça biraz farklı büker; bu sapma rastgele değil, tahmin edilebilir
 ve ölçülebilir bir şeydir. Kalibrasyon, bu sapmayı sayılara dökme işidir.
 
-<PixelToWorld mmPerCell={5} adjustableCalibration={true} theme="universite" />
+<PixelToWorld mmPerPixel={5} adjustableCalibration={true} theme="universite" />
 
 ## Ne oldu
 

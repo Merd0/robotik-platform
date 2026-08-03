@@ -80,8 +80,6 @@ export function ScanPath({ rows: initialRows = 6, adjustableRows = false, theme 
     setVisited(new Set());
   }
 
-  const rowHeightPx = (MAX_ROWS * CELL_PX) / rows;
-
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
       <div
@@ -96,7 +94,7 @@ export function ScanPath({ rows: initialRows = 6, adjustableRows = false, theme 
             <div
               key={index}
               className={`rounded-sm ${on ? t.accent : "border border-dashed " + t.outline}`}
-              style={{ width: CELL_PX, height: Math.min(CELL_PX, rowHeightPx) }}
+              style={{ width: CELL_PX, height: CELL_PX }}
             />
           );
         })}

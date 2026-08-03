@@ -44,6 +44,13 @@ sürekli değil, düzenli aralıklarla (tarama döngüsü / scan cycle) okur. Bu
 döngü tipik olarak onlarca milisaniye sürer. Yani "Giriş" açılıp "Çıkış"
 tepki verene kadar küçük ama gerçek bir gecikme olabilir.
 
+Yukarıdaki sahnede bir uyarı: "Oynat"a bastığında okuma başı her adımda
+tam 500 milisaniye bekler — bu, bileşenin kendi kodundaki sabit bir
+zamanlayıcıdır, gerçek bir tarama döngüsünün süresi değil. Sahnedeki bir
+adımı "onlarca milisaniye" diye okuma; adım burada sadece bir sıra
+birimi, gerçek zamanın ölçeği değil. Gecikmeyi gözünle görebilmek için
+yavaşlatılmıştır.
+
 ## Gerçek dünyada
 
 ABB'nin robot kontrolörlerinde bu kavramın karşılığı doğrudan iki RAPID

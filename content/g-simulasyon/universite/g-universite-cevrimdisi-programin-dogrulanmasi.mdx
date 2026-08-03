@@ -21,11 +21,10 @@ durum: taslak
 
 ## Kanca
 
-İki mühendis aynı hareket programını yazıyor. Biri kodu doğrudan robot
-kontrolörüne yüklüyor ve "Çalıştır"a basıyor. Diğeri önce aynı kodu bir
-simülasyonda çalıştırıp sonucu gözden geçiriyor, SONRA robota yüklüyor.
-İkisi de aynı programı yazdı — ama sadece biri üretim hattını durdurma
-riskini göze aldı.
+Aşağıdaki programı çalıştırmadan önce dur ve tahminini söyle: hedef
+erişilebilir mi, `basarili` hangi değeri yazdıracak? Sonra çalıştır.
+Çevrim dışı doğrulama, bu iki adımın — önce tahmin, sonra kontrol —
+disipline edilmiş halinden ibarettir.
 
 <CodeRunner
   robot="generic-2dof"
@@ -114,7 +113,7 @@ gereken bir komuttur ve simülasyon onu ÜCRETSİZ yakalamış oldu.
   ]}
 />
 
-**Kaynak kodu:** [`inverseKinematicsAnalytical2Dof`](https://github.com/Merd0/robotik-platform/blob/main/lib/robotics/kinematics.ts#L75), [`create_plan`](https://github.com/Merd0/robotik-platform/blob/main/reference-python/backend/api/main.py#L64)
+**Kaynak kodu:** [`inverseKinematicsAnalytical2Dof`](https://github.com/Merd0/robotik-platform/blob/main/lib/robotics/kinematics.ts#L75), [`create_plan`](https://github.com/Merd0/robotik-platform/blob/main/reference-python/backend/api/main.py#L65)
 
 ## Sonraki
 

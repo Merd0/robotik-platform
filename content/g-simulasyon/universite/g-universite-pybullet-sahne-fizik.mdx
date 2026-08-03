@@ -23,10 +23,11 @@ durum: taslak
 
 ## Kanca
 
-Çoğu kişi "simülasyon" kelimesini duyunca sadece güzel bir 3B
-görselleştirme düşünür. PyBullet'te asıl iş görselleştirmeden önce olur:
-her karede katı cisimlerin konumu, hızı ve çarpışması yeniden hesaplanır
-— ekranda gördüğün şey bu hesabın SONUCU, kendisi değil.
+Bu ders bir simülasyonun ekranda gördüğün kısmıyla arka planda hesaplanan
+kısmını ayırıyor. Aşağıdaki sahnede engelleri sürükleyip yeniden planlat:
+değişen şey görüntü değil, altta çalışan çarpışma ve arama hesabı.
+PyBullet'te de ayrım aynıdır — `stepSimulation()` çağrılmadıkça sahne
+zamanda ilerlemez, çizim ne kadar akıcı olursa olsun.
 
 <PlannerRace algorithms={["astar"]} allowObstacleEdit={true} theme="universite" extent={3} />
 

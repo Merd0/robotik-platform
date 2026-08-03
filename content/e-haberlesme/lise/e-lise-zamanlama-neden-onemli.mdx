@@ -23,11 +23,10 @@ durum: taslak
 
 ## Kanca
 
-Çoğu kişi "zamanlama" deyince aklına saniyeler gelir, "birkaç saniye erken
-ya da geç ne fark eder ki" diye düşünür. Endüstriyel bir hücrede bu birkaç
-saniye — bazen milisaniyeler — robotun boş bir tezgaha doğru hareket
-etmesiyle henüz kapanmamış bir tutucuya çarpması arasındaki farkı
-belirleyebilir.
+Aynı program iki farklı hücrede çalışıyor. Birinde robot tezgaha sorunsuz
+uzanıyor, diğerinde henüz kapanmamış bir tutucuya çarpıyor. Kod iki
+hücrede de satır satır aynı; değişen tek şey, iki sinyalin birbirine göre
+kaç milisaniye kaydığı.
 
 <SignalTimeline signals={["Robot: Hazırım", "PLC: Başla"]} theme="lise" />
 
