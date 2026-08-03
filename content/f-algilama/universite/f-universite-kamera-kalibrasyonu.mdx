@@ -1,0 +1,122 @@
+---
+id: f-universite-kamera-kalibrasyonu
+baslik: "Kamera kalibrasyonu — iç ve dış parametreler"
+hat: f-algilama
+seviye: universite
+sure: 20
+sira: 1
+onkosul: []
+kazanimlar:
+  - "Pinhole kamera modelindeki iç parametrelerin (odak uzaklığı fx/fy, optik merkez cx/cy) ve distorsiyon katsayılarının anlamını açıklayabilme"
+  - "Dış parametrelerin (rotasyon R, öteleme t) kamera çerçevesini dünya/robot çerçevesine nasıl bağladığını açıklayabilme"
+  - "Zhang'ın düzlemsel desen tabanlı kalibrasyon yönteminin temel mantığını (birden çok görüntü, kapalı form çözüm + iyileştirme) özetleyebilme"
+  - "PixelToWorld sahnesindeki sabit 'piksel başına mm' varsayımının gerçek kalibrasyonun neden basitleştirilmiş bir hali olduğunu açıklayabilme"
+kaynaklar:
+  - "OpenCV, 'Camera Calibration' (docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html) — kamera matrisi (fx, fy, cx, cy), distorsiyon katsayıları (k1, k2, p1, p2, k3), rotasyon/öteleme vektörleri ve en az ~10 satranç tahtası görüntüsüyle kalibrasyon"
+  - "Zhengyou Zhang, 'A Flexible New Technique for Camera Calibration', IEEE Transactions on Pattern Analysis and Machine Intelligence, 22(11), 2000, DOI: 10.1109/34.888718"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PixelToWorld
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Bir kameranın çektiği görüntüde, aslında dümdüz olan bir masanın kenarı
+hafifçe kavisli çıkabilir. Kamera bozuk değildir. Lens, ışığı merkezden
+uzaklaştıkça biraz farklı büker; bu sapma rastgele değil, tahmin edilebilir
+ve ölçülebilir bir şeydir. Kalibrasyon, bu sapmayı sayılara dökme işidir.
+
+<PixelToWorld mmPerCell={5} adjustableCalibration={true} theme="universite" />
+
+## Ne oldu
+
+Yukarıdaki sahne, bir hücreye tıkladığında piksel konumunu tek bir sabit
+katsayıyla ("1 piksel = X mm") gerçek dünya konumuna çeviriyor. Bu, gerçek
+bir kamera kalibrasyonunun kabaca basitleştirilmiş hali. Gerçek pinhole
+kamera modelinde iki ayrı parametre grubu var.
+
+**İç parametreler (intrinsic parameters).** Kameraya özgüdür, sahneden
+bağımsızdır: odak uzaklığı (fx, fy) ve optik merkez (cx, cy). Bir kamera
+çerçevesindeki 3B nokta (X, Y, Z), bu parametrelerle piksel koordinatına
+projekte edilir:
+
+```
+u = fx · (X / Z) + cx
+v = fy · (Y / Z) + cy
+```
+
+Örnek: fx = 800 piksel, cx = 320 piksel, bir nokta kamera çerçevesinde
+X = 100 mm, Z = 1000 mm konumundaysa: u = 800 · (100/1000) + 320 = 80 + 320
+= 400 piksel.
+
+Buna ek olarak lens gerçek bir pinhole değildir; ışığı hafifçe büker. OpenCV
+belgeleri bunu beş katsayıyla tanımlar: radyal distorsiyon (k1, k2, k3 —
+düz çizgileri eğri gösterir) ve tanjansiyel distorsiyon (p1, p2 — lensin tam
+hizalı olmamasından gelir).
+
+**Dış parametreler (extrinsic parameters).** Kameranın kendisi değil,
+kameranın dünyaya (veya robot tabanına) göre nerede durduğunu tanımlar:
+bir rotasyon matrisi R ve bir öteleme vektörü t. Dünya çerçevesindeki bir
+nokta, kamera çerçevesine şöyle taşınır:
+
+```
+P_kamera = R · P_dünya + t
+```
+
+**Nasıl bulunur.** Zhang'ın yöntemi, düz bir satranç tahtası desenini farklı
+açılardan (pratikte OpenCV belgelerine göre en az ~10 görüntü) çekip, her
+görüntüdeki desen köşeleri ile bilinen gerçek geometri arasındaki homografiyi
+kullanır. Farklı görüntülerden gelen kısıtlar birleştirilerek iç parametreler
+için kapalı form bir başlangıç çözümü bulunur, ardından tüm parametreler
+toplam yeniden-projeksiyon hatasını en aza indirecek şekilde sayısal olarak
+(Levenberg-Marquardt) iyileştirilir.
+
+## Gerçek dünyada
+
+`cv2.calibrateCamera()` (OpenCV), yukarıdaki adımların tamamını uygular:
+birden çok satranç tahtası görüntüsü verirsin, kamera matrisini,
+distorsiyon katsayılarını ve her görüntü için ayrı bir dış parametre
+(R, t) çiftini döner. Bir robot hücresinde bir kamera sabit bir konuma
+veya robot bileğine monte edildiğinde, kameranın piksel ölçümlerini
+gerçek dünya milimetresine çevirebilmek için önce bu iç kalibrasyon
+yapılır — bir sonraki derste ele alınan el-göz kalibrasyonu, bunun
+üstüne kurulur.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir noktanın kamera çerçevesindeki konumu X = 150 mm, Z = 1000 mm. fx = 800 piksel, cx = 320 piksel. Distorsiyon ihmal edilirse piksel koordinatı u kaçtır?",
+      secenekler: ["320", "440", "800"],
+      dogru: 1,
+      aciklama: "u = fx·(X/Z) + cx = 800·(150/1000) + 320 = 120 + 320 = 440.",
+    },
+    {
+      soru: "Bir kamera aynı kalır ama robot hücresindeki konumu değiştirilirse hangi parametre grubu değişir?",
+      secenekler: ["İç parametreler (fx, fy, cx, cy)", "Dış parametreler (R, t)", "Distorsiyon katsayıları"],
+      dogru: 1,
+      aciklama: "İç parametreler kameranın kendisine (lens, sensör) özgüdür ve konumdan bağımsızdır. Kameranın dünyaya göre konumu değiştiğinde değişen şey dış parametrelerdir (R, t).",
+    },
+    {
+      soru: "Zhang'ın yöntemi neden 'esnek' (flexible) olarak tanımlanıyor?",
+      secenekler: [
+        "Hassas, pahalı bir 3B kalibrasyon rig'i gerektirmiyor — düz, basit bir satranç tahtası deseni yeterli",
+        "Tek bir görüntüden kalibrasyon yapabiliyor",
+        "Distorsiyonu tamamen yok sayıyor",
+      ],
+      dogru: 0,
+      aciklama: "Zhang (2000) yönteminin özgünlüğü, önceki yöntemlerin gerektirdiği hassas 3B kalibrasyon nesneleri yerine, farklı açılardan çekilmiş düz bir desenin yeterli olmasıdır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Yukarıdaki sahne, kamera çerçevesinde bir konum hesaplıyor. Ama robot
+kontrolörüne "oraya git" diyebilmen için bir bilgi daha eksik: kamera
+çerçevesi ile robotun hareket ettiği çerçeve arasındaki dönüşüm. Bir
+sonraki ders bunu — el-göz kalibrasyonunu — ele alıyor.

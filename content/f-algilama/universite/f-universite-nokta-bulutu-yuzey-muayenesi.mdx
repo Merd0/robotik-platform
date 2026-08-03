@@ -1,0 +1,124 @@
+---
+id: f-universite-nokta-bulutu-yuzey-muayenesi
+baslik: "Nokta bulutu (point cloud) ve yüzey muayenesi iş akışı"
+hat: f-algilama
+seviye: universite
+sure: 16
+sira: 4
+onkosul:
+  - f-universite-lazer-profil-sensoru
+kazanimlar:
+  - "Ardışık profil taramalarının birleşiminden bir nokta bulutunun nasıl oluştuğunu açıklayabilme"
+  - "Yüzey muayenesi iş akışının temel adımlarını (tarama, hizalama/kayıt, referans yüzeyle karşılaştırma, sapma haritası) sıralayabilme"
+  - "Nokta bulutu yoğunluğu ile ölçüm çözünürlüğü/veri boyutu arasındaki ödünleşimi açıklayabilme"
+kaynaklar:
+  - "Paul J. Besl & Neil D. McKay, 'A Method for Registration of 3-D Shapes', IEEE Transactions on Pattern Analysis and Machine Intelligence, 14(2), 1992, DOI: 10.1109/34.121791 — Iterative Closest Point (ICP) hizalama algoritması"
+  - "Point Cloud Library (PCL) belgeleri, 'Overview' (pointclouds.org/documentation/) — nokta bulutu veri yapısı ve kayıt (registration) modülü"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - ScanPath
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi "nokta bulutu" dediğinde tek bir taramadan çıkan, hazır bir 3B
+görüntü hayal eder — bir fotoğraf gibi, anlık. Gerçekte kullanılan nokta
+bulutu böyle oluşmaz. Art arda toplanan yüzlerce profil çizgisinin
+zamana yayılmış birikimidir; robot hareket ederken, satır satır, saniyeler
+içinde inşa edilir.
+
+<ScanPath rows={6} theme="universite" />
+
+## Ne oldu
+
+Bir önceki derste her satırın tek bir profil (bir kesit boyunca yükseklik
+ölçümleri) olduğunu gördün. Yukarıdaki sahnede "toplanan nokta sayısı"
+tam olarak bunu gösteriyor: robot her satırı tararken, o satırdaki
+noktalar birikime eklenir. Tüm satırlar bitince elinde bir **nokta bulutu
+(point cloud)** vardır — üç boyutlu koordinatlarla (x, y, z) tanımlı,
+düzensiz (yapılandırılmamış) bir nokta kümesi.
+
+**Yüzey muayenesi iş akışı** genelde dört adımdan oluşur:
+
+1. **Tarama.** Robot, bir önceki derste görülen boustrophedon (gidip-gelen)
+   desenle yüzeyi tarar, ham nokta bulutunu toplar. Bu noktalar önce
+   sensör çerçevesinde, sonra el-göz kalibrasyonuyla (bkz. iki ders önce)
+   robot taban çerçevesine taşınır.
+2. **Hizalama (registration).** Taranan nokta bulutu, parçanın referans
+   CAD modeliyle veya önceki bir taramayla üst üste getirilir. En yaygın
+   yöntem **Iterative Closest Point (ICP)**: her iki bulut için en yakın
+   nokta çiftleri bulunur, bu çiftler arasındaki ortalama mesafeyi en aza
+   indiren rotasyon+öteleme hesaplanır, bu adım yakınsayana kadar tekrar
+   edilir (Besl & McKay, 1992).
+3. **Karşılaştırma.** Hizalanmış tarama, referans CAD yüzeyiyle
+   noktasal olarak karşılaştırılır; her nokta için CAD yüzeyine olan
+   dik mesafe (sapma) hesaplanır.
+4. **Sapma haritası ve karar.** Sapmalar genelde renk kodlu bir harita
+   olarak görselleştirilir (yeşil: tolerans içinde, kırmızı/mavi:
+   tolerans dışı) ve tanımlı bir tolerans bandıyla karşılaştırılarak
+   parça kabul/red kararı verilir.
+
+**Yoğunluk ödünleşimi.** Nokta bulutunun yoğunluğu iki şeyle belirlenir:
+tarama satırları arasındaki aralık (bir sonraki dersin konusu) ve her
+profil içindeki nokta aralığı (sensörün optik çözünürlüğü). Daha sık
+satır ve daha sık nokta, küçük yüzey kusurlarını (çizik, çukur) daha
+güvenilir yakalar — ama veri boyutu ve tarama süresi de o oranda artar.
+Pratik bir muayene tasarımı, aranan kusurun boyutuna göre bu yoğunluğu
+seçer; her yüzeyi mikron çözünürlükte taramak nadiren gerekli ve
+neredeyse hiçbir zaman verimlidir.
+
+## Gerçek dünyada
+
+Point Cloud Library (PCL), nokta bulutlarını işlemek için yaygın
+kullanılan açık kaynak bir kütüphane; ICP dahil birçok hizalama
+algoritmasının hazır uygulamalarını içerir. Endüstriyel yüzey
+muayenesinde (ör. döküm parça kontrolü, kaynak dikişi ölçümü) bu dört
+adımlık iş akışı — tara, hizala, karşılaştır, karar ver — kalite kontrol
+istasyonlarının standart mantığıdır; farklı üreticilerin yazılımları bu
+adımları farklı arayüzlerle sunsa da temel akış aynıdır.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "ICP (Iterative Closest Point) algoritmasının amacı nedir?",
+      secenekler: [
+        "İki nokta bulutunu, aralarındaki ortalama mesafeyi en aza indirecek rotasyon+öteleme ile hizalamak",
+        "Nokta bulutundaki gürültüyü tamamen silmek",
+        "Lazer sensörünün iç kalibrasyonunu yapmak",
+      ],
+      dogru: 0,
+      aciklama: "ICP, en yakın nokta çiftlerini eşleştirip aralarındaki mesafeyi iteratif olarak azaltan bir rotasyon+öteleme bulur (Besl & McKay, 1992).",
+    },
+    {
+      soru: "Yüzey muayenesi iş akışında hizalama (registration) adımı hangi sıradadır?",
+      secenekler: [
+        "Sapma haritasından SONRA",
+        "Tarama ile karşılaştırma ADIMLARI ARASINDA",
+        "Robot hareket etmeden ÖNCE",
+      ],
+      dogru: 1,
+      aciklama: "Sıra: tarama → hizalama (ICP ile CAD'e oturtma) → karşılaştırma (sapma hesabı) → sapma haritası/karar.",
+    },
+    {
+      soru: "Nokta bulutu yoğunluğunu artırmanın (daha sık satır, daha sık nokta) bedeli nedir?",
+      secenekler: [
+        "Hiçbir bedeli yok, her zaman en yüksek yoğunluk seçilmeli",
+        "Veri boyutu ve tarama süresi artar",
+        "Sensörün ölçüm menzili kısalır",
+      ],
+      dogru: 1,
+      aciklama: "Daha yoğun bir tarama küçük kusurları daha iyi yakalar ama daha fazla veri üretir ve daha uzun sürer — yoğunluk, aranan kusurun boyutuna göre seçilir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Nokta bulutunun yoğunluğunu belirleyen iki faktörden birini (satır
+aralığı) hâlâ açmadık. Bir sonraki ders, robotun bir yüzeyi eksiksiz
+taraması için tarama yolunun nasıl üretildiğini ele alıyor.

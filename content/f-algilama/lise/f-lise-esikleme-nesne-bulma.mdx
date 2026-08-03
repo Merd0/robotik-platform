@@ -1,0 +1,110 @@
+---
+id: f-lise-esikleme-nesne-bulma
+baslik: Basit eşikleme ve nesne bulma
+hat: f-algilama
+seviye: lise
+sure: 10
+sira: 2
+onkosul:
+  - f-lise-piksel-milimetre
+kazanimlar:
+  - Bir görüntüdeki parlaklık değerlerine eşik uygulayarak nesneyi arka plandan ayırabilme
+  - Çok düşük bir eşiğin gürültüyü de nesne saydığını, çok yüksek bir eşiğin nesnenin kendisini de sildiğini gözlemleyip açıklayabilme
+  - Bir nesneyi net biçimde ayıran eşik aralığını deneme ve gözlemle bulabilme
+kaynaklar:
+  - "OpenCV, 'Image Thresholding' öğretici sayfası — basit eşikleme mekanizması, https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html"
+  - "Rafael C. Gonzalez, Richard E. Woods, Digital Image Processing, 4. Baskı, Pearson, 2018, Bölüm 10 (Image Segmentation) — eşikleme (thresholding)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - ThresholdViewer
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi eşiği ne kadar düşük tutarsa nesneyi o kadar "güvenli"
+yakalayacağını düşünür — "düşük eşik koyarsam hiçbir parçayı kaçırmam"
+mantığıyla. Aslında olan bunun tam tersi: eşiği düşürdükçe nesne değil,
+arka plandaki gürültü de "nesne" sayılmaya başlar.
+
+<ThresholdViewer theme="lise" />
+
+## Ne oldu
+
+Gördüğün ızgara, bir kameranın ürettiği parlaklık değerlerini (0 ile 255
+arası) temsil ediyor. Ortadaki nesne parlak, çevresi daha karanlık ama
+tamamen düz değil — hafif bir gürültü var, tıpkı gerçek bir kamera
+görüntüsünde olduğu gibi.
+
+Eşikleme, tek bir kuralla çalışır: parlaklığı eşik değerinin üstünde olan
+her piksel "nesne" sayılır, altında olan "arka plan" sayılır. OpenCV'nin
+tanımıyla: "Her piksel için aynı eşik değeri uygulanır. Piksel değeri eşiğe
+eşit ya da küçükse 0'a, değilse maksimum değere ayarlanır."
+
+Kaydırıcıyı denediğinde şunu fark ettin:
+
+- **Eşik çok düşükse** (örneğin 50), arka plandaki gürültülü pikseller de
+  eşiğin üstüne çıkar — ekranın büyük bölümü "nesne" sayılır, oysa asıl
+  nesne kayboluyor demektir bu, çünkü artık onu çevresinden ayırt edemezsin.
+- **Eşik çok yüksekse** (örneğin 220), nesnenin gürültülü kenar pikselleri
+  eşiğin altında kalır — nesnenin kendisi parçalanır ya da tamamen kaybolur.
+- Aradaki bir aralıkta (bu sahnede kabaca 82-188 arası) sadece gerçek nesne
+  eşiğin üstünde kalır, arka plan tamamen altında.
+
+Ekrandaki "eşiğin üstünde kalan hücre sayısı" bu üç durumu sayısal olarak
+gösteriyor: doğru aralıkta sabit ve nesnenin gerçek boyutuna yakın kalır,
+aralığın dışına çıktığında aniden çok küçülür ya da çok büyür.
+
+## Gerçek dünyada
+
+Eşikleme, görüntü işlemenin en eski ve en temel bölütleme (segmentation)
+yöntemi. Gonzalez ve Woods'un *Digital Image Processing* kitabının bölütleme
+bölümü, eşiklemeyi "bir görüntüyü, piksel parlaklığına dayanarak nesne ve
+arka plan olmak üzere ikiye ayırma" olarak tanımlar ve sabit bir eşiğin
+sadece aydınlatma tutarlıysa işe yaradığını vurgular. Bir üretim hattındaki
+basit bir görü sistemi — örneğin bir bant üzerinden geçen parlak renkli bir
+parçayı koyu bir fon üzerinde bulmak — genelde bu kadar basit bir eşikleme
+ile çözülür; parça fonla yeterince kontrastlıysa tek bir sabit eşik değeri
+günlerce değiştirilmeden çalışabilir. Aydınlatma değişkense (gün ışığı giren
+bir alan gibi) sabit eşik yetersiz kalır — bu durumda OpenCV'nin de
+belgelediği gibi bölgeye göre uyarlanan (adaptive) eşikleme kullanılır.
+
+## Dene
+
+Eşiği 30'a çek ve hücre sayısının aniden nasıl fırladığını gözlemle — arka
+plan gürültüsü artık "nesne" sayılıyor. Sonra 230'a çek, sayının neredeyse
+sıfıra düştüğünü gör. Son olarak ikisinin ortasında, nesnenin net biçimde
+ayrıştığı bir değer bul.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Eşik değerini çok düşük tutarsan (örneğin 20) ne olur?",
+      secenekler: [
+        "Sadece nesne tespit edilir, sonuç daha net olur",
+        "Arka plandaki gürültülü pikseller de eşiğin üstüne çıkar, nesne arka plandan ayırt edilemez hale gelir",
+        "Görüntü otomatik olarak netleşir",
+      ],
+      dogru: 1,
+      aciklama: "Düşük eşik, arka planın gürültülü kısımlarını da 'nesne' sayar — daha 'güvenli' değil, daha yanıltıcıdır.",
+    },
+    {
+      soru: "Sabit bir eşik değeri hangi durumda güvenilmez hale gelir?",
+      secenekler: [
+        "Nesne hep aynı yerde durduğunda",
+        "Aydınlatma zamanla veya bölgeden bölgeye değiştiğinde",
+        "Kamera çözünürlüğü arttığında",
+      ],
+      dogru: 1,
+      aciklama: "Sabit eşik, aydınlatmanın tutarlı olduğu varsayımına dayanır; aydınlatma değişirse eşik ya çok düşük ya da çok yüksek kalır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bir önceki derste piksel konumunu milimetreye çevirmiştin; bu derste bir
+nesneyi görüntüden ayırmayı gördün. Sıradaki derste bu ikisinin birleştiği
+bir sorunu ele alacaksın: aynı kalibrasyon, görüntünün her noktasında aynı
+doğrulukta mı çalışır?

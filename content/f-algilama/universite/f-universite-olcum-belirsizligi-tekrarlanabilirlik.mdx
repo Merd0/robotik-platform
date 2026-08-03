@@ -1,0 +1,139 @@
+---
+id: f-universite-olcum-belirsizligi-tekrarlanabilirlik
+baslik: "Ölçüm belirsizliği ve tekrarlanabilirlik"
+hat: f-algilama
+seviye: universite
+sure: 15
+sira: 6
+onkosul:
+  - f-universite-kamera-kalibrasyonu
+kazanimlar:
+  - "Ölçüm belirsizliği (uncertainty) ile tekrarlanabilirlik (repeatability) arasındaki kavramsal farkı, doğruluk (trueness) kavramıyla karşılaştırarak açıklayabilme"
+  - "Aynı büyüklüğün tekrarlı ölçümlerinden ortalama ve standart sapmanın nasıl hesaplandığını gösterebilme"
+  - "Üretici datasheet'lerinde 'repeatability' ve 'accuracy/linearity' değerlerinin neden ayrı ayrı raporlandığını açıklayabilme"
+kaynaklar:
+  - "JCGM 200:2012, International Vocabulary of Metrology — Basic and General Concepts and Associated Terms (VIM), 3rd edition, madde 2.26 (measurement uncertainty) ve madde 2.21 (repeatability condition of measurement)"
+  - "ISO 5725-1:1994, 'Accuracy (trueness and precision) of measurement methods and results — Part 1: General principles and definitions' — trueness (doğruluk/gerçeklik) ve precision (kesinlik) kavramlarının ayrımı"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - ThresholdViewer
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+İki sensör aynı, gerçek değeri 10,00 mm olan bir parçayı ölçüyor. Biri
+her seferinde 10,02 mm okuyor — hep aynı, hafifçe hatalı değer. Diğeri
+bazen 9,97 mm, bazen 10,04 mm okuyor ama ölçümlerin ortalaması 10,00
+mm'ye çok yakın. Hangisi "daha iyi" sensör? Cevap, hangi soruyu
+sorduğuna bağlı.
+
+<ThresholdViewer theme="universite" />
+
+## Ne oldu
+
+Bir önceki F/Lise dersindeki eşikleme sahnesiyle aynı sahneyi burada
+farklı bir soru için kullanıyoruz. Izgaradaki her hücrenin parlaklığı,
+sabit bir taban değer artı rastgele bir gürültü payından oluşuyor.
+Orada bu gürültünün nesne tespitini nasıl etkilediğine bakmıştık; burada
+aynı gürültüyü, aynı büyüklüğün tekrar tekrar ölçülmesi gibi düşün — her
+hücre, "gerçek" bir taban değerin etrafında saçılan bir ölçüm serisi.
+
+Uluslararası Ölçübilim Sözlüğü'nün (VIM, JCGM 200:2012) tanımına göre
+**ölçüm belirsizliği (measurement uncertainty)**, bir ölçülene atfedilen
+değerlerin dağılımını karakterize eden bir parametredir — "gerçek değer
+tam olarak kaç" sorusuna değil, "bu ölçümün etrafında ne kadar geniş bir
+güven aralığı var" sorusuna cevap verir. **Tekrarlanabilirlik
+(repeatability)** ise VIM'de ayrı bir kavram: aynı ölçüm prosedürü, aynı
+gözlemci, aynı cihaz, aynı yer, kısa bir zaman aralığında tekrarlandığında
+elde edilen sonuçların birbirine ne kadar yakın çıktığıdır (bir
+tekrarlanabilirlik koşulu altında elde edilen sonuçların yakınlığı).
+
+Bu ikisi, ISO 5725-1'in ayırdığı iki farklı hatadan kaynaklanır:
+**doğruluk/gerçeklik (trueness)** — ortalama ölçümün gerçek değere ne
+kadar yakın olduğu (sistematik hata, bias) — ve **kesinlik (precision)**
+— tekrarlı ölçümlerin birbirine ne kadar yakın olduğu (rastgele hata,
+saçılma). Kancadaki iki sensör tam bu ayrımı gösteriyor: birinci sensör
+yüksek kesinliğe (her zaman aynı sonuç) ama düşük doğruluğa (hep 0,02 mm
+kaymış) sahip; ikinci sensör düşük kesinliğe ama yüksek doğruluğa
+(ortalaması gerçek değere yakın) sahip.
+
+**Sayısal örnek.** Aynı 10,00 mm'lik parça beş kez ölçülüyor: 9,97; 10,04;
+10,01; 9,98; 10,02 mm. Ortalama:
+
+```
+x̄ = (9,97 + 10,04 + 10,01 + 9,98 + 10,02) / 5 = 50,02 / 5 = 10,004 mm
+```
+
+Standart sapma (örneklem, n−1 ile):
+
+```
+sapmalar: −0,034; 0,036; 0,006; −0,024; 0,016
+kareler toplamı: 0,001156 + 0,001296 + 0,000036 + 0,000576 + 0,000256 = 0,00332
+s = √(0,00332 / 4) ≈ √0,00083 ≈ 0,029 mm
+```
+
+Doğruluk (bias) = x̄ − gerçek değer = 10,004 − 10,00 = +0,004 mm — çok
+küçük. Tekrarlanabilirlik ise bu s ≈ 0,029 mm'lik saçılmadır. Bu sensör
+düşük bias'a (iyi doğruluk) ama ~0,03 mm'lik bir saçılmaya (orta düzey
+tekrarlanabilirlik) sahip.
+
+## Gerçek dünyada
+
+Bu yüzden endüstriyel sensör datasheet'lerinde "repeatability" ve
+"accuracy" (veya "linearity") ayrı satırlar olarak raporlanır — ikisi
+farklı hata kaynaklarını ölçtüğü için biri diğerinden hesaplanamaz. Bir
+lazer profil sensörünün tekrarlanabilirliği iyi ama doğruluğu (fabrika
+kalibrasyonundaki sapma nedeniyle) kötü olabilir, ya da tam tersi. Bir
+ölçüm sistemi seçerken hangisinin uygulama için kritik olduğuna bakmak
+gerekir: parçalar arası KARŞILAŞTIRMA yapıyorsan (ör. bir hattaki tüm
+parçaların birbirine göre tutarlılığı) tekrarlanabilirlik öne çıkar;
+mutlak bir ölçüm standardına UYUM göstermen gerekiyorsa (ör. bir CAD
+toleransına göre kabul/red) doğruluk öne çıkar.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "VIM'e göre 'tekrarlanabilirlik' hangi koşulda tanımlanır?",
+      secenekler: [
+        "Farklı cihazlar, farklı operatörler, farklı günlerde alınan ölçümler arasında",
+        "Aynı prosedür, aynı gözlemci, aynı cihaz, aynı yer, kısa zaman aralığında tekrarlanan ölçümler arasında",
+        "Sadece kalibre edilmiş referans cihazlarla yapılan ölçümlerde",
+      ],
+      dogru: 1,
+      aciklama: "VIM (JCGM 200:2012), tekrarlanabilirliği sabit tutulan koşullar altında (aynı prosedür/gözlemci/cihaz/yer, kısa süre) elde edilen sonuçların yakınlığı olarak tanımlar.",
+    },
+    {
+      soru: "Kancadaki iki sensörden 'her zaman 10,02 mm okuyan' sensör hangi özelliği yüksek, hangisini düşük gösteriyor?",
+      secenekler: [
+        "Yüksek kesinlik (precision), düşük doğruluk (trueness)",
+        "Yüksek doğruluk, düşük kesinlik",
+        "İkisi de düşük",
+      ],
+      dogru: 0,
+      aciklama: "Hep aynı değeri okuması yüksek kesinlik (tekrarlanabilirlik) demektir; ama bu değer gerçek değerden sistematik olarak kayık (0,02 mm), yani doğruluğu düşüktür.",
+    },
+    {
+      soru: "Üretici datasheet'lerinde 'repeatability' ve 'accuracy' neden ayrı ayrı raporlanır?",
+      secenekler: [
+        "Pazarlama nedeniyle, teknik bir farkları yok",
+        "Biri sistematik hatayı (bias), diğeri rastgele saçılmayı (precision) ölçer — biri diğerinden hesaplanamaz",
+        "Sadece bazı ülkelerin standartları bunu zorunlu kıldığı için",
+      ],
+      dogru: 1,
+      aciklama: "ISO 5725-1, doğruluk/gerçekliği (trueness, sistematik hata) ve kesinliği (precision, rastgele hata) ayrı kavramlar olarak tanımlar; ikisi farklı hata kaynaklarından gelir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Hat F burada altı üniversite dersiyle tamamlanıyor: kamera kalibrasyonundan
+el-göz kalibrasyonuna, lazer üçgenlemesinden tarama yolu üretimine ve
+ölçüm belirsizliğine kadar bir algılama iş akışının uçtan uca parçaları.
+Bu belirsizlik kavramı, ilerideki güvenlik ve performans seviyesi
+tartışmalarında da karşına çıkacak.

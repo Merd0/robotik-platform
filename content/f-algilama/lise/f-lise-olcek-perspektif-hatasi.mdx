@@ -1,0 +1,105 @@
+---
+id: f-lise-olcek-perspektif-hatasi
+baslik: Ölçek ve perspektif hatası
+hat: f-algilama
+seviye: lise
+sure: 12
+sira: 3
+onkosul:
+  - f-lise-piksel-milimetre
+kazanimlar:
+  - Aynı piksel-milimetre kalibrasyonunun görüntünün her noktasında aynı doğrulukla geçerli olmayabileceğini fark edebilme
+  - Merkezden uzaklaştıkça büyüyen ölçüm sapmasının (perspektif/lens hatası) nedenini açıklayabilme
+  - Tek noktada yapılan bir kalibrasyonun neden görüntünün tamamı için yeterli olmayabileceğini yorumlayabilme
+kaynaklar:
+  - "OpenCV, 'Camera Calibration' öğretici sayfası — radyal distorsiyonun görüntü merkezinden uzaklaştıkça büyüdüğü, https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html"
+  - "Carsten Steger, Markus Ulrich, Christian Wiedemann, Machine Vision Algorithms and Applications, 2. Baskı, Wiley-VCH, 2018, Bölüm 3 (Camera Calibration)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PixelToWorld
+durum: taslak
+---
+
+## Kanca
+
+İki nesne aynı kamera görüntüsünde, ikisi de gerçekte tam olarak aynı
+boyutta. Biri görüntünün tam ortasında duruyor, diğeri kenarına yakın. Aynı
+piksel-milimetre kalibrasyonunu ikisine de uygularsan, ikisi de aynı doğru
+sonucu verir mi?
+
+<PixelToWorld theme="lise" allowPerspectiveDistortion={true} />
+
+## Ne oldu
+
+Önceki derste öğrendiğin formülü ("gerçek mm = piksel × k") burada tekrar
+kullanıyorsun ama bu sefer "Perspektif hatasını göster" anahtarını da
+açabiliyorsun. Anahtar kapalıyken sahne, geçen derste gördüğün gibi
+davranıyor: her yerde aynı `k` geçerli. Anahtarı açtığında ise, merkezden
+uzaklaştıkça `k` hafifçe büyüyor — merkeze yakın bir hücreye tıkladığında
+sonuç neredeyse değişmiyor, kenara yakın bir hücreye tıkladığında sonuç
+belirgin biçimde şişiyor.
+
+Bunun nedeni basit: gerçek bir kamera merkezinde neredeyse hiç hata yokken,
+kenarlara doğru büyüyen bir sapma taşır. OpenCV'nin kalibrasyon
+belgelerindeki ifadeyle: "Radyal distorsiyon, görüntü merkezinden uzaklaşan
+noktalarda büyür." Görüntünün ortasındaki bir satranç tahtası kenarı düz
+görünürken, kenara yakın bir kısmı hafifçe kavisli görünür — çünkü lens,
+görüş alanının merkezinde ve kenarında aynı geometriyi vermez.
+
+## Gerçek dünyada
+
+Tek noktada (genelde görüntünün ortasına yakın) yapılan bir kalibrasyon, o
+noktaya yakın ölçümlerde doğru sonuç verir ama görüntünün kenarlarına
+gidildikçe hata büyür. Steger, Ulrich ve Wiedemann'ın kalibrasyon bölümü, bu
+yüzden basit, tek oranlı (düzlem varsayımlı) kalibrasyonu, lens
+çarpıklığını da hesaba katan tam kalibrasyondan ayırıyor: ilki hızlı ve
+kolay ama sadece kalibre edilen bölgeye yakın yerlerde güvenilir, ikincisi
+görüş alanının tamamında tutarlı sonuç vermek için ek parametreler
+(radyal/teğetsel distorsiyon katsayıları) kullanır.
+
+Pratikte bunun anlamı şu: bir üretim hattında kamera, görüş alanının sadece
+ortasındaki tek bir noktada kalibre edilip, parça o alanın kenarına yakın
+bir yerde ölçülürse, ölçülen konum gerçek konumdan birkaç milimetre
+kayabilir. Bu yüzden hassasiyetin önemli olduğu uygulamalarda kalibrasyon
+tek bir noktada değil, görüş alanının tamamını kaplayan bir ızgara
+(örneğin bir satranç tahtası deseni) üzerinden yapılır.
+
+## Dene
+
+Önce "Perspektif hatasını göster" kapalıyken merkeze yakın bir hücreye,
+sonra köşeye yakın bir hücreye tıkla — ikisinin de aynı `k` ile
+hesaplandığını doğrula. Sonra anahtarı aç ve aynı iki hücreye tekrar tıkla:
+merkezdeki sonucun neredeyse değişmediğini, köşedekinin belirgin biçimde
+büyüdüğünü karşılaştır.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Perspektif hatası gösterildiğinde, görüntünün hangi bölgesindeki ölçümler gerçeğe en yakın kalır?",
+      secenekler: [
+        "Görüntünün kenarları",
+        "Görüntünün merkezine yakın bölge",
+        "Fark etmez, hepsi eşit derecede hatalı olur",
+      ],
+      dogru: 1,
+      aciklama: "Hata, merkezden uzaklaştıkça büyür — bu yüzden merkeze yakın ölçümler en güvenilir olanlardır.",
+    },
+    {
+      soru: "Bir üretim hattında hassas ölçüm gerekiyorsa, kalibrasyon neden görüş alanının tamamını kaplayan bir desenle yapılır?",
+      secenekler: [
+        "Çünkü tek noktada yapılan kalibrasyon sadece o noktaya yakın yerlerde doğru sonuç verir, kenarlara doğru hata büyür",
+        "Çünkü kameralar tek noktadan kalibre edilemez",
+        "Çünkü tek noktalı kalibrasyon daha yavaş çalışır",
+      ],
+      dogru: 0,
+      aciklama: "Tek bir referans noktasıyla bulunan oran, sadece o noktanın çevresinde güvenilirdir; görüş alanının tamamında tutarlı olması için kalibrasyonun da alanın tamamını kaplaması gerekir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu hattın üniversite seviyesi, burada "hafifçe büyüyen bir hata" olarak
+gördüğün şeyi tam bir kamera kalibrasyonuyla — iç ve dış parametreler, lens
+distorsiyon katsayıları — sayısal olarak ele alacak.

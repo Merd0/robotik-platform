@@ -1,0 +1,117 @@
+---
+id: f-universite-el-goz-kalibrasyonu
+baslik: "El-göz kalibrasyonu (hand-eye calibration)"
+hat: f-algilama
+seviye: universite
+sure: 16
+sira: 2
+onkosul:
+  - f-universite-kamera-kalibrasyonu
+kazanimlar:
+  - "Göz-içi-el (eye-in-hand) ve göz-elde-sabit (eye-to-hand) montaj biçimlerini ayırt edebilme"
+  - "AX = XB denklem formunda A, B ve X'in hangi dönüşümlere karşılık geldiğini açıklayabilme"
+  - "Bu kalibrasyon yapılmadan kamerada ölçülen bir konumun neden doğrudan robot hareketine çevrilemeyeceğini açıklayabilme"
+kaynaklar:
+  - "Roger Y. Tsai & Reimar K. Lenz, 'A New Technique for Fully Autonomous and Efficient 3D Robotics Hand/Eye Calibration', IEEE Transactions on Robotics and Automation, 5(3), 1989, DOI: 10.1109/70.34770"
+  - "OpenCV, 'Camera Calibration and 3D Reconstruction' modülü, calib3d — calibrateHandEye() fonksiyonu (docs.opencv.org/4.x/d9/d0c/group__calib3d.html)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PixelToWorld
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Bileğe takılı bir kamera bir cıvatayı görüyor. Önceki dersteki iç
+kalibrasyon sayesinde bu cıvatanın kamera çerçevesindeki konumunu
+milimetre cinsinden biliyorsun. Ama kontrolöre "oraya git" diyebilmen
+için hâlâ eksik bir bilgi var: kamera çerçevesi ile robotun uç flanşının
+çerçevesi arasındaki dönüşüm. Bu dönüşümü bulma işine el-göz kalibrasyonu
+denir.
+
+<PixelToWorld mmPerCell={5} theme="universite" />
+
+## Ne oldu
+
+İki montaj biçimi var. **Göz-içi-el (eye-in-hand):** kamera robotun
+bileğine takılıdır, robotla birlikte hareket eder — yukarıdaki sahnedeki
+gibi bir kamera görüntüsü, her eklem hareketinde kayar. **Göz-elde-sabit
+(eye-to-hand):** kamera sahnede sabit bir yere monte edilir, robot onun
+görüş alanında hareket eder. İkisinde de aynı soru sorulur: kamera
+çerçevesi ile robotun bilinen çerçeveleri (flanş veya taban) arasındaki
+sabit dönüşüm nedir?
+
+Bu dönüşüm doğrudan ölçülemez — kamera merceğinin optik merkezi flanşın
+içinde, elle erişilemeyen bir yerdedir. Bunun yerine dolaylı bir yoldan
+çözülür. Tsai ve Lenz'in (1989) klasik formülasyonu şöyle çalışır: robot
+iki farklı poza hareket ettirilir, aradaki flanş hareketi robotun kendi
+kinematiğinden tam olarak bilinir (bu bilinen dönüşüme **A** denir). Aynı
+iki poz arasında, kamera sabit bir kalibrasyon hedefinin (ör. satranç
+tahtası) görüntüsünden hedefin kamera çerçevesine göre nasıl hareket
+ettiğini hesaplar (bu da **B**). Bilinmeyen tek şey, kamera çerçevesi ile
+flanş çerçevesi arasındaki sabit dönüşüm **X**'tir; ve şu denklemi
+sağlaması gerekir:
+
+```
+A · X = X · B
+```
+
+Birden çok poz çifti toplanıp bu denklem sistemi çözülünce X — yani el-göz
+dönüşümü — ortaya çıkar. Tsai-Lenz yöntemi bu çözümü önce rotasyon, sonra
+öteleme olmak üzere iki adımda, kapalı formda bulur.
+
+## Gerçek dünyada
+
+OpenCV'nin `calibrateHandEye()` fonksiyonu, Tsai-Lenz dahil birden fazla
+klasik yöntemi (Park, Horaud, Andreff, Daniilidis) uygular; girdi olarak
+birden çok robot pozu çiftini ve o pozlarda çekilmiş kalibrasyon hedefi
+görüntülerini alır, çıktı olarak X dönüşümünü döner. Kamera güdümlü
+(vision-guided) bir robot hücresinde — parça toplama, kalite kontrol,
+tarama — bu kalibrasyon bir kere yapılır ve robot çalıştığı sürece
+geçerliliğini korur; kamera veya flanş üzerindeki montaj fiziksel olarak
+değişmediği sürece yeniden kalibrasyona gerek yoktur.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Göz-içi-el (eye-in-hand) montajda kamera nerededir?",
+      secenekler: [
+        "Robotun bileğine/flanşına takılı, robotla birlikte hareket eder",
+        "Sahnede sabit, robot onun önünde hareket eder",
+        "Robotun tabanına gömülü",
+      ],
+      dogru: 0,
+      aciklama: "Göz-içi-el montajda kamera robotla birlikte hareket eder; göz-elde-sabit montajda ise kamera sahitir, robot onun görüş alanında hareket eder.",
+    },
+    {
+      soru: "AX = XB denkleminde A neyi temsil eder?",
+      secenekler: [
+        "Kamera-flanş dönüşümü (bilinmeyen)",
+        "İki poz arasındaki bilinen flanş hareketi (robot kinematiğinden)",
+        "Kalibrasyon hedefinin gerçek boyutları",
+      ],
+      dogru: 1,
+      aciklama: "A, robotun kendi kinematiğinden tam olarak bilinen, iki poz arasındaki flanş hareketidir. B, aynı iki poz arasında kameranın gördüğü hedef hareketidir. X, ikisi arasındaki bilinmeyen sabit dönüşümdür.",
+    },
+    {
+      soru: "Bir önceki dersteki iç kalibrasyon (fx, fy, cx, cy) tek başına neden yeterli değil?",
+      secenekler: [
+        "İç kalibrasyon yanlış olduğu için",
+        "İç kalibrasyon konumu sadece kamera çerçevesinde verir; robotun hareket ettiği çerçeveyle ilişkisini vermez",
+        "İç kalibrasyon sadece siyah-beyaz kameralarda çalışır",
+      ],
+      dogru: 1,
+      aciklama: "İç kalibrasyon, piksel konumunu kamera çerçevesinde bir 3B konuma çevirir. O konumu robotun anlayacağı bir hedefe (flanş veya taban çerçevesi) taşımak için el-göz dönüşümü X gerekir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Kamera, bir yüzeyin rengini ve dokusunu görür ama yüksekliğini tek
+görüntüden söyleyemez. Bir sonraki ders farklı bir sensör türüne geçiyor:
+temas gerektirmeden yükseklik ölçen lazer profil sensörü.

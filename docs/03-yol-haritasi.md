@@ -99,14 +99,20 @@ doldurulması ayrı, insan tarafından yapılacak bir adım; bkz.
 ## Faz 4 — Endüstriyel gerçeklik
 
 - [x] Hat E — haberleşme (protokol simülasyonları, zamanlama görselleştirmesi) — 10 ders
-- [ ] Hat F — algılama (kamera, lazer profil sensörü, tarama yolu üretimi)
+- [x] Hat F — algılama (kamera, lazer profil sensörü, tarama yolu üretimi) — 11 ders
 
 **Çıktı:** Sahada çalışan bir mühendisin de işine yarayan içerik.
 
 **Not (2026-08-02):** Hat E için yeni bir bileşen (`SignalTimeline`)
 eklendi — sinyal/zamanlama sahnesi, ortaokuldan üniversiteye üç seviyede
 de kullanılıyor. 10 ders `durum: taslak`; `docs/durum-denetim.md` Faz 4
-bölümüne bkz. Hat F henüz başlamadı.
+bölümüne bkz.
+
+**Not (2026-08-03):** Hat F için üç yeni bileşen eklendi (`PixelToWorld`,
+`ThresholdViewer`, `ScanPath`) — kamera/piksel-mm kalibrasyonu, eşikleme
+ve lazer tarama sahneleri. 11 ders (ortaokul 2, lise 3, üniversite 6)
+`durum: taslak`; `docs/durum-denetim.md` Faz 4 bölümüne bkz. Faz 4 artık
+tamamen bitti.
 
 ---
 

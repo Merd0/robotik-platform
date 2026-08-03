@@ -1,0 +1,94 @@
+---
+id: f-ortaokul-goz-olmadan-is-yapmak
+baslik: Neden robotun gözü olmadan iş yapması zordur
+hat: f-algilama
+seviye: ortaokul
+sure: 7
+sira: 2
+onkosul:
+  - f-ortaokul-robot-nasil-gorur
+kazanimlar:
+  - Sadece "var/yok" ya da "ne kadar uzakta" bilgisi veren bir sensörün, bir nesnenin tam konumunu ve yönünü söyleyemeyeceğini açıklayabilme
+  - Bir nesnenin konumu beklenenden az da olsa kaydığında, kamerası olmayan bir robotun neden boşa uzanabileceğini ya da nesneyi kaçırabileceğini örneklerle anlatabilme
+kaynaklar:
+  - "Keyence, Photoelectric Sensors — Sensor Basics, https://www.keyence.com/ss/products/sensor/sensorbasics/photoelectric/info/ — ışık huzmesi sensörünün sadece nesnenin varlığını (huzmenin kesilip kesilmediğini) algıladığı, konum/yön bilgisi vermediği"
+  - "Keyence, Vision Sensors — Sensor Basics, https://www.keyence.com/ss/products/sensor/sensorbasics/vision/info/ — kamera tabanlı sensörlerin parçanın varlığının yanı sıra yönünü ve konum doğruluğunu da belirleyebildiği"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SignalTimeline
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi bir robot kolunun her zaman doğru yere uzandığını düşünür —
+sonuçta programlanmıştır, şaşırmaz. Ama masadaki kutu bir santim bile
+kaysa, gözü olmayan bir robot bunu hiç fark etmez.
+
+<SignalTimeline signals={["Işık huzmesi sensörü"]} theme="ortaokul" />
+
+## Ne oldu
+
+Şeritteki her kutucuk, robotun bir anlık kontrolünü temsil ediyor.
+Kutucuğa tıklayınca sensör "AÇIK" oluyor — yani ışık huzmesinin önünde
+bir şey var demek. Ama bu sinyal sana sadece "bir şey var" diyor;
+nesnenin tam olarak nerede durduğunu, hangi yöne baktığını ya da ne
+olduğunu söylemiyor.
+
+Önceki derste gördüğün gibi bir kamera, görüntüyü piksel piksel
+inceleyip bir nesnenin tam konumunu ve yönünü bulabiliyor. Işık huzmesi
+ya da mesafe sensörü gibi daha basit sensörler bunu yapamaz — sadece
+"var" ya da "yok" der, ya da tek bir noktaya olan uzaklığı verir. Robot
+kolu önceden öğretilmiş sabit bir noktaya doğru hareket ediyorsa ve
+elindeki tek bilgi bu kadar basitse, parça birkaç santim kaymış olsa
+bile robot bunu anlayamaz: ya boşluğa uzanır ya da parçayı tam
+kavrayamadan bırakır.
+
+## Gerçek dünyada
+
+Bir montaj hattında robot kolunun alacağı parça, her seferinde tam
+milimetresine kadar aynı yerde durmayabilir — taşıma sırasında hafifçe
+kayabilir. Sadece ışık huzmesiyle "parça geldi mi, gelmedi mi" bilgisi
+alan bir robot, parçanın var olduğunu bilir ama tam nerede durduğunu
+bilemez; önceden öğretilmiş sabit noktaya uzanır ve parça kaymışsa
+boşluğu kavrar. Kamera eklenmiş bir robot ise her seferinde parçanın
+görüntüsüne bakıp konumunu yeniden hesaplayabilir.
+
+## Dene
+
+Şeritte birkaç kutucuğu AÇIK yap, sonra "Oynat"a bas. Sensörün sana
+söylediği tek şeyin "o anda huzmenin önünde bir şey var" olduğunu, ama
+o şeyin tam olarak nerede durduğunu hiç söylemediğini fark et.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir ışık huzmesi (fotoelektrik) sensörü, önünden geçen bir kutu hakkında sana ne söyler?",
+      secenekler: [
+        "Kutunun tam olarak nerede durduğunu",
+        "Sadece huzmenin önünde bir şey olup olmadığını",
+        "Kutunun rengini",
+      ],
+      dogru: 1,
+      aciklama: "Işık huzmesi sensörü ikili (var/yok) bir bilgi verir; huzme kesildi mi kesilmedi mi, hepsi bu. Konum veya yön bilgisi taşımaz.",
+    },
+    {
+      soru: "Masadaki bir parça, robotun öğretilmiş olduğu yerden birkaç santim kaymışsa, sadece 'var/yok' bilgisi alan bir robot ne yapar?",
+      secenekler: [
+        "Parçayı otomatik olarak yeni yerinde bulur",
+        "Eski (öğretilmiş) konuma uzanır, parçayı kaçırabilir",
+        "Duruş yapıp bir uyarı sesi çalar",
+      ],
+      dogru: 1,
+      aciklama: "Robotun elinde konumu güncelleyecek bir bilgi yoksa, önceden öğretilmiş sabit noktaya gider — parça kaymışsa orada bulamaz.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Lise seviyesinde, bir kameranın gördüğü görüntüdeki piksel konumunun
+gerçek dünyada kaç milimetreye karşılık geldiğini nasıl hesapladığına
+ve bu hesabın nerede yanılabileceğine (ölçek ve perspektif hatası)
+bakacaksın.

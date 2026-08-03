@@ -1,0 +1,127 @@
+---
+id: f-universite-lazer-profil-sensoru
+baslik: "Lazer profil sensörü ile yüzey tarama — çalışma prensibi"
+hat: f-algilama
+seviye: universite
+sure: 18
+sira: 3
+onkosul: []
+kazanimlar:
+  - "Lazer üçgenleme (triangulation) düzeneğinin temel bileşenlerini (lazer kaynağı, hedef yüzey, açılı konumlanmış detektör) tanımlayabilme"
+  - "Yüzey yüksekliği değiştiğinde detektördeki yansıma konumunun neden kaydığını ve bu kaymanın geometriyle nasıl mesafeye çevrildiğini gösterebilme"
+  - "Nokta lazer ile çizgi (profil) lazer arasındaki farkı, tek taramada elde edilen veri boyutu açısından açıklayabilme"
+kaynaklar:
+  - "Keyence Corporation, 'Laser Profiler / 3D Laser Snapshot Sensor' (keyence.com/products/measure/laser-2d/) — lazer çizgisinin yüzeyden yansıyıp CMOS üzerinde oluşturduğu profilin konum/şekil değişimiyle mesafe ölçümü"
+  - "François Blais, 'Review of 20 Years of Range Sensor Development', Journal of Electronic Imaging, 13(1), 2004, DOI: 10.1117/1.1631921 — üçgenleme tabanlı menzil sensörlerinin geometrisi, baseline/açı/odak uzaklığı ilişkisi ve sınırlamaları (oklüzyon, aynasal yansıma)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - ScanPath
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Bir kamera bir yüzeyin rengini ve dokusunu görür ama düz mü yoksa 2 mm
+çökük mü olduğunu tek bir görüntüden söyleyemez — derinlik bilgisi
+kaybolur. Lazer profil sensörü tam bu boşluğu doldurmak için var: renk
+değil yükseklik ölçer, ve bunu dokunmadan yapar.
+
+<ScanPath rows={6} theme="universite" />
+
+## Ne oldu
+
+Yukarıdaki sahnedeki her satır, sensörün tek bir geçişte topladığı bir
+"profil" — yüzey boyunca bir çizgi üzerindeki yükseklik ölçümleri
+dizisi. Bu profilin nasıl üretildiği **lazer üçgenlemesi (laser
+triangulation)** denen bir geometriye dayanır.
+
+Düzenek üç parçadan oluşur: bir lazer kaynağı (S), hedef yüzeydeki bir
+nokta (P) ve S'den bilinen bir taban uzaklığında (baseline, b) duran bir
+detektör/lens (D). Lazer, S'den P'ye sabit bir açıyla ışın gönderir; bu
+ders boyunca en yaygın tasarımı ele alalım — lazer ışını, S-D taban
+çizgisine dik açıda (90°) gönderilir. P'den yansıyan ışık D'deki lense
+düşer ve sensör üzerinde bir konuma odaklanır; bu konumun taban
+çizgisine göre açısı θ_D olsun (lens odak uzaklığı f ve görüntüdeki
+kayma x biliniyorsa θ_D = θ_D0 + arctan(x/f) olarak bulunur, θ_D0
+referans/kalibrasyon açısıdır).
+
+S-P-D üçgeninde açılar toplamı 180° olduğundan, S'deki açı 90° ise
+P'deki açı (90° − θ_D)'dir. Sinüs teoremiyle:
+
+```
+Z = |SP| = b · sin(θ_D) / sin(90° − θ_D) = b · tan(θ_D)
+```
+
+Yani yüzeyin yüksekliği (Z), detektördeki yansıma açısının tanjantıyla
+doğru orantılıdır — yüzey S'ye yaklaşıp uzaklaştıkça, yansıyan ışığın
+detektör üzerindeki konumu kayar, ve bu kaymadan Z geri hesaplanır.
+
+**Örnek.** Taban uzaklığı b = 50 mm, kalibrasyon açısı θ_D0 = 45°
+olsun (bu durumda referans mesafe Z₀ = 50 · tan(45°) = 50 mm). Yüzey
+biraz uzaklaşıp θ_D = 50°'ye çıkarsa: Z = 50 · tan(50°) ≈ 50 · 1,1918 ≈
+59,6 mm. 5°'lik bir açı değişimi, ~9,6 mm'lik bir mesafe farkına karşılık
+geliyor.
+
+**Nokta mı, çizgi mi?** Yukarıdaki geometri tek bir noktayı (S-P-D
+düzlemi) anlatıyor. Bir **nokta lazer** sensörü her ölçümde tek bir Z
+değeri verir. Bir **profil (çizgi) lazer** sensörü ise ışını bir çizgiye
+yayar (Keyence'in tanımıyla lazer bir çizgiye genişletilip yüzeyden
+"diffüz" yansır) ve bu çizgi boyunca yüzlerce noktanın Z değerini AYNI
+ANDA verir — tek bir geçişte bütün bir kesit (profil) elde edilir. Bu
+yüzden robot kolu bir yüzey üzerinde ilerlerken her karede tek bir sayı
+değil, bir profil çizgisi toplanır.
+
+## Gerçek dünyada
+
+Bu geometrinin sınırları var. Detektörün görüş açısı ve lensin çözünürlüğü
+sabit olduğu için sensörün bir ölçüm menzili (measurement range) vardır —
+yüzey bu menzilin dışına çıkarsa yansıma detektöre hiç düşmez. Ayrıca
+Blais'nin (2004) menzil sensörleri değerlendirmesinde vurguladığı gibi,
+üçgenleme tabanlı sensörler iki tipik sorunla karşılaşır: **oklüzyon**
+(lazer ışını yüzeyin bir kısmına ulaşsa bile, o noktadan yansıyan ışık
+geometrik olarak detektöre görünmeyebilir — derin oyuklarda sık görülür)
+ve **aynasal (specular) yansıma** (parlak, aynamsı yüzeyler ışığı
+detektöre değil başka bir yöne yansıtır, ölçüm başarısız olur). Bu
+yüzden lazer profil sensörleri mat, diffüz yüzeylerde daha güvenilir
+çalışır.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Lazer üçgenlemesinde (S-D dik açı tasarımı) taban uzaklığı b = 40 mm, detektör açısı θ_D = 60° ise yüzey mesafesi Z kaçtır?",
+      secenekler: ["≈ 40 mm", "≈ 69,3 mm", "≈ 23,1 mm"],
+      dogru: 1,
+      aciklama: "Z = b · tan(θ_D) = 40 · tan(60°) = 40 · 1,732 ≈ 69,3 mm.",
+    },
+    {
+      soru: "Bir profil (çizgi) lazer sensörü, bir nokta lazer sensörüne göre neden daha hızlı yüzey taraması sağlar?",
+      secenekler: [
+        "Daha güçlü bir lazer kullandığı için",
+        "Tek bir geçişte, çizgi boyunca yüzlerce noktanın yüksekliğini aynı anda ölçtüğü için",
+        "Işığı hiç bükmediği için",
+      ],
+      dogru: 1,
+      aciklama: "Nokta lazer her ölçümde tek bir Z değeri verir; profil lazer ışını bir çizgiye yayarak o çizgi boyunca birçok noktayı aynı anda ölçer.",
+    },
+    {
+      soru: "Parlak, aynamsı (specular) bir metal yüzeyde lazer profil sensörünün ölçümü neden başarısız olabilir?",
+      secenekler: [
+        "Yüzey ışığı emdiği için",
+        "Yansıyan ışık dağınık (diffüz) değil, tek bir yönde (genelde detektöre değil) yansıdığı için",
+        "Sensör metal yüzeyleri algılayamadığı için",
+      ],
+      dogru: 1,
+      aciklama: "Üçgenleme, yüzeyden diffüz (her yöne dağılan) yansımaya dayanır. Aynasal yüzeyler ışığı tek bir yansıma açısında yönlendirir; bu açı detektöre denk gelmezse ölçüm düşer.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Tek bir profil, yüzeyin sadece bir kesitini gösterir. Robot bu profili
+tekrar tekrar, satır satır toplayınca ortaya ne çıkıyor? Bir sonraki ders
+bunu — nokta bulutunu ve yüzey muayenesi iş akışını — ele alıyor.

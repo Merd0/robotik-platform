@@ -1,0 +1,94 @@
+---
+id: f-ortaokul-robot-nasil-gorur
+baslik: 'Robot nasıl "görür": kamera ve sensör türleri'
+hat: f-algilama
+seviye: ortaokul
+sure: 7
+sira: 1
+onkosul: []
+kazanimlar:
+  - Robotların çevresini algılamak için kamera, mesafe sensörü (ör. ultrasonik) ve ışık huzmesi (fotoelektrik) sensörü gibi farklı araçlar kullandığını örnekleyebilme
+  - Bir kameranın bir nesnenin yerini, görüntüyü küçük karelere (piksel) bölüp hangi karede olduğuna bakarak bulduğunu açıklayabilme
+kaynaklar:
+  - "Keyence, Vision Sensors — Sensor Basics, https://www.keyence.com/ss/products/sensor/sensorbasics/vision/info/ — kameranın görüntüyü piksel piksel analiz ederek parçanın varlığını, yönünü ve konumunu belirlemesi"
+  - "Keyence, Photoelectric Sensors — Sensor Basics, https://www.keyence.com/ss/products/sensor/sensorbasics/photoelectric/info/ — ışık huzmesinin kesilmesiyle nesne algılama prensibi"
+  - "Keyence, Ultrasonic Sensors — Sensor Basics, https://www.keyence.com/ss/products/sensor/sensorbasics/ultrasonic/info/ — ses dalgası gönderip yankısının dönüş süresine göre mesafe ölçme prensibi"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PixelToWorld
+durum: taslak
+---
+
+## Kanca
+
+Bir kamera aslında hiçbir şeye "bakmaz". Sadece görüntüyü binlerce küçük
+kareye böler ve her karenin ne kadar aydınlık olduğunu sayar. Robot da
+etrafını işte böyle, sayılardan oluşan bir tablo olarak tanır.
+
+<PixelToWorld theme="ortaokul" />
+
+## Ne oldu
+
+Yukarıdaki ızgara bir kamera görüntüsünü basitleştirilmiş hâliyle
+gösteriyor: her kutucuk bir piksel. Nesnenin üstündeki kutucuğa
+tıkladığında, o kutucuğun ızgaradaki yerini (piksel konumu) ve robotun
+bunu gerçek dünyada nereye karşılık geldiğini hesapladığını görüyorsun.
+
+Robotlar çevrelerini üç ana yoldan algılar:
+
+- **Kamera** görüntüyü piksellere böler, her pikselin parlaklığına ve
+  rengine bakarak bir nesnenin nerede olduğunu ve nasıl durduğunu
+  (yönünü) bulur.
+- **Mesafe sensörü** (ör. ultrasonik) bir ses dalgası gönderir, dalga bir
+  nesneye çarpıp geri döner; gidiş-dönüş ne kadar sürdüyse mesafe o
+  kadardır — tıpkı bir yarasanın karanlıkta yol bulması gibi.
+- **Işık huzmesi sensörü** (fotoelektrik) sürekli ince bir ışık çizgisi
+  gönderir; bir nesne bu çizgiyi kestiğinde sensör bunu fark eder. Ama
+  sadece "bir şey var" der, nesnenin tam olarak ne olduğunu söylemez.
+
+## Gerçek dünyada
+
+Bir fabrikada bir kamera sensörü, bant üzerinden geçen bir parçanın
+doğru yönde durup durmadığını kontrol eder — parça ters dönmüşse
+görüntüdeki piksel deseni değişir ve sensör bunu yakalar. Mobil bir
+robot, önündeki duvara çarpmamak için ultrasonik bir mesafe sensörüyle
+sürekli "ne kadar yakınım" diye ölçüm alır. Bir paketleme hattında ise
+ince bir ışık huzmesi, önünden geçen her kutuyu tek tek sayar.
+
+## Dene
+
+Izgarada nesnenin bulunduğu kutucuğa tıkla, sonra bir kutucuk yanına
+tıkla. İkisinin hesaplanan konumu arasındaki farka bak — kamera, tek bir
+pikselin bile hangi karede olduğunu ayırt edebiliyor.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir kamera bir nesnenin yerini nasıl bulur?",
+      secenekler: [
+        "Nesneye dokunarak",
+        "Görüntüyü küçük karelere (piksel) bölüp hangi karede olduğuna bakarak",
+        "Sadece sesle",
+      ],
+      dogru: 1,
+      aciklama: "Kamera görüntüyü pikselere böler; nesnenin üstüne düşen piksellerin konumuna bakarak nesnenin yerini bulur.",
+    },
+    {
+      soru: "Bir ultrasonik mesafe sensörü nasıl çalışır?",
+      secenekler: [
+        "Bir ses dalgası gönderip yankısının geri dönme süresine bakarak",
+        "Görüntü çekerek",
+        "Nesneye dokunarak",
+      ],
+      dogru: 0,
+      aciklama: "Sensör bir ses dalgası gönderir, nesneden yansıyan yankıyı dinler; gidiş-dönüş süresi ne kadar uzunsa nesne o kadar uzaktadır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki ders, bir robotun bu algılama araçları olmadan iş yaparken
+nelerle karşılaştığını — neden bazen yanlış yere uzandığını —
+gösteriyor.

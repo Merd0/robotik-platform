@@ -662,5 +662,75 @@ geçirmesi değil.
 
 ### Sonraki için not
 
-Hat E tamamlandı. Faz 4'ün geri kalanı — Hat F (algılama, 8 ders) —
-henüz başlamadı; kullanıcı onayı bekliyor.
+Hat E tamamlandı. Faz 4'ün geri kalanı — Hat F (algılama) — henüz
+başlamadı; kullanıcı onayı bekliyor.
+
+---
+
+## Faz 4 — Hat F tamamlandı, Faz 4 tamamen bitti (2026-08-03)
+
+Aynı `faz-3-programlama-simulasyon` branch'inde devam edildi. Bir önceki
+oturumda Hat F için 3 bileşen (`PixelToWorld`, `ThresholdViewer`,
+`ScanPath`) zaten yazılıp commit'lenmişti (`96b2319`); bu oturumda
+içerik (11 ders) yazıldı.
+
+### İçerik — 3 paralel `ders-yazari` subagent'ı ile 11 ders
+
+Bu oturumda proje `.claude/agents/ders-yazari.md`, doğrudan proje
+subagent'ı (`ders-yazari`) olarak çağrılabildi — önceki fazlardaki gibi
+genel amaçlı `Agent` çağrısına talimat taşıtmaya gerek kalmadı.
+
+| Grup | Ders sayısı | Bileşen(ler) |
+|---|---|---|
+| Hat F / Ortaokul | 2 | `PixelToWorld`, `SignalTimeline` |
+| Hat F / Lise | 3 | `PixelToWorld` (kalibrasyon + perspektif), `ThresholdViewer` |
+| Hat F / Üniversite | 6 | `PixelToWorld`, `ScanPath`, `ThresholdViewer`, `Quiz` |
+
+Hat F artık 11/11 — toplam 79 ders dosyası. docs/01-mufredat.md'deki Hat
+F madde sayısıyla birebir (ortaokul 2 + lise 3 + üniversite 6 = 11);
+`docs/03-yol-haritasi.md`'deki eski "8 ders" tahmini güncellendi.
+
+Kaynaklar arasında Keyence sensör dokümantasyonu, OpenCV kalibrasyon/
+eşikleme belgeleri, Zhang (2000) ve Tsai & Lenz (1989) kamera/el-göz
+kalibrasyonu makaleleri, Choset & Pignon (1997) ve Galceran & Carreras
+(2013) kapsama planlaması yayınları, Besl & McKay (1992) ICP makalesi,
+JCGM 200:2012 (VIM) ve ISO 5725-1:1994 var — hepsi WebFetch ile erişimi
+doğrulanarak atfedildi (bazı üretici sayfaları 403/404 verdiği için
+kaynak dışı bırakıldı).
+
+Üniversite seviyesinde "Kaynak kodu" linki hiçbir derse eklenmedi:
+`lib/robotics/` içinde kamera/görü/nokta bulutu matematiği yok, uydurma
+link yazılmadı (docs/04 kuralı).
+
+Graph doğrulaması iki "kök" (ön koşulsuz üniversite dersi) uyarısı
+veriyor (`f-universite-kamera-kalibrasyonu`,
+`f-universite-lazer-profil-sensoru`) — bu kasıtlı, Hat F'nin üniversite
+seviyesinde iki bağımsız alt-konusu (kalibrasyon zinciri / tarama
+zinciri) olduğu için, Hat E'deki benzer duruma paralel.
+
+### Doğrulama
+
+`npx tsx scripts/check-content.ts` (79 ders), `npx tsx
+scripts/validate-content-graph.ts` (79 ders, döngü/eksik referans yok,
+2 kasıtlı kök uyarısı), `npx tsc --noEmit`, `npx eslint .`, `npx vitest
+run` (61/61), `npm run build` (85 sayfa) — hepsi temiz.
+
+Tarayıcıda (Claude in Chrome) üç seviyeden örnek ders açılıp test
+edildi: `f-lise-piksel-milimetre` (`PixelToWorld`, piksel (50,20) →
+250mm/100mm, ders metnindeki sayıyla birebir), `f-universite-tarama-
+yolu-uretimi` (`ScanPath`, "Tara" ile 4×12=48 nokta eksiksiz toplandı),
+`f-ortaokul-robot-nasil-gorur` (`PixelToWorld` ortaokul temasıyla doğru
+render).
+
+### Yapılmayan adım — yine `durum: yayinda` işaretlemesi
+
+Faz 1/2/3/4(E)'teki gibi: 11 yeni ders `durum: taslak` kaldı — yapay
+zeka yazım/incelemesiydi, docs/06 Katman 3'ün istediği insan gözden
+geçirmesi değil.
+
+### Sonraki için not
+
+**Faz 4 tamamen bitti** (Hat E + Hat F). Sıradaki faz, Faz 5 (v1.0) —
+Hat H (güvenlik), arama, sözlük, katkı süreci, erişilebilirlik/performans
+denetimi. CLAUDE.md kuralı gereği yeni faz kapsamı kullanıcı onayı
+gerektirir.
