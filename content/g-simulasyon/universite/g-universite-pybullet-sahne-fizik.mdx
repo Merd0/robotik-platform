@@ -1,0 +1,155 @@
+---
+id: g-universite-pybullet-sahne-fizik
+baslik: PyBullet ile sahne kurma ve fizik
+hat: g-simulasyon
+seviye: universite
+sure: 20
+sira: 2
+onkosul:
+  - g-universite-urdf-modelleme
+kazanimlar:
+  - "PyBullet'in bir fizik motoru olarak neyi simüle ettiğini (katı cisim dinamiği, çarpışma, yerçekimi) tanımlayabilme"
+  - GUI ve DIRECT bağlantı modları arasındaki farkı ve her birinin ne zaman kullanılacağını açıklayabilme
+  - "Planlama sırasında kullanılan hızlı geometrik çarpışma kontrolü ile PyBullet'in tam fizik simülasyonu arasındaki farkı ayırt edebilme"
+kaynaklar:
+  - "PyBullet resmi web sitesi: https://pybullet.org/wordpress/ ('physics simulation for games, visual effects, robotics and reinforcement learning')"
+  - "Bullet Physics SDK (Bullet3) kaynak deposu: https://github.com/bulletphysics/bullet3"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PlannerRace
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi "simülasyon" kelimesini duyunca sadece güzel bir 3B
+görselleştirme düşünür. PyBullet'te asıl iş görselleştirmeden önce olur:
+her karede katı cisimlerin konumu, hızı ve çarpışması yeniden hesaplanır
+— ekranda gördüğün şey bu hesabın SONUCU, kendisi değil.
+
+<PlannerRace algorithms={["astar"]} allowObstacleEdit={true} theme="universite" extent={3} />
+
+## Ne oldu
+
+PyBullet, Bullet fizik motorunun Python arayüzü — oyunlar, görsel efekt,
+robotik ve pekiştirmeli öğrenme için katı cisim dinamiği (rigid body
+dynamics) ve çarpışma algılama (collision detection) sağlayan, URDF
+dosyalarını doğrudan yükleyebilen bir kütüphane.
+
+Bu platformun `reference-python/` klasöründeki `backend/simulation/scene.py`
+dosyası bir sahnenin nasıl adım adım kurulduğunu gösteriyor:
+
+```python
+def connect(gui: bool = False) -> int:
+    mode = p.GUI if gui else p.DIRECT
+    client_id = p.connect(mode)
+    p.setAdditionalSearchPath(pybullet_data.getDataPath())
+    p.setGravity(0, 0, -9.8)
+    p.loadURDF("plane.urdf")
+    return client_id
+```
+
+Üç ayrı karar burada görünür:
+
+- **GUI ve DIRECT modu:** `p.GUI` bir pencere açıp sahneyi anlık çizer —
+  insan gözlemi için ama yavaş. `p.DIRECT` hiçbir pencere açmaz, sadece
+  hesaplar. Testlerde ve otomatik çalıştırmalarda daima `DIRECT` kullanılır
+  (bkz. `reference-python/CLAUDE.md`) — çizmenin kendisi zaman alır, hesabın
+  doğruluğunu etkilemez.
+- **Yerçekimi:** `setGravity(0, 0, -9.8)`, z ekseninde dünya yerçekimi
+  ivmesine (yaklaşık 9.8 m/s²) karşılık gelen bir kuvvet vektörü tanımlar.
+  Bu satır olmadan sahnedeki hiçbir cisim düşmez.
+- **Zemin:** `plane.urdf`, PyBullet'in kendi paketiyle gelen hazır bir
+  düzlem modeli — sahnenin "yer" referansı.
+
+Robot ise ayrı bir çağrıyla, sabit tabanlı olarak yüklenir:
+
+```python
+def load_robot() -> int:
+    return p.loadURDF("kuka_iiwa/model.urdf", useFixedBase=True)
+```
+
+`useFixedBase=True`, robotun tabanının dünyaya sabitlendiği (bir mobil
+robot gibi yerde kaymadığı) anlamına gelir — sabit tabanlı bir endüstriyel
+kol için doğru varsayım.
+
+**Engeller farklı bir mantıkla eklenir.** `backend/simulation/obstacles.py`
+içindeki `add_obstacle`, her engeli `baseMass=0` ile oluşturur:
+
+```python
+return p.createMultiBody(
+    baseMass=0,
+    baseCollisionShapeIndex=collision_shape,
+    baseVisualShapeIndex=visual_shape,
+    basePosition=obstacle.center,
+)
+```
+
+Kütlesi sıfır olan bir cisim PyBullet'in fizik motorunda hiç hareket
+etmez — sabit (statik) kalır. Bu, engellerin robot tarafından itilip
+kaydırılamayacağını garantiler.
+
+**Önemli ayrım:** Bu platformdaki (ve `reference-python`'daki) yol
+planlayıcılar (A*, RRT, RRT*), PyBullet'in TAM fizik/temas hesabını
+KULLANMAZ — arama sırasında her aday nokta, çok daha hızlı bir geometrik
+testle kontrol edilir (`is_collision_free`, `is_path_segment_free`; bu
+platformun TypeScript karşılığı `lib/robotics/collision.ts` içindeki
+`isPointFree` ve `isSegmentFree`). Yukarıdaki sahnede "Çalıştır"a
+bastığında çalışan tam olarak bu geometrik kontrol — PyBullet'in kendisi
+bu platformda tarayıcı tarafında hiç çalışmıyor (bkz.
+`docs/02-mimari.md` "hesaplama tarayıcıda yapılır"); `reference-python`
+tarafında ise gerçek fizik motoru bu kontrolü doğrulamak ve sahneyi
+gerçekçi göstermek için ayrıca kullanılıyor.
+
+## Gerçek dünyada
+
+PyBullet, robotik araştırmalarında ve pekiştirmeli öğrenme (reinforcement
+learning) deneylerinde yaygın kullanılan açık kaynaklı bir araç — gerçek
+donanım kırılmadan önce bir kontrol algoritmasını binlerce kez ücretsiz
+"denemeye" izin verir. Bu platformun kendi `reference-python/` projesi
+tam olarak bunu yapıyor: KUKA iiwa'yı gerçek geometrisiyle (URDF üzerinden)
+yükleyip, planlanan bir yolun gerçekten çarpışmasız olup olmadığını hem
+hızlı geometrik testle hem de (video/demo üretiminde) tam fizik motoruyla
+doğruluyor.
+
+## Dene
+
+Sahneye birkaç engel ekle, sonra "Çalıştır"a bas. A*'ın bulduğu yolun
+engellerin gerçekten dışından geçtiğini gözlemle. Şimdi bir engeli
+başlangıç noktasının tam üstüne koy — planlayıcının hâlâ bir yol bulup
+bulamadığına, bulamıyorsa ne kadar sürede "başarısız" sonucuna vardığına
+bak.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir engelin PyBullet'te `baseMass=0` ile oluşturulmasının anlamı nedir?",
+      secenekler: [
+        "Engel görünmez olur",
+        "Engel statik kalır, robot ona çarpsa bile yerinden oynamaz",
+        "Engel çarpışma kontrolünden muaf tutulur",
+      ],
+      dogru: 1,
+      aciklama: "Kütlesi sıfır olan bir gövde PyBullet'in dinamik hesabında hareket etmez; bu, engellerin sabit kalmasını garantiler.",
+    },
+    {
+      soru: "Testlerde neden GUI değil DIRECT modu tercih edilir?",
+      secenekler: [
+        "DIRECT modu daha doğru fizik sonucu verir",
+        "GUI penceresi açmak yavaştır ve otomatik/test ortamında gereksizdir",
+        "DIRECT modunda yerçekimi devre dışı kalır",
+      ],
+      dogru: 1,
+      aciklama: "GUI sadece insan gözlemi için bir pencere açar; hesabın kendisi ikisinde de aynıdır, ama pencere açmak zaman kaybettirir.",
+    },
+  ]}
+/>
+
+**Kaynak kodu:** [`connect`](https://github.com/Merd0/robotik-platform/blob/main/reference-python/backend/simulation/scene.py#L15), [`add_obstacle`](https://github.com/Merd0/robotik-platform/blob/main/reference-python/backend/simulation/obstacles.py#L10), [`isPointFree`](https://github.com/Merd0/robotik-platform/blob/main/lib/robotics/collision.ts#L30)
+
+## Sonraki
+
+Bir sahne kurup fiziğini gördün. Sıradaki ders, bu simülasyonun endüstride
+"dijital ikiz" denen kavramla aynı şey olup olmadığını — ve neden
+olmadığını — ele alıyor.

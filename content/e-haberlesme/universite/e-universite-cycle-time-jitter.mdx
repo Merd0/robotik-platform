@@ -1,0 +1,123 @@
+---
+id: e-universite-cycle-time-jitter
+baslik: "Gerçek zamanlılık, döngü süresi (cycle time), jitter"
+hat: e-haberlesme
+seviye: universite
+sure: 15
+sira: 3
+onkosul:
+  - e-universite-endustriyel-protokoller
+kazanimlar:
+  - "'Gerçek zamanlı' (real-time) teriminin 'hızlı' değil 'zaman garantili' anlamına geldiğini açıklayabilme"
+  - "Döngü süresi (cycle time) ile sapma (jitter) kavramlarını ayırt edebilme"
+  - "SignalTimeline sahnesindeki idealize edilmiş, sabit adımlı animasyon ile gerçek bir endüstriyel ağdaki jitter'lı davranış arasındaki farkı açıklayabilme"
+kaynaklar:
+  - "Jane W. S. Liu, Real-Time Systems, Prentice Hall, 2000, Bölüm 1 — gerçek zamanlı bir hesaplamanın doğruluğunun hem mantığa hem zamana bağlı olduğu tanımı"
+  - "EtherCAT Technology Group, 'EtherCAT Technology' (ethercat.org/en/technology.html) — 'short cycle times (≤ 100 µs), low jitter for accurate synchronization (≤ 1 µs)'"
+  - "James F. Kurose & Keith W. Ross, Computer Networking: A Top-Down Approach, Bölüm 3-4 — IP/Internet'in 'en iyi çaba' (best-effort) teslimat modeli, zaman garantisi vermemesi"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SignalTimeline
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi "gerçek zamanlı" (real-time) kelimesini duyunca "hızlı" anlar.
+Aslında kelime hızla ilgili değil, kesinlikle ilgili: bir işlemin HER
+ZAMAN aynı, garanti edilen bir sürede bitmesi. Süper hızlı ama bazen 2
+kat uzun süren bir sistem gerçek zamanlı DEĞİLDİR; nispeten yavaş ama
+her seferinde tam olarak aynı sürede biten bir sistem gerçek zamanlıdır.
+
+## Ne oldu
+
+Jane W. S. Liu'nun klasik tanımına göre gerçek zamanlı bir sistemde
+"sonucun doğruluğu sadece mantıksal doğruluğa değil, üretildiği ZAMANA da
+bağlıdır." Bir önceki derste gördüğün üç protokol (EtherCAT, PROFINET,
+EtherNet/IP) tam olarak bunu hedefliyor: veri değişiminin ne kadar sürede
+olacağını değil, HER DÖNGÜDE aynı sürede olup olmadığını garanti etmeye
+çalışıyorlar.
+
+Bunun için iki ayrı sayı önemli:
+
+- **Döngü süresi (cycle time):** bir denetleyicinin (ör. PLC) tüm bağlı
+  cihazlarla veri alışverişini tamamladığı, düzenli olarak tekrarlanan
+  süre. Örneğin EtherCAT'te bu süre 100 mikrosaniyenin altına inebiliyor.
+- **Sapma (jitter):** bu döngü süresinin, döngüden döngüye ne kadar
+  DEĞİŞTİĞİ. EtherCAT Technology Group'un kendi ifadesiyle sistem "kısa
+  döngü süreleri (≤ 100 µs), hassas senkronizasyon için düşük jitter
+  (≤ 1 µs)" hedefiyle tasarlanmış. Yani döngü sadece kısa değil, neredeyse
+  hiç sapmıyor.
+
+Bu ikisi aynı şey değil: bir sistemin ortalama döngü süresi 1 ms olabilir
+ama bazı döngüler 0.5 ms, bazıları 3 ms sürebilir — bu YÜKSEK jitter'lı
+bir sistemdir, ortalaması iyi görünse bile senkronizasyon için güvenilmez.
+Bunun karşıtı, standart TCP/IP üzerinden çalışan "en iyi çaba"
+(best-effort) bir ağ: Kurose & Ross'un ders kitabında anlatıldığı gibi
+İnternet'in temel teslimat modeli hiçbir zaman garantisi vermez — paket
+bazen hemen, bazen ağ trafiğine bağlı olarak çok daha geç ulaşır. Bir
+önceki dersteki `e-universite-tcpip-soket` soket örneği tam olarak bu
+modelin üstünde çalışıyordu.
+
+Aşağıdaki sahnede "Oynat"a bastığında, okuma başı HER ZAMAN tam 500
+milisaniyede bir adım ilerler — bileşenin kendi kodunda sabit bir
+zamanlayıcı var. Bu, jitter'sız, idealize edilmiş bir döngüyü temsil
+ediyor. Gerçek bir endüstriyel ağda böyle bir kusursuzluk yoktur; en iyi
+protokoller (EtherCAT gibi) bu kusursuzluğa mikrosaniye mertebesinde
+yaklaşır, standart Ethernet/TCP-IP üzerinden çalışan bir bağlantı ise hiç
+yaklaşamaz.
+
+<SignalTimeline signals={["Döngü sinyali"]} theme="universite" steps={12} />
+
+## Gerçek dünyada
+
+Jitter neden önemli? Çünkü senkronizasyon kayması üretir. Örneğin bir
+robot kolunun altı ekleminin hepsi aynı döngüde güncellenmesi gerekiyorsa
+ve bir eklemin verisi 2 ms geç gelirse, o eklem kısa bir süre "eski"
+komutla hareket eder — altı eklem arasında küçük bir uyumsuzluk oluşur.
+Hassas, senkronize hareket gerektiren uygulamalarda (ör. birden fazla
+eksenin aynı anda hareket ettiği bir kaynak hattı) bu kayma, üretim
+hatasına dönüşebilir. Bu yüzden EtherCAT gibi protokoller sadece kısa
+döngü süresini değil, DÜŞÜK JITTER'I de ayrı bir tasarım hedefi olarak
+belirtiyor — "kısa ama düzensiz" bir döngü, senkronizasyon açısından
+"biraz daha uzun ama tam düzenli" bir döngüden daha kötü olabilir.
+
+## Dene
+
+Sahnedeki "Döngü sinyali" satırında birkaç kutuyu AÇIK yap, "Oynat"a bas.
+Okuma başının her kutuda tam olarak aynı sürede durduğunu gözlemle — bu
+sahne bilerek jitter'sız kuruldu. Şimdi hayal et: gerçek bir ağda her adım
+biraz farklı sürede gelseydi, okuma başının "AÇIK" bir kutuda tam
+zamanında durup durmayacağından hiç emin olamazdın.
+
+<Quiz
+  sorular={[
+    {
+      soru: "'Gerçek zamanlı' (real-time) bir sistem ne anlama gelir?",
+      secenekler: [
+        "İşlemin mümkün olan en yüksek hızda tamamlanması",
+        "İşlemin her seferinde garanti edilen, öngörülebilir bir sürede tamamlanması",
+        "Sistemin hiç gecikme yaşamaması",
+      ],
+      dogru: 1,
+      aciklama: "Liu'nun tanımına göre gerçek zamanlılık hızla değil, zamanlamanın DOĞRULUĞUN bir parçası olmasıyla ilgilidir — sonucun ne zaman geldiği, sonucun kendisi kadar önemlidir.",
+    },
+    {
+      soru: "Bir sistemin ortalama döngü süresi kısa ama jitter'ı yüksekse, bu ne anlama gelir?",
+      secenekler: [
+        "Sistem gerçek zamanlı sayılır çünkü ortalama iyi",
+        "Döngü süresi döngüden döngüye önemli ölçüde değişiyor demektir — senkronizasyon için güvenilir olmayabilir",
+        "Jitter, döngü süresiyle aynı şeydir, ayrı bir sorun değildir",
+      ],
+      dogru: 1,
+      aciklama: "Jitter, döngü süresinin döngüden döngüye sapmasıdır; düşük ortalama süre, düşük jitter garantisi vermez — ikisi ayrı ayrı ölçülür ve ayrı ayrı önemlidir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu döngü kim tarafından belirleniyor? Sıradaki ders, bir PLC-robot
+hücresinde döngüyü hangi tarafın (usta/master) başlattığını, hangi
+tarafın (köle/slave) buna yanıt verdiğini ele alıyor.

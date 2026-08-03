@@ -1,0 +1,145 @@
+---
+id: e-universite-hata-durumlari
+baslik: "Hata durumları: zaman aşımı, bağlantı kopması, güvenli durma"
+hat: e-haberlesme
+seviye: universite
+sure: 16
+sira: 5
+onkosul:
+  - e-universite-plc-master-slave
+kazanimlar:
+  - "Zaman aşımı (timeout), bağlantı kopması (connection loss) ve güvenli durma (safe stop) kavramlarını ayırt edebilme"
+  - "Bir haberleşme hatasında robot kontrol yazılımının neden 'bekle ve tekrar dene' yerine güvenli bir duruşa geçmesi gerektiğini, endüstriyel güvenlik standardı bağlamında açıklayabilme"
+  - "Bu platformun neden gerçek bir robotu kontrol eden hata kurtarma kodu ÖNERMEDİĞİNİ ifade edebilme"
+kaynaklar:
+  - "ISO 10218-2:2011, Robots and robotic devices — Safety requirements for industrial robots — Part 2: Robot systems and integration (standart numarasıyla; endüstriyel robot sistemlerinde tanımlı güvenli durma kategorileri gerektirir)"
+  - "OSHA Technical Manual, Section IV: Chapter 4 — Industrial Robots and Robot System Safety (osha.gov/otm) — ANSI/RIA R15.06-2012 ve ISO 10218-2:2011'e atıfla 'safety-rated monitored stop' (Category 2 Stop) tanımı: bir arıza/algılama durumunda tetiklenen izlemeli duruş"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Robot kolu bir parçayı taşırken, PLC'den gelen ağ bağlantısı birden
+kesiliyor. Robot elinde parçayla birlikte tam o anda ne yapmalı? "Son
+komutu bekle" mi, "son bilinen komutu tekrarla" mı, yoksa hemen dur mu?
+
+## Ne oldu
+
+Bir önceki dersteki usta/köle döngüsü sorunsuz çalıştığında sorun yok. Ama
+üç şey ters gidebilir, ve üçü de farklı bir şey:
+
+- **Zaman aşımı (timeout):** köle (robot) beklenen yanıtı, tanımlı süre
+  içinde ÜRETEMEZ — ör. hareket normalden uzun sürer. Bağlantı hâlâ
+  açıktır, sadece yanıt gecikmiştir.
+- **Bağlantı kopması (connection loss):** soket tamamen kapanır — kablo
+  çıkar, anahtar (switch) arızalanır, ağ kesilir. Karşı taraftan artık
+  hiçbir veri gelmez.
+- **Güvenli durma (safe stop):** bu ikisinden BİRİ tespit edildiğinde
+  sistemin girmesi gereken, tanımlı ve öngörülebilir durum.
+
+Bu üçü arasındaki fark önemli çünkü tepki farklı olmalı. Bir zaman
+aşımında sistem belki birkaç kez daha bekleyebilir (tanımlı bir yeniden
+deneme sayısıyla). Ama bağlantı tamamen koptuysa, "birazdan gelir"
+varsayımıyla robotu olduğu hızda hareket ettirmeye devam etmek tehlikeli
+bir varsayımdır — çünkü kontrol eden taraf artık robotu DURDURAMAZ da.
+
+## Güvenlik notu
+
+**Bu, bu platformdaki en kritik uyarılardan biri.** Gerçek bir endüstriyel
+robotta haberleşme koptuğunda "bekle ve tekrar dene" mantığıyla hareketi
+sürdürmek, çevresindeki insanlar için risk oluşturur — çünkü hücreyi
+denetleyen taraf (PLC, güvenlik rölesi) artık robota müdahale edemiyor
+demektir. Bu yüzden endüstriyel güvenlik standartları, robot sistemlerinde
+tanımlı "güvenli durma" kategorileri ister. OSHA'nın kendi teknik el
+kitabı, ANSI/RIA R15.06-2012 ve ISO 10218-2:2011'e atıfla bunu "safety-rated
+monitored stop" (Category 2 Stop) olarak tanımlıyor: bir arıza veya
+algılama durumunda tetiklenen, izlenen ve tanımlı bir duruş. Bir
+haberleşme hatası da bu kapsamda ele alınması gereken bir arıza
+durumudur — robot "belki birazdan yanıt gelir" diyerek son bilinen
+komutla hareket etmeye devam edemez.
+
+Bu platform hiçbir yerde "bu kodu gerçek robotunda çalıştır" demez ve
+gerçek bir robota bağlanan bir kontrol yazılımı içermez (bkz.
+`docs/00-vizyon.md`). Aşağıdaki örnek, bir hata durumunu TEMSİLİ olarak
+gösteriyor — gerçek bir hata kurtarma (fault recovery) sistemi, güvenlik
+sertifikalı donanım ve eğitimli personel gerektirir.
+
+<CodeRunner
+  robot="generic-2dof"
+  theme="universite"
+  initialCode={`# hedefe_git(x, y) gercek ters kinematikle hedefe ulasmayi dener;
+# hedef kolun erisim alaninin disindaysa False doner. Burada bunu bir
+# haberlesme hatasinin (zaman asimi/baglanti kaybi) TEMSILI modeli
+# olarak kullaniyoruz: "beklenen yanit gelmedi" durumu.
+
+hedef_x, hedef_y = 5.0, 5.0  # kolun erisemeyecegi kadar uzak bir nokta
+yanit_geldi_mi = robot.hedefe_git(hedef_x, hedef_y)
+
+if not yanit_geldi_mi:
+    print("Yanit alinamadi (zaman asimi / baglanti kaybi gibi dusun).")
+    print("Guvenli davranis: son bilinen konumda GUVENLI DURUSA gec.")
+    print("YAPMA: 'belki birazdan gelir' diyerek son komutu tekrarlayip")
+    print("       hareketi kendi basina surdurmek.")
+else:
+    print("Yanit geldi, hareket tamamlandi.")`}
+/>
+
+## Gerçek dünyada
+
+Endüstride bu üç durumun her biri için ayrı bir davranış tanımlanır:
+
+- Zaman aşımında: sınırlı sayıda yeniden deneme, sonra hata durumuna geç.
+- Bağlantı kopmasında: mevcut hareketi güvenli şekilde sonlandır (ör.
+  ivmeyle yavaşlatarak dur), yeni komut kabul etme.
+- Her iki durumda da: hücredeki güvenlik sistemine (kapı sensörü, acil
+  durdurma devresi) bu durumu bildir — haberleşme katmanındaki bir hata,
+  güvenlik katmanından bağımsız ele alınmaz.
+
+Bu üçlü ayrım, `e-universite-tcpip-soket` dersindeki `recv()` çağrısının
+neden sonsuza kadar bekleyebileceğini (zaman aşımı riski) ve
+`e-universite-plc-master-slave` dersindeki usta/köle döngüsünün neden
+"köle sessiz kalırsa" diye bir durumu da tanımlaması gerektiğini
+birleştiriyor.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir robot kontrolörü, bağlantının tamamen KOPTUĞUNU (connection loss) tespit ettiğinde en güvenli tepki hangisidir?",
+      secenekler: [
+        "Son bilinen komutu tekrarlayarak hareketi olduğu gibi sürdürmek",
+        "Tanımlı bir güvenli duruşa geçmek ve yeni komut kabul etmemek",
+        "Bağlantı kendiliğinden düzelene kadar rastgele bekleme sürelerinde denemeye devam etmek",
+      ],
+      dogru: 1,
+      aciklama: "OSHA'nın atıf yaptığı ANSI/RIA R15.06-2012 ve ISO 10218-2:2011, robot sistemlerinde arıza durumunda tetiklenen tanımlı bir 'güvenli durma' (safety-rated monitored stop) kategorisi ister; belirsizlikte harekete devam etmek bu ilkeye aykırıdır.",
+    },
+    {
+      soru: "Zaman aşımı (timeout) ile bağlantı kopması (connection loss) arasındaki fark nedir?",
+      secenekler: [
+        "İkisi aynı şeydir, sadece farklı isimlendirilir",
+        "Zaman aşımında bağlantı hâlâ açıktır ama yanıt gecikmiştir; bağlantı kopmasında soket tamamen kapanmıştır",
+        "Zaman aşımı sadece yazılım hatasıdır, bağlantı kopması donanım hatasıdır ve ikisi hiç ilişkili değildir",
+      ],
+      dogru: 1,
+      aciklama: "Zaman aşımında karşı taraf hâlâ ulaşılabilir olabilir, sadece yanıt tanımlı süreyi aşmıştır; bağlantı kopmasında iletişim kanalının kendisi kesilmiştir — ikisi farklı tespit ve tepki gerektirir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu ders, Hat E'nin (haberleşme ve entegrasyon) üniversite seviyesindeki
+son dersiydi — soket düzeyinden (`e-universite-tcpip-soket`) protokol
+karşılaştırmasına (`e-universite-endustriyel-protokoller`), zamanlamaya
+(`e-universite-cycle-time-jitter`) ve rol ayrımına
+(`e-universite-plc-master-slave`) uzanan zincirin güvenlik katmanı.
+Robot güvenliğinin standartlar düzeyinde nasıl tanımlandığını (ISO 10218,
+ISO/TS 15066, kategori ve performans seviyeleri) merak edenler için Hat H
+(güvenlik ve endüstriyel gerçeklik) bu konuları doğrudan ele alıyor.

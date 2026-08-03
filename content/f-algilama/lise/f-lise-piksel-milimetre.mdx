@@ -1,0 +1,112 @@
+---
+id: f-lise-piksel-milimetre
+baslik: "Kamera görüntüsünden konum bulma: piksel ile milimetre ilişkisi"
+hat: f-algilama
+seviye: lise
+sure: 12
+sira: 1
+onkosul: []
+kazanimlar:
+  - Bir piksel konumunu, verilen bir ölçekleme oranıyla (mm/piksel) gerçek dünya konumuna çevirebilme
+  - Ölçekleme oranının bilinen boyutlu bir referans nesne üzerinden nasıl belirlendiğini açıklayabilme
+  - Kalibrasyon oranı değiştiğinde aynı piksel konumunun karşılığının neden değiştiğini yorumlayabilme
+kaynaklar:
+  - "Wikipedia katkıcıları, 'Ground sample distance' maddesi — piksel aralığının gerçek dünya mesafesine karşılık gelmesi, https://en.wikipedia.org/wiki/Ground_sample_distance"
+  - "Carsten Steger, Markus Ulrich, Christian Wiedemann, Machine Vision Algorithms and Applications, 2. Baskı, Wiley-VCH, 2018, Bölüm 3 (Camera Calibration)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - PixelToWorld
+durum: taslak
+---
+
+## Kanca
+
+Kameranın gördüğü görüntü aslında hiç milimetre bilmiyor. Ekrandaki her nokta
+sadece bir piksel — bir satır numarası, bir sütun numarası. Bir robot kolunun
+"şuraya git" diyebilmesi için, bu piksel numarasının kaç milimetreye karşılık
+geldiğini önce birinin ona söylemesi gerekiyor.
+
+<PixelToWorld theme="lise" adjustableCalibration={true} />
+
+## Ne oldu
+
+Nesnenin üstündeki hücreye tıkladığında iki sayı gördün: piksel konumu ve
+hesaplanan gerçek dünya konumu (mm). Aradaki ilişki basit bir çarpma:
+
+**X_gerçek (mm) = X_piksel × k**
+**Y_gerçek (mm) = Y_piksel × k**
+
+Buradaki `k`, kalibrasyon oranı — "1 piksel kaç milimetreye karşılık geliyor"
+sorusunun cevabı. Kaydırıcıyı oynattığında `k` değişti, aynı piksel konumu bu
+sefer farklı bir milimetre sonucu verdi. Piksel sayısı değişmedi, sadece onu
+gerçek dünyaya çeviren oran değişti.
+
+`k` nereden gelir? Havadan uydurulmaz. Görüş alanına, gerçek boyutu bilinen
+bir referans nesne (örneğin 50 mm'lik bir cetvel parçası) koyup, bu nesnenin
+görüntüde kaç piksel kapladığını sayarsın:
+
+**k = bilinen uzunluk (mm) ÷ o uzunluğun kapladığı piksel sayısı**
+
+Sahnedeki her hücre, görüntüde 10 pikselik bir adıma karşılık geliyor.
+Varsayılan kalibrasyonda (k = 5 mm/piksel) nesnenin piksel konumu (50, 20) ise
+gerçek konumu (250 mm, 100 mm) olarak hesaplanır — kaydırıcıyı 5'in üstüne
+çıkarırsan aynı piksel konumu artık daha büyük bir mesafeye karşılık gelir.
+
+## Gerçek dünyada
+
+Bu, uzaktan algılamada "yer örnekleme mesafesi" (ground sample distance, GSD)
+olarak adlandırılan kavramın küçük ölçekli hali. Wikipedia'nın tanımıyla GSD,
+"görüntüdeki bitişik iki piksel merkezi arasının yerdeki karşılığı" — uydu
+görüntülerinde metre cinsinden, bir masa üstü kamera sisteminde milimetre
+cinsinden aynı mantık işler: piksel aralığı sabit bir oranla gerçek mesafeye
+çevrilir.
+
+Endüstriyel görü sistemlerinde bu, işe başlamadan önce yapılan tek seferlik
+bir kalibrasyon adımıdır: kamera sabitlenir, bilinen boyutlu bir referans
+görüntülenir, oran hesaplanır ve sistem her yeni görüntüde aynı oranı
+kullanır — ta ki kamera veya çalışma mesafesi değişene kadar. Steger, Ulrich
+ve Wiedemann'ın *Machine Vision Algorithms and Applications* kitabının
+kalibrasyon bölümü, bu tür bir ölçekleme kalibrasyonunu (basit, düzlem
+varsayımlı) daha karmaşık, lens çarpıklığını da hesaba katan kalibrasyon
+yöntemlerinden ayırarak ele alır.
+
+## Dene
+
+Kaydırıcıyı 5 mm/piksel'de bırakıp nesnenin üstüne tıkla, gerçek konumu not
+et. Sonra kaydırıcıyı 10 mm/piksel'e çek ve aynı hücreye tekrar tıkla — piksel
+konumunun değişmediğine ama mm sonucunun iki katına çıktığına dikkat et.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir nesnenin piksel konumu (40, 30). Kalibrasyon oranı k = 2 mm/piksel ise, gerçek dünya konumu nedir?",
+      secenekler: [
+        "(20 mm, 15 mm)",
+        "(80 mm, 60 mm)",
+        "(40 mm, 30 mm)",
+      ],
+      dogru: 1,
+      aciklama: "X_gerçek = X_piksel × k formülünü uygula: 40 × 2 = 80, 30 × 2 = 60.",
+    },
+    {
+      soru: "Kalibrasyon oranı k'yı belirlemek için ne yaparsın?",
+      secenekler: [
+        "Kamerayı üreticinin varsayılan ayarında bırakırsın, hesaplama gerekmez",
+        "Gerçek boyutu bilinen bir nesneyi görüntüde ölçüp, bilinen uzunluğu piksel sayısına bölersin",
+        "Görüntüdeki en parlak pikseli bulup onu referans alırsın",
+      ],
+      dogru: 1,
+      aciklama: "Kalibrasyon, bilinen bir referans uzunluğun görüntüde kaç piksele karşılık geldiğini ölçmeye dayanır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bir sonraki derste, bir görüntüde nesneyi arka plandan nasıl ayırt ettiğine
+— eşikleme (thresholding) mantığına — bakacaksın. Bu hattın ortaokul
+seviyesindeki dersi (`f-ortaokul-goz-olmadan-is-yapmak`) kameranın neden
+robota gerekli olduğunu görsel olarak ele alıyor; üniversite seviyesinde ise
+bu ölçekleme fikri, iç ve dış parametrelerle tam bir kamera kalibrasyonuna
+genişleyecek.

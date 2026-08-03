@@ -1,0 +1,102 @@
+---
+id: d-lise-hareket-komutlari
+baslik: "Hareket komutları: eklem hareketi ve doğrusal hareket"
+hat: d-programlama
+seviye: lise
+sure: 15
+sira: 2
+onkosul:
+  - d-lise-python-komut-dizisi
+  - b-lise-geometrik-ters-kinematik
+kazanimlar:
+  - "`eklem_ac` (açı vererek) ile `hedefe_git` (nokta vererek) hareket ettirme arasındaki farkı ayırt edebilme"
+  - Bir hedef noktanın kolun erişim aralığı dışında kalabileceğini ve bunun kodda False olarak döndüğünü açıklayabilme
+  - Bu ayrımı gerçek robot dillerindeki MoveJ/MoveL komutlarıyla ilişkilendirebilme
+kaynaklar:
+  - "ABB RAPID Instructions, Functions and Data Types Reference Manual — MoveJ/MoveL talimatları"
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 6 (iki eklemli düzlemsel kolun erişim aralığı, |a1−a2| ile a1+a2 arasında)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+durum: taslak
+---
+
+## Kanca
+
+Bir arkadaşına robotun kolunu hareket ettirmesini iki farklı şekilde
+söyleyebilirsin: "omzunu 30 derece, dirseğini 45 derece döndür" ya da
+"elini şu noktaya götür, gerisini sen hesapla". İkisi de aynı sonucu
+doğurabilir ama arkadaşının yapması gereken iş tamamen farklı. Python'da
+robota tam bu iki şekilde emir verebilirsin.
+
+<CodeRunner
+  robot="generic-2dof"
+  theme="lise"
+  initialCode={`# 1) Eklem hareketi: robota AÇI söylersin.
+robot.eklem_ac(0, 30)
+robot.eklem_ac(1, 45)
+print("Eklem komutlarıyla ulaşılan konum.")
+
+# 2) Hedef hareketi: robota NOKTA söylersin, açıları kendisi hesaplar.
+basarili = robot.hedefe_git(1.2, 0.5)
+print("Hedefe ulaşıldı mı:", basarili)`}
+/>
+
+## Ne oldu
+
+`robot.eklem_ac(index, derece)` sana kolay gelir çünkü her eklemin ne
+yapacağını sen söylüyorsun — ama uç noktanın (x, y) nereye vardığını
+kafandan hesaplaman gerekir. Önceki derste (geometrik ters kinematik)
+gördüğün kosinüs teoremi tam bu hesabı yapıyordu.
+
+`robot.hedefe_git(x, y)` bu işi tersine çeviriyor: sen sadece hedef NOKTAYI
+veriyorsun, robot açıları kendi içinde (aynı kosinüs teoremiyle) hesaplayıp
+ayarlıyor. Bu yüzden `hedefe_git` iki değerden biriyle döner:
+
+- **True** — hedefe ulaşıldı, eklem açıları hedefe göre ayarlandı.
+- **False** — hedef kolun erişemeyeceği bir yerde, eklem açıları
+  DEĞİŞMEDEN kaldı.
+
+Yukarıdaki kolda iki parça var: a1 = 1.0 birim, a2 = 0.8 birim. Hedefin
+kola olan uzaklığı 0.2 (= |a1 − a2|) ile 1.8 (= a1 + a2) birim arasında
+değilse, `hedefe_git` hiçbir zaman True dönmez — kol o kadar uzayıp
+kısalamaz.
+
+## Gerçek dünyada
+
+Bu iki komut, ABB'nin RAPID dilindeki `MoveJ` ve `MoveL` ayrımının
+basitleştirilmiş bir ön halidir (bu ayrımı üniversite seviyesinde tam
+haliyle göreceksin). `MoveJ`, eklemlerin kendi açı yolunda hareket etmesini
+sağlar — `eklem_ac` gibi düşünülebilir. `MoveL`, uç noktayı doğrudan bir
+hedef koordinata götürür ve robot kontrolörü ters kinematiği kendisi
+çözer — `hedefe_git` gibi düşünülebilir. Gerçek bir RAPID programında bu
+`MoveL p1, v200, z10, tool0;` şeklinde yazılır; `p1` hedef koordinattır.
+
+## Dene
+
+Yukarıdaki kodda `robot.hedefe_git(1.2, 0.5)` satırını `robot.hedefe_git(3, 3)`
+olarak değiştir ve çalıştır — `basarili` değişkeninin `False` bastığını
+gör. Sonra `robot.hedefe_git(1.5, -0.3)` gibi kolun erişim aralığında
+kalan bir noktayla tekrar dene.
+
+<Quiz
+  sorular={[
+    {
+      soru: "robot.hedefe_git(x, y) hedefe ulaşamayıp False döndüğünde eklem açılarına ne olur?",
+      secenekler: [
+        "Açılar en yakın ulaşılabilir noktaya otomatik ayarlanır",
+        "Açılar hiç değişmeden, önceki durumunda kalır",
+        "Program hata verip durur",
+      ],
+      dogru: 1,
+      aciklama: "hedefe_git, hedefe ulaşamazsa açılara hiç dokunmaz — robot son bilinen konumunda kalır. Bu yüzden False dönen bir çağrıdan sonra robotun konumu değişmemiş olmalı.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki ders, birden fazla `hedefe_git` çağrısını art arda vererek basit
+bir rota oluşturmayı ve gerçek robot kodunda hedefin yanında hız ve
+bekleme süresinin nasıl belirtildiğini ele alıyor.

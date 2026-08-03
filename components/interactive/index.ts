@@ -2,7 +2,13 @@ import { JointSliders } from "./JointSliders";
 import { IkTarget } from "./IkTarget";
 import { JacobianViz } from "./JacobianViz";
 import { PlannerRace } from "./PlannerRace";
+import { CodeRunner } from "./CodeRunner";
 import { Quiz } from "./Quiz";
+import { BlockEditor } from "./BlockEditor";
+import { SignalTimeline } from "./SignalTimeline";
+import { PixelToWorld } from "./PixelToWorld";
+import { ThresholdViewer } from "./ThresholdViewer";
+import { ScanPath } from "./ScanPath";
 
 /**
  * MDX'e açılan bileşenlerin TEK listesi. Bir ders dosyası burada olmayan bir
@@ -14,5 +20,11 @@ export const mdxComponents = {
   IkTarget,
   JacobianViz,
   PlannerRace,
+  CodeRunner,
   Quiz,
+  BlockEditor,
+  SignalTimeline,
+  PixelToWorld,
+  ThresholdViewer,
+  ScanPath,
 };

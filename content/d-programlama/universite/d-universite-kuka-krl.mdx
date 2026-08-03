@@ -1,0 +1,111 @@
+---
+id: d-universite-kuka-krl
+baslik: "KUKA KRL: temel yapı ve RAPID'den farkları"
+hat: d-programlama
+seviye: universite
+sure: 15
+sira: 2
+onkosul:
+  - d-universite-abb-rapid
+kazanimlar:
+  - KRL programlarının neden iki ayrı dosyaya (.src ve .dat) bölündüğünü açıklayabilme
+  - PTP ve LIN komutlarını RAPID'deki MoveJ/MoveL karşılıklarıyla eşleştirebilme
+  - "$BASE ve $TOOL sistem değişkenlerinin RAPID'deki wobj/tool0 kavramlarına karşılığını kurabilme"
+kaynaklar:
+  - "KUKA System Software (KSS) — Operating and Programming Instructions for System Integrators (KUKA resmi programlama kılavuzu; KR C4/KR C5 kontrolör serisi için)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi KUKA'nın KRL dilini RAPID'in birebir çevirisi sanır: komut
+isimleri değişmiş, mantık aynı kalmış. Aslında ayrım daha köklü —
+KUKA bir programı baştan iki ayrı dosyaya böler, ABB'nin RAPID'i tek
+bir modülde tutar.
+
+## Ne oldu
+
+Bir KRL programı iki dosyadan oluşur:
+
+- **`.src`** — çalıştırılan mantık: hangi hareket önce, hangi koşul
+  kontrol edilecek.
+- **`.dat`** — veri bildirimleri: hedef noktaların, çerçevelerin sayısal
+  değerleri.
+
+RAPID'de bir `robtarget`'ın sayısal değeri de mantığı da aynı modülün
+içinde durabilir; KRL bu ikisini kasıtlı olarak ayırır. Pratik sonucu:
+bir teknisyen `.dat` dosyasındaki bir nokta koordinatını, `.src`
+dosyasındaki hareket mantığına dokunmadan güncelleyebilir.
+
+**Hareket komutları.** RAPID'in `MoveJ` / `MoveL` ayrımının KRL'deki
+karşılığı `PTP` ve `LIN`:
+
+```krl
+DEF ProgramAdi ( )
+  PTP P1 VEL=100% FINE
+  LIN P2 VEL=0.5 M/S CONT
+END
+```
+
+`PTP` (point-to-point), eklem uzayında interpolasyon yapar — RAPID'deki
+`MoveJ` ile aynı fikir, farklı isim. `LIN`, uç noktayı Kartezyen
+uzayda düz bir çizgide götürür — `MoveL`'in karşılığı. Üçüncü bir
+hareket türü `CIRC` (dairesel), RAPID'deki `MoveC`'ye karşılık gelir.
+
+`FINE` ve `CONT`, RAPID'deki `fine` ve `zXX` (bölge/zone verisi) ile
+aynı işi görür: `FINE` robotun o noktada tam durmasını ister, `CONT`
+bir sonraki harekete yumuşak geçiş (blending) için köşeyi
+yuvarlatmasına izin verir.
+
+**`$BASE` ve `$TOOL`.** RAPID'de bir hedefi hangi çerçeveye göre
+okuyacağını `wobj` ile, hangi uç aletle çalıştığını `tool0` gibi bir
+araç tanımıyla belirtiyordun. KRL'de bunlar ayrı komut argümanları
+değil, `FRAME` tipinde birer sistem değişkeni: `$BASE` aktif iş
+parçası çerçevesini, `$TOOL` aktif alet merkez noktasını (TCP) tutar.
+Bir hareket komutu çalışmadan önce bu iki değişkenin doğru
+ayarlanmış olması gerekir — RAPID'de bunu her `MoveJ`/`MoveL`
+satırında `\WObj:=` ile açıkça yazarken, KRL'de bu örtük bir global
+durumdur.
+
+## Gerçek dünyada
+
+Bu örtük/açık farkı somut bir riske dönüşür: KRL'de `$BASE` veya
+`$TOOL` bir önceki programdan yanlış değerde kalmışsa, sonraki hareket
+komutu hiçbir hata vermeden YANLIŞ bir çerçeveye göre çalışır. RAPID'de
+her hareket satırının kendi `\WObj:=` argümanını taşıması bu hatayı
+satır bazında görünür kılar. İki tasarımın da kendi ödünleşimi var:
+KRL daha az tekrar yazım ister, RAPID her satırda niyeti daha açık
+gösterir.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir KRL programında .dat dosyasındaki bir nokta koordinatını değiştirmek, .src dosyasındaki hareket mantığını bozar mı?",
+      secenekler: [
+        "Evet, ikisi aynı dosyada olduğu için birlikte değişmesi gerekir",
+        "Hayır, veri (.dat) ve mantık (.src) kasıtlı olarak ayrı dosyalarda tutulur",
+        "KRL'de .dat dosyası yoktur, hepsi .src içinde tanımlanır",
+      ],
+      dogru: 1,
+      aciklama: "KRL programları veriyi (.dat) ve akışı (.src) bilinçli olarak ayırır — bu RAPID'in tek modül yaklaşımından farklı bir tasarım kararıdır.",
+    },
+    {
+      soru: "RAPID'deki MoveJ, KRL'de hangi komuta karşılık gelir?",
+      secenekler: ["LIN", "CIRC", "PTP"],
+      dogru: 2,
+      aciklama: "İkisi de eklem uzayında interpolasyon yapar; sadece isim farklıdır. LIN, MoveL'e; CIRC, MoveC'ye karşılık gelir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki ders, hiç kendi diline sahip olmayan bir robotu gösteriyor:
+Mecademic, RAPID veya KRL gibi bir dosya biçimi yerine düz metin
+komutlarını doğrudan bir ağ soketinden okuyor.

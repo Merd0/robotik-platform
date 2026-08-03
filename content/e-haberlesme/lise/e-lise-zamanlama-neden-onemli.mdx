@@ -1,0 +1,92 @@
+---
+id: e-lise-zamanlama-neden-onemli
+baslik: Neden zamanlama önemlidir
+hat: e-haberlesme
+seviye: lise
+sure: 12
+sira: 3
+onkosul:
+  - e-lise-el-sikisma
+kazanimlar:
+  - El sıkışma sırasının bozulmasının (ör. erken gelen "başla" sinyali) neden bir senkronizasyon hatasına yol açtığını açıklayabilme
+  - Gerçek bir kontrol sisteminde zamanlama/sıra hatasının ciddi sonuçlar doğurabileceğine dair somut bir örnek verebilme
+  - Bir robot hücresinde "PLC henüz hazır değilken başla derse" senaryosunun taşıdığı riski (çarpışma, hatalı işlem) tanımlayabilme
+kaynaklar:
+  - "Nancy G. Leveson & Clark S. Turner, 'An Investigation of the Therac-25 Accidents', IEEE Computer, Cilt 26, Sayı 7, 1993, DOI: 10.1109/MC.1993.274940"
+  - "ABB RAPID Instructions, Functions and Data Types Reference Manual — SetDO ve WaitDI talimatları"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SignalTimeline
+durum: taslak
+---
+
+## Kanca
+
+Çoğu kişi "zamanlama" deyince aklına saniyeler gelir, "birkaç saniye erken
+ya da geç ne fark eder ki" diye düşünür. Endüstriyel bir hücrede bu birkaç
+saniye — bazen milisaniyeler — robotun boş bir tezgaha doğru hareket
+etmesiyle henüz kapanmamış bir tutucuya çarpması arasındaki farkı
+belirleyebilir.
+
+<SignalTimeline signals={["Robot: Hazırım", "PLC: Başla"]} theme="lise" />
+
+## Ne oldu
+
+Önceki derste gördüğün el sıkışmayı burada tersinden dene: PLC, robotun
+"Hazırım" sinyalini beklemeden "Başla" derse ne olur? Zaman ekseninde bunu
+kurman kolay — "PLC: Başla"yı erken bir adımda aç, "Robot: Hazırım"ı hiç
+açma ya da çok geç aç. Sonuç: PLC, robotun aslında hazır olmadığı bir anda
+ona "başla" komutu vermiş olur.
+
+Bu, yarış durumu (race condition) olarak adlandırılan bir hatanın basit
+bir örneği: sistemin doğru çalışması, sinyallerin doğru SIRADA gelmesine
+bağlıdır; sıradan bir gecikme veya erken tetikleme, beklenmedik bir
+davranışa yol açabilir.
+
+## Gerçek dünyada
+
+Zamanlama hatalarının ne kadar ciddi sonuçlar doğurabileceğine dair en çok
+anılan mühendislik vakalarından biri Therac-25 radyasyon tedavi cihazıdır.
+Leveson ve Turner'ın 1993 tarihli incelemesine göre, cihazın kontrol
+yazılımındaki bir yarış durumu — operatörün ekrana çok hızlı veri girmesi
+durumunda iki farklı işlem modunun beklenmedik sırada üst üste binmesi —
+en az üç hastanın ölümüne yol açan aşırı radyasyon dozlarına neden oldu. Bu,
+robot-PLC el sıkışmasıyla birebir aynı senaryo değil, ama aynı ilkeyi
+gösteriyor: bir kontrol sisteminde "hangi sinyal önce geldi" sorusunun
+cevabı kozmetik bir detay değil, güvenliğin kendisidir.
+
+Bir robot hücresinde aynı ilke somut olarak şöyle işler: PLC, robotun
+`SetDO doHazirim, 1;` ile açtığı sinyali `WaitDI diHazirim, 1;` ile
+beklemeden kendi "başla" çıkışını açarsa, robot henüz tamamlamadığı bir
+işin ortasında yeni bir komutla karşılaşabilir.
+
+## Dene
+
+"PLC: Başla"yı 2. adımda aç. "Robot: Hazırım"ı ise hiç açma (ya da 6. adım
+gibi çok geç bir adımda aç). Oynat'a bas ve okuma başının "Başla"
+karesinden geçtiği anda "Hazırım"ın henüz açılmamış olduğunu gözlemle.
+Sonra Sıfırla'ya bas, bu kez doğru sırayla kur: "Robot: Hazırım" 2. adımda,
+"PLC: Başla" 4. adımda.
+
+<Quiz
+  sorular={[
+    {
+      soru: "PLC, 'Robot: Hazırım' sinyalini hiç görmeden 'Başla' sinyalini açarsa, robot hücresinde ne tür bir risk doğar?",
+      secenekler: [
+        "Robot daha yavaş çalışır, başka bir risk yoktur",
+        "Robot henüz hazır olmadığı bir anda harekete başlayabilir; bu da çarpışma veya hatalı işlem riski taşır",
+        "PLC sinyali kendiliğinden düzeltir",
+      ],
+      dogru: 1,
+      aciklama: "'Başla' sinyali 'Hazırım'dan önce gelirse robotun gerçek durumuyla PLC'nin varsaydığı durum uyuşmaz — bu uyuşmazlık fiziksel bir riske dönüşebilir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu hattın üniversite seviyesi, aynı el sıkışma mantığının TCP/IP soket
+haberleşmesinde ve EtherCAT/PROFINET gibi endüstriyel protokollerde döngü
+süresi (cycle time) ve jitter gibi kavramlarla nasıl genişlediğini ele
+alacak.

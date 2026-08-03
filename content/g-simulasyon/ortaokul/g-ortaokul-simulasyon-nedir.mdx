@@ -1,0 +1,73 @@
+---
+id: g-ortaokul-simulasyon-nedir
+baslik: Simülasyon nedir, neden gerçeğinden önce denenir
+hat: g-simulasyon
+seviye: ortaokul
+sure: 7
+sira: 1
+onkosul: []
+kazanimlar:
+  - Bir simülasyonun gerçek robotun kopyası olduğunu ve sonuçlarının gerçek bir bedeli olmadığını fark edebilme
+  - Simülasyonda bir robotu "bozmaya" çalışmanın neden bir sorun olmadığını açıklayabilme
+kaynaklar:
+  - "Bullet Physics SDK (PyBullet), resmi GitHub deposu — https://github.com/bulletphysics/bullet3 ('real-time collision detection and multi-physics simulation for VR, games, visual effects, robotics, machine learning' açıklaması)"
+  - "RoboDK, Offline Programming (çevrim dışı programlama) resmi dokümantasyonu — https://robodk.com/offline-programming"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JointSliders
+durum: taslak
+---
+
+## Kanca
+
+Bir mühendis yeni bir hareket denemek istiyor. Robotu çalıştırmadan önce
+aklından tek bir soru geçiyor: "Ya bir yere çarparsa?" Aşağıdaki robotta
+bu soruyu hiç sormana gerek yok.
+
+<JointSliders robot="generic-2dof" />
+
+## Ne oldu
+
+Az önce oynattığın kol gerçek değil. Ekrandaki her şey bir simülasyon:
+gerçek bir robotun davranışını taklit eden ama metalden, motordan
+yapılmamış bir kopya.
+
+Kaydırıcıları sonuna kadar çektin, kolu garip duruşlara soktun. Hiçbir
+şey kırılmadı, hiçbir motor ısınmadı, kimse yaralanmadı. Simülasyonun
+gücü tam burada: denemenin hiçbir bedeli yok.
+
+## Gerçek dünyada
+
+Robotik araştırmacıları yeni bir hareketi genelde önce simülasyonda
+dener. Bu platformun kendi geliştirme sürecinde de kullanılan Bullet
+Physics fizik motoru (PyBullet), resmi tanımında robotik ve makine
+öğrenmesi araştırmaları için tam da bu amaçla var olduğunu söylüyor.
+Fabrikalarda da mühendisler bir hücreyi gerçekten kurmadan önce RoboDK
+gibi yazılımlarla sanal olarak deneyip hataları baştan görürler.
+
+## Dene
+
+Kaydırıcıları uçlara kadar götürüp kolu en tuhaf şekle sok. "Sıfırla"
+düğmesine bas — her şey eski haline döner. İstersen tekrar dene, bu
+sefer kolu ekranın kenarına doğru "kaçırmaya" çalış.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Simülasyonda bir robotu 'bozmaya' çalışman neden bir sorun değildir?",
+      secenekler: [
+        "Simülasyon kendini otomatik olarak düzeltir",
+        "Simülasyondaki robot gerçek değildir, hiçbir şeye zarar vermez",
+        "Simülasyon zaten hiçbir zaman bozulamaz",
+      ],
+      dogru: 1,
+      aciklama: "Simülasyon gerçek robotun bir kopyasıdır. Ekranda gördüğün kol gerçekten dönmüyor, ısınmıyor, kırılmıyor — bu yüzden denemenin bedeli yoktur.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bir üst seviyede, bir simülasyon sahnesinin robot, masa ve engelden nasıl
+kurulduğunu göreceksin.

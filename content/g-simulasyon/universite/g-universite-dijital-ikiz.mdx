@@ -1,0 +1,105 @@
+---
+id: g-universite-dijital-ikiz
+baslik: Dijital ikiz kavramı ve sınırları
+hat: g-simulasyon
+seviye: universite
+sure: 15
+sira: 3
+onkosul:
+  - g-universite-pybullet-sahne-fizik
+kazanimlar:
+  - "'Dijital ikiz' teriminin endüstride ne anlama geldiğini (fiziksel sistemle sürekli senkronize sanal kopya) tanımlayabilme"
+  - Bu platformdaki simülasyonun neden bir dijital ikiz olmadığını gerekçeleriyle açıklayabilme
+kaynaklar:
+  - "Edward H. Glaessgen & D. S. Stargel, 'The Digital Twin Paradigm for Future NASA and U.S. Air Force Vehicles', 53rd AIAA/ASME/ASCE/AHS/ASC Structures, Structural Dynamics and Materials Conference, 2012 (NASA Technical Reports Server, kayıt no. 20120008178)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - IkTarget
+durum: taslak
+---
+
+## Kanca
+
+Bu derste öğreneceğin ilk şey, bu platformdaki hiçbir sahnenin bir
+"dijital ikiz" OLMADIĞI. Terim son yıllarda pazarlamada o kadar gevşek
+kullanılıyor ki neredeyse her simülasyon kendini böyle tanıtıyor —
+gerçek tanım, sandığından çok daha dar.
+
+<IkTarget robot="generic-2dof" />
+
+## Ne oldu
+
+Terimi endüstriyel bağlamda popülerleştiren 2012 tarihli NASA/ABD Hava
+Kuvvetleri çalışması, dijital ikizi bir uçuş aracının SÜREKLİ, gerçek
+sistemden gelen sensör verisi ve kullanım geçmişiyle güncellenen,
+hayat döngüsü boyunca senkronize kalan sanal kopyası olarak tanımlar.
+Kritik unsur şu: dijital ikiz TEK SEFERLİK kurulmuş bir model değil,
+gerçek sistemle SÜREKLİ veri alışverişinde olan, zamanla onunla birlikte
+"yaşlanan" bir modeldir.
+
+Bu tanımla yukarıdaki `IkTarget` sahnesini karşılaştır:
+
+| | Gerçek dijital ikiz | Bu platformdaki sahne |
+|---|---|---|
+| Veri kaynağı | Gerçek sistemden gelen sürekli sensör akışı | Sadece senin fare/dokunmatik girdin |
+| Güncelleme | Fiziksel sistemle sürekli senkronize | Tek seferlik, anlık hesaplama |
+| Amaç | İzleme, kestirimci bakım, "ne olurdu" analizi | Öğretim |
+| Gerçek donanımla bağ | Var (çift yönlü) | Yok |
+
+Kolu sürüklediğinde gördüğün hareket saf matematik — ters kinematik
+çözücünün her karede yeniden hesapladığı bir sonuç. Hiçbir gerçek motor,
+hiçbir gerçek enkoder bu hesaba katkı vermiyor. Bu yüzden platformun kendi
+vizyon belgesi (`docs/00-vizyon.md`) baştan net: bu site "kapsamlı bir
+robotik simülatörü değil" — dijital ikiz iddiası hiç taşımıyor, taşımamalı.
+
+## Gerçek dünyada
+
+`reference-python/` klasöründeki PyBullet sahnesi de aynı sınırı taşıyor:
+KUKA iiwa'yı geometrik olarak doğru modelliyor, çarpışma ve yerçekimini
+hesaplıyor, ama hiçbir gerçek robottan sensör verisi ALMIYOR — kurulduğu
+anda "donmuş" bir model. Endüstride gerçek bir dijital ikiz, örneğin
+üretim hattındaki bir robotun titreşim/sıcaklık/konum sensörlerinden gelen
+verilerle sürekli güncellenip arızayı önceden kestirmeye çalışır; bu
+platformdaki hiçbir sahne bu geri besleme döngüsüne sahip değil — ikisi de
+bilinçli olarak "çevrim dışı, tek seferlik" kalıyor
+(bkz. `docs/02-mimari.md` "Peki mevcut Python kodu ne olacak").
+
+## Dene
+
+`IkTarget` sahnesinde hedefi hızlıca sürükle, kolun anında tepki
+verdiğini gör. Şimdi düşün: bu sahne gerçek bir dijital ikiz olsaydı
+ekranda ne farklı olurdu? (İpucu: gerçek robottan gelen bir iletişim
+gecikmesi, motorun o açıya GERÇEKTEN ulaşıp ulaşmadığına dair bir geri
+bildirim, ya da bir enkoder gürültüsü — hiçbiri şu an burada yok.)
+
+<Quiz
+  sorular={[
+    {
+      soru: "Dijital ikizi sıradan bir simülasyondan ayıran temel özellik nedir?",
+      secenekler: [
+        "Daha gerçekçi 3B grafikler kullanması",
+        "Fiziksel sistemden gelen verilerle sürekli, gerçek zamanlı güncellenmesi",
+        "Daha hızlı çalışması",
+      ],
+      dogru: 1,
+      aciklama: "Dijital ikiz, tek seferlik kurulan bir model değil; gerçek sistemle sürekli senkronize kalan, onunla birlikte güncellenen bir modeldir.",
+    },
+    {
+      soru: "Bu platformdaki IkTarget sahnesi neden bir dijital ikiz değildir?",
+      secenekler: [
+        "Çünkü ters kinematik matematiği hatalı",
+        "Çünkü hiçbir gerçek robottan sensör verisi almıyor, sadece tek seferlik hesaplıyor",
+        "Çünkü kullanıcı hedefi sürükleyemiyor",
+      ],
+      dogru: 1,
+      aciklama: "Sahne saf bir matematiksel modeldir; gerçek bir sistemle veri alışverişi yoktur — dijital ikizin tanımlayıcı özelliği tam olarak bu eksik.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu ayrımı gördün: statik simülasyon ile gerçek zamanlı senkronize bir
+ikiz aynı şey değil. Sıradaki ders, statik bir simülasyonun bile gerçek
+donanımdan nasıl FARKLI davranabileceğini (sim-to-real farkı) ele alıyor.

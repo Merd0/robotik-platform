@@ -1,0 +1,108 @@
+---
+id: e-universite-endustriyel-protokoller
+baslik: "Endüstriyel protokoller: EtherCAT, PROFINET, EtherNet/IP"
+hat: e-haberlesme
+seviye: universite
+sure: 14
+sira: 2
+onkosul:
+  - e-universite-tcpip-soket
+kazanimlar:
+  - "EtherCAT, PROFINET ve EtherNet/IP'nin ortak noktasını (standart Ethernet donanımı üzerine kurulu olmaları) ve temel farkını (gerçek zamanlılığı nasıl sağladıkları) açıklayabilme"
+  - "Bir protokolün tipik döngü süresi/jitter değerini kaynağıyla birlikte söyleyebilme"
+  - "Üç protokolün hangi topoloji ve hangi endüstriyel bağlamda tercih edildiğini örnekleyebilme"
+kaynaklar:
+  - "EtherCAT Technology Group, 'EtherCAT Technology' (ethercat.org/en/technology.html) — MainDevice/SubDevice çalışma prensibi, döngü süresi ≤100 µs, jitter ≤1 µs"
+  - "PROFIBUS & PROFINET International (PI), 'PROFINET Technology' (us.profinet.com/technology/profinet/) — üç iletişim kanalı: standart TCP/IP, RT (1-10 ms), IRT (<1 ms)"
+  - "ODVA, 'EtherNet/IP' (odva.org/technology-standards/key-technologies/ethernet-ip/) — standart Ethernet üzerinde CIP protokolü, topoloji ve kullanım alanları"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Üç farklı endüstriyel ağ protokolü, üçü de aynı Ethernet kablosunu, aynı
+RJ45 konektörünü, aynı fiziksel donanımı kullanabilir. Ama birini bir
+paketleme hattına, diğerini bir otomotiv gövde kaynak hücresine
+taktığında, kablo aynı görünür, davranış tamamen farklıdır.
+
+## Ne oldu
+
+Üçü de standart Ethernet donanımı üzerine kurulu — hiçbiri özel bir kablo
+veya konektör gerektirmiyor. Fark, bu donanımın üstüne gerçek zamanlılığı
+nasıl bindirdiklerinde.
+
+**EtherCAT.** EtherCAT Technology Group'un kendi tanımıyla: "The EtherCAT
+MainDevice sends a telegram that passes through each node. Each EtherCAT
+SubDevice reads the data addressed to it 'on the fly', and inserts its
+data in the frame as the frame is moving downstream." Yani tek bir Ethernet
+çerçevesi, hat üzerindeki her düğümden GEÇERKEN okunuyor ve yazılıyor —
+düğümler çerçeveyi durdurup işlemiyor. Bu yaklaşım çok düşük döngü süresi
+(≤ 100 µs) ve çok düşük sapma (jitter, ≤ 1 µs) sağlıyor.
+
+**PROFINET.** PI'nin (PROFINET International) kendi tanımıyla, PROFINET üç
+ayrı iletişim kanalı sunuyor: parametre ayarı gibi zaman kritik olmayan
+işler için standart TCP/IP; 1-10 ms döngü süresiyle çalışan RT (Real-Time,
+A/B sınıfı uygulamalar); ve 1 ms'nin altına inen, sürücü (motion) kontrolü
+gibi çok hassas uygulamalar için IRT (Isochronous Real-Time, C sınıfı).
+Yani PROFINET tek bir yöntem değil, ihtiyaca göre seçilen üç ayrı
+performans seviyesi sunuyor.
+
+**EtherNet/IP.** ODVA'nın kendi tanımıyla: "EtherNet/IP uses standard
+Ethernet infrastructure, but adds industrial communication services
+through CIP™ for automation applications." EtherCAT ve PROFINET'in aksine
+EtherNet/IP, Ethernet çerçevesinin kendisini değiştirmiyor; bunun yerine
+CIP (Common Industrial Protocol) adlı bir uygulama katmanı protokolünü
+standart Ethernet'in üzerine ekliyor. ODVA, yıldız, doğrusal ve cihaz
+seviyesi halka (DLR) topolojilerini destek olarak sayıyor; EtherNet/IP'yi
+imalat, proses otomasyonu, otomotiv, gıda ve içecek, petrol-gaz, su/atık
+su gibi sektörlerde yaygın olarak listeliyor.
+
+## Gerçek dünyada
+
+| Protokol | Çalışma prensibi | Tipik döngü süresi | Topoloji | Yaygın olduğu alan |
+|---|---|---|---|---|
+| EtherCAT | Tek çerçeve, düğümlerden "geçerken" okunur/yazılır | ≤ 100 µs, jitter ≤ 1 µs | Hat (line), dallanmalı | Hareket kontrolü (motion control), paketleme |
+| PROFINET | RT: standart anahtarlama; IRT: zaman senkronize anahtarlama | RT 1-10 ms, IRT < 1 ms | Hat, ağaç, yıldız, halka | Genel fabrika otomasyonu, Siemens ekosistemi |
+| EtherNet/IP | Standart Ethernet + CIP uygulama katmanı | Uygulamaya bağlı, standart anahtarlama sınırlarına tabi | Yıldız, doğrusal, DLR (cihaz seviyesi halka) | Kuzey Amerika imalatı, proses otomasyonu, otomotiv |
+
+Bir robot hücresi tasarlarken hangi protokolün seçildiği genelde robot
+markasının veya PLC ekosisteminin kararıdır — ama üçü de aynı temel soruyu
+çözer: "hangi veri, ne sıklıkla, ne kadar sapmayla (jitter) iletilecek?"
+Bu son soru (döngü süresi ve jitter) sıradaki dersin konusu.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "EtherCAT'te bir SubDevice, kendisine ait veriyi ne zaman okur/yazar?",
+      secenekler: [
+        "Çerçeve durdurulup önce SubDevice'a kopyalandıktan sonra",
+        "Çerçeve kendisinden GEÇERKEN, 'on the fly'",
+        "Sadece MainDevice özel bir istek gönderdiğinde",
+      ],
+      dogru: 1,
+      aciklama: "EtherCAT Technology Group'un tanımına göre SubDevice veriyi çerçeve hareket halindeyken okur ve yazar — bu, çok düşük döngü süresinin (≤100 µs) temel nedeni.",
+    },
+    {
+      soru: "PROFINET'in IRT (Isochronous Real-Time) kanalı hangi tür uygulamalar için tasarlanmış?",
+      secenekler: [
+        "Parametre ayarı gibi zaman kritik olmayan işler",
+        "1-10 ms aralığında yeterli olan genel I/O",
+        "1 ms'nin altına inen, sürücü/motion kontrolü gibi çok hassas senkronizasyon gerektiren uygulamalar",
+      ],
+      dogru: 2,
+      aciklama: "PI'ye göre IRT, class C uygulamaları için 1 ms altı döngü sürelerine izin veriyor; RT kanalı ise 1-10 ms aralığındaki class A/B uygulamaları için yeterli.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Tablodaki "döngü süresi" ve "jitter" sütunlarını tek başlarına ele alan
+sıradaki ders, bu iki kavramın neden aynı şey olmadığını ve neden ikisinin
+de ayrı ayrı önemli olduğunu gösteriyor.

@@ -42,6 +42,24 @@ frontend/             2D canvas arayüz (tek dosya, build adımı yok)
 docs/                 plan.md, architecture.md, sonuclar.md, gunluk-loglar/
 ```
 
+## Öğrenciler için
+
+Bu depo aynı zamanda robotik platformunun (`../content/g-simulasyon/universite/`
+altındaki dersler) indirilebilir alıştırma ortamıdır — platformdaki tarayıcı
+sahneleri hafifletilmiş/basitleştirilmiş; burada aynı problemleri gerçek
+PyBullet fiziğiyle, kendi makinende çalıştırabilirsin. Kurulumdan sonra
+denenebilecek somut alıştırmalar:
+
+- `backend/planners/base.py`'deki `Planner` arayüzünü uygulayan yeni bir
+  algoritma yaz (ör. potansiyel alan yöntemi), `backend/benchmark.py` ile
+  mevcut A*/RRT/RRT*'ye karşı karşılaştır.
+- `backend/simulation/obstacles.py`'ye kendi engel düzenini ekleyip
+  `docs/sonuclar.md`'deki az/orta/çok engelli senaryolara bir dördüncüsünü
+  ekle.
+- `p.GUI` modunda (`backend/simulation/scene.py`, testlerdeki `p.DIRECT`
+  yerine) çalıştırıp planlanan yolu 3D'de izle — tarayıcıdaki 2D üstten
+  görünümün eksik bıraktığı şeyi (gerçek çarpışma hacmi) gör.
+
 ## Sonuçlar
 
 Üç algoritmanın az/orta/çok engelli sahnelerdeki karşılaştırması ve kısa

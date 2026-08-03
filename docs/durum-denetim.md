@@ -346,3 +346,391 @@ scripts/validate-content-graph.ts` ve `npx next build` tekrar
 çalıştırıldı; hepsi temiz. Eklenen "Kaynak kodu" linklerinin build
 çıktısında doğru render olduğu (`out/ders/b-universite-jacobian.html`
 üzerinden) doğrulandı.
+
+---
+
+## Faz 3 — kontrol noktası (yarım kaldı, 2026-08-02)
+
+Faz 3'ün TAMAMI istendi (Pyodide, CodeRunner, blok editör, Hat D'nin ve
+Hat G'nin tam kapsamı, indirilebilir Python deposu), `faz-3-programlama-simulasyon`
+branch'inde çalışmaya başlandı. Tarayıcı testi kullanıcı tarafından
+durduruldu (tool-call reddi), iş bu noktada duraklatıldı. Aşağıda tam
+durum — ne bitti, ne yarım, hangi risk var.
+
+### Bitti ve commit'lendi (`879a126`, branch: `faz-3-programlama-simulasyon`)
+
+- `lib/workers/pyodideWorker.ts` — Python kodunu Pyodide (WASM CPython)
+  ile Web Worker içinde çalıştırıyor. `jsglobals` kısıtlanarak
+  Python'dan `import js` ile fetch/XHR erişimi engellendi (docs/08).
+  `robot.eklem_ac(index, derece)` API'si enjekte ediliyor, her çağrı
+  `jointTrace`'e kaydediliyor.
+- `scripts/copy-pyodide-assets.mjs` — Pyodide'in çekirdek dosyalarını
+  (`pyodide.mjs`, `.asm.mjs`, `.asm.wasm`, `python_stdlib.zip`,
+  `pyodide-lock.json` — 13 MB) `node_modules/pyodide`'den
+  `public/pyodide/`'a kopyalıyor; dış CDN kullanılmıyor (docs/08).
+  Ekstra bilimsel paketler (numpy vb.) BİLİNÇLİ OLARAK kopyalanmadı —
+  gerekirse ayrı bir kararla eklenir.
+- `scripts/build-worker.mjs` — artık `lib/workers/` altındaki birden
+  fazla worker'ı (planner + pyodide) ayrı ayrı esbuild ile derliyor.
+  `pyodide.mjs`'nin sadece Node'da çalışan (tarayıcıda hiç
+  yürütülmeyen) dinamik `node:*` importları build'i kırıyordu —
+  `external: ["node:*"]` ile çözüldü.
+- `components/interactive/CodeRunner.tsx` — kod editörü (textarea) +
+  Çalıştır/Durdur/Sıfırla; `robot` prop'u verilirse `RobotArm`'ı
+  Python'dan gelen `jointTrace`'in son durumuyla sürüyor. `mdxComponents`
+  listesine eklendi.
+- `content/d-programlama/lise/d-lise-python-komut-dizisi.mdx` — Hat
+  D'nin ilk dersi (`sira: 1`), `CodeRunner`'ı kullanıyor.
+- `eslint.config.mjs` — `public/pyodide/**` ve `public/workers/**`
+  ignore listesine eklendi (bunlar olmadan, kopyalanan üçüncü taraf
+  `pyodide.asm.mjs` dosyası lint hatası veriyordu — gerçek bir bug,
+  bu turda bulunup düzeltildi).
+
+**Doğrulama:** `npx tsc --noEmit`, `npx eslint .`, `npx vitest run`
+(55/55), `npx tsx scripts/check-content.ts` (40 ders), `npx tsx
+scripts/validate-content-graph.ts`, `npx next build` (46 sayfa) —
+hepsi temiz. Build çıktısında `/workers/pyodide-worker.js` ve
+`/pyodide/*` dosyalarının doğru üretildiği, ders sayfasının
+`robot.eklem_ac` içeren kodu doğru render ettiği dosya sistemi
+üzerinden doğrulandı.
+
+### YARIM / DOĞRULANMADI — önemli
+
+**CodeRunner'ın tarayıcıda GERÇEKTEN çalıştığı hiç doğrulanmadı.**
+Yukarıdaki "Doğrulama" sadece derleme/statik üretim katmanı — Pyodide'in
+tarayıcıda gerçekten yüklenip yüklenmediği, `robot.eklem_ac()`
+çağrısının işleyip işlemediği, stdout'un doğru yakalanıp yakalanmadığı,
+`jsglobals` kısıtlamasının Pyodide'in kendi iç başlatma sürecini
+bozup bozmadığı HİÇ test edilmedi — canlı tarayıcı testi tam bu adımda,
+kullanıcının tool-call'ı reddetmesiyle durduruldu. Bu, mimarideki en
+riskli varsayılan nokta: `jsglobals: { console: {...} }` gibi dar bir
+nesne vermek Pyodide'in kendi başlatma kodunun ihtiyaç duyduğu bir
+global'i kırabilir, bu durumda `loadPyodide()` hiç tamamlanmayabilir.
+**Bir sonraki oturumda ilk iş bu olmalı: gerçek tarayıcıda bir ders
+açıp "Çalıştır"a basmak.**
+
+### Hiç başlanmadı
+
+- Blok tabanlı editör (ortaokul Hat D)
+- Hat D içerik: ortaokul (2), lise (kalan 2/3), üniversite (6) — sadece
+  1/11 ders yazıldı
+- Hat G içeriği (8 ders, hiçbiri yok)
+- İndirilebilir Python alıştırma deposu düzenlemesi
+- Faz 4 (Hat E) — Faz 3 bitmeden başlanmayacak zaten
+
+### Cron/loop durumu
+
+- **Aktif**, ID `4cb1628e` — her 5 dakikada bir (`*/5 * * * *`)
+  tetikleniyor, "önce `/usage` kontrol et, limitliysen hiçbir şey
+  yapma" talimatını taşıyor.
+- **Session-only** — bu CLI oturumu kapanırsa iş de biter, diskte
+  kalıcı değil. Oturum yeniden başlarsa bu cron job'ı da kaybolur,
+  yeniden kurulması gerekir.
+- Durdurmak için: `/loop stop` (veya CronDelete `4cb1628e`).
+
+### Sonraki oturum için kontrol listesi
+
+1. Dev sunucusunu başlat, `d-lise-python-komut-dizisi` dersini aç,
+   "Çalıştır"a bas — Pyodide yüklenip robot hareket ediyor mu?
+2. Çalışmıyorsa: önce `jsglobals` kısıtlamasını gevşetip (`jsglobals`
+   parametresini hiç vermeden) dene — sorunun kaynağı bu mu anla.
+   Kesin yasak: sorunu "çözmek" için testi/doğrulamayı zayıflatma,
+   kök nedeni bul.
+3. Çalışıyorsa: Hat D'nin kalan 10 dersine, blok editöre ve Hat G'ye
+   geç (görev listesi: TaskList, #19-#28 numaralı görevler).
+
+---
+
+## Güncelleme — CodeRunner tarayıcıda doğrulandı, kök neden bulundu (2026-08-02)
+
+Bir önceki oturumdan iki dosyada commit'lenmemiş değişiklik bulundu
+(`CodeRunner.tsx`, `pyodideWorker.ts`) — bunlar yukarıdaki kontrol
+listesinin 1-2. maddelerine tam uyan, `jsglobals` kısıtlamasını
+gevşetip teşhis amaçlı `status` mesajları ekleyen bir ilk deneme
+girişimiydi. Çakışan/atılması gereken bir şey değildi, doğru yöndeydi;
+üzerine inşa edildi.
+
+**Kök neden bulundu:** Hata `jsglobals` değil, tamamen başka bir
+şeydi. `node_modules/pyodide/pyodide.mjs`, kendi içinde
+`isClassicWorker()` kontrolü yapıyor (`WorkerGlobalScope` + çalışan
+`importScripts` = klasik worker sinyali) ve klasik bir worker içinde
+çalıştığını tespit ederse **bilinçli olarak** `"Classic web workers
+are not supported"` hatası fırlatıyor. `scripts/build-worker.mjs`
+worker'ları `format: "iife"` (klasik script) olarak derliyordu ve
+`CodeRunner.tsx` da `new Worker(url)`'ü module tipi belirtmeden
+çağırıyordu — bu ikisi birlikte pyodide'in reddettiği tam senaryoyu
+oluşturuyordu. Hata `loadPyodide()` içinde bile değil, worker script'i
+DAHA YÜKLENIRKEN, senkron ve "error" event'i olarak geliyordu — bu
+yüzden önceki oturumun `message` event dinleyicisi bunu hiç görmedi
+(sessizce yutuldu).
+
+**Düzeltme:**
+- `scripts/build-worker.mjs`: `pyodide-worker.js` artık `format: "esm"`
+  ile derleniyor (planner-worker `iife` olarak kaldı, pyodide
+  kullanmıyor).
+- `components/interactive/CodeRunner.tsx`: `new Worker(url, { type:
+  "module" })` — modül worker olarak başlatılıyor.
+- Teşhis için eklenen `status` postMessage kanalı ve konsol log'ları,
+  kök neden bulunup doğrulandıktan sonra kaldırıldı (gürültüydü,
+  kalıcı bir ihtiyaç değildi). Worker'ın `error` event dinleyicisi
+  (senkron/top-level hataları yakalar) kalıcı olarak bırakıldı —
+  gerçek hata tam da bu sayede görülebildi.
+
+**Doğrulama — gerçek tarayıcıda (Claude in Chrome):**
+`d-lise-python-komut-dizisi` dersi açıldı, "Çalıştır"a basıldı.
+Pyodide ~5 saniyede yüklendi, `robot.eklem_ac(0, 45)` /
+`robot.eklem_ac(1, 30)` çalıştı, `print()` çıktısı
+("Robot hazır konuma geldi.") ekranda göründü VE 3D sahnedeki robot
+kolu görsel olarak büküldü (yatay çizgiden dirsekli poza geçti) —
+yani Python → worker → `jointTrace` → React state → Three.js sahne
+zinciri uçtan uca çalışıyor. Temizlik sonrası ikinci bir çalıştırmayla
+da (yeni hata yok) doğrulandı.
+
+Ayrıca `npx tsc --noEmit`, `npx eslint .`, `npx vitest run` (55/55),
+`npx tsx scripts/check-content.ts` (40 ders), `npx tsx
+scripts/validate-content-graph.ts`, `npx next build` (46 sayfa)
+tekrar çalıştırıldı; hepsi temiz.
+
+**Sonraki oturum için:** Faz 3 kontrol listesinin 3. maddesine
+geçilebilir — Hat D'nin kalan 10 dersi, blok tabanlı editör (ortaokul),
+Hat G'nin 8 dersi, indirilebilir Python deposu.
+
+---
+
+## Faz 3 — tamamlandı (2026-08-02)
+
+Aynı oturumda devam edilip Faz 3'ün kalan tüm maddeleri bitirildi.
+
+### Altyapı (elle yazıldı, subagent kullanılmadı)
+
+- **`robot.hedefe_git(x, y)`** — `pyodideWorker.ts`'ye eklendi.
+  `CodeRunner`'a artık tam RobotSpec (`robotSpec`) da gönderiliyor;
+  robot 2 eklemliyse Python tarafına `hedefe_git` enjekte ediliyor,
+  içeride `lib/robotics/kinematics.ts`'teki (zaten fixture'a karşı
+  test edilmiş) `inverseKinematicsAnalytical2Dof` çağrılıyor. Erişilemeyen
+  noktada açılar değişmeden `False` döner. Tarayıcıda `hedefe_git(1,1)`
+  → `True`, `hedefe_git(100,100)` → `False` olarak doğrulandı.
+- **`BlockEditor` bileşeni** (`components/interactive/BlockEditor.tsx`) —
+  ortaokul Hat D için yeni bir bileşen. Saf yorumlayıcısı
+  `lib/robotics/blockProgram.ts`'te (DOM/React import yok, vitest ile
+  6/6 test), UI'ı tıkla-ekle blok ağacı (hareket / tekrarla / eğer-
+  değilse, iç içe geçebilir, "Engel var" anahtarıyla dallanma). "Çalıştır"
+  bloğu 600ms adımlarla oynatıp robotu 3D sahnede sürüyor. `allowedBlocks`
+  prop'uyla ders başına palette kısıtlanabiliyor (ör. ilk ders sadece
+  "hareket"). Tarayıcıda iç içe tekrarla bloğuyla uçtan uca test edildi.
+- `components/interactive/index.ts`'e `BlockEditor` eklendi.
+
+### İçerik — 5 paralel `ders-yazari` subagent'ı ile 18 ders
+
+Faz 1/2'deki gibi proje `.claude/agents/ders-yazari.md` bu oturumun araç
+kümesinde doğrudan proje subagent'ı olarak çağrılamadığı için, genel
+amaçlı `Agent` çağrıları `ders-yazari.md`'nin tam talimatını taşıyarak
+kullanıldı — her biri kendi hat+seviye grubunu yazdı, kaynaklarını
+WebFetch ile doğruladı:
+
+| Grup | Ders sayısı | Bileşen(ler) |
+|---|---|---|
+| Hat D / Ortaokul | 2 | `BlockEditor` |
+| Hat D / Lise (kalan) | 2 | `CodeRunner` (`hedefe_git` dahil) |
+| Hat D / Üniversite | 6 | `CodeRunner`, `Quiz` |
+| Hat G / Ortaokul + Lise | 3 | `JointSliders`, `PlannerRace`, `IkTarget` |
+| Hat G / Üniversite | 5 | `JointSliders`, `PlannerRace`, `IkTarget`, `JacobianViz`, `CodeRunner` |
+
+Hat D artık 11/11, Hat G 8/8 tamam — 58 ders dosyası toplamda.
+
+**Not — oturum limiti:** İlk 5 paralel ajan çağrısının 4'ü "session limit"
+hatasıyla başarısız oldu (sıfırlanma 20:10 Europe/Istanbul olarak
+bildirildi). `/loop 5m` ile bir yeniden-deneme cron'u kuruldu; ama sistem
+saati kontrol edilince (21:17, sıfırlanmadan sonra) limitin zaten açılmış
+olduğu anlaşıldı, cron silindi, 5 ajan da doğrudan yeniden başlatılıp
+başarıyla tamamlandı.
+
+### Yazım sırasında bulunan/düzeltilen 2 gerçek hata
+
+- `d-lise-hareket-komutlari.mdx`: `baslik` alanında tırnaksız iki nokta
+  üst üste (`baslik: X: Y`) YAML'ı bozuyordu — tırnaklandı.
+- `d-ortaokul-sirali-tekrar-kosul.mdx`: bir `kazanimlar` satırı
+  `- "Tekrarla" bloğuyla ...` şeklinde kısmi tırnaklıydı (YAML "bad
+  indentation of a sequence entry" hatası) — iç tırnaklar kaldırıldı.
+
+Bu ikisi `npx tsx scripts/check-content.ts` çalıştırılırken (js-yaml
+parse hatası, node process crash olarak) yakalandı, elle düzeltildi.
+
+### Diğer
+
+- `reference-python/README.md`'ye "Öğrenciler için" bölümü eklendi —
+  Hat G üniversite derslerinden depoya atıf yapıldığı için, depodan da
+  platforma dönük 3 somut alıştırma önerisi (yeni planlayıcı yaz, engel
+  senaryosu ekle, `p.GUI` ile 3D izle) eklendi.
+- Dev sunucusu bir ara PID çakışması yüzünden (aynı anda iki `next dev`
+  süreci) 500 hatası vermeye başladı — çakışan süreç `taskkill //PID ... //F`
+  ile (Git Bash'te `/PID` MSYS tarafından yol olarak yorumlandığı için
+  çift slash gerekiyor) sonlandırılıp tek sunucu ile temiz başlatıldı.
+
+### Doğrulama
+
+`npx tsc --noEmit`, `npx eslint .`, `npx vitest run` (61/61),
+`npx tsx scripts/check-content.ts` (58 ders), `npx tsx
+scripts/validate-content-graph.ts` (58 ders, döngü/eksik referans yok),
+`npx next build` (64 sayfa) — hepsi temiz. Tarayıcıda ayrıca:
+`d-ortaokul-blok-komutlar` (BlockEditor, `allowedBlocks={["move"]}`
+doğru kısıtlıyor), `d-lise-hareket-komutlari` (`hedefe_git` → `True`,
+robot kolu görsel olarak hedefe büküldü), `g-lise-basit-sahne-kurma`
+(`PlannerRace` + `initialObstacles` ile "masa" doğru render oldu) —
+üçü de gerçek tarayıcıda (Claude in Chrome) çalıştırılıp doğrulandı.
+
+### Yapılmayan adım — yine `durum: yayinda` işaretlemesi
+
+Faz 1/2'deki gibi: 18 yeni ders de dahil 58 dosyanın `durum: taslak`
+kalması bilinçli — bu bir **yapay zeka** yazım/incelemesiydi, docs/06
+Katman 3'ün istediği insan gözden geçirmesi değil. Hangi derslerin
+okunup `yayinda` yapılacağına karar vermek kullanıcıya (Mert) ait.
+
+### Sonraki için not
+
+Faz 3 tamamlandı. Faz 4 (Hat E — haberleşme, Hat F — algılama) henüz
+başlamadı; CLAUDE.md kuralı gereği yeni faz kapsamı kullanıcı onayı
+gerektirir.
+
+---
+
+## Faz 4 — Hat E tamamlandı (2026-08-02)
+
+Kullanıcı "Faz 4'e geç: Hat E'nin haberleşme dersleri" diyerek onay
+verdi. Aynı oturumda (Faz 3'ün hemen ardından) Hat E'nin 10 dersinin
+tamamı yazıldı.
+
+### Altyapı — `SignalTimeline` bileşeni
+
+`components/interactive/SignalTimeline.tsx` — bir veya birden fazla
+sinyalin zaman içindeki AÇIK/KAPALI durumunu tıkla-ayarla + "Oynat"
+düğmesiyle 500ms/adım playhead animasyonu. `BlockEditor`'dan farklı
+olarak ayrı bir `lib/robotics/` yorumlayıcısı YOK — bu bilinçli bir
+karar: bileşende test edilmesi gereken bir "hesaplama/algoritma" yok,
+sadece UI durumu (JointSliders/IkTarget'ın yaptığı gibi). Doğru/yanlış
+sinyal deseni bileşende değil, ders metninde/Quiz'de ele alınıyor —
+`CodeRunner` gibi 3 temalı (`ortaokul`/`lise`/`universite`),
+`JointSliders`/`IkTarget` gibi seviyeden bağımsız. Tarayıcıda el sıkışma
+deseniyle (toggle + oynat + sıfırla) test edildi, `index.ts`'e kaydedildi.
+
+### İçerik — 3 paralel `ders-yazari` subagent'ı ile 10 ders
+
+| Grup | Ders sayısı | Bileşen(ler) |
+|---|---|---|
+| Hat E / Ortaokul | 2 | `SignalTimeline` |
+| Hat E / Lise | 3 | `SignalTimeline` (3 dersde de farklı sinyal seti/görev) |
+| Hat E / Üniversite | 5 | `SignalTimeline`, `CodeRunner`, `Quiz` |
+
+Hat E artık 10/10 — toplam 68 ders dosyası.
+
+**Paralel yazımın yan etkisi:** Ortaokul/lise/üniversite ajanları aynı
+anda çalıştığı için ikisi (`e-lise-dijital-giris-cikis`,
+`e-universite-tcpip-soket`) henüz yazılmamış kardeş derslere onkosul
+veremedi, `onkosul: []` bıraktı. Doğrulama sırasında elle
+`e-ortaokul-sinyal-var-yok` ve `e-lise-el-sikisma`'ya bağlandı.
+
+**docs/05 Bölüm 2.3 güvenlik notu:** `e-universite-hata-durumlari.mdx`
+belirgin bir "## Güvenlik notu" bölümü taşıyor — gerçek bir robotta
+haberleşme koptuğunda "belki birazdan gelir" varsayımıyla harekete
+devam etmenin neden tehlikeli olduğunu, ISO 10218-2/OSHA atıflarıyla
+anlatıyor; platformun "gerçek robota bağlanmaz" duruşunu (docs/00)
+tekrar vurguluyor.
+
+### Yazım sırasında bulunan/düzeltilen hata
+
+- `e-lise-el-sikisma.mdx`: bir `kazanimlar` satırı `- "Aldım" sinyalinin
+  "hazırım" sinyalinden...` şeklinde kısmi tırnaklıydı (aynı YAML "bad
+  indentation of a sequence entry" hatası, Faz 3'te de görülmüştü) —
+  iç tırnaklar kaldırıldı.
+
+### Doğrulama
+
+`npx tsc --noEmit`, `npx eslint .`, `npx vitest run` (61/61), `npx tsx
+scripts/check-content.ts` (68 ders), `npx tsx
+scripts/validate-content-graph.ts` (68 ders, döngü/eksik referans yok),
+`npx next build` (74 sayfa) — hepsi temiz. Tarayıcıda: `SignalTimeline`
+(toggle + oynat, geçici test dersiyle), `e-lise-el-sikisma` (el sıkışma
+sahnesi görsel olarak doğru) ve `e-universite-hata-durumlari`
+(`CodeRunner` ile `hedefe_git(5,5)` → `False` → "haberleşme hatası"
+senaryosu doğru çalıştı) test edildi.
+
+### Yapılmayan adım — yine `durum: yayinda` işaretlemesi
+
+Faz 1/2/3'teki gibi: 10 yeni ders `durum: taslak` kaldı — yapay zeka
+yazım/incelemesiydi, docs/06 Katman 3'ün istediği insan gözden
+geçirmesi değil.
+
+### Sonraki için not
+
+Hat E tamamlandı. Faz 4'ün geri kalanı — Hat F (algılama) — henüz
+başlamadı; kullanıcı onayı bekliyor.
+
+---
+
+## Faz 4 — Hat F tamamlandı, Faz 4 tamamen bitti (2026-08-03)
+
+Aynı `faz-3-programlama-simulasyon` branch'inde devam edildi. Bir önceki
+oturumda Hat F için 3 bileşen (`PixelToWorld`, `ThresholdViewer`,
+`ScanPath`) zaten yazılıp commit'lenmişti (`96b2319`); bu oturumda
+içerik (11 ders) yazıldı.
+
+### İçerik — 3 paralel `ders-yazari` subagent'ı ile 11 ders
+
+Bu oturumda proje `.claude/agents/ders-yazari.md`, doğrudan proje
+subagent'ı (`ders-yazari`) olarak çağrılabildi — önceki fazlardaki gibi
+genel amaçlı `Agent` çağrısına talimat taşıtmaya gerek kalmadı.
+
+| Grup | Ders sayısı | Bileşen(ler) |
+|---|---|---|
+| Hat F / Ortaokul | 2 | `PixelToWorld`, `SignalTimeline` |
+| Hat F / Lise | 3 | `PixelToWorld` (kalibrasyon + perspektif), `ThresholdViewer` |
+| Hat F / Üniversite | 6 | `PixelToWorld`, `ScanPath`, `ThresholdViewer`, `Quiz` |
+
+Hat F artık 11/11 — toplam 79 ders dosyası. docs/01-mufredat.md'deki Hat
+F madde sayısıyla birebir (ortaokul 2 + lise 3 + üniversite 6 = 11);
+`docs/03-yol-haritasi.md`'deki eski "8 ders" tahmini güncellendi.
+
+Kaynaklar arasında Keyence sensör dokümantasyonu, OpenCV kalibrasyon/
+eşikleme belgeleri, Zhang (2000) ve Tsai & Lenz (1989) kamera/el-göz
+kalibrasyonu makaleleri, Choset & Pignon (1997) ve Galceran & Carreras
+(2013) kapsama planlaması yayınları, Besl & McKay (1992) ICP makalesi,
+JCGM 200:2012 (VIM) ve ISO 5725-1:1994 var — hepsi WebFetch ile erişimi
+doğrulanarak atfedildi (bazı üretici sayfaları 403/404 verdiği için
+kaynak dışı bırakıldı).
+
+Üniversite seviyesinde "Kaynak kodu" linki hiçbir derse eklenmedi:
+`lib/robotics/` içinde kamera/görü/nokta bulutu matematiği yok, uydurma
+link yazılmadı (docs/04 kuralı).
+
+Graph doğrulaması iki "kök" (ön koşulsuz üniversite dersi) uyarısı
+veriyor (`f-universite-kamera-kalibrasyonu`,
+`f-universite-lazer-profil-sensoru`) — bu kasıtlı, Hat F'nin üniversite
+seviyesinde iki bağımsız alt-konusu (kalibrasyon zinciri / tarama
+zinciri) olduğu için, Hat E'deki benzer duruma paralel.
+
+### Doğrulama
+
+`npx tsx scripts/check-content.ts` (79 ders), `npx tsx
+scripts/validate-content-graph.ts` (79 ders, döngü/eksik referans yok,
+2 kasıtlı kök uyarısı), `npx tsc --noEmit`, `npx eslint .`, `npx vitest
+run` (61/61), `npm run build` (85 sayfa) — hepsi temiz.
+
+Tarayıcıda (Claude in Chrome) üç seviyeden örnek ders açılıp test
+edildi: `f-lise-piksel-milimetre` (`PixelToWorld`, piksel (50,20) →
+250mm/100mm, ders metnindeki sayıyla birebir), `f-universite-tarama-
+yolu-uretimi` (`ScanPath`, "Tara" ile 4×12=48 nokta eksiksiz toplandı),
+`f-ortaokul-robot-nasil-gorur` (`PixelToWorld` ortaokul temasıyla doğru
+render).
+
+### Yapılmayan adım — yine `durum: yayinda` işaretlemesi
+
+Faz 1/2/3/4(E)'teki gibi: 11 yeni ders `durum: taslak` kaldı — yapay
+zeka yazım/incelemesiydi, docs/06 Katman 3'ün istediği insan gözden
+geçirmesi değil.
+
+### Sonraki için not
+
+**Faz 4 tamamen bitti** (Hat E + Hat F). Sıradaki faz, Faz 5 (v1.0) —
+Hat H (güvenlik), arama, sözlük, katkı süreci, erişilebilirlik/performans
+denetimi. CLAUDE.md kuralı gereği yeni faz kapsamı kullanıcı onayı
+gerektirir.

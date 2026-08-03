@@ -7,8 +7,10 @@ out/
 next-env.d.ts
 *.tsbuildinfo
 
-# scripts/build-worker.mjs tarafından üretilir, kaynak değil
+# scripts/build-worker.mjs ve scripts/copy-pyodide-assets.mjs tarafından
+# üretilir, kaynak değil
 public/workers/
+public/pyodide/
 
 # Test/araç önbellekleri
 .turbo/

@@ -1,0 +1,85 @@
+---
+id: e-ortaokul-sinyal-var-yok
+baslik: "Sinyal kavramı: var / yok"
+hat: e-haberlesme
+seviye: ortaokul
+sure: 8
+sira: 2
+onkosul:
+  - e-ortaokul-makineler-nasil-konusur
+kazanimlar:
+  - İki makinenin kendi sinyalini birbirinden bağımsız açıp kapatabildiğini gözlemleyebilme
+  - İki sinyalin zaman içindeki düzenini karşılaştırıp yorumlayabilme
+kaynaklar:
+  - "Mikell P. Groover, Automation, Production Systems, and Computer-Integrated Manufacturing, 4. baskı, Pearson, Bölüm 6 (Discrete Control Using Programmable Logic Controllers and Digital Computers) — ikili giriş/çıkış sinyalleri: sensör ve aktüatör örnekleri"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SignalTimeline
+durum: taslak
+---
+
+## Kanca
+
+Makine A ışığını yakıp söndürüyor. Makine B de kendi ışığını yakıp
+söndürüyor. Aralarında yazışma yok, telefon yok — üretim hattındaki
+bütün anlaşma bu iki ışığın arasındaki sıradan ibaret.
+
+<SignalTimeline signals={["Makine A", "Makine B"]} theme="ortaokul" />
+
+## Ne oldu
+
+Şimdi iki satır var. Her satırı kendi başına, birbirinden bağımsız
+olarak AÇIK/KAPALI yapabiliyorsun. "Oynat"a basınca okuma başı ikisini
+de aynı anda tarıyor — bir adımda A açıkken B kapalı olabilir, başka
+bir adımda ikisi de açık olabilir.
+
+Bir sinyal tek başına sadece "var" (AÇIK) ya da "yok" (KAPALI) söyler.
+Ama iki sinyali yan yana koyunca bir DÜZEN ortaya çıkar: hangisi önce
+açılıyor, hangisi ne zaman kapanıyor. Fabrikalardaki makineler
+birbirine tam olarak bunu okutur — kelime değil, bu düzeni.
+
+## Gerçek dünyada
+
+Bir otomatik kapıda da aynı fikir çalışır: yer sensörü birinin
+geldiğini algılayınca kendi sinyalini AÇIK yapar, kapı motoru bu
+sinyali görünce kendi hareketini başlatır. İki ayrı parça (sensör ve
+motor), aralarında tek kelime geçmeden, sadece bu iki sinyalin
+durumuna bakarak birlikte çalışır.
+
+## Dene
+
+Bir düzen kur: Makine A sadece şeridin ilk yarısında AÇIK olsun,
+Makine B sadece ikinci yarısında AÇIK olsun — yani A kapanmadan B hiç
+açılmasın. "Oynat"a bas ve okuma başını izle.
+
+<Quiz
+  sorular={[
+    {
+      soru: "İki ayrı makinenin sinyali aynı anda AÇIK olabilir mi?",
+      secenekler: [
+        "Hayır, bir sinyal açıkken diğeri her zaman kapalı olmak zorundadır",
+        "Evet, her sinyal kendi başına, diğerinden bağımsız olarak AÇIK/KAPALI olabilir",
+        "Sadece aynı makineyse aynı anda açık olabilirler",
+      ],
+      dogru: 1,
+      aciklama: "Her sinyal kendi düğmesi gibi çalışır. İki sinyal aynı anda AÇIK olabilir, ikisi de KAPALI olabilir ya da sırayla açılıp kapanabilir — bağımsızdırlar.",
+    },
+    {
+      soru: "Bir otomatik kapıda yer sensörü ile kapı motoru arasında ne geçer?",
+      secenekler: [
+        "Yazılı bir komut listesi",
+        "Sadece AÇIK/KAPALI durumundaki sinyaller",
+        "Sesli bir konuşma",
+      ],
+      dogru: 1,
+      aciklama: "Sensör kimseye 'biri geldi' diye yazmaz, sadece kendi sinyalini AÇIK yapar. Motor bu sinyalin durumuna bakarak hareket eder.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Lise seviyesinde bu iki sinyalin belirli bir sırayla birbirine
+"cevap verdiği" bir düzene — el sıkışma (handshake) mantığına — ve
+zamanlamanın neden önemli olduğuna bakacaksın.

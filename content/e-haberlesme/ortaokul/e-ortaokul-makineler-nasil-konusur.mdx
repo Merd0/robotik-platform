@@ -1,0 +1,84 @@
+---
+id: e-ortaokul-makineler-nasil-konusur
+baslik: Makineler birbiriyle nasıl "konuşur"
+hat: e-haberlesme
+seviye: ortaokul
+sure: 7
+sira: 1
+onkosul: []
+kazanimlar:
+  - Makineler arasındaki "konuşmanın" kelime değil, açılıp kapanan bir sinyalle olduğunu açıklayabilme
+  - Bir sinyalin zaman içindeki AÇIK/KAPALI düzenini kurup okuyabilme
+kaynaklar:
+  - "Mikell P. Groover, Automation, Production Systems, and Computer-Integrated Manufacturing, 4. baskı, Pearson, Bölüm 6 (Discrete Control Using Programmable Logic Controllers and Digital Computers) — ikili (binary) sensör/aktüatör sinyali: ON/OFF durumu kavramı"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SignalTimeline
+durum: taslak
+---
+
+## Kanca
+
+Bir fabrikada iki makine birbirine durmadan bir şeyler bildiriyor.
+Aralarında tek bir harf bile geçmiyor — sadece küçük bir ışık yanıp
+sönüyor. Bütün "konuşma" bundan ibaret: açık ya da kapalı.
+
+<SignalTimeline signals={["Sinyal"]} theme="ortaokul" />
+
+## Ne oldu
+
+Yukarıdaki şerit bir zaman ekseni. Her kutucuğa tıkladığında o anda
+sinyalin AÇIK mı KAPALI mı olacağını sen belirliyorsun. "Oynat"a
+basınca bir okuma başı soldan sağa ilerliyor ve her adımda sinyale
+bakıyor.
+
+Bir makinenin gönderdiği sinyal, senin telefonundaki bir mesaj gibi
+kelimelerden oluşmaz. Elektrik ya akıyordur ya akmıyordur — tıpkı bir
+ışık düğmesi gibi, iki hâlden başka bir şey yoktur. Fabrikalardaki
+bütün makineler birbirleriyle önce bu en basit haliyle konuşmayı
+öğrenir; kelimeler, sayılar, komutlar hep bu iki hâlin farklı
+düzenlerinden inşa edilir.
+
+## Gerçek dünyada
+
+Bir üretim hattındaki bir sensör, önünden bir kutu geçtiğinde ışık
+huzmesini kesiyor ve sinyalini AÇIK'a çeviriyor; kutu geçince sinyal
+tekrar KAPALI'ya dönüyor. Kontrolör bu tek sinyali izleyerek kaç kutu
+geçtiğini sayabiliyor — hepsi bu iki durumdan (AÇIK/KAPALI) ibaret.
+
+## Dene
+
+Şeride tıklayarak önce iki kutucuğu AÇIK yap, aralarına bir KAPALI
+bırak, sonra "Oynat"a bas. Okuma başının AÇIK kutucuklarda nasıl
+"yandığını" izle.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir makinenin gönderdiği tek bir sinyal, aynı anda kaç farklı durumda olabilir?",
+      secenekler: [
+        "Sonsuz sayıda durumda",
+        "İki durumda: açık ya da kapalı",
+        "Sadece açık durumda",
+      ],
+      dogru: 1,
+      aciklama: "Bir sinyal ya akım taşır (AÇIK) ya taşımaz (KAPALI). Üçüncü bir hâli yoktur — tıpkı bir ışık düğmesi gibi.",
+    },
+    {
+      soru: "Üretim hattındaki bir sensör önünden kutu geçerken ne yapar?",
+      secenekler: [
+        "Kutunun rengini kontrolöre yazıyla bildirir",
+        "Sinyalini AÇIK'a çevirir, kutu geçince tekrar KAPALI'ya döner",
+        "Kutuyu durdurup bir uyarı sesi çalar",
+      ],
+      dogru: 1,
+      aciklama: "Sensör kelime göndermez, sadece sinyalini AÇIK/KAPALI arasında değiştirir. Kontrolör bu değişimi sayarak kutuları takip eder.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki ders, iki ayrı makinenin bu açık/kapalı sinyalleri birbirine
+göre nasıl kullandığını gösteriyor.

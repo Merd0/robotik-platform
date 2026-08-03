@@ -1,0 +1,108 @@
+---
+id: d-universite-fanuc-karsilastirma
+baslik: "Fanuc TP ve dört yaklaşımın karşılaştırması"
+hat: d-programlama
+seviye: universite
+sure: 15
+sira: 4
+onkosul:
+  - d-universite-abb-rapid
+  - d-universite-kuka-krl
+  - d-universite-mecademic-python
+kazanimlar:
+  - FANUC TP programlarının satır numaralı, teach-pendant merkezli yapısını diğer üç yaklaşımdan ayırt edebilme
+  - Dört farklı robot programlama yaklaşımını (RAPID, KRL, Mecademic, FANUC TP) ortak bir kritere göre karşılaştırabilme
+kaynaklar:
+  - "FANUC TP Programming and Operations Manual (üretici teach pendant programlama kılavuzu) — J/L hareket talimatları, FINE/CNT terminasyon tipleri"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Şimdiye kadar üç robot diline baktın: RAPID, KRL, ve Mecademic'in metin
+komutları. Dördüncüsü hiç "dil" gibi görünmeyebilir — satır numaralı,
+teach pendant ekranında oluşturulan bir liste.
+
+## Ne oldu
+
+FANUC'un teach pendant (TP) programları, bir metin editöründe
+yazılmaz; robotun kendi kontrol kutusuna bağlı el terminalinde,
+menülerden seçilerek satır satır oluşturulur. Sonuçta ortaya çıkan
+program şöyle görünür:
+
+```text
+1:  J P[1] 100% FINE
+2:  L P[2] 500mm/sec CNT100
+3:  J P[3] 80% FINE
+```
+
+`J`, RAPID'deki `MoveJ` ve KRL'deki `PTP` ile aynı işi görür: eklem
+uzayında interpolasyon. `L`, `MoveL`/`LIN` ile aynı işi görür:
+Kartezyen uzayda düz çizgi. `P[1]`, `P[2]` gibi kayıtlar (position
+register), diğer dillerdeki `robtarget`/`E6POS` karşılığıdır — konumu
+ve kolun konfigürasyonunu birlikte tutar.
+
+Hız birimi harekete göre değişir: eklem hareketinde (`J`) hız, o
+eklemin maksimum hızının YÜZDESİ (`100%`); doğrusal harekette (`L`) hız
+doğrudan `mm/sec` olarak yazılır — çünkü doğrusal hareketin anlamlı
+birimi uzayda kat edilen mesafedir, eklem yüzdesi değil. `FINE` tam
+durma (diğer dillerdeki `fine`/`C_DIS` yokluğu), `CNT100` ise bir
+sonraki harekete ne kadar "yuvarlanarak" geçileceğini belirten bir
+harmanlama (blending) değeri — RAPID'deki `zXX` ve KRL'deki `CONT`
+ile aynı fikir, farklı ölçek.
+
+## Gerçek dünyada
+
+Dört yaklaşımı aynı satırda karşılaştırınca, hepsinin ÇÖZDÜĞÜ problem
+aynı: hangi noktaya, hangi yoldan, ne hızda, nasıl durarak gidileceği.
+Farklı olan, bu bilginin nerede yaşadığı.
+
+| Sistem | Hedef verisi | Eklem hareketi | Doğrusal hareket | Program nerede yazılır |
+|---|---|---|---|---|
+| ABB RAPID | `robtarget` (trans+rot+robconf) | `MoveJ` | `MoveL` | Metin dosyası (modül) |
+| KUKA KRL | `E6POS`/`FRAME` (.dat) | `PTP` | `LIN` | İki ayrı dosya (.src + .dat) |
+| Mecademic | Komut argümanı içinde | `MoveJoints` | `MoveLin` | ASCII metin komutu (soket) |
+| FANUC TP | `P[]` kaydı | `J` | `L` | Teach pendant, satır numaralı liste |
+
+Bu tablo aynı zamanda şunu gösteriyor: bir robotik mühendisinin "Python
+biliyorum, yeter" demesi neden yetmiyor. Bir hücrede ABB, bir başkasında
+FANUC varsa, aynı kavramı (eklem hareketi mi Kartezyen hareket mi)
+dört farklı sözdiziminde ifade edebilmen gerekiyor.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "FANUC TP programında bir eklem hareketinin (J) hızı hangi birimle yazılır?",
+      secenekler: [
+        "mm/sec, çünkü tüm hareketler aynı birimi kullanır",
+        "Maksimum eklem hızının yüzdesi (%)",
+        "Radyan/saniye",
+      ],
+      dogru: 1,
+      aciklama: "Eklem hareketinde anlamlı olan, o eklemin kendi maksimum hızına göre ne kadar hızlı döndüğüdür — bu yüzden yüzde (%) kullanılır. Doğrusal harekette (L) ise mm/sec kullanılır çünkü orada anlamlı olan uzaydaki hızdır.",
+    },
+    {
+      soru: "Dört sistemde de (RAPID, KRL, Mecademic, FANUC TP) ortak olan nedir?",
+      secenekler: [
+        "Hepsi aynı dosya uzantısını kullanır",
+        "Hepsi eklem uzayında ve Kartezyen uzayda hareket arasında bir ayrım yapar",
+        "Hepsi programı bir ağ soketinden alır",
+      ],
+      dogru: 1,
+      aciklama: "İsimler değişse de (MoveJ/PTP/MoveJoints/J ve MoveL/LIN/MoveLin/L), dördü de aynı temel ayrımı yapıyor — bu hattın lise/üniversite kinematik derslerinde gördüğün eklem uzayı/Kartezyen uzay ayrımı.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu dört dilin hiçbiri robotu ilk kez programlarken üzerinde
+YAZILMADI — hepsi önce bir simülasyonda veya çevrim dışı bir ortamda
+denendi. Sıradaki ders bunun neden standart bir pratik olduğunu
+anlatıyor.

@@ -1,0 +1,111 @@
+---
+id: g-universite-sim-to-real-farki
+baslik: "Sim-to-real farkı: simülasyonda çalışıp gerçekte çalışmayan şeyler"
+hat: g-simulasyon
+seviye: universite
+sure: 18
+sira: 4
+onkosul:
+  - g-universite-dijital-ikiz
+kazanimlar:
+  - "Sim-to-real farkının (sim-to-real gap) hangi fiziksel etkenlerden kaynaklandığını sayabilme"
+  - "Saf matematiksel bir modelin, tekillik gibi 'temiz' durumlarda bile gerçek donanımda neden farklı davranabileceğini açıklayabilme"
+kaynaklar:
+  - "Wenshuai Zhao, Jorge Peña Queralta & Tomi Westerlund, 'Sim-to-Real Transfer in Deep Reinforcement Learning for Robotics: a Survey', arXiv:2009.13303, 2020"
+  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 5"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - JacobianViz
+durum: taslak
+---
+
+## Kanca
+
+Aşağıdaki sahnede manipülabilite tam sıfıra indiğinde, sayı matematiksel
+olarak kusursuz davranır — düzgün, öngörülebilir, sıfıra yumuşakça yaklaşır.
+Şimdi gerçek bir motorun aynı anda ne yaptığını hayal et: matematik "bu
+yönde sonsuz hız gerekir" derken, motor sürücüsü akım limitine çarpıp
+durur, ya da mekanik boşluk (backlash) yüzünden titrer. İkisi de aynı
+konfigürasyondan bahsediyor ama ikisi de aynı şeyi "görmüyor".
+
+<JacobianViz robot="generic-2dof" />
+
+## Ne oldu
+
+Sim-to-real farkı (sim-to-real gap), pekiştirmeli öğrenme ve robotik
+literatüründe sıkça geçen bir terim: bir modelin veya politikanın
+simülasyonda gösterdiği performansın, gerçek donanıma aktarıldığında
+düşmesi. 2020 tarihli bir derleme makale bu farkı şöyle özetliyor: "The
+gap between the simulated and real worlds degrades the performance of the
+policies once the models are transferred into real robots" — yani
+simülasyon ile gerçek dünya arasındaki fark, modelin gerçek robota
+aktarılınca performansını düşürüyor.
+
+Bu farkın tipik kaynakları arasında şunlar sayılır: gerçek dünyadaki
+sürtünme ve temas dinamiğinin simülasyonda tam modellenememesi, gerçek
+sensörlerin (kamera, enkoder) gürültülü ölçüm üretmesine karşılık
+simülasyonun genelde "temiz" veri vermesi, ve gerçek aktüatörlerin
+(motor + sürücü) tepki gecikmesinin, simülasyondaki anlık eklem
+güncellemesinden farklı olması.
+
+**Bu platformdaki küçük bir örnek:** `JacobianViz` sahnesindeki
+manipülabilite hesabı (`|det(J)| = |a1·a2·sin(θ2)|`, bkz.
+`b-universite-tekillik`) saf geometrik bir modeldir — DH parametrelerinden
+başka hiçbir şey bilmez. Sürtünme yok, motor akım limiti yok, mekanik
+boşluk yok, titreşim yok. Model sana NEREDE tehlikeli olduğunu (θ2 = 0°
+veya 180°) kusursuz doğrulukla söyler, ama gerçek donanımın o bölgeye
+YAKLAŞIRKEN tam olarak NASIL davranacağını söylemez — bu, sim-to-real
+farkının küçük ama somut bir örneği.
+
+## Gerçek dünyada
+
+Bu yüzden endüstriyel robot kontrolörleri tekillik bölgelerine yaklaşırken
+sadece matematiksel manipülabilite eşiğine değil, gerçek eklem hız/ivme
+limitlerine de bakar ve gerekirse hareketi yavaşlatır veya durdurur
+(bkz. `b-universite-tekillik` "Gerçek dünyada"). Pekiştirmeli öğrenmeyle
+eğitilmiş bir robot kontrol politikası da aynı sorunu yaşar: simülasyonda
+mükemmel çalışan bir politika, gerçek robotta sürtünme ve sensör gürültüsü
+yüzünden başarısız olabilir — literatürdeki "domain randomization" (eğitim
+sırasında simülasyon parametrelerini kasten rastgele değiştirme) gibi
+yöntemler tam olarak bu farkı kapatmak için geliştirilmiştir.
+
+## Dene
+
+`JacobianViz` sahnesinde eklem 2'yi 0°'ye yaklaştır ama TAM sıfıra
+getirme — örneğin 2°'de dur. Manipülabilite değerinin çok küçük ama sıfır
+OLMADIĞINI, sahnenin bunu hâlâ "çözülebilir" bir durum olarak gösterdiğini
+gözlemle. Gerçek bir robotta bu dar bölgede motor sürücüsünün akım
+limitine çarpması ya da titreşmesi, bu ekrandaki hiçbir sayıda görünmeyen
+bir davranıştır.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Sim-to-real farkının tipik bir kaynağı nedir?",
+      secenekler: [
+        "Simülasyonun gerçek zamandan daha yavaş çalışması",
+        "Gerçek dünyadaki sürtünme, sensör gürültüsü ve aktüatör gecikmelerinin simülasyonda tam modellenememesi",
+        "Simülasyon ekranının çözünürlüğünün düşük olması",
+      ],
+      dogru: 1,
+      aciklama: "Fark, fiziksel etkenlerin (sürtünme, gürültü, gecikme) modelde eksik veya basitleştirilmiş olmasından kaynaklanır — görsel kalite ile ilgisi yoktur.",
+    },
+    {
+      soru: "JacobianViz sahnesindeki manipülabilite hesabı neden gerçek bir motorun davranışını birebir yansıtmaz?",
+      secenekler: [
+        "Çünkü formül yanlış yazılmış",
+        "Çünkü hesap saf geometrik bir modeldir; motor akım limiti, mekanik boşluk gibi fiziksel etkileri içermez",
+        "Çünkü sahne sadece iki eklemli robotlarda çalışıyor",
+      ],
+      dogru: 1,
+      aciklama: "Manipülabilite formülü sadece DH geometrisine dayanır; gerçek donanımın elektriksel ve mekanik sınırlarını hiç bilmez.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu farkın var olduğunu kabul ederek, sıradaki ders bu simülasyonun yine de
+neden faydalı bir doğrulama adımı olduğunu — çevrim dışı bir programın
+gerçek robota yüklenmeden önce nasıl kontrol edildiğini — ele alıyor.

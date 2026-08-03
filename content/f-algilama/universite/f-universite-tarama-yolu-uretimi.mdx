@@ -1,0 +1,110 @@
+---
+id: f-universite-tarama-yolu-uretimi
+baslik: "Tarama yolu üretimi — bir yüzeyi eksiksiz taramak için robot nasıl hareket etmeli"
+hat: f-algilama
+seviye: universite
+sure: 16
+sira: 5
+onkosul:
+  - f-universite-lazer-profil-sensoru
+kazanimlar:
+  - "Boustrophedon (gidip-gelen) tarama deseninin mantığını açıklayabilme"
+  - "Satır aralığı ile sensörün tarama genişliği (footprint) arasındaki ilişkinin yüzey kapsamını nasıl etkilediğini açıklayabilme"
+  - "Örtüşme payı (overlap) kavramını kullanarak eksik kapsamayı (coverage gap) önleyen bir satır aralığı seçebilme"
+kaynaklar:
+  - "Howie Choset & Philippe Pignon, 'Coverage Path Planning: The Boustrophedon Cellular Decomposition', Proceedings of the International Conference on Field and Service Robotics, 1997"
+  - "Enric Galceran & Marc Carreras, 'A Survey on Coverage Path Planning for Robotics', Robotics and Autonomous Systems, 61(12), 2013, DOI: 10.1016/j.robot.2013.09.004 — örtüşme oranı (overlap ratio) ve kapsama garantisi tartışması"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - ScanPath
+  - Quiz
+durum: taslak
+---
+
+## Kanca
+
+Satır aralığını sensörün tarama genişliğine tam eşit seçmek mantıklı
+görünür — üst üste binme (overlap) olmadan, israfsız bir tarama. Ama
+pratikte bu seçim neredeyse her zaman yüzeyin bir kısmını taramadan
+bırakır. Aşağıdaki sahnede satır sayısını azaltıp bunu kendin görebilirsin.
+
+<ScanPath rows={4} adjustableRows={true} theme="universite" />
+
+## Ne oldu
+
+Yukarıdaki sahnenin izlediği desene **boustrophedon** (Yunanca "öküzün
+döndüğü gibi") denir: satır çift ise soldan sağa, tek ise sağdan sola —
+tıpkı bir tarlayı sabanla sürmek gibi. Choset ve Pignon (1997) bu deseni
+robot kapsama (coverage) planlamasının temel yapı taşı olarak tanımlar:
+alan hücrelere bölünür, her hücre bu gidip-gelen desenle tam taranır.
+
+Satır sayısını azalttığında sahnede satırlar arasında taranmamış boşluklar
+kaldığını görürsün. Bunun nedeni basit geometri: sensörün tek geçişte
+kapsadığı gerçek genişliğe **tarama genişliği (footprint, W)** denir.
+Satır aralığı (adım, s) W'ye tam eşit seçilirse, teorikte boşluk kalmaz —
+ama bu, üç varsayımın hepsinin doğru olmasını gerektirir: robotun
+konumlama hatası sıfır, yüzey tamamen düz (eğim W'yi değiştirmiyor) ve
+zamanlama sapması (jitter) yok. Gerçek bir robot hücresinde üçü de
+kısmen ihlal edilir.
+
+Bu yüzden pratikte bir **örtüşme payı (overlap ratio, o)** eklenir: etkin
+adım s = W · (1 − o) olacak şekilde satırlar birbirine kısmen biner.
+Galceran ve Carreras'ın (2013) kapsama planlaması derlemesinde vurgulandığı
+gibi, bu pay konumlama hatasına ve yüzey değişkenliğine karşı bir güvenlik
+marjı sağlar — kapsama garantisinin bedeli, daha fazla satır ve daha uzun
+tarama süresidir.
+
+**Örnek.** Sensörün tarama genişliği W = 20 mm, taranacak yüzeyin
+yüksekliği 100 mm olsun. Sıfır örtüşmeyle (o = 0), s = 20 mm ve
+100/20 = 5 satır teorik olarak yeter. %20 örtüşme payı eklersen
+(o = 0,2), etkin adım s = 20 · 0,8 = 16 mm'ye iner; 100 mm'yi eksiksiz
+kapsamak için 100/16 = 6,25 → yukarı yuvarlanarak 7 satır gerekir. Satır
+sayısı %40 arttı, ama konumlama hatasına karşı bir güvenlik payı
+kazanıldı.
+
+## Gerçek dünyada
+
+Bir yüzey muayenesi hücresinde tarama yolu genelde çevrim dışı
+(offline) üretilir: parçanın CAD modeli üzerinden sensörün tarama
+genişliği ve istenen örtüşme oranı girilir, robot yolu (satır sayısı,
+satır aralığı, robot hızı) buna göre hesaplanır. Yüzey eğimli veya
+kavisli olduğunda W sabit kalmaz — eğim arttıkça projekte edilen çizgi
+genişçe uzar ama ışık şiddeti düşer, bu da örtüşme payının eğimli
+bölgelerde neden daha yüksek tutulduğunu açıklar.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Boustrophedon tarama deseninde tek numaralı satırlar hangi yönde ilerler?",
+      secenekler: ["Her zaman soldan sağa", "Bir önceki satırın tersi yönde", "Rastgele"],
+      dogru: 1,
+      aciklama: "Boustrophedon desen gidip-gelir: çift satır bir yönde, tek satır ters yönde ilerler — robotun her satır sonunda tam tur atmasını gerektirmez.",
+    },
+    {
+      soru: "Satır aralığını sensörün tarama genişliğine (W) tam eşit seçmek neden risklidir?",
+      secenekler: [
+        "Tarama süresini gereksiz uzatır",
+        "Robotun konumlama hatası veya yüzey eğimi, gerçek kapsamayı W'den küçük hale getirebilir ve boşluk bırakabilir",
+        "Sensörün ölçüm menzilini aşar",
+      ],
+      dogru: 1,
+      aciklama: "Sıfır örtüşme, sadece sıfır konumlama hatası ve tam düz yüzey varsayımı altında boşluksuz kalır. Gerçek koşullarda bu varsayımlar kısmen ihlal edilir.",
+    },
+    {
+      soru: "Tarama genişliği W = 30 mm, örtüşme oranı o = 0,25 ise etkin satır adımı s kaç mm'dir?",
+      secenekler: ["30 mm", "22,5 mm", "7,5 mm"],
+      dogru: 1,
+      aciklama: "s = W · (1 − o) = 30 · (1 − 0,25) = 30 · 0,75 = 22,5 mm.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu tarama yollarından elde edilen ölçümler ne kadar güvenilir? Bir
+sonraki ders, ölçüm belirsizliği ve tekrarlanabilirlik kavramlarını ele
+alıyor — bir sensörün "iyi" olmasının aslında iki farklı anlamı
+olabileceğini gösteriyor.
