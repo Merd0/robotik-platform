@@ -1,0 +1,97 @@
+---
+id: h-ortaokul-temel-guvenlik-kurallari
+baslik: Robotun yanında temel güvenlik kuralları
+hat: h-guvenlik
+seviye: ortaokul
+sure: 10
+sira: 2
+onkosul:
+  - h-ortaokul-robotlar-neden-tehlikeli
+kazanimlar:
+  - Bir robot hücresinin yanında uyulması gereken temel davranış kurallarını sıralayabilme
+  - Acil durdurma düğmesinin ne işe yaradığını ve ne zaman kullanıldığını açıklayabilme
+kaynaklar:
+  - "ISO 10218-2:2025, Robotics — Safety requirements — Part 2: Industrial robot applications and robot cells — operatörün korunması ve güvenli erişim gereksinimleri"
+  - "Occupational Safety and Health Administration (OSHA), Technical Manual, Section IV, Chapter 4: Industrial Robots and Robot System Safety, https://www.osha.gov/otm/section-4-safety-hazards/chapter-4"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli: []
+durum: taslak
+---
+
+## Kanca
+
+Bir robot hücresinin önündesin ve içeride bir parça yere düşmüş. Uzanıp
+alman bir saniye sürer. Bu dersin tek amacı, o bir saniyeyi neden asla
+almayacağını anlatmak.
+
+## Ne oldu
+
+Robot durmuş gibi görünebilir ama durmuş olmayabilir. Bir robot, sıradaki
+parçayı beklerken hareketsiz durur; parça gelince hiçbir uyarı vermeden
+harekete geçer. "Hareketsiz" ile "kapalı" aynı şey değildir.
+
+Temel kurallar şunlar:
+
+- **Kafesin içine girme.** Kapı kilitliyse sebebi vardır.
+- **Robot çalışırken uzanma.** Hareketsiz durması durduğu anlamına gelmez.
+- **Yetkili değilsen düğmelere dokunma.** Bir robotu başlatmak, onu
+  durdurmaktan çok daha kolaydır.
+- **Bir sorun görürsen haber ver.** Kendin çözmeye çalışma.
+
+Bir de her hücrede bulunan kırmızı bir düğme vardır: **acil durdurma
+(emergency stop)**. Elinle bastığın anda robotun enerjisi kesilir. Bu
+düğme günlük kullanım için değil, iş ters gittiğinde içindir.
+
+## Gerçek dünyada
+
+Acil durdurma düğmeleri her zaman kırmızı ve sarı zemin üstündedir, her
+zaman elle basılabilecek yerdedir ve basıldıktan sonra kendiliğinden geri
+gelmez — birisi onu bilerek çevirip serbest bırakmalıdır. Bu bilinçli bir
+tasarım: "durdurma" kararı otomatik olarak geri alınamaz.
+
+Robotlarla çalışan kişiler bu kuralları bir kere dinleyip geçmez; düzenli
+olarak tazeleme eğitimi alırlar.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Robot hareketsiz duruyor. Bu ne anlama gelir?",
+      secenekler: [
+        "Robot kapalıdır, yanına gidilebilir",
+        "Robot sıradaki işi bekliyor olabilir ve her an harekete geçebilir",
+        "Robot bozulmuştur",
+      ],
+      dogru: 1,
+      aciklama: "Hareketsizlik ile kapalı olmak aynı şey değildir. Bekleyen bir robot, parça gelir gelmez uyarı vermeden hareket eder.",
+    },
+    {
+      soru: "Acil durdurma düğmesi ne zaman kullanılır?",
+      secenekler: [
+        "Her vardiya sonunda robotu kapatmak için",
+        "İş ters gittiğinde, tehlikeli bir durum oluştuğunda",
+        "Robotun hızını ayarlamak için",
+      ],
+      dogru: 1,
+      aciklama: "Acil durdurma günlük kapatma düğmesi değildir; beklenmedik ve tehlikeli bir durum için ayrılmıştır.",
+    },
+    {
+      soru: "Acil durdurmaya basıldıktan sonra ne olur?",
+      secenekler: [
+        "Robot birkaç saniye sonra kendiliğinden devam eder",
+        "Düğme basılı kalır; birisi bilerek serbest bırakana kadar robot çalışmaz",
+        "Robot en baştan programı tekrar başlatır",
+      ],
+      dogru: 1,
+      aciklama: "Düğme kendiliğinden geri gelmez. Durdurma kararının kazara geri alınmaması için böyle tasarlanmıştır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu derste robotun etrafında ne yapılmayacağını gördün. Bir üst seviye,
+robotu insandan ayıran kafesin her zaman gerekli olup olmadığını
+soruyor: [Kafesli robot ile kobot arasındaki fark](/ders/h-lise-kafesli-robot-ve-kobot).

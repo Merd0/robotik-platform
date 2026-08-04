@@ -1,0 +1,152 @@
+---
+id: h-universite-risk-degerlendirmesi
+baslik: Risk değerlendirmesi nasıl yapılır
+hat: h-guvenlik
+seviye: universite
+sure: 18
+sira: 2
+onkosul:
+  - h-universite-iso-10218-ve-ts-15066
+kazanimlar:
+  - "ISO 12100'ün risk değerlendirmesi adımlarını (tehlike tanımlama, risk kestirimi, risk değerlendirme) sırasıyla açıklayabilme"
+  - "Üç adımlı risk azaltma yönteminin sırasının neden bağlayıcı olduğunu gerekçelendirebilme"
+  - "Bir robot hücresi için tehlike listesi çıkarırken hangi yaşam döngüsü aşamalarının hesaba katılması gerektiğini sayabilme"
+kaynaklar:
+  - "ISO 12100:2010, Safety of machinery — General principles for design — Risk assessment and risk reduction"
+  - "ISO 10218-2:2025, Robotics — Safety requirements — Part 2: Industrial robot applications and robot cells"
+  - "Occupational Safety and Health Administration (OSHA), Technical Manual, Section IV, Chapter 4: Industrial Robots and Robot System Safety, https://www.osha.gov/otm/section-4-safety-hazards/chapter-4"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli: []
+durum: taslak
+---
+
+## Kanca
+
+Bir entegratör hücreyi kurmuş, çiti çekmiş, ışık perdesini takmış ve
+sana soruyor: "Başka ne lazım?" Bu sorunun sırası yanlış. Hangi
+önlemlerin gerektiği, hangi tehlikelerin olduğu yazılmadan
+belirlenemez — ve o liste henüz yok.
+
+## Ne oldu
+
+ISO 12100, risk değerlendirmesini bir sezgi işi olmaktan çıkarıp
+sıralı bir sürece bağlar. Süreç iki büyük parçadan oluşur: önce
+**risk analizi ve değerlendirmesi**, sonra **risk azaltma**.
+
+### 1. Sınırların belirlenmesi
+
+Önce makinenin sınırları yazılır: ne yapar, kim kullanır, hangi
+ortamda çalışır, ömrü boyunca hangi aşamalardan geçer. Bu aşama
+atlanırsa sonraki her şey eksik kalır.
+
+Kritik nokta: sınırlar sadece normal üretimi değil, **tüm yaşam
+döngüsünü** kapsar — taşıma, kurulum, devreye alma, programlama,
+üretim, temizlik, bakım, arıza giderme ve sökme. Robot hücrelerindeki
+yaralanmaların önemli bir kısmı normal üretim sırasında değil, bakım ve
+arıza giderme sırasında olur; çünkü o anlarda insan kasten kafesin
+içindedir.
+
+### 2. Tehlike tanımlama
+
+Her aşama için tehlikeler tek tek yazılır. Bir robot hücresinde tipik
+başlıklar: ezilme, çarpma, kesilme, yakalanma, enerji altında kalma,
+taşınan parçanın düşmesi, beklenmedik başlatma. "Beklenmedik başlatma"
+özellikle önemlidir çünkü hücrede duran bir robot, bir sinyal geldiğinde
+uyarı vermeden harekete geçer.
+
+### 3. Risk kestirimi
+
+Her tehlike için risk kestirilir. ISO 12100'ün mantığında bu, iki
+şeyin birleşimidir: **zararın ciddiyeti** ve **zararın oluşma
+olasılığı**. Olasılık de kendi içinde parçalara ayrılır — kişinin
+tehlikeye ne sıklıkta ve ne kadar süreyle maruz kaldığı, olayın
+gerçekleşme ihtimali ve zarardan kaçınma imkânı.
+
+### 4. Risk değerlendirme
+
+Kestirilen risk, kabul edilebilir sınırın altında mı? Değilse risk
+azaltmaya geçilir ve süreç baştan tekrarlanır. Risk değerlendirmesi
+tek seferlik bir belge değil, **yinelemeli** bir döngüdür: aldığın her
+önlem yeni tehlikeler doğurabilir ve yeniden değerlendirilmelidir.
+
+### Üç adımlı risk azaltma — sıra bağlayıcıdır
+
+1. **Tasarımla güvenli hale getirme.** Tehlikeyi ortadan kaldır: robotun
+   hızını fiziksel olarak sınırla, keskin köşeyi yuvarla, erişim
+   gerektiren noktayı hücrenin dışına taşı.
+2. **Koruyucu önlemler.** Tehlike kaldırılamıyorsa aralarına bir şey
+   koy: çit, ışık perdesi, alan tarayıcı, kilitli kapı.
+3. **Kullanım bilgisi.** Kalan riski anlat: uyarı etiketi, kılavuz,
+   eğitim.
+
+Sıra keyfi değil. Bir tehlikeyi tasarımla kaldırabiliyorken uyarı
+etiketiyle geçiştirmek, ISO 12100'ün mantığına aykırıdır — çünkü etiket,
+onu okumayan veya unutan kişiyi korumaz. Kullanım bilgisi en zayıf
+önlemdir ve diğer ikisinin yerine geçmez.
+
+## Gerçek dünyada
+
+Robot hücrelerinde en sık gözden kaçan aşama programlama ve devreye
+almadır: o sırada koruma önlemlerinin bir kısmı bilerek devre dışı
+bırakılır, çünkü kişinin robotu hareket ederken görmesi gerekir. Bu
+yüzden standartlar bu mod için ayrı gereksinimler tanımlar — düşürülmüş
+hız, kalıcı temaslı kumanda (enable device) ve hücre içinde tek kişi
+kuralı gibi.
+
+Risk değerlendirmesi belgelenir ve saklanır. Hücrede bir değişiklik
+yapıldığında — yeni bir alet, farklı bir parça, değişen bir yerleşim —
+değerlendirme güncellenir.
+
+> **Doğrulama notu.** ISO 12100:2010 ve ISO 10218-2:2025 metinlerine
+> erişilemedi (ücretli erişim). Yukarıdaki adım sıralaması ve üç adımlı
+> yöntem, standardın kamuya açık özetleri ve makine güvenliği alanındaki
+> ikincil kaynaklarla tutarlıdır; ancak **madde numaraları ve standardın
+> birebir ifadeleri doğrulanmadı**, bu yüzden alıntı verilmedi.
+
+> **Uyarı.** Bu ders bir yöntemi tanıtır, bir risk değerlendirmesinin
+> yerine geçmez. Gerçek bir hücrenin değerlendirmesi eğitimli personel
+> tarafından, o hücreye özgü koşullarla yapılır.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir hücrede operatörün eli sıkışabiliyor. Tasarımı değiştirip sıkışma noktasını tamamen ortadan kaldırmak mümkün. Buna rağmen ekip oraya bir uyarı etiketi koymayı öneriyor. ISO 12100 mantığına göre sorun nedir?",
+      secenekler: [
+        "Etiket yeterlidir, ek bir şey gerekmez",
+        "Tehlike tasarımla kaldırılabiliyorken kullanım bilgisiyle geçiştirilmiş olur — sıra atlanmış",
+        "Etiket yerine ışık perdesi konmalıydı, tasarım değişikliği gereksiz",
+      ],
+      dogru: 1,
+      aciklama: "Üç adımın sırası bağlayıcıdır. Tasarımla kaldırılabilen bir tehlike için uyarıya geçmek, en zayıf önlemi en güçlünün yerine koymak demektir.",
+    },
+    {
+      soru: "Robot hücrelerinde yaralanmaların önemli bir kısmı hangi aşamada olur?",
+      secenekler: [
+        "Normal üretim sırasında",
+        "Bakım, arıza giderme ve programlama sırasında",
+        "Hücre boşken",
+      ],
+      dogru: 1,
+      aciklama: "Normal üretimde insan zaten dışarıdadır. Bakım ve arıza gidermede ise kasten içeridedir; bu yüzden risk değerlendirmesi tüm yaşam döngüsünü kapsamak zorundadır.",
+    },
+    {
+      soru: "Risk kestiriminde ciddiyetin yanında hangi büyüklük kullanılır?",
+      secenekler: [
+        "Makinenin maliyeti",
+        "Zararın oluşma olasılığı (maruz kalma sıklığı/süresi, olayın ihtimali, kaçınma imkânı)",
+        "Üretim hattının hızı",
+      ],
+      dogru: 1,
+      aciklama: "Risk, ciddiyet ile olasılığın birleşimidir; olasılık da maruz kalma, olay ihtimali ve kaçınma imkânı bileşenlerine ayrılır.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Risk azaltmanın ikinci adımı koruyucu önlemlerdi. Peki bir koruyucu
+önlemin kendisi ne kadar güvenilir olmalı? Sıradaki ders bunu ölçmenin
+yolunu ele alıyor.

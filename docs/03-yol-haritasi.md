@@ -118,15 +118,25 @@ tamamen bitti.
 
 ## Faz 5 — v1.0
 
-- [ ] Hat H — güvenlik ve standartlar
-- [ ] Arama
-- [ ] Sözlük (terimlerin Türkçe-İngilizce karşılıkları)
-- [ ] Katkı süreci resmileştirilir (şablon, PR akışı, inceleme rolleri
-      genişletilir) — not: proje zaten Faz 0'dan itibaren açık kaynak ve
-      dış katkıya açık yapıda kuruldu (bkz. `06-kalite-ve-topluluk.md`);
-      burada yapılan sadece süreci büyütmek
-- [ ] Erişilebilirlik denetimi
-- [ ] Performans denetimi
+- [x] Hat H — güvenlik ve standartlar (10 ders + `SafetyZone` bileşeni +
+      `lib/robotics/safety.ts`)
+- [x] Arama — `scripts/build-search-index.ts` → `public/arama-index.json`,
+      `app/ara/page.tsx` tembel yükleyip filtreler; Türkçe karakter yazmadan
+      da eşleşir (`lib/arama.ts`)
+- [x] Sözlük (terimlerin Türkçe-İngilizce karşılıkları) — `app/sozluk/page.tsx`,
+      72 terim `content/sozluk.json` içinde veri olarak
+- [x] Katkı süreci resmileştirilir (şablon, PR akışı, inceleme rolleri
+      genişletilir) — `CONTRIBUTING.md`, `SECURITY.md`,
+      `.github/pull_request_template.md`. Not: proje zaten Faz 0'dan itibaren
+      açık kaynak ve dış katkıya açık yapıda kuruldu (bkz.
+      `06-kalite-ve-topluluk.md`); burada yapılan sadece süreci büyütmek
+- [x] Erişilebilirlik denetimi — Lighthouse erişilebilirlik puanı denetlenen
+      her sayfada **100**. Bulgular ve düzeltmeleri `docs/durum-denetim.md`
+- [x] Performans denetimi — **kısmi.** 3D sahnesi olmayan sayfalar hedefte
+      (perf 95-99, FCP 0,8 sn, CLS 0). 3D sahnesi olan ders sayfaları
+      hedefin altında (perf ~73-76); ilk yükleme JS bütçesi 434 → 197 KB
+      indirildi ama emüle mobil CPU'da three.js çalıştırması ~1 sn ana
+      thread tutuyor. Ayrıntı ve açık madde `docs/durum-denetim.md`
 
 ---
 

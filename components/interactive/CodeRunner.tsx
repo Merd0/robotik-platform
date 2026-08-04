@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { RobotArm } from "@/components/scene/RobotArm";
+import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { getRobotById } from "@/lib/robotics/robots";
 import type { PyodideWorkerRequest, PyodideWorkerResponse } from "@/lib/workers/pyodideWorker";
 
@@ -19,7 +19,7 @@ const THEME = {
     surface: "bg-ortaokul-surface",
     bg: "bg-ortaokul-bg",
     ink: "text-ortaokul-ink",
-    inkMuted: "text-ortaokul-ink/60",
+    inkMuted: "text-ortaokul-ink/70",
     button: "bg-ortaokul-ink text-ortaokul-surface",
     outline: "border-ortaokul-ink/20",
   },
@@ -28,7 +28,7 @@ const THEME = {
     surface: "bg-lise-surface",
     bg: "bg-lise-bg",
     ink: "text-lise-ink",
-    inkMuted: "text-lise-ink/60",
+    inkMuted: "text-lise-ink/70",
     button: "bg-lise-ink text-lise-surface",
     outline: "border-lise-ink/20",
   },
@@ -37,7 +37,7 @@ const THEME = {
     surface: "bg-universite-surface",
     bg: "bg-universite-bg",
     ink: "text-universite-ink",
-    inkMuted: "text-universite-ink/60",
+    inkMuted: "text-universite-ink/70",
     button: "bg-universite-ink text-universite-surface",
     outline: "border-universite-ink/20",
   },
@@ -135,9 +135,9 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
       {robot && (
-        <div className={`aspect-video w-full overflow-hidden rounded-lg ${t.bg}`}>
+        <SahneAlani className={`aspect-video w-full overflow-hidden rounded-lg ${t.bg}`}>
           <RobotArm robot={robot} jointAngles={jointAngles} />
-        </div>
+        </SahneAlani>
       )}
 
       <textarea

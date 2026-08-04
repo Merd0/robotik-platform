@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
-import { RobotArm } from "@/components/scene/RobotArm";
+import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import {
   forwardKinematics,
   inverseKinematicsAnalytical2Dof,
@@ -78,7 +78,7 @@ export function IkTarget({ robot: robotId }: IkTargetProps) {
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-lise-ink/10 bg-lise-surface p-4">
-      <div className="aspect-square w-full overflow-hidden rounded-lg bg-lise-bg sm:aspect-video">
+      <SahneAlani className="aspect-square w-full overflow-hidden rounded-lg bg-lise-bg sm:aspect-video">
         <RobotArm robot={robot} jointAngles={angles}>
           <mesh
             position={[target.x, target.y, 0.02]}
@@ -103,13 +103,40 @@ export function IkTarget({ robot: robotId }: IkTargetProps) {
             </mesh>
           )}
         </RobotArm>
+      </SahneAlani>
+
+      {/*
+        Hedefi sürüklemek dokunmatik/fare için doğal ama klavyeyle imkânsız.
+        docs/02 "her etkileşimli sahnenin klavyeyle kullanılabilir bir
+        alternatifi olmalı" kuralı gereği aynı hedef bu iki kaydırıcıyla da
+        konumlandırılabiliyor — alttaki IK çözümü ikisinde de aynı.
+      */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {(["x", "y"] as const).map((eksen) => (
+          <label key={eksen} className="flex flex-col gap-1 text-sm">
+            <span>
+              Hedef {eksen.toUpperCase()}: {round(target[eksen])} m
+            </span>
+            <input
+              type="range"
+              className="h-11 touch-none accent-lise-accent"
+              min={-maxReach}
+              max={maxReach}
+              step={0.01}
+              value={target[eksen]}
+              onChange={(event) =>
+                applyTarget({ ...target, [eksen]: Number(event.target.value) }, elbow)
+              }
+            />
+          </label>
+        ))}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-        <span>
+        <span role="status">
           {reachable
             ? `Hedef: (${round(target.x)}, ${round(target.y)})`
-            : "Bu noktaya ulaşılamıyor — kırmızı nokta erişim alanının dışında"}
+            : "Bu noktaya ulaşılamıyor — hedef, erişim alanının dışında"}
         </span>
         <div className="flex gap-2">
           {robot.joints.length === 2 && (
@@ -130,7 +157,7 @@ export function IkTarget({ robot: robotId }: IkTargetProps) {
           </button>
         </div>
       </div>
-      <p className="text-xs text-lise-ink/60">
+      <p className="text-xs text-lise-ink/70">
         Uç nokta: ({round(endEffector.x)}, {round(endEffector.y)})
       </p>
     </div>

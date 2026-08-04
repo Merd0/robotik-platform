@@ -169,7 +169,12 @@ liste tam vizyondur; hangi sırayla üretileceği `03-yol-haritasi.md` içinde.
 **H / Üniversite**
 - ISO 10218 ve ISO/TS 15066: ne söylerler
 - Risk değerlendirmesi nasıl yapılır
-- Performans seviyesi (PL d) ve kategori (Cat 3) ne demek
+- Performans seviyesi (PL) ve kategori (Category) ne demek; gerekli
+  seviyenin (PLr) risk değerlendirmesinden türetilmesi. ISO 10218'in 2011
+  baskısındaki blok "PL d + Kategori 3" şartı 2025 revizyonunda büyük
+  ölçüde terk edildi; yerine her güvenlik fonksiyonu için ayrı, riskine
+  göre belirleme geldi — ders bu yöntem değişimini anlatır, sayısal
+  tabloları değil (birincil metinler ücretli erişim arkasında)
 - Güç ve kuvvet sınırlama (power and force limiting)
 - Güvenli izlemeli duruş, hız ve mesafe izleme
 - Bir hücre nasıl güvenli tasarlanır

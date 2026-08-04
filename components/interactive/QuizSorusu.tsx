@@ -39,7 +39,7 @@ export function QuizSorusu({ soru, secenekler, dogru, aciklama }: QuizSorusuProp
         })}
       </div>
       {selected !== null && (
-        <p className={`text-sm ${isCorrect ? "text-ortaokul-accent" : "text-ortaokul-ink/70"}`}>
+        <p className={`text-sm ${isCorrect ? "text-ortaokul-accent-text" : "text-ortaokul-ink/70"}`}>
           {isCorrect ? "Doğru." : `Şuna dikkat et: ${aciklama}`}
         </p>
       )}

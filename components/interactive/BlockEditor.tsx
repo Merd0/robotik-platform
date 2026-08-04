@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { RobotArm } from "@/components/scene/RobotArm";
+import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { getRobotById } from "@/lib/robotics/robots";
 import { runBlockProgram, type Block } from "@/lib/robotics/blockProgram";
 
@@ -124,9 +124,9 @@ export function BlockEditor({ robot: robotId, allowedBlocks }: BlockEditorProps)
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-ortaokul-ink/10 bg-ortaokul-surface p-4">
-      <div className="aspect-video w-full overflow-hidden rounded-lg bg-ortaokul-bg">
+      <SahneAlani className="aspect-video w-full overflow-hidden rounded-lg bg-ortaokul-bg">
         <RobotArm robot={robot} jointAngles={jointAngles} />
-      </div>
+      </SahneAlani>
 
       {allowed.includes("if") && (
         <label className="flex h-11 items-center gap-2 text-sm">

@@ -1,0 +1,170 @@
+---
+id: h-universite-guvenli-hucre-tasarimi
+baslik: Bir hücre nasıl güvenli tasarlanır
+hat: h-guvenlik
+seviye: universite
+sure: 20
+sira: 6
+onkosul:
+  - h-universite-risk-degerlendirmesi
+  - h-universite-guvenli-durus-hiz-ve-mesafe
+kazanimlar:
+  - "Bir robot hücresinin güvenlik tasarımını, tek tek önlemler yerine bir sıralı süreç olarak kurgulayabilme"
+  - "Bakım ve programlama modlarının neden ayrı ele alınması gerektiğini açıklayabilme"
+  - "Bir güvenlik tasarımında doğrulamanın (validation) neden tasarımın parçası olduğunu gerekçelendirebilme"
+kaynaklar:
+  - "ISO 10218-2:2025, Robotics — Safety requirements — Part 2: Industrial robot applications and robot cells"
+  - "ISO 12100:2010, Safety of machinery — General principles for design — Risk assessment and risk reduction"
+  - "ISO 13855, Safety of machinery — Positioning of safeguards with respect to the approach speeds of parts of the human body"
+  - "Occupational Safety and Health Administration (OSHA), Technical Manual, Section IV, Chapter 4: Industrial Robots and Robot System Safety, https://www.osha.gov/otm/section-4-safety-hazards/chapter-4"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SafetyZone
+durum: taslak
+---
+
+## Kanca
+
+İki hücre aynı robotu, aynı parçayı ve aynı çevrim süresini kullanıyor.
+Birinde operatör vardiyada onlarca kez kapıyı açıp elle müdahale
+ediyor; diğerinde parçalar hücreye bir konveyörle giriyor ve kimse
+içeri girmiyor. İkinci hücrenin güvenlik donanımı daha az — çünkü
+tasarımı daha iyi.
+
+<SafetyZone mode="hesap" robotSpeed={800} theme="universite" />
+
+## Ne oldu
+
+Güvenli hücre tasarımı bir donanım listesi değil, bir sıradır. Bu hattın
+önceki derslerindeki parçalar burada birleşiyor.
+
+### 1. Önce görevi ve erişim ihtiyacını tanımla
+
+En etkili güvenlik kararı, insanın hücreye **girme ihtiyacını ortadan
+kaldırmaktır.** Parça besleme otomatikleştirilirse, ayar noktaları
+hücre dışına taşınırsa, atık tahliyesi dışarıdan yapılabilirse geriye
+korunacak çok daha az durum kalır.
+
+Bu, ISO 12100'ün üç adımlı yönteminde birinci adımdır — tasarımla
+güvenli hale getirme — ve en sık atlanan adımdır, çünkü donanım almak
+tasarımı değiştirmekten kolaydır.
+
+### 2. Riskleri, tüm çalışma modları için değerlendir
+
+Hücrenin normal üretim modu genelde en kolay korunan moddur. Asıl zor
+olanlar:
+
+- **Programlama / öğretme:** kişi hücre içindedir ve robot hareket
+  eder. Bu mod için düşürülmüş hız, kalıcı temaslı kumanda (enable
+  device) ve hücrede tek kişi kuralı gibi ayrı gereksinimler tanımlanır.
+- **Bakım ve arıza giderme:** koruma önlemlerinin bir kısmı bilerek
+  devre dışıdır. Burada enerji izolasyonu ve kilitleme/etiketleme
+  düzeni belirleyicidir.
+- **Temizlik ve parça sıkışması giderme:** kısa süreli ama sık; tam bu
+  yüzden kestirme yollara en açık mod.
+
+### 3. Koruma önlemlerini seç ve konumlandır
+
+Ayırma yaklaşımı (çit, kilitli kapı) mı, mesafe izleme mi, güç ve kuvvet
+sınırlama mı — seçim riske göre yapılır ve bir hücrede birkaçı bir arada
+bulunabilir. Örneğin parça yükleme istasyonu işbirlikçi, kaynak
+istasyonu kafesli olabilir.
+
+Konumlandırma başlı başına bir tasarım işidir: bir ışık perdesi veya
+alan tarayıcı, insanın koruma alanını geçtikten sonra tehlikeli bölgeye
+ulaşmasından **önce** robotun durabileceği mesafede olmalıdır. Yukarıdaki
+sahne bu ilişkiyi gösteriyor — mesafe, durma süresine bağlı.
+
+### 4. Güvenlik fonksiyonlarının seviyesini belirle
+
+Her fonksiyon için gerekli performans seviyesi riskten türetilir ve
+seçilen bileşenlerle karşılandığı gösterilir (bkz. [Performans seviyesi
+ve kategori](/ders/h-universite-performans-seviyesi-ve-kategori)).
+
+### 5. Doğrula — tasarımın parçası olarak
+
+Bir hücre "tasarlandı, kuruldu, bitti" değildir. Doğrulama, kâğıt
+üzerindeki tasarımın sahada gerçekten karşılandığını göstermektir:
+
+- Durma süreleri ölçülür (katalogdan alınmaz).
+- Ayrım mesafeleri ölçülen sürelerle yeniden hesaplanır.
+- Her güvenlik fonksiyonu tek tek tetiklenip beklenen davranış gözlenir.
+- İşbirlikçi bir uygulama varsa kuvvet ve basınç ölçülür.
+- Sonuçlar belgelenir.
+
+### 6. Değişiklikte baştan değerlendir
+
+Yeni bir alet, farklı bir parça, değişen bir yerleşim veya artırılan bir
+hız — hepsi risk değerlendirmesini geçersiz kılabilir. Güvenlik dosyası
+canlı bir belgedir.
+
+> **Doğrulama notu.** Bu ders ISO 10218-2:2025, ISO 12100:2010 ve
+> ISO 13855 metinlerine **erişilmeden** yazıldı (ücretli erişim).
+> Anlatılan sıra ve mod ayrımları, standartların kamuya açık özetleri
+> ile OSHA'nın herkese açık teknik kılavuzuna dayanıyor. **Madde
+> numaraları, zorunlu donanım listeleri ve sayısal değerler
+> verilmedi**; programlama modundaki düşürülmüş hız sınırı gibi somut
+> değerler bilinçli olarak yazılmadı çünkü birincil metinle
+> doğrulanamadı. Bir hücre tasarımında bu değerler standardın kendisinden
+> alınmalıdır.
+
+> **Uyarı.** Bu ders bir tasarım yöntemine giriştir; bir hücrenin
+> güvenlik tasarımının yerine geçmez. Gerçek bir hücre, eğitimli personel
+> tarafından yürütülen resmi bir risk değerlendirmesi ve doğrulama
+> süreci gerektirir.
+
+## Gerçek dünyada
+
+Sahada en sık görülen üç zayıflık şunlardır. Birincisi, güvenliğin
+üretim tasarımından **sonra** düşünülmesi: hücre kurulduktan sonra
+"buraya bir çit çekelim" demek, en pahalı ve en zayıf çözümdür. İkincisi,
+bakım ve programlama modlarının hiç değerlendirilmemesi — koruma
+yalnızca normal üretim için kurgulanır. Üçüncüsü, hücrede bir değişiklik
+yapıldıktan sonra güvenlik dosyasının güncellenmemesi.
+
+Bu üçünün ortak noktası, hiçbirinin donanım eksikliği olmaması. Üçü de
+süreç eksikliği.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir hücrede en etkili güvenlik kararı genellikle hangisidir?",
+      secenekler: [
+        "Daha yüksek performans seviyeli sensör seçmek",
+        "İnsanın hücreye girme ihtiyacını tasarımla ortadan kaldırmak",
+        "Çiti yükseltmek",
+      ],
+      dogru: 1,
+      aciklama: "Üç adımlı yöntemin birinci adımı tasarımla güvenli hale getirmedir. Girme ihtiyacı kalkarsa korunacak durum sayısı azalır.",
+    },
+    {
+      soru: "Robotun durma süresi neden katalogdan alınmaz?",
+      secenekler: [
+        "Üreticiler bu veriyi yayımlamadığı için",
+        "Gerçek durma süresi yüke, hıza ve konfigürasyona bağlı olduğu için hücrede ölçülmelidir",
+        "Katalog değerleri her zaman fazla güvenli olduğu için",
+      ],
+      dogru: 1,
+      aciklama: "Durma süresi yükle ve hızla değişir. Ayrım mesafesi bu süreye dayandığı için süre, hücrenin kendi koşullarında ölçülür.",
+    },
+    {
+      soru: "Hücreye yeni bir uç alet takıldı, robot programı aynı kaldı. Ne yapılmalı?",
+      secenekler: [
+        "Bir şey yapılmasına gerek yok, program değişmedi",
+        "Risk değerlendirmesi güncellenmeli — alet yeni tehlikeler ve farklı bir durma davranışı getirebilir",
+        "Sadece uyarı etiketi eklenmeli",
+      ],
+      dogru: 1,
+      aciklama: "Alet geometrisi, ağırlığı ve keskinliği hem riski hem durma süresini değiştirir. Güvenlik dosyası canlı bir belgedir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Hat H burada tamamlanıyor. Terimlerin Türkçe-İngilizce karşılıkları için
+[sözlüğe](/sozluk), tüm dersler arasında arama yapmak için
+[arama sayfasına](/ara) bakabilirsin.

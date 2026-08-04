@@ -1,20 +1,46 @@
 @import "tailwindcss";
 
 @theme {
+  /*
+   * Her seviyede iki vurgu tonu var, aynı hue ailesinden:
+   *
+   * --accent       → dolgu, kenarlık, kaydırıcı, 3D sahne renkleri. Canlı ton;
+   *                  metin taşımadığı için kontrast eşiğine tabi değil.
+   * --accent-text  → METİN için (bağlantı, etiket, durum yazısı). Aynı rengin
+   *                  koyulaştırılmışı. Neden ayrı: Lighthouse denetiminde
+   *                  #0ea5a0 üzerine yazılan bağlantı metni 2,88:1 çıktı,
+   *                  WCAG AA 4,5:1 istiyor (docs/07 "kontrast oranı WCAG AA
+   *                  karşılar"). Canlılığı kaybetmemek için vurgu rengini
+   *                  bütünüyle koyultmak yerine metin için ayrı token açıldı.
+   */
   --color-ortaokul-bg: #faf9f7;
   --color-ortaokul-surface: #ffffff;
   --color-ortaokul-accent: #0ea5a0;
+  --color-ortaokul-accent-text: #0a736e;
   --color-ortaokul-ink: #16231f;
 
   --color-lise-bg: #f7f8fa;
   --color-lise-surface: #ffffff;
   --color-lise-accent: #0c8c87;
+  --color-lise-accent-text: #0a6d69;
   --color-lise-ink: #161d23;
 
   --color-universite-bg: #fcfcfc;
   --color-universite-surface: #ffffff;
   --color-universite-accent: #1e293b;
+  /* Üniversite vurgusu zaten koyu grafit; metinde de aynısı yeterli (14:1). */
+  --color-universite-accent-text: #1e293b;
   --color-universite-ink: #0f172a;
+
+  /*
+   * Durum renkleri — Hat H (güvenlik) sahnelerinde bölge/durum göstergesi.
+   * Seviye paletinden bağımsızdır çünkü anlamları seviyeye göre değişmez.
+   * docs/07: renk tek başına bilgi taşımaz — bu renkler her zaman bir
+   * ikon/metin etiketiyle birlikte kullanılır.
+   */
+  --color-durum-dur: #b91c1c;
+  --color-durum-uyari: #b45309;
+  --color-durum-serbest: #15803d;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
@@ -25,6 +51,19 @@ body {
   background-color: var(--color-ortaokul-bg);
   color: var(--color-ortaokul-ink);
   font-family: var(--font-sans);
+}
+
+/*
+ * Klavye odağı her zaman görünür (docs/07: "outline kaldırılmaz, yeniden
+ * tasarlanır"). Tarayıcı varsayılanı bazı arka planlarda kayboluyordu;
+ * burada tek, tutarlı bir odak halkası tanımlanıyor. :focus-visible
+ * kullanılıyor — fareyle tıklandığında halka çıkmaz, klavyeyle gelindiğinde
+ * çıkar.
+ */
+:focus-visible {
+  outline: 2px solid var(--color-ortaokul-accent-text);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .ders-icerik h2 {

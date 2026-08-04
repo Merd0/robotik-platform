@@ -1,0 +1,151 @@
+---
+id: h-universite-guvenli-durus-hiz-ve-mesafe
+baslik: Güvenli izlemeli duruş, hız ve mesafe izleme
+hat: h-guvenlik
+seviye: universite
+sure: 20
+sira: 5
+onkosul:
+  - h-universite-guc-ve-kuvvet-sinirlama
+kazanimlar:
+  - "Güvenlik dereceli izlemeli duruşun sıradan bir duraklatmadan farkını açıklayabilme"
+  - "Gerekli ayrım mesafesinin neden sabit bir sayı olmadığını, hangi bileşenlerden oluştuğunu gösterebilme"
+  - "Robot hızı ile gerekli ayrım mesafesi arasındaki ilişkiyi yorumlayabilme"
+kaynaklar:
+  - "ISO/TS 15066:2016, Robots and robotic devices — Collaborative robots — hız ve mesafe izleme, koruyucu ayrım mesafesi"
+  - "ISO 10218-2:2025, Robotics — Safety requirements — Part 2: Industrial robot applications and robot cells"
+  - "ISO 13855, Safety of machinery — Positioning of safeguards with respect to the approach speeds of parts of the human body"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SafetyZone
+durum: taslak
+---
+
+## Kanca
+
+Aşağıdaki sahnede robot hızını yükselt, sonra insanı yaklaştır. Robotun
+durduğu mesafeyi not et. Şimdi frenleme süresini iki katına çıkar ve
+aynı şeyi tekrarla — güvenli mesafenin robotun hızıyla birlikte değil,
+robotun *durabilme yeteneğiyle* birlikte değiştiğini göreceksin.
+
+<SafetyZone mode="hesap" robotSpeed={1000} theme="universite" />
+
+## Ne oldu
+
+### Güvenlik dereceli izlemeli duruş
+
+Bu çalışma biçiminde robot, insan alana girdiğinde durur — ama enerjisi
+kesilmez ve program konumunu kaybetmez. İnsan alandan çıkınca robot
+kaldığı yerden devam eder; yeniden başlatma veya referanslama
+gerekmez.
+
+Sıradan bir duraklatmadan farkı şudur: duruş **izlenir**. Sistem sadece
+"dur" komutunu vermekle kalmaz, robotun gerçekten durduğunu ve durur
+halde kaldığını sürekli denetler. Robot komuta rağmen hareket ederse bu
+bir güvenlik ihlali sayılır ve sistem daha sert bir durdurmaya geçer.
+"Güvenlik dereceli" ifadesi tam olarak bunu anlatır — fonksiyonun kendi
+doğruluğu da güvence altındadır.
+
+### Hız ve mesafe izleme
+
+Burada robot durmak zorunda değildir; insan ile arasında yeterli bir
+**ayrım mesafesi** koruduğu sürece çalışmaya devam edebilir. Mesafe
+daraldıkça robot yavaşlar, gerekli mesafenin altına inilirse durur.
+
+Kritik soru şu: "yeterli mesafe" ne kadar?
+
+Bu sabit bir sayı olamaz, çünkü mesafe daraldığı anda durmak yetmez —
+**durma kararı verildikten sonra iki taraf da hareket etmeye devam
+eder.** Gerekli mesafe en az şu üç bileşenin toplamıdır:
+
+- **İnsanın aldığı yol.** İnsan robota doğru yaklaşmaya devam eder.
+  Hesapta bir varsayılan yaklaşma hızı kullanılır.
+- **Robotun aldığı yol.** Robot, algılama ve frenleme süresi boyunca
+  hareketini sürdürür. Bu, hızıyla doğru orantılıdır.
+- **Belirsizlik payı.** Sensörün ölçüm hatası ve robotun konum
+  belirsizliği için bir pay eklenir.
+
+Yukarıdaki sahne bu üç bileşeni ayrı ayrı gösteriyor. Robot hızını
+artırdığında sadece "robotun aldığı yol" büyür; frenleme süresini
+uzattığında hem robotun hem insanın aldığı yol birlikte büyür — bu
+yüzden frenleme süresi, hızdan daha güçlü bir etkendir.
+
+Sahnede dikkat çeken bir sonuç daha var: robot hızını sıfıra
+indirdiğinde bile gerekli mesafe sıfır olmuyor. Sebebi, insanın
+yaklaşmaya devam etmesi ve belirsizlik payının kalması.
+
+**Kaynak kodu:** [`requiredSeparation`](https://github.com/Merd0/robotik-platform/blob/main/lib/robotics/safety.ts#L73)
+
+> **Doğrulama notu.** Yukarıdaki model **öğretici bir yaklaşımdır,
+> standardın formülü değildir.** ISO/TS 15066 ve ISO 10218-2 metinlerine
+> erişilemedi (ücretli erişim); koruyucu ayrım mesafesinin standarttaki
+> tam ifadesi, burada gösterilenden daha fazla terim içerir ve bileşenler
+> farklı adlandırılır. Bu derste ayrıca **hiçbir varsayılan insan
+> yaklaşma hızı değeri iddia edilmedi**; sahnedeki sayı bir örnektir,
+> standarttan alınmış bir değer olarak sunulmamaktadır. Gerçek bir
+> uygulamada mesafe hesabı standardın kendi formülüyle ve o hücrenin
+> ölçülmüş durma süreleriyle yapılmalıdır.
+
+## Gerçek dünyada
+
+Ayrım mesafesini ölçen tipik cihaz bir **güvenlik lazer alan
+tarayıcısıdır**: zeminden birkaç santimetre yükseklikte yatay bir
+düzlemi tarar ve içine giren nesnenin mesafesini bildirir. Genelde iki
+alan tanımlanır — dıştaki uyarı alanına girildiğinde robot yavaşlar,
+içteki koruma alanına girildiğinde durur.
+
+Robotun durma süresi bir katalog değeri olarak kabul edilmez; hücrede,
+gerçek yük ve gerçek hızla **ölçülür**. Yük arttıkça durma süresi uzar,
+dolayısıyla gerekli mesafe büyür. Bu yüzden hücrede taşınan parça
+değiştiğinde ayrım mesafesi yeniden değerlendirilmelidir.
+
+ISO 13855, koruma donanımının insan yaklaşma hızları dikkate alınarak
+nereye konumlandırılacağını ele alan standarttır; alan tarayıcı ve ışık
+perdesi yerleşimi bu çerçevede yapılır.
+
+> **Uyarı.** Ayrım mesafesi hesabı ve doğrulaması eğitimli personel
+> tarafından, ölçülmüş verilerle yapılır. Bu sahnedeki değerler
+> öğreticidir, tasarım girdisi değildir.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Güvenlik dereceli izlemeli duruşu sıradan bir duraklatmadan ayıran nedir?",
+      secenekler: [
+        "Robotun enerjisinin kesilmesi",
+        "Robotun gerçekten durduğunun sürekli izlenmesi ve ihlalde daha sert durdurmaya geçilmesi",
+        "Programın baştan başlaması",
+      ],
+      dogru: 1,
+      aciklama: "'Güvenlik dereceli' ifadesi, fonksiyonun kendi doğruluğunun da güvence altında olduğunu anlatır: duruş komut edilmekle kalmaz, denetlenir.",
+    },
+    {
+      soru: "Robot hızı sıfıra indirildiğinde gerekli ayrım mesafesi neden sıfır olmaz?",
+      secenekler: [
+        "Sensörler sıfır mesafe ölçemediği için",
+        "İnsan yaklaşmaya devam ettiği ve belirsizlik payı kaldığı için",
+        "Standart asgari bir sabit değer zorunlu kıldığı için",
+      ],
+      dogru: 1,
+      aciklama: "Robot dursa bile insanın aldığı yol ve ölçüm belirsizliği payı hesapta kalır.",
+    },
+    {
+      soru: "Hücrede taşınan parça ağırlaştı. Ayrım mesafesi açısından ne olur?",
+      secenekler: [
+        "Değişmez, mesafe sadece hıza bağlıdır",
+        "Durma süresi uzayacağı için gerekli mesafe büyür ve yeniden değerlendirilmelidir",
+        "Azalır, çünkü ağır yük robotu yavaşlatır",
+      ],
+      dogru: 1,
+      aciklama: "Durma süresi yükle birlikte uzar; gerekli mesafe hem insanın hem robotun bu süre boyunca aldığı yolu kapsadığı için büyür.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Tek tek güvenlik fonksiyonlarını gördün. Son ders bunları bir arada,
+bir hücre tasarımı olarak ele alıyor.

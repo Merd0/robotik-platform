@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { PlanningGrid, type PlannerPathDisplay } from "@/components/scene/PlanningGrid";
+import { PlanningGrid, SahneAlani } from "@/components/scene/LazyScene";
+import type { PlannerPathDisplay } from "@/components/scene/PlanningGrid";
 import { isPointFree, type Obstacle } from "@/lib/robotics/collision";
 import { PLANNER_IDS, pathLength, type PlanResult, type PlannerId } from "@/lib/robotics/planners";
 import type { Vec3 } from "@/lib/robotics/transform";
@@ -36,7 +37,7 @@ const THEME = {
     surface: "bg-ortaokul-surface",
     bg: "bg-ortaokul-bg",
     ink: "text-ortaokul-ink",
-    inkMuted: "text-ortaokul-ink/60",
+    inkMuted: "text-ortaokul-ink/70",
     divide: "border-ortaokul-ink/10",
     button: "bg-ortaokul-ink text-ortaokul-surface",
     outline: "border-ortaokul-ink/20",
@@ -46,7 +47,7 @@ const THEME = {
     surface: "bg-lise-surface",
     bg: "bg-lise-bg",
     ink: "text-lise-ink",
-    inkMuted: "text-lise-ink/60",
+    inkMuted: "text-lise-ink/70",
     divide: "border-lise-ink/10",
     button: "bg-lise-ink text-lise-surface",
     outline: "border-lise-ink/20",
@@ -56,7 +57,7 @@ const THEME = {
     surface: "bg-universite-surface",
     bg: "bg-universite-bg",
     ink: "text-universite-ink",
-    inkMuted: "text-universite-ink/60",
+    inkMuted: "text-universite-ink/70",
     divide: "border-universite-ink/10",
     button: "bg-universite-ink text-universite-surface",
     outline: "border-universite-ink/20",
@@ -87,6 +88,8 @@ export function PlannerRace({
   const [obstacles, setObstacles] = useState<Obstacle[]>(initialObstacles);
   const [results, setResults] = useState<Partial<Record<PlannerId, PlanResult>>>({});
   const [running, setRunning] = useState(false);
+  // Klavye ile engel koymak için imleç konumu (sahneye dokunmanın alternatifi).
+  const [cursor, setCursor] = useState<Vec3>({ x: 0, y: 0, z: 0 });
   const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {
@@ -150,7 +153,7 @@ export function PlannerRace({
 
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
-      <div className={`aspect-square w-full overflow-hidden rounded-lg ${t.bg} sm:aspect-video`}>
+      <SahneAlani className={`aspect-square w-full overflow-hidden rounded-lg ${t.bg} sm:aspect-video`}>
         <PlanningGrid
           extent={extent}
           obstacles={obstacles}
@@ -159,12 +162,50 @@ export function PlannerRace({
           paths={paths}
           onPlaneClick={allowObstacleEdit ? handlePlaneClick : undefined}
         />
-      </div>
+      </SahneAlani>
+
+      {/*
+        Sahneye dokunmak engel eklemenin doğal yolu ama klavyeyle yapılamıyor.
+        docs/02 "her etkileşimli sahnenin klavyeyle kullanılabilir bir
+        alternatifi olmalı" gereği aynı işlem X/Y kaydırıcıları + bir düğmeyle
+        de yapılabiliyor; ikisi de handlePlaneClick'e gidiyor, davranış aynı.
+      */}
+      {allowObstacleEdit && (
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {(["x", "y"] as const).map((eksen) => (
+              <label key={eksen} className={`flex flex-col gap-1 text-sm ${t.ink}`}>
+                <span>
+                  Engel {eksen.toUpperCase()}: {round(cursor[eksen])}
+                </span>
+                <input
+                  type="range"
+                  className="h-11 touch-none"
+                  min={-half}
+                  max={half}
+                  step={0.05}
+                  value={cursor[eksen]}
+                  onChange={(event) =>
+                    setCursor((prev) => ({ ...prev, [eksen]: Number(event.target.value) }))
+                  }
+                />
+              </label>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => handlePlaneClick(cursor)}
+            className={`h-11 self-start rounded-md border ${t.outline} px-4 text-sm ${t.ink}`}
+          >
+            Bu noktaya engel ekle / kaldır
+          </button>
+        </div>
+      )}
 
       <div className={`flex flex-wrap items-center justify-between gap-2 text-sm ${t.ink}`}>
-        <span className={t.inkMuted}>
+        <span role="status" className={t.inkMuted}>
           {allowObstacleEdit
-            ? "Sahneye dokunarak engel ekle; var olan bir engele dokunarak kaldır."
+            ? `Sahneye dokunarak da engel ekleyebilirsin. Şu an ${obstacles.length} engel var.`
             : "Bu sahnede engel düzeni sabit."}
         </span>
         <div className="flex gap-2">
@@ -201,8 +242,20 @@ export function PlannerRace({
                 const result = results[id];
                 return (
                   <tr key={id} className={`border-t ${t.divide}`}>
-                    <td className="py-1 pr-4 font-medium" style={{ color: ALGORITHM_COLORS[id] }}>
-                      {ALGORITHM_LABELS[id]}
+                    {/*
+                      Algoritma adı, sahnedeki yol rengiyle eşleşsin diye
+                      renkli bir kare taşır — ama metnin kendisi ink renginde
+                      kalır (renkli metin WCAG AA kontrastını karşılamıyordu).
+                    */}
+                    <td className="py-1 pr-4 font-medium">
+                      <span className="flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className="inline-block size-3 shrink-0 rounded-sm"
+                          style={{ backgroundColor: ALGORITHM_COLORS[id] }}
+                        />
+                        {ALGORITHM_LABELS[id]}
+                      </span>
                     </td>
                     <td className="py-1 pr-4">{result ? (result.success ? "başarılı" : "başarısız") : "—"}</td>
                     <td className="py-1 pr-4">{result ? `${round(result.elapsedMs)} ms` : "—"}</td>

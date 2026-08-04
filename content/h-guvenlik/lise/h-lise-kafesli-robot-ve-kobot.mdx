@@ -1,0 +1,111 @@
+---
+id: h-lise-kafesli-robot-ve-kobot
+baslik: Kafesli robot ile işbirlikçi robot (kobot) farkı
+hat: h-guvenlik
+seviye: lise
+sure: 14
+sira: 1
+onkosul:
+  - h-ortaokul-temel-guvenlik-kurallari
+kazanimlar:
+  - Kafesle ayırma ile işbirlikçi çalışma arasındaki temel güvenlik yaklaşımı farkını açıklayabilme
+  - Güvenliğin robotun kendisinden değil, robotun nasıl kullanıldığından geldiğini örneklerle gösterebilme
+  - Bir uygulamanın işbirlikçi sayılabilmesi için robotun "kobot" olmasının tek başına yetmediğini açıklayabilme
+kaynaklar:
+  - "ISO 10218-2:2025, Robotics — Safety requirements — Part 2: Industrial robot applications and robot cells — işbirlikçi uygulamalara ilişkin gereksinimler (ISO/TS 15066:2016 içeriğinin devralındığı bölüm)"
+  - "ISO/TS 15066:2016, Robots and robotic devices — Collaborative robots — işbirlikçi çalışma biçimleri"
+  - "Occupational Safety and Health Administration (OSHA), Technical Manual, Section IV, Chapter 4: Industrial Robots and Robot System Safety, https://www.osha.gov/otm/section-4-safety-hazards/chapter-4"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SafetyZone
+durum: taslak
+---
+
+## Kanca
+
+İki üretim hücresi yan yana duruyor. Birinde robot çelik bir kafesin
+içinde, kapı açılınca duruyor. Diğerinde robot açıkta, operatörün hemen
+yanında çalışıyor ve kimse rahatsız görünmüyor. İkisi de kurallara
+uygun.
+
+<SafetyZone mode="mesafe" robotSpeed={900} theme="lise" />
+
+## Ne oldu
+
+İki hücre, aynı soruna iki farklı cevap veriyor: **insan ile robot aynı
+anda aynı yerde bulunmamalı.**
+
+**Kafesli yaklaşım** bunu fiziksel olarak çözer. Robot hızlıdır ve
+güçlüdür; çözüm, insanı o alandan tamamen uzak tutmaktır. Kapı bir
+kilit ve sensörle robota bağlıdır — kapı açılırsa robot durur. Bu
+yaklaşımın avantajı basitliğidir: robotun ne kadar tehlikeli olduğu
+önemli değildir, çünkü insan zaten oraya giremez.
+
+**İşbirlikçi yaklaşım** ise ayrımı zamana ve hıza yayar. Robot ile insan
+aynı alanı paylaşabilir, ama robot bunun bedelini öder: yavaş hareket
+eder, yaklaşınca durur, ve çarpması durumunda uygulayabileceği kuvvet
+sınırlıdır. Yukarıdaki sahnede gördüğün davranış tam olarak budur —
+mesafe daraldıkça robotun hızı düşer.
+
+Burada en sık karıştırılan nokta şu: **güvenli olan robot değil,
+uygulamadır.** "Kobot" diye satılan bir robotu alıp ucuna keskin bir
+bıçak takarsan, ortaya işbirlikçi bir uygulama çıkmaz. Robot yavaş
+hareket etse bile taşıdığı alet veya parça tehlikeliyse, o hücre yine
+ayırma gerektirir. 2025'te güncellenen ISO 10218 serisi bu ayrımı dilde
+de belirginleştirdi: standart "kobot" yerine **işbirlikçi uygulama**
+(collaborative application) terimini kullanıyor.
+
+## Gerçek dünyada
+
+Otomotiv gövde hatlarındaki büyük punta kaynak robotları neredeyse her
+zaman kafeslidir: hızlı hareket ederler, ağır yük taşırlar ve
+yavaşlatılmaları üretimi anlamsız kılar. Buna karşılık elektronik
+montajda küçük parçaları yerleştiren bir robot, operatörün yanında
+çalışabilir — çünkü hem yavaştır hem de taşıdığı parça hafiftir.
+
+Aynı fabrikada iki yaklaşımın bir arada bulunması olağandır. Seçim
+robotun markasına göre değil, o istasyondaki riske göre yapılır.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir tesis 'kobot' olarak satılan bir robot alıp ucuna keskin bir kesme bıçağı taktı. Bu hücre işbirlikçi sayılır mı?",
+      secenekler: [
+        "Evet, robot kobot olduğu için otomatik olarak güvenlidir",
+        "Hayır, güvenlik robottan değil uygulamanın tamamından gelir; alet de riske dahildir",
+        "Sadece robot yavaş çalışıyorsa sayılır, alet önemli değildir",
+      ],
+      dogru: 1,
+      aciklama: "Risk, robotun kendisinden değil uygulamanın tamamından doğar: taşınan parça, uçtaki alet ve çevredeki nesneler de değerlendirmeye girer.",
+    },
+    {
+      soru: "Kafesli yaklaşımın işbirlikçi yaklaşıma göre en belirgin avantajı nedir?",
+      secenekler: [
+        "Robotun hızlı ve güçlü kalmasına izin verir",
+        "Daha az yer kaplar",
+        "Sensör gerektirmez",
+      ],
+      dogru: 0,
+      aciklama: "İnsan zaten alana giremediği için robot tam hızda çalışabilir. İşbirlikçi yaklaşımda ise robot hız ve kuvvetinden ödün verir.",
+    },
+    {
+      soru: "Yukarıdaki sahnede mesafe daralınca robotun hızı düştü. Bu davranış hangi yaklaşımın örneğidir?",
+      secenekler: [
+        "Kafesli ayırma",
+        "İşbirlikçi çalışma",
+        "Acil durdurma",
+      ],
+      dogru: 1,
+      aciklama: "Ayrımı fiziksel bir engelle değil, mesafeye bağlı hız kontrolüyle sağlamak işbirlikçi yaklaşımın temel fikridir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+İşbirlikçi bir hücrede robotu durduran şeyin ne olduğuna daha yakından
+bakalım: [Acil durdurma, hız sınırlama ve güvenli
+bölge](/ders/h-lise-acil-durdurma-ve-guvenli-bolge).

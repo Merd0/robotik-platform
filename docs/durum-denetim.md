@@ -888,3 +888,322 @@ Denetim bir insan gözden geçirmesinin yerine geçmez. 40 ders
 `durum: taslak` kalmaya devam ediyor; `durum: yayinda` için docs/06
 Katman 3 (kaynakların elle karşılaştırılması — özellikle yukarıdaki
 RAPID/KRL/TP listesi) hâlâ gerekli.
+
+---
+
+## Faz 5 — YARIM KALDI (2026-08-04, ara kayıt)
+
+**Bu bölüm tamamlanmış bir faz kaydı DEĞİL.** Faz 5 (v1.0) başlatıldı,
+altı maddeden ikisi bitti, dördü hiç başlamadı. Çalışma
+`faz-5-guvenlik-ve-v1` dalına commit edildi; **main'e merge edilmedi ve
+PR açılmadı** — bu adım faz bitince yapılacak. Sonraki oturum buradan
+devam etmeli.
+
+### Biten
+
+**1. Hat H — güvenlik ve standartlar (10 ders).** `content/h-guvenlik/`
+altında, hepsi `durum: taslak`:
+
+| Seviye | Ders | sıra |
+|---|---|---|
+| Ortaokul | `h-ortaokul-robotlar-neden-tehlikeli` | 1 |
+| Ortaokul | `h-ortaokul-temel-guvenlik-kurallari` | 2 |
+| Lise | `h-lise-kafesli-robot-ve-kobot` | 1 |
+| Lise | `h-lise-acil-durdurma-ve-guvenli-bolge` | 2 |
+| Üniversite | `h-universite-iso-10218-ve-ts-15066` | 1 |
+| Üniversite | `h-universite-risk-degerlendirmesi` | 2 |
+| Üniversite | `h-universite-performans-seviyesi-ve-kategori` | 3 |
+| Üniversite | `h-universite-guc-ve-kuvvet-sinirlama` | 4 |
+| Üniversite | `h-universite-guvenli-durus-hiz-ve-mesafe` | 5 |
+| Üniversite | `h-universite-guvenli-hucre-tasarimi` | 6 |
+
+Bununla 8 hattın tamamı içerik olarak var: **89 ders dosyası.**
+
+**2. Altyapı (Hat H için yazıldı, kalıcı):**
+
+- `lib/robotics/safety.ts` — ayrım mesafesi matematiği (`travelDistance`,
+  `stoppingDistance`, `requiredSeparation`, `zoneState`, `allowedSpeed`).
+  Saf TypeScript, DOM/React importu yok.
+- `lib/robotics/safety.test.ts` — 15 test, hepsi geçiyor.
+- `components/interactive/SafetyZone.tsx` — üç seviyede de kullanılan tek
+  sahne; `mode` prop'u ile sunum derinliği değişiyor (`bolge` /`mesafe` /
+  `hesap`), alttaki hesap aynı. `index.ts`'e kaydedildi.
+- `app/globals.css` — `--color-durum-dur/uyari/serbest` semantik durum
+  renkleri. Her zaman ikon + metinle birlikte kullanılıyor (docs/07:
+  renk tek başına bilgi taşımaz).
+- `lib/content.ts` — `HAT_ETIKET` haritası ve `hatEtiket()` eklendi
+  (daha önce hat adlarının görünen karşılığı hiçbir yerde yoktu).
+
+**3. Sözlük — verisi hazır, sayfası YOK:**
+
+- `content/sozluk.json` — 8 hattın tamamından **72 terim**, Türkçe-İngilizce
+  karşılık + bir cümlelik tanım + hat etiketi. İçerik koddan ayrı tutuldu.
+- `lib/sozluk.ts` — `getSozluk()` ve `getSozlukByHat()` okuyucuları.
+- **Eksik:** `app/sozluk/page.tsx` yazılmadı.
+
+### Kaynak durumu — Hat H için kritik
+
+Kullanıcının açık talimatı vardı: güvenlik standartlarında doğrulanamayan
+hiçbir şey iddia edilmeyecek, PL d/Cat 3 gibi sayısal detaylarda daha az
+iddialı ifadeye çekilecek. Uygulanan yöntem:
+
+**Doğrulanabilenler** (WebSearch/WebFetch ile, birden fazla bağımsız
+kaynaktan teyit edildi):
+
+- ISO 10218-1:2025 ve ISO 10218-2:2025 yayımlandı, 2011 baskılarının
+  yerini aldı.
+- **ISO/TS 15066'nın işbirlikçi uygulama içeriği ISO 10218 serisine
+  alındı.** TS resmen geri çekilmedi; ISO/AWI 15066-1 halefi geliştiriliyor.
+- Standart "kobot" yerine **işbirlikçi uygulama** terimine geçti.
+- **Blok "PL d + Kategori 3" şartı büyük ölçüde terk edildi**, yerine
+  fonksiyon bazlı PLr belirlemesi geldi. Acil durdurma için asgari seviye
+  PL d'den bir kademe aşağıda.
+- ISO 12100 risk değerlendirmesi adımları ve üç adımlı risk azaltma sırası.
+- ISO/TS 15066'nın dört işbirlikçi çalışma biçimi.
+
+**Doğrulanamayanlar** — hiçbiri derste sayı olarak yazılmadı:
+
+- ISO 10218-1/-2:2025, ISO/TS 15066:2016, ISO 12100:2010, ISO 13849-1,
+  ISO 13855, IEC 60204-1 **birincil metinlerinin hiçbirine erişilemedi**
+  (ücretli erişim; iso.org 403 döndü).
+- Bu yüzden bilinçli olarak YAZILMADI: PL'ler için sayısal arıza olasılığı
+  aralıkları, 2025 baskısındaki fonksiyon–seviye tablosu, biyomekanik
+  kuvvet/basınç sınır değerleri, vücut bölgesi sayısı, yay sabitleri,
+  koruyucu ayrım mesafesinin standart formülü, programlama modundaki
+  düşürülmüş hız sınırı, madde numaraları.
+
+Üniversite derslerinin **hepsinde** görünür bir `> **Doğrulama notu.**`
+bloğu var; neyin doğrulanmadığını ve neyin bilinçli olarak yazılmadığını
+okuyucuya doğrudan söylüyor. Ayrıca `> **Uyarı.**` blokları docs/05 §2.3
+gereği "bu ders risk değerlendirmesinin yerine geçmez" diyor.
+
+`SafetyZone`'un arkasındaki model standardın formülü değil; hem
+`lib/robotics/safety.ts` dosya başlığında hem ilgili derste bu açıkça
+belirtildi.
+
+### Yapılmayan — sonraki oturumun listesi
+
+1. **Arama özelliği** — hiç başlanmadı. Planlanan yaklaşım: statik export
+   olduğu için `scripts/build-search-index.mjs` ile `public/arama-index.json`
+   üretip (`prebuild`/`predev`'e bağlanacak, `public/workers/` deseninin
+   aynısı), `app/ara/page.tsx` istemci tarafında tembel yükleyip filtreleyecek.
+   İlk yükleme JS bütçesi (<200 KB) bozulmamalı.
+2. **Sözlük sayfası** — `app/sozluk/page.tsx`. Veri ve okuyucular hazır.
+3. **Erişilebilirlik denetimi** — hiç başlanmadı.
+4. **Performans denetimi (Lighthouse)** — hiç başlanmadı. docs/05 §3
+   hedefleri: FCP < 1.0 sn, TTI < 2.0 sn, ilk yükleme JS < 200 KB,
+   Lighthouse mobil ≥ 90.
+5. **Katkı sürecinin resmileştirilmesi** — `CONTRIBUTING.md`, PR şablonu,
+   `SECURITY.md` (hiçbiri repoda yok; `.github/` altında sadece
+   `workflows/ci.yml` var).
+6. **docs/03-yol-haritasi.md** Faz 5 kutuları işaretlenmedi.
+7. **Commit + PR** açılmadı. Kullanıcının isteği: main'e doğrudan merge
+   YOK, PR açılacak; `gh` CLI kurulu değil, `winget install GitHub.cli`
+   denenecek, olmazsa lokal commit + push ile PR elle açılacak.
+
+**Bilinen sarkan bağlantı:** `h-universite-guvenli-hucre-tasarimi` dersinin
+"Sonraki" bölümü `/sozluk` ve `/ara` sayfalarına link veriyor; o iki sayfa
+henüz yok. Build kırılmıyor (MDX içindeki düz bağlantılar), ama sayfalar
+yazılana kadar 404 verir. Sayfalar yazıldığında bu kendiliğinden düzelir.
+
+### Doğrulama (bu ara kayıt anındaki durum)
+
+`npx vitest run` (6 dosya, **76/76** — safety.ts ile 15 test eklendi),
+`npx eslint .`, `npx tsc --noEmit`, `npx tsx scripts/check-content.ts`
+(**89 ders**, hata yok), `npm run validate-content-graph` (89 ders,
+döngü/eksik referans yok, **0 uyarı**), `npm run build`
+(**95 sayfa**, temiz) — hepsi geçiyor.
+
+### Yapılmayan adım — yine `durum: yayinda` işaretlemesi
+
+Hat H'nin 10 dersi `durum: taslak`. Güvenlik hattı için insan gözden
+geçirmesi diğer hatlardan daha kritik: yukarıdaki "doğrulanamayanlar"
+listesindeki her madde, standardın kendisi alınarak kontrol edilmeli.
+
+---
+
+## Müfredat dosyası eski standart çerçeveyi yansıtıyordu — güncellendi (2026-08-04)
+
+`docs/01-mufredat.md`'deki Hat H / Üniversite listesinde bir madde
+**"Performans seviyesi (PL d) ve kategori (Cat 3) ne demek"** yazıyordu.
+Bu satır, ISO 10218'in 2011 baskısı dönemindeki yaygın uygulamayı —
+güvenlikle ilgili kontrol fonksiyonlarına topluca PL d + Kategori 3
+şartı koymayı — bir öğretim hedefi gibi sabitliyordu.
+
+Hat H yazılırken (yukarıdaki Faz 5 ara kaydı) doğrulanan durum bunun
+tersi: **2025 baskılarında bu blok şart büyük ölçüde terk edildi**,
+yerine her güvenlik fonksiyonu için ayrı ayrı, o fonksiyonun kendi
+riskinden türetilen bir gerekli seviye (PLr) belirlemesi geldi. Ders
+(`h-universite-performans-seviyesi-ve-kategori`) zaten bu doğru
+çerçeveyle yazılmıştı; **eski olan müfredat dosyasıydı**, ders değil.
+
+Madde, ders içeriğiyle hizalanacak şekilde yeniden yazıldı: PL ve
+kategori kavramları + PLr'nin risk değerlendirmesinden türetilmesi +
+2011→2025 yöntem değişimi. Sayısal tablo hedefi bilinçli olarak
+konmadı; birincil standart metinleri ücretli erişim arkasında olduğu
+için bu platformda sayısal eşik iddia edilmiyor (aynı gerekçe dersin
+`> **Doğrulama notu.**` bloğunda okuyucuya da söyleniyor).
+
+**Genel ders:** planlama dokümanları da içerik gibi eskiyebiliyor.
+Bir hat yazılırken kaynak araştırması müfredattaki bir varsayımı
+çürütüyorsa, düzeltilmesi gereken sadece ders değil, müfredat
+maddesinin kendisi.
+
+---
+
+## Faz 5 tamamlandı (2026-08-04)
+
+Yarım kalan dört madde bitirildi: arama, sözlük sayfası, erişilebilirlik
+denetimi, performans denetimi ve katkı sürecinin resmileştirilmesi.
+`docs/03-yol-haritasi.md` Faz 5 kutuları işaretlendi.
+
+### 1. Arama (`/ara`)
+
+Statik export olduğu için sunucu tarafı arama yok. Kurulan hat:
+
+- `lib/arama.ts` — saf TypeScript (DOM/React importu yok): Türkçe→ASCII
+  normalleştirme, indeks hazırlama, eşleştirme ve bağlam (snippet) çıkarma.
+  MDX gövdesini düz metne indirgeyen `mdxDuzMetne` de burada (test edilebilir
+  olsun diye script'te değil). `lib/arama.test.ts` — 10 test.
+- `scripts/build-search-index.ts` — `predev`/`prebuild` içinde koşar,
+  `public/arama-index.json` üretir (39 yayınlanmış ders, 88 KB / 29 KB gzip).
+  `public/workers/` deseninin aynısı: üretilen dosya, `.gitignore`'da.
+- `components/ui/AramaKutusu.tsx` — indeksi **kullanıcı yazmaya başlayınca**
+  `fetch` ile getirir; ilk yükleme JS bütçesine hiç girmez.
+
+Normalleştirmenin bir tasarım kısıtı var ve kodda not düşüldü: her harf
+eşlemesi tek karakter → tek karakter, çünkü bağlam çıkarma normalleştirilmiş
+metindeki indisin orijinal metinde de aynı yeri göstermesine dayanıyor.
+Bunu doğrulayan ayrı bir test var.
+
+Arama yalnızca `durum: yayinda` dersleri kapsıyor — ana sayfa ve seviye
+sayfalarıyla aynı kural. Yani Hat D/E/F/G/H henüz aranamıyor; insan gözden
+geçirmesinden geçtikçe kendiliğinden görünür olacaklar.
+
+### 2. Sözlük (`/sozluk`)
+
+`app/sozluk/page.tsx` — tamamen statik, hat başlıklarına çapa gezinmesi olan
+bir tanım listesi. Veri (`content/sozluk.json`, 72 terim) ve okuyucular
+(`lib/sozluk.ts`) Faz 5'in ilk yarısında hazırdı, eksik olan sayfaydı.
+Ana sayfaya `/ara` ve `/sozluk` bağlantıları eklendi.
+
+Bununla önceki turda not düşülen **sarkan bağlantı kapandı**:
+`h-universite-guvenli-hucre-tasarimi` dersinin "Sonraki" bölümü bu iki
+sayfaya link veriyordu, ikisi de artık var.
+
+### 3. Erişilebilirlik denetimi
+
+Lighthouse (mobil) erişilebilirlik puanı denetlenen her sayfada **100**.
+Bulunan ve düzeltilen gerçek sorunlar:
+
+| Bulgu | Neden ciddi | Düzeltme |
+|---|---|---|
+| **`IkTarget` yalnızca sürükleyerek kullanılabiliyordu** | Klavye kullanıcısı hedefi hiç oynatamıyordu — WCAG 2.1.1 ihlali ve docs/02'nin "her sahnenin klavye alternatifi olmalı" kuralının doğrudan ihlali | Hedefi konumlandıran X/Y kaydırıcıları eklendi; alttaki IK çözümü sürüklemeyle aynı |
+| **`PlannerRace`'te engel koymak yalnızca dokunmayla yapılıyordu** | Aynı sorun; dersin ana etkileşimi (kendi engel düzenini kur) klavyeyle erişilemezdi | X/Y kaydırıcıları + "Bu noktaya engel ekle / kaldır" düğmesi; ikisi de aynı `handlePlaneClick`'e gidiyor |
+| **Vurgu rengi `#0ea5a0` bağlantı metninde 2,88:1 kontrast** | Sitedeki HER ders bağlantısı bu renkteydi; WCAG AA 4,5:1 istiyor (docs/07 "kontrast WCAG AA karşılar") | Vurgu rengi ikiye ayrıldı: `--accent` (dolgu/kenarlık/3D, canlı kalır) ve `--accent-text` (metin, koyulaştırılmış). 19 kullanım yeni token'a geçti |
+| **Soluk metin `ink/60` ≈ 4,2:1** | Yine AA altı, 29 yerde | Hepsi `ink/70`'e çıkarıldı (≈5,9:1) |
+| **`JacobianViz` ve `PlannerRace`'te etiket metni renkle boyanıyordu** | Turuncu/mor metin AA'yı karşılamıyor; ayrıca renk tek başına bilgi taşıyordu | Renk, metinden ayrılıp yanına küçük bir kare olarak konuldu; metin tam kontrastlı ink renginde |
+| **3D canvas ekran okuyucuya boş geliyordu** | docs/02: "her sahnenin metin özeti olmalı" | Sahne kutuları `aria-hidden`, bilgi içeriği `role="status"` taşıyan metin özetlerinde (uç nokta, manipülabilite, eşik üstü hücre sayısı, toplanan nokta sayısı, engel sayısı) |
+| **Klavye odağı bazı zeminlerde kayboluyordu** | docs/07: "outline kaldırılmaz, yeniden tasarlanır" | `app/globals.css`'e tek, tutarlı bir `:focus-visible` halkası |
+| **`favicon.ico` 404** | Konsol hatası, "best practices" puanını düşürüyordu | `app/icon.svg` — docs/07'deki iz çizgisi motifi |
+
+`IkTarget`'ta ayrıca "kırmızı nokta erişim alanının dışında" ifadesi
+renkten bağımsız hale getirildi.
+
+### 4. Performans denetimi — kısmen hedefte
+
+Ölçüm: `npx serve out` + `npx lighthouse --form-factor=mobile` (4× CPU
+kısıtlamalı emülasyon).
+
+| Sayfa | Perf | Erişilebilirlik | FCP | TTI | TBT | CLS |
+|---|---|---|---|---|---|---|
+| Ana sayfa | 98 | 100 | 0,8 sn | 2,4 sn | 120 ms | 0 |
+| `/ara` | 98 | 100 | 0,8 sn | 2,4 sn | 60 ms | 0 |
+| `/sozluk` | 99 | 100 | 0,8 sn | 2,3 sn | 120 ms | 0 |
+| Ders — 3D **yok** (`h-lise-acil-durdurma`) | 98 | 100 | 0,8 sn | 2,4 sn | 100 ms | 0 |
+| Ders — 3D **var** (`b-lise-ileri-kinematik`) | **73** | 100 | 0,8 sn | 4,8 sn | 1300 ms | 0 |
+
+İlk yükleme JS bütçesi (docs/05: < 200 KB gzip):
+
+| Sayfa | Önce | Sonra |
+|---|---|---|
+| Ana sayfa / ara / sözlük / seviye | 184-186 KB | değişmedi (bütçe içinde) |
+| 3D'li ders sayfası | **434 KB** | **197 KB** |
+
+Yapılan üç düzeltme:
+
+1. **3D sahneler `next/dynamic` ile ayrı parçaya alındı** (`ssr: false`).
+   Önceden `three` + `@react-three/fiber` + `drei` doğrudan import ediliyordu
+   ve ders sayfasının İLK paketine giriyordu. Tek başına bu, 434 → 197 KB.
+2. **`SahneAlani` bileşeni** — sahne, görünür alana yaklaşana kadar hiç
+   bağlanmıyor (`IntersectionObserver`, 300 px pay). Ekranda olmayan
+   sahneler artık hiç kurulmuyor. Aynı bileşen sahneyi ekran okuyucudan da
+   gizliyor, iki iş tek yerde.
+3. **Tembel parça tekilleştirildi.** Her sahne kendi dosyasından ayrı ayrı
+   dynamic-import edilince derleyici `three`'yi her parçaya kopyalıyordu —
+   ölçüldü: iki ayrı parçada birebir aynı 900 KB'lık gövde. `scenes.ts` tek
+   giriş noktası yapılıp üç `dynamic()` çağrısı da oraya bağlandı; artık tek
+   bir 236 KB'lık parça var. İki farklı sahne kullanan ders sayfaları bunu
+   iki kez indirip iki kez çalıştırmıyor.
+
+**Açık kalan madde — 3D'li ders sayfaları hedefin altında.** Kök neden
+ölçüldü, tahmin değil: sahne parçasının ÇALIŞTIRILMASI (indirilmesi veya
+ayrıştırılması değil) emüle mobil CPU'da ~1,2 sn ana thread tutuyor
+(`bootup-time`: scripting 1183 ms, parse 108 ms). Bu, three.js'in kendi
+modül başlatması ve WebGL bağlamının kurulmasıdır.
+
+Denenmeyen tek seçenek `drei`'yi tamamen çıkarıp `Grid`/`Line`/`Cylinder`/
+`Sphere` yerine three'nin çıplak ilkellerini kullanmak. **Bilinçli olarak
+yapılmadı:** `drei`'nin `Line`'ı kalınlık verebilen tek yol (WebGL'in kendi
+çizgisi 1 piksel), ve iz çizgisi docs/07'de projenin imza öğesi. Onu
+hairline'a düşürmek ölçülebilir bir puan için görünür bir kalite kaybı
+olurdu. Bu karar bakımcıya ait; cila fazının doğal maddesi.
+
+Not: FCP (0,8 sn) ve CLS (0) hedefleri 3D'li sayfalarda da karşılanıyor —
+sayfa hızlı boyanıyor, kayma yok; sorun yalnızca etkileşime hazır olma
+süresi.
+
+**Yanlış alarm:** `serve` ile yerelde koşarken konsolda RSC `.txt` 404'leri
+görünüyor (`__next.ders.$d$slug.txt`). Dosyalar aslında `out/` altında
+üretilmiş; `serve`, yoldaki `$` karakterini çözemiyor. Vercel'de böyle bir
+sorun yok — yerel statik sunucu artefaktı, kodda düzeltilecek bir şey değil.
+
+### 5. Katkı süreci resmileştirildi
+
+- `CONTRIBUTING.md` — katkı türleri, yerel kurulum, çalıştırılacak
+  kontroller, ders katkısının üç kapısı (kaynak / sayısal doğruluk / insan
+  gözden geçirmesi), kod PR kontrol listesi (`docs/08`'den), dal ve merge
+  kuralı, ilk PR'da CI'nin neden bakımcı onayı istediği.
+- `SECURITY.md` — açık bildirimi GitHub'ın özel danışma kanalından (issue
+  ile DEĞİL), kapsam içi/dışı ayrımı. Kapsam dışı listesi bilinçli olarak
+  gerekçeli: kişisel veri sızıntısı senaryosu yok çünkü **hiç kişisel veri
+  toplanmıyor**. Kapsam içine sıra dışı bir madde eklendi: ders içeriğinde
+  yanlış güvenlik bilgisi de güvenlik bildirimi sayılıyor (Hat H'de
+  yanlış anlatılmış bir standart gerçek dünyada zarar üretebilir).
+- `.github/pull_request_template.md` — tür seçimi, altı kontrol komutu,
+  içerik ve kod için ayrı kontrol listeleri.
+
+### 6. Yapılmayan iki şey — bakımcı kararı bekliyor
+
+- **`LICENSE` dosyası yok.** `docs/06` "MIT veya benzeri açık lisans" diyor
+  ama kesinleştirmiyor. Eğitim içeriği olan bir projede kod (MIT) ile ders
+  metinlerinin (ör. CC BY-SA) farklı lisanslanması yaygın ve sonuçları
+  gerçekten farklı — bu yüzden kendi başıma seçilmedi. `CONTRIBUTING.md`
+  açık kaynak olmaya atıf yapıyor; lisans dosyası eklenene kadar bu eksik.
+- **`README.md` yok.** Katkı süreci resmileşti ama depoya ilk bakan kişi
+  için bir giriş metni hâlâ yok. İstenen listede değildi, kapsam dışı
+  bırakıldı.
+
+### Doğrulama
+
+`npx tsc --noEmit`, `npx eslint .`, `npx vitest run` (**86/86** — arama ile
+10 test eklendi), `npx tsx scripts/check-content.ts` (89 ders),
+`npm run validate-content-graph` (89 ders, döngü/eksik referans yok, 0
+uyarı), `npm run build` (**97 sayfa**) — hepsi temiz.
+
+### Yapılmayan adım — yine `durum: yayinda` işaretlemesi
+
+Hat H'nin 10 dersi `durum: taslak` kalmaya devam ediyor. Güvenlik hattı
+için insan gözden geçirmesi diğer hatlardan daha kritik: Faz 5 ara
+kaydındaki "doğrulanamayanlar" listesindeki her madde standardın kendisi
+alınarak kontrol edilmeli.

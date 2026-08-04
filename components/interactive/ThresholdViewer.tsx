@@ -12,7 +12,7 @@ const THEME = {
     surface: "bg-lise-surface",
     bg: "bg-lise-bg",
     ink: "text-lise-ink",
-    inkMuted: "text-lise-ink/60",
+    inkMuted: "text-lise-ink/70",
     accent: "bg-lise-accent",
   },
   universite: {
@@ -20,7 +20,7 @@ const THEME = {
     surface: "bg-universite-surface",
     bg: "bg-universite-bg",
     ink: "text-universite-ink",
-    inkMuted: "text-universite-ink/60",
+    inkMuted: "text-universite-ink/70",
     accent: "bg-universite-accent",
   },
 } as const;
@@ -66,7 +66,9 @@ export function ThresholdViewer({ theme = "lise" }: ThresholdViewerProps) {
 
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
+      {/* Salt görsel ızgara; bilgi içeriği aşağıdaki sayısal özette metin olarak var. */}
       <div
+        aria-hidden="true"
         className={`grid w-fit gap-0.5 rounded-lg ${t.bg} p-2`}
         style={{ gridTemplateColumns: `repeat(${COLS}, ${CELL_PX}px)` }}
       >
@@ -96,7 +98,9 @@ export function ThresholdViewer({ theme = "lise" }: ThresholdViewerProps) {
         />
       </label>
 
-      <div className={`text-sm ${t.ink}`}>Eşiğin üstünde kalan hücre sayısı: {detectedCount}</div>
+      <div role="status" className={`text-sm ${t.ink}`}>
+        Eşiğin üstünde kalan hücre sayısı: {detectedCount} / {ROWS * COLS}
+      </div>
     </div>
   );
 }

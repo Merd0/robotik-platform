@@ -26,7 +26,7 @@ export default async function SeviyePage({ params }: SeviyePageProps) {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
-      <p className="text-sm uppercase tracking-wide text-ortaokul-accent">Seviye</p>
+      <p className="text-sm uppercase tracking-wide text-ortaokul-accent-text">Seviye</p>
       <h1 className="mt-2 text-3xl font-semibold text-ortaokul-ink">{SEVIYE_ETIKET[level]}</h1>
 
       <ul className="mt-8 flex flex-col gap-3">
@@ -35,7 +35,7 @@ export default async function SeviyePage({ params }: SeviyePageProps) {
             key={lesson.slug}
             className="flex items-center justify-between gap-2 rounded-lg border border-ortaokul-ink/10 p-4"
           >
-            <Link href={`/ders/${lesson.slug}`} className="text-ortaokul-accent underline">
+            <Link href={`/ders/${lesson.slug}`} className="text-ortaokul-accent-text underline">
               {lesson.frontmatter.baslik}
             </Link>
             <LessonProgressBadge slug={lesson.slug} />
@@ -44,7 +44,7 @@ export default async function SeviyePage({ params }: SeviyePageProps) {
       </ul>
 
       {lessons.length === 0 && (
-        <p className="mt-8 text-ortaokul-ink/60">
+        <p className="mt-8 text-ortaokul-ink/70">
           Bu seviyede henüz yayınlanmış ders yok — içerik hazırlanıyor.
         </p>
       )}

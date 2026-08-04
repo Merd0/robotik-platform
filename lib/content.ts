@@ -14,6 +14,23 @@ export const SEVIYE_ETIKET: Record<Seviye, string> = {
   universite: "Üniversite",
 };
 
+/** Konu hattı klasör adı → görünen ad. Yeni hat eklenirse buraya bir satır eklenir. */
+export const HAT_ETIKET: Record<string, string> = {
+  "a-temeller": "Temeller",
+  "b-kinematik": "Hareket ve kinematik",
+  "c-planlama": "Yol planlama",
+  "d-programlama": "Robot programlama dilleri",
+  "e-haberlesme": "Haberleşme ve entegrasyon",
+  "f-algilama": "Algılama: sensör ve görü",
+  "g-simulasyon": "Simülasyon ve dijital ikiz",
+  "h-guvenlik": "Güvenlik ve endüstriyel gerçeklik",
+};
+
+/** Etiketi bilinmeyen hat için klasör adını olduğu gibi döndürür. */
+export function hatEtiket(hat: string): string {
+  return HAT_ETIKET[hat] ?? hat;
+}
+
 export interface DersFrontmatter {
   id: string;
   baslik: string;

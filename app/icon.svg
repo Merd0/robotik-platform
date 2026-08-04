@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Robotik Öğrenme Platformu">
+  <!--
+    docs/07'deki imza öğesi: uç noktanın geçtiği "iz çizgisi" + iki eklem.
+    Next App Router bu dosyayı otomatik olarak favicon'a çevirir (app/icon.svg).
+  -->
+  <rect width="32" height="32" rx="7" fill="#16231f"/>
+  <path d="M5 24 C 11 24, 13 8, 27 8" fill="none" stroke="#0ea5a0" stroke-width="2.2"
+        stroke-linecap="round" opacity="0.55"/>
+  <circle cx="5" cy="24" r="3" fill="#0ea5a0"/>
+  <circle cx="27" cy="8" r="3" fill="#0ea5a0"/>
+</svg>

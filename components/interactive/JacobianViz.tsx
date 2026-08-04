@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Line } from "@react-three/drei";
-import { RobotArm } from "@/components/scene/RobotArm";
+import { JacobianScene, SahneAlani } from "@/components/scene/LazyScene";
 import {
   computeJacobian,
   forwardKinematics,
@@ -21,33 +20,6 @@ const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 const round = (value: number) => Math.round(value * 1000) / 1000;
 
 const JOINT_COLORS = ["#0ea5a0", "#f97316"];
-const VECTOR_SCALE = 0.35;
-const ELLIPSE_SAMPLES = 48;
-
-function addScaled(base: Vec3, direction: Vec3, scale: number): [number, number, number] {
-  return [base.x + direction.x * scale, base.y + direction.y * scale, base.z + direction.z * scale];
-}
-
-/**
- * İki eklemli kol için manipülabilite elipsi: birim eklem hızı dairesi
- * Jacobian ile uç hız uzayına taşınınca bir elipse dönüşür. Sadece 2 eklemli
- * robotlar için doğru — daha fazla eklemde n-küre örneklemesi gerekir.
- */
-function ellipsePoints(columns: Vec3[], center: Vec3): [number, number, number][] {
-  const points: [number, number, number][] = [];
-  for (let i = 0; i <= ELLIPSE_SAMPLES; i++) {
-    const angle = (i / ELLIPSE_SAMPLES) * Math.PI * 2;
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    const velocity: Vec3 = {
-      x: columns[0].x * cos + columns[1].x * sin,
-      y: columns[0].y * cos + columns[1].y * sin,
-      z: 0,
-    };
-    points.push(addScaled(center, velocity, VECTOR_SCALE));
-  }
-  return points;
-}
 
 /** Ders içine gömülen etkileşimli sahne: Jacobian sütunlarını ve manipülabilite elipsini görselleştirir. */
 export function JacobianViz({ robot: robotId }: JacobianVizProps) {
@@ -71,27 +43,31 @@ export function JacobianViz({ robot: robotId }: JacobianVizProps) {
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-universite-ink/10 bg-universite-surface p-4">
-      <div className="aspect-square w-full overflow-hidden rounded-lg bg-universite-bg sm:aspect-video">
-        <RobotArm robot={robot} jointAngles={jointAngles}>
-          {columns.map((column, index) => (
-            <Line
-              key={index}
-              points={[
-                [endEffector.x, endEffector.y, endEffector.z],
-                addScaled(endEffector, column, VECTOR_SCALE),
-              ]}
-              color={JOINT_COLORS[index % JOINT_COLORS.length]}
-              lineWidth={3}
-            />
-          ))}
-          <Line points={ellipsePoints(columns, endEffector)} color="#64748b" lineWidth={1.5} />
-        </RobotArm>
-      </div>
+      <SahneAlani className="aspect-square w-full overflow-hidden rounded-lg bg-universite-bg sm:aspect-video">
+        <JacobianScene
+          robot={robot}
+          jointAngles={jointAngles}
+          endEffector={endEffector}
+          columns={columns}
+          jointColors={JOINT_COLORS}
+        />
+      </SahneAlani>
 
       <div className="flex flex-col gap-3">
         {robot.joints.map((joint, index) => (
           <label key={index} className="flex flex-col gap-1 text-sm">
-            <span style={{ color: JOINT_COLORS[index % JOINT_COLORS.length] }}>
+            {/*
+              Renk, etiketi boyamak yerine ayrı bir kare olarak veriliyor:
+              sahnedeki çizgiyle eşleşmeyi korur ama metnin kendisi tam
+              kontrastlı ink renginde kalır (docs/07: kontrast WCAG AA, renk
+              tek başına bilgi taşımaz — sayı ve "Eklem n" metni zaten var).
+            */}
+            <span className="flex items-center gap-2 text-universite-ink">
+              <span
+                aria-hidden="true"
+                className="inline-block size-3 shrink-0 rounded-sm"
+                style={{ backgroundColor: JOINT_COLORS[index % JOINT_COLORS.length] }}
+              />
               Eklem {index + 1} hızı yönü: {round(toDegrees(jointAngles[index]))}°
             </span>
             <input
@@ -107,7 +83,7 @@ export function JacobianViz({ robot: robotId }: JacobianVizProps) {
       </div>
 
       <div className="flex items-center justify-between text-sm">
-        <span>Manipülabilite: {manipulability.toExponential(3)}</span>
+        <span role="status">Manipülabilite: {manipulability.toExponential(3)}</span>
         <button
           type="button"
           onClick={handleReset}
@@ -123,7 +99,7 @@ export function JacobianViz({ robot: robotId }: JacobianVizProps) {
           bazı yönlerde hızlanamaz — Jacobian bu yönde tersinemez hale gelir.
         </p>
       )}
-      <p className="text-xs text-universite-ink/60">
+      <p className="text-xs text-universite-ink/70">
         Renkli çizgiler: her eklemin birim hızının uç noktada ürettiği hız yönü (Jacobian
         sütunları). Gri elips: tüm birim eklem hızı kombinasyonlarının süpürdüğü uç hız alanı
         (manipülabilite elipsi) — elips daralıp çizgiye dönüştüğünde tekillik yaklaşıyor demektir.
