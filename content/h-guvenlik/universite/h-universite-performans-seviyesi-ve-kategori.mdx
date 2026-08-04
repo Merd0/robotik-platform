@@ -1,0 +1,160 @@
+---
+id: h-universite-performans-seviyesi-ve-kategori
+baslik: Performans seviyesi (PL) ve kategori ne demek
+hat: h-guvenlik
+seviye: universite
+sure: 20
+sira: 3
+onkosul:
+  - h-universite-risk-degerlendirmesi
+kazanimlar:
+  - "Performans seviyesi (PL) ile kategorinin (Category) farklı şeyleri ölçtüğünü açıklayabilme"
+  - "Bir güvenlik fonksiyonu için gerekli performans seviyesinin (PLr) risk değerlendirmesinden türetildiğini açıklayabilme"
+  - "ISO 10218'in 2011 baskısındaki blok PL d şartının 2025 revizyonunda neden fonksiyon bazlı belirlemeye dönüştüğünü özetleyebilme"
+kaynaklar:
+  - "ISO 13849-1, Safety of machinery — Safety-related parts of control systems — Part 1: General principles for design"
+  - "ISO 10218-1:2025, Robotics — Safety requirements — Part 1: Industrial robots (ISO kataloğu kaydı: iso.org/standard/73933.html)"
+  - "ISO 10218-2:2025, Robotics — Safety requirements — Part 2: Industrial robot applications and robot cells (ISO kataloğu kaydı: iso.org/standard/73934.html)"
+  - "IEC 62061, Safety of machinery — Functional safety of safety-related control systems (SIL kavramı)"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli: []
+durum: taslak
+---
+
+## Kanca
+
+Robot güvenliği alanında yıllarca tek bir cümle dolaştı: "güvenlik
+fonksiyonları PL d, Kategori 3 olmalı." Bu cümle bir dönem pratikte
+işe yarayan bir kestirme yoldu. 2025'te yayımlanan ISO 10218
+baskılarıyla birlikte artık bir kestirme yol olarak da kullanılamıyor.
+
+## Ne oldu
+
+İki ayrı kavramı ayırmakla başlayalım — sık karıştırılırlar çünkü
+genelde yan yana yazılırlar.
+
+**Performans seviyesi (Performance Level, PL)** bir güvenlik
+fonksiyonunun ne kadar güvenilir olduğunu ifade eder. ISO 13849-1'de
+`a`'dan `e`'ye beş kademe vardır; `a` en düşük, `e` en yüksek
+güvenilirliktir. Bu bir olasılık ölçüsüdür: fonksiyonun tehlikeli
+şekilde arızalanma ihtimaliyle ilgilidir.
+
+**Kategori (Category)** ise fonksiyonun **mimarisini** tanımlar:
+devrenin nasıl kurulduğunu, tek bir arızanın fonksiyonu ortadan
+kaldırıp kaldırmadığını, arızanın tespit edilip edilemediğini.
+ISO 13849-1'de B, 1, 2, 3 ve 4 kategorileri vardır. Kabaca: daha yüksek
+kategoriler, tek bir bileşen arızasının koruma fonksiyonunu sessizce
+yok etmesini engelleyecek yapıları (yedeklilik, karşılıklı izleme)
+gerektirir.
+
+İkisi bağımsız değildir — mimari, ulaşılabilecek performans seviyesini
+sınırlar — ama aynı şeyi ölçmezler. "Kategori 3" bir yapıyı, "PL d" bir
+güvenilirlik hedefini anlatır.
+
+### Gerekli performans seviyesi (PLr) nereden gelir
+
+Sıralama şöyledir: önce risk değerlendirmesi yapılır, oradan her
+güvenlik fonksiyonu için bir **gerekli performans seviyesi (PLr)**
+türetilir, sonra o fonksiyon PLr'yi karşılayacak şekilde tasarlanır ve
+ulaşılan PL doğrulanır.
+
+ISO 13849-1 bu türetme için risk parametrelerine dayanan bir yöntem
+verir: zararın ciddiyeti, tehlikeye maruz kalma sıklığı/süresi ve
+zarardan kaçınma imkânı. Yani PLr bir tercih değil, riskin sonucudur.
+
+### 2011'den 2025'e: blok şarttan fonksiyon bazlı belirlemeye
+
+ISO 10218'in 2011 baskıları döneminde yaygın uygulama, robot
+güvenliğiyle ilgili kontrol fonksiyonları için topluca PL d ve
+Kategori 3 istemekti. Bu, uygulaması kolay ama kaba bir kuraldı:
+riski çok farklı olan iki fonksiyona aynı şartı koyuyordu.
+
+2025 baskılarında bu blok şart büyük ölçüde terk edildi. Yerine gelen
+yaklaşım, **her güvenlik fonksiyonu için ayrı ayrı, o fonksiyonun kendi
+riskine göre bir seviye belirlemek.** Bunun iki pratik sonucu var:
+
+- Bazı fonksiyonlar için gereken seviye eskisinden **düşük** olabilir.
+  Erişebildiğimiz ikincil kaynaklara göre acil durdurma fonksiyonu için
+  belirtilen asgari seviye PL d değil, ondan bir kademe aşağıdadır.
+- Bazı fonksiyonlar için PL d (veya IEC 62061 karşılığıyla SIL 2)
+  seviyesinde bir gereksinim korunmuştur.
+
+Buradaki asıl değişim sayılarda değil, **yöntemde**: artık "standart
+böyle diyor" diyerek tek bir seviyeyi her yere uygulamak yerine, her
+fonksiyon için gerekçelendirilmiş bir belirleme yapmak ve bunu
+belgelemek gerekiyor.
+
+> **Doğrulama notu — bu ders için özellikle önemli.**
+> ISO 13849-1, ISO 10218-1:2025 ve ISO 10218-2:2025 metinleri ücretli
+> erişim arkasındadır ve platform hazırlanırken **birincil metinlere
+> ulaşılamadı.** Bu yüzden bu derste bilinçli olarak:
+> - Hiçbir PL için sayısal arıza olasılığı aralığı verilmedi.
+> - 2025 baskılarındaki fonksiyon–seviye tablosu aktarılmadı; hangi
+>   fonksiyonun hangi seviyeyi gerektirdiği tek tek yazılmadı.
+> - Acil durdurmaya ilişkin ifade "bir kademe aşağıda" diye genel
+>   bırakıldı; kesin değer ikincil kaynaklara dayandığı için iddia
+>   edilmedi.
+>
+> Bir projede bu değerlere ihtiyaç varsa standardın kendisi alınmalı ve
+> tablolar oradan okunmalıdır. Bu dersteki anlatım kavramsaldır;
+> tasarım girdisi olarak kullanılamaz.
+
+## Gerçek dünyada
+
+Pratikte bu hesap elle yapılmaz. ISO 13849-1'e göre PL doğrulaması,
+bileşenlerin arıza verilerini (üreticinin verdiği güvenilirlik
+değerleri), teşhis kapsamını ve ortak sebepli arızalara karşı alınan
+önlemleri birlikte değerlendirmeyi gerektirir. Bunun için yaygın olarak
+kullanılan hesap araçları vardır ve üreticiler kendi güvenlik
+bileşenleri için gerekli verileri yayımlar.
+
+Bir mühendis olarak senin işin genelde şu: doğru fonksiyonu tanımlamak,
+riskten doğru PLr'yi türetmek ve seçtiğin bileşenlerin bunu
+karşıladığını belgelemek.
+
+> **Uyarı.** Fonksiyonel güvenlik tasarımı ve doğrulaması, eğitimli
+> personel ve resmi bir süreç gerektirir. Bu ders bir giriş metnidir.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "PL ile kategori arasındaki fark nedir?",
+      secenekler: [
+        "İkisi de aynı şeyi ölçer, farklı standartların adlandırmasıdır",
+        "PL güvenilirliği (arızalanma ihtimalini), kategori ise devrenin mimarisini tanımlar",
+        "PL Avrupa'da, kategori Amerika'da kullanılır",
+      ],
+      dogru: 1,
+      aciklama: "Kategori yapıyı (yedeklilik, arıza tespiti), PL ise ulaşılan güvenilirlik hedefini anlatır. Mimari, ulaşılabilecek PL'yi sınırlar ama ikisi aynı şey değildir.",
+    },
+    {
+      soru: "Bir güvenlik fonksiyonunun gerekli performans seviyesi (PLr) nereden gelir?",
+      secenekler: [
+        "Bileşen üreticisinin kataloğundan",
+        "Risk değerlendirmesinden — ciddiyet, maruz kalma ve kaçınma imkânından türetilir",
+        "Müşterinin talebinden",
+      ],
+      dogru: 1,
+      aciklama: "Sıra risk değerlendirmesi → PLr → tasarım → doğrulama şeklindedir. PLr bir tercih değil, riskin sonucudur.",
+    },
+    {
+      soru: "ISO 10218'in 2025 baskılarındaki en önemli yöntem değişikliği nedir?",
+      secenekler: [
+        "Tüm güvenlik fonksiyonları için seviye şartı kaldırıldı",
+        "Topluca uygulanan tek bir seviye şartı yerine, her fonksiyon için riskine göre ayrı belirleme geldi",
+        "Performans seviyesi yerine yalnızca SIL kullanılmaya başlandı",
+      ],
+      dogru: 1,
+      aciklama: "Şart kalkmadı; kabalığı kalktı. Artık her fonksiyon için gerekçelendirilmiş ve belgelenmiş bir belirleme yapılıyor.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Şimdiye kadar robotu insandan ayırmayı veya durdurmayı konuştuk. Peki
+temas kaçınılmazsa? Sıradaki ders, temasa izin veren tek yaklaşımı ele
+alıyor.

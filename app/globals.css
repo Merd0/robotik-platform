@@ -16,6 +16,16 @@
   --color-universite-accent: #1e293b;
   --color-universite-ink: #0f172a;
 
+  /*
+   * Durum renkleri — Hat H (güvenlik) sahnelerinde bölge/durum göstergesi.
+   * Seviye paletinden bağımsızdır çünkü anlamları seviyeye göre değişmez.
+   * docs/07: renk tek başına bilgi taşımaz — bu renkler her zaman bir
+   * ikon/metin etiketiyle birlikte kullanılır.
+   */
+  --color-durum-dur: #b91c1c;
+  --color-durum-uyari: #b45309;
+  --color-durum-serbest: #15803d;
+
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;

@@ -1,0 +1,126 @@
+---
+id: h-lise-acil-durdurma-ve-guvenli-bolge
+baslik: Acil durdurma, hız sınırlama ve güvenli bölge
+hat: h-guvenlik
+seviye: lise
+sure: 15
+sira: 2
+onkosul:
+  - h-lise-kafesli-robot-ve-kobot
+kazanimlar:
+  - Acil durdurma ile koruyucu durdurma (protective stop) arasındaki amaç farkını açıklayabilme
+  - Güvenli bölge kavramını, uyarı bölgesi ve durdurma bölgesi ayrımıyla birlikte tanımlayabilme
+  - Bir güvenlik fonksiyonunun neden kendi arızasını da hesaba katmak zorunda olduğunu açıklayabilme
+kaynaklar:
+  - "ISO 13850:2015, Safety of machinery — Emergency stop function — Principles for design"
+  - "ISO 10218-2:2025, Robotics — Safety requirements — Part 2: Industrial robot applications and robot cells — koruyucu durdurma ve güvenlikle ilgili durdurma fonksiyonları"
+  - "IEC 60204-1, Safety of machinery — Electrical equipment of machines — Part 1: General requirements — durdurma kategorileri 0, 1 ve 2"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SafetyZone
+durum: taslak
+---
+
+## Kanca
+
+Bir robot hücresinde günde yüzlerce kez robot durur, ama acil durdurma
+düğmesine yıllarca hiç basılmaz. İkisi de "durdurma" ama aynı şey
+değiller — biri işin normal parçası, diğeri işin bozulduğunun işareti.
+
+<SafetyZone mode="mesafe" robotSpeed={1200} theme="lise" />
+
+## Ne oldu
+
+**Koruyucu durdurma (protective stop)** günlük çalışmanın bir
+parçasıdır. Bir sensör insanı algılar, kapı açılır ya da bir ışık
+perdesi kesilir; robot durur, sebep ortadan kalkınca tekrar devam eder.
+Yukarıdaki sahnede mesafe daralınca robotun durması bunun örneği.
+
+**Acil durdurma (emergency stop)** ise bir istisnadır. İnsan tarafından
+elle tetiklenir, sistemin geri kalanından bağımsız çalışır ve kendisi
+serbest bırakılana kadar kilitli kalır. ISO 13850 bu fonksiyonun
+tasarım ilkelerini tanımlar. Acil durdurmanın diğer koruma
+önlemlerinin yerine geçmediğini bilmek önemli: o, her şey yolunda
+gitmediğinde kalan son müdahaledir, birincil koruma değildir.
+
+### Güvenli bölge: iki katman
+
+Yukarıdaki sahnede iki ayrı bant var. Dıştaki **uyarı bölgesi**: insan
+buraya girince robot yavaşlar ama çalışmaya devam eder. İçteki
+**durdurma bölgesi**: buraya girildiğinde robot durur.
+
+İki katmanın olması bir konfor tercihi değil, bir zorunluluk. Robot
+anında duramaz — durma kararı verildikten sonra fiilen durana kadar bir
+mesafe alır. Durdurma bölgesi, tam olarak bu mesafeyi karşılayacak
+kadar geniş olmalıdır. Sahnedeki kaydırıcıyı oynatıp gerekli mesafenin
+robot hızıyla birlikte nasıl büyüdüğünü görebilirsin.
+
+### Güvenlik fonksiyonu kendi arızasını da düşünmek zorundadır
+
+Sıradan bir sensör bozulduğunda genelde "çalışmaz" hale gelir ve bu fark
+edilir. Bir güvenlik sensörü bozulduğunda ise ortaya çok daha kötü bir
+ihtimal çıkar: **bozulduğu halde "her şey yolunda" demeye devam etmek.**
+
+Bu yüzden güvenlikle ilgili devreler sıradan devrelerden farklı
+tasarlanır — tek bir arıza, koruma fonksiyonunu sessizce ortadan
+kaldırmamalıdır. Bunun nasıl ölçüldüğü ve hangi seviyelerin gerektiği
+üniversite seviyesindeki derslerin konusu.
+
+## Gerçek dünyada
+
+IEC 60204-1 üç durdurma kategorisi tanımlar. Kategori 0, enerjiyi anında
+keserek durdurmadır — en hızlısıdır ama robot serbest kalacağı için
+taşıdığı yükü düşürebilir. Kategori 1 önce kontrollü şekilde yavaşlatıp
+sonra enerjiyi keser. Kategori 2 ise kontrollü durdurmadır, enerji kesilmez.
+
+Hangisinin kullanılacağı duruma bağlıdır: dikey eksende ağır yük taşıyan
+bir robotta enerjiyi anında kesmek yükün düşmesine yol açabileceği için
+her zaman en güvenli seçenek değildir.
+
+> **Uyarı.** Bu ders bir eğitim materyalidir. Gerçek bir robot
+> hücresindeki güvenlik fonksiyonlarının tasarımı ve doğrulanması,
+> eğitimli personel ve resmi bir risk değerlendirmesi gerektirir.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir ışık perdesi kesildiğinde robotun durması hangi durdurma türüdür?",
+      secenekler: [
+        "Acil durdurma",
+        "Koruyucu durdurma",
+        "Bakım durdurması",
+      ],
+      dogru: 1,
+      aciklama: "Koruyucu durdurma, normal çalışmanın bir parçasıdır: sebep ortadan kalkınca üretim devam eder. Acil durdurma elle tetiklenen bir istisnadır.",
+    },
+    {
+      soru: "Durdurma bölgesi neden robotun tam ulaşabildiği mesafeden daha geniş olmak zorundadır?",
+      secenekler: [
+        "Sensörler pahalı olduğu için",
+        "Robot durma kararı verildikten sonra fiilen durana kadar bir mesafe daha aldığı için",
+        "Standartlar keyfi bir güvenlik payı istediği için",
+      ],
+      dogru: 1,
+      aciklama: "Robot anında duramaz. Bölge, algılama ve frenleme boyunca alınan yolu da kapsayacak kadar geniş olmalıdır.",
+    },
+    {
+      soru: "Bir güvenlik sensörünün arızasında en tehlikeli senaryo hangisidir?",
+      secenekler: [
+        "Sensörün tamamen çalışmayı bırakması ve bunun fark edilmesi",
+        "Sensörün bozulduğu halde 'ortam güvenli' demeye devam etmesi",
+        "Sensörün gereğinden sık alarm vermesi",
+      ],
+      dogru: 1,
+      aciklama: "Fark edilen bir arıza durdurulabilir. Asıl tehlike, korumanın sessizce ortadan kalkması ve kimsenin bunu bilmemesidir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bir üst seviye, bu kavramların arkasındaki standartlara giriyor:
+[ISO 10218 ve ISO/TS 15066 ne
+söyler](/ders/h-universite-iso-10218-ve-ts-15066).

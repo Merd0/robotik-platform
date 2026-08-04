@@ -1,0 +1,157 @@
+---
+id: h-universite-guc-ve-kuvvet-sinirlama
+baslik: Güç ve kuvvet sınırlama (power and force limiting)
+hat: h-guvenlik
+seviye: universite
+sure: 18
+sira: 4
+onkosul:
+  - h-universite-iso-10218-ve-ts-15066
+kazanimlar:
+  - "Güç ve kuvvet sınırlamanın diğer işbirlikçi çalışma biçimlerinden farkını (temasa izin vermesi) açıklayabilme"
+  - "Geçici (transient) ve yarı-statik (quasi-static) temas ayrımının neden yapıldığını açıklayabilme"
+  - "Biyomekanik sınırların vücut bölgesine göre değiştiğini ve bunun tasarıma etkisini yorumlayabilme"
+kaynaklar:
+  - "ISO/TS 15066:2016, Robots and robotic devices — Collaborative robots — biyomekanik sınırlar ve işbirlikçi çalışma biçimleri"
+  - "ISO 10218-2:2025, Robotics — Safety requirements — Part 2: Industrial robot applications and robot cells — işbirlikçi uygulamalara ilişkin gereksinimler"
+  - "ISO 10218-1:2025, Robotics — Safety requirements — Part 1: Industrial robots"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli: []
+durum: taslak
+---
+
+## Kanca
+
+İşbirlikçi çalışma biçimlerinin üçü aynı hedefe hizmet eder: robot ile
+insan asla temas etmesin. Güç ve kuvvet sınırlama bunlardan ayrılır —
+temasın olabileceğini kabul eder ve soruyu değiştirir: temas olursa
+yaralanma olmayacak mı?
+
+## Ne oldu
+
+ISO/TS 15066, işbirlikçi çalışma için dört biçim tanımladı:
+
+1. **Güvenlik dereceli izlemeli duruş** — insan alana girdiğinde robot
+   durur, enerjisi kesilmeden bekler.
+2. **Elle kılavuzlama (hand guiding)** — operatör robotu bir kumanda
+   aracılığıyla elle hareket ettirir.
+3. **Hız ve mesafe izleme** — robot ile insan arasında bir ayrım
+   mesafesi korunur; mesafe daraldıkça robot yavaşlar veya durur.
+4. **Güç ve kuvvet sınırlama** — temas mümkündür, ancak temasta ortaya
+   çıkan kuvvet ve basınç sınırlandırılmıştır.
+
+İlk üçünde amaç temasın önlenmesidir. Dördüncüsü farklı bir kabul
+üzerine kuruludur: temas olabilir, önemli olan temasın **zararsız
+kalması**.
+
+### Geçici ve yarı-statik temas
+
+Bu ayrım, yaklaşımın merkezindedir çünkü aynı kuvvet iki durumda çok
+farklı sonuç doğurur.
+
+**Geçici (transient) temas**, robotun insana çarpıp insanın serbestçe
+geri çekilebildiği durumdur — darbe kısa sürer, vücut hareket ederek
+enerjiyi dağıtır.
+
+**Yarı-statik (quasi-static) temas**, insanın robot ile başka bir yüzey
+(tezgâh, duvar, başka bir makine) arasında **sıkıştığı** durumdur.
+Burada geri çekilme imkânı yoktur; kuvvet uygulanmaya devam eder.
+
+Aynı temas kuvveti, sıkışma durumunda çok daha ciddi bir yaralanmaya yol
+açar. Bu yüzden yarı-statik durum için izin verilen sınırlar geçici
+duruma göre daha düşüktür — ve hücre tasarımında sıkışma noktalarını
+ortadan kaldırmak, kuvveti düşürmekten daha etkilidir.
+
+### Sınırlar vücut bölgesine göre değişir
+
+Tek bir "güvenli kuvvet" değeri yoktur. ISO/TS 15066, insan vücudunu
+bölgelere ayırır ve her bölge için ayrı kuvvet ve basınç sınırları
+tanımlar. Sezgisel olarak beklenen sıralama geçerlidir: yüz ve boyun
+gibi bölgeler için sınırlar, el ve kol gibi bölgelere göre belirgin
+şekilde daha düşüktür.
+
+Bunun tasarıma doğrudan etkisi var: bir uygulamanın işbirlikçi
+sayılabilmesi, temasın hangi vücut bölgesiyle olabileceğine bağlıdır.
+Robotun çalışma yüksekliğini baş hizasının altında tutmak, tek başına
+bir güvenlik önlemidir.
+
+Kuvvetin yanında **basınç** da sınırlanır — ve bu ikisi bağımsız
+değildir. Aynı kuvvet, küçük bir temas alanına uygulandığında çok daha
+yüksek basınç yaratır. Bu yüzden işbirlikçi uygulamalarda uçtaki
+aletin geometrisi belirleyicidir: keskin köşeler ve sivri uçlar,
+kuvvet sınırının altında kalsa bile basınç sınırını aşabilir.
+
+> **Doğrulama notu.** ISO/TS 15066:2016 ve ISO 10218 metinlerine
+> erişilemedi (ücretli erişim). Bu derste **hiçbir sayısal kuvvet veya
+> basınç sınır değeri verilmedi** — vücut bölgesi sayısı, bölge başına
+> newton veya newton/cm² değerleri ve yay sabitleri bilinçli olarak
+> yazılmadı, çünkü birincil metinle doğrulanamadı. Anlatılan yapı
+> (geçici/yarı-statik ayrımı, bölgeye göre değişen sınırlar, kuvvet ve
+> basıncın ayrı sınırlanması) ikincil kaynaklarla tutarlıdır; **sayılar
+> için standardın kendisi alınmalıdır.**
+>
+> Ayrıca not: 2025 revizyonuyla bu içerik ISO 10218 serisine taşınmıştır
+> (bkz. [ISO 10218 ve ISO/TS
+> 15066](/ders/h-universite-iso-10218-ve-ts-15066)); değerlerin hangi
+> belgede güncel olarak yer aldığı kontrol edilmelidir.
+
+## Gerçek dünyada
+
+Güç ve kuvvet sınırlama, robotun yavaş olmasıyla değil, temas anındaki
+davranışıyla ilgilidir. Bunu sağlayan robotlarda tipik olarak eklem
+torku izlenir veya ölçülür; beklenmedik bir direnç algılandığında robot
+durur ya da geri çeker. Yüzeyler yuvarlatılır, sıkışma noktaları
+kapatılır, uçtaki alet yumuşak malzemeyle kaplanır.
+
+Bir uygulamanın bu sınırları gerçekten karşıladığı, tasarımla
+varsayılmaz — ölçülerek doğrulanır. Bunun için kuvvet ve basınç ölçen
+özel ölçüm düzenekleri kullanılır ve ölçüm, hücrenin kendi
+konfigürasyonunda yapılır.
+
+> **Uyarı.** Bir uygulamanın işbirlikçi olarak çalıştırılabilmesi resmi
+> risk değerlendirmesi ve doğrulama ölçümü gerektirir. Bu ders kavramsal
+> bir girişdir.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Güç ve kuvvet sınırlamayı diğer üç işbirlikçi çalışma biçiminden ayıran temel varsayım nedir?",
+      secenekler: [
+        "Robotun çok daha yavaş olması",
+        "Temasın olabileceğini kabul edip temasın zararsız kalmasını hedeflemesi",
+        "Sensör gerektirmemesi",
+      ],
+      dogru: 1,
+      aciklama: "Diğer üçü temasın önlenmesine dayanır. Güç ve kuvvet sınırlama temasa izin verir, ama sonucunu sınırlar.",
+    },
+    {
+      soru: "Aynı kuvvet neden yarı-statik (sıkışma) temasta daha tehlikelidir?",
+      secenekler: [
+        "Sıkışmada robot daha hızlı hareket eder",
+        "İnsan geri çekilemez, kuvvet uygulanmaya devam eder ve enerji dağılamaz",
+        "Sıkışma her zaman baş bölgesinde olur",
+      ],
+      dogru: 1,
+      aciklama: "Geçici temasta vücut hareket ederek enerjiyi dağıtır. Sıkışmada bu imkân yoktur; bu yüzden yarı-statik sınırlar daha düşüktür.",
+    },
+    {
+      soru: "Bir uygulama kuvvet sınırının altında kalıyor ama uçtaki alet sivri uçlu. Sorun ne olabilir?",
+      secenekler: [
+        "Sorun yok, kuvvet sınırı sağlanıyorsa yeterlidir",
+        "Küçük temas alanı nedeniyle basınç sınırı aşılabilir",
+        "Sivri uçlar kuvveti otomatik olarak azaltır",
+      ],
+      dogru: 1,
+      aciklama: "Kuvvet ve basınç ayrı ayrı sınırlanır. Aynı kuvvet, küçük bir alana uygulandığında basınç sınırını aşabilir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Temasa izin vermeyen yaklaşımların en yaygını hız ve mesafe izleme.
+Sıradaki ders, gerekli ayrım mesafesinin neden sabit bir sayı
+olmadığını ele alıyor.

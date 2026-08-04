@@ -1,0 +1,145 @@
+---
+id: h-universite-iso-10218-ve-ts-15066
+baslik: ISO 10218 ve ISO/TS 15066 ne söyler
+hat: h-guvenlik
+seviye: universite
+sure: 18
+sira: 1
+onkosul:
+  - h-lise-acil-durdurma-ve-guvenli-bolge
+kazanimlar:
+  - "ISO 10218-1 ile ISO 10218-2'nin farklı muhatapları (üretici / entegratör) olduğunu açıklayabilme"
+  - "ISO/TS 15066'nın rolünü ve 2025 revizyonuyla içeriğinin nereye taşındığını özetleyebilme"
+  - "Bir standardın 'uyumlaştırılmış' olmasının pratikte ne anlama geldiğini açıklayabilme"
+kaynaklar:
+  - "ISO 10218-1:2025, Robotics — Safety requirements — Part 1: Industrial robots (ISO kataloğu kaydı: iso.org/standard/73933.html)"
+  - "ISO 10218-2:2025, Robotics — Safety requirements — Part 2: Industrial robot applications and robot cells (ISO kataloğu kaydı: iso.org/standard/73934.html)"
+  - "ISO/TS 15066:2016, Robots and robotic devices — Collaborative robots"
+  - "ISO 12100:2010, Safety of machinery — General principles for design — Risk assessment and risk reduction"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli: []
+durum: taslak
+---
+
+## Kanca
+
+Bu ders, robot güvenliğinin standart tarafını ele alıyor — ve bir
+uyarıyla başlıyor: alandaki en yaygın kaynakların çoğu artık güncel
+değil. ISO 10218 serisi 2011'den beri değişmemişti; 2025'te ikisi de
+yeniden yayımlandı ve bazı yerleşik bilgiler geçerliliğini yitirdi.
+
+## Ne oldu
+
+Robot güvenliği tek bir standartta değil, iç içe geçmiş birkaç belgede
+tanımlanır.
+
+**ISO 12100** en üstte durur ve robota özgü değildir: her makine için
+risk değerlendirmesinin ve risk azaltmanın genel ilkelerini verir.
+Robot standartları bunun üzerine kurulur.
+
+**ISO 10218-1** robot **üreticisine** hitap eder. Robotun kendisinin —
+kolun, kontrolörün, yazılımın — hangi güvenlik özelliklerini taşıması
+gerektiğini tanımlar.
+
+**ISO 10218-2** robot **entegratörüne** hitap eder. Robotu bir hücreye
+yerleştiren, çevresine çit, sensör ve PLC koyan tarafın sorumluluğudur.
+Bir robotun kendi başına "güvenli" olması, kurulduğu hücrenin güvenli
+olduğu anlamına gelmez — bu ayrım serinin ikiye bölünmüş olmasının
+sebebidir.
+
+**ISO/TS 15066** ise bir standart değil, bir **teknik şartname**
+(technical specification) olarak 2016'da yayımlandı. İşbirlikçi
+uygulamalar için ISO 10218'in bıraktığı boşluğu doldurdu: özellikle
+insan-robot temasında izin verilen kuvvet ve basınç sınırlarını
+tanımladı.
+
+### 2025 revizyonu ve bunun sonucu
+
+ISO 10218-1 ve ISO 10218-2'nin yeni baskıları 2025'te yayımlandı ve
+2011 baskılarının yerini aldı. Bu revizyonun en önemli sonucu:
+**ISO/TS 15066'nın işbirlikçi uygulamalara ilişkin içeriği ISO 10218
+serisinin içine alındı.** Yani işbirlikçi güvenlik artık ayrı bir
+şartnamede duran bir ek değil, ana standardın parçası.
+
+İkinci önemli değişiklik terminolojide. Standart artık "kobot" gibi
+robotun kendisini niteleyen bir terim yerine **işbirlikçi uygulama**
+(collaborative application) terimini kullanıyor. Bu dilsel bir tercih
+değil, bir duruş: güvenlik robotun bir özelliği değil, kullanımının bir
+özelliğidir.
+
+Üçüncüsü, güvenlikle ilgili kontrol fonksiyonlarına konan blok
+performans şartı gevşetildi — bu, ayrı bir dersin konusu.
+
+### "Uyumlaştırılmış standart" ne demek
+
+Avrupa'da bir makinenin piyasaya sürülebilmesi için ilgili yönetmeliğin
+gereklerini karşılaması gerekir. Uyumlaştırılmış (harmonised) bir
+standarda uymak, bu gereklerin karşılandığına dair bir **uygunluk
+varsayımı** sağlar. Standarda uymak hukuken zorunlu değildir; ama
+uymuyorsan, eşdeğer güvenliği kendin kanıtlamak zorundasın — pratikte
+çok daha zor bir yol.
+
+## Gerçek dünyada
+
+Bir robot satın aldığında üretici ISO 10218-1'e uygunluk beyan eder.
+Bu, hücrenin güvenli olduğu anlamına gelmez: hücreyi kuran taraf
+ISO 10218-2 kapsamında kendi risk değerlendirmesini yapmak ve kendi
+uygunluğunu göstermek zorundadır. Sahada en sık yapılan hata bu ikisini
+karıştırmaktır — "robot sertifikalı" cümlesi, hücre için hiçbir şey
+söylemez.
+
+> **Doğrulama notu.** Bu dersteki bilgiler ISO standartlarının **birincil
+> metinlerine erişilerek doğrulanmadı** — ISO 10218-1:2025,
+> ISO 10218-2:2025 ve ISO/TS 15066:2016 ücretli erişim arkasındadır ve
+> platform hazırlanırken metinlere ulaşılamadı. Yukarıdaki anlatım,
+> ISO katalog kayıtları ile sektör kuruluşlarının ve makine güvenliği
+> uzmanlarının yayımladığı özetlere dayanıyor. Madde numaraları,
+> tablolar ve sayısal sınır değerleri bilinçli olarak verilmedi.
+> Bir uygulamada bunlara ihtiyaç varsa standardın kendisi alınmalıdır.
+
+> **Uyarı.** Standart bilgisi, risk değerlendirmesinin yerine geçmez.
+> Gerçek bir hücrenin güvenliği eğitimli personel ve resmi bir
+> değerlendirme süreci gerektirir.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Bir robot üreticisi ISO 10218-1 uygunluğu beyan etti. Bu, robotu kurduğunuz hücre için ne söyler?",
+      secenekler: [
+        "Hücre de otomatik olarak uygundur",
+        "Hiçbir şey söylemez; hücrenin uygunluğu ISO 10218-2 kapsamında entegratörün sorumluluğudur",
+        "Hücre için ayrıca ISO 12100 gerekmez",
+      ],
+      dogru: 1,
+      aciklama: "Serinin ikiye bölünmüş olmasının sebebi tam olarak budur: Part 1 üreticiye, Part 2 entegratöre hitap eder.",
+    },
+    {
+      soru: "2025 revizyonuyla ISO/TS 15066'nın işbirlikçi uygulama içeriğine ne oldu?",
+      secenekler: [
+        "Tamamen kaldırıldı, artık işbirlikçi uygulama standardı yok",
+        "ISO 10218 serisinin içine alındı",
+        "Değişmedi, hâlâ tek başına ayrı bir standart olarak uygulanıyor",
+      ],
+      dogru: 1,
+      aciklama: "İşbirlikçi güvenlik artık ayrı bir teknik şartnamede duran bir ek değil, ana standardın parçası.",
+    },
+    {
+      soru: "Standardın 'kobot' yerine 'işbirlikçi uygulama' terimini tercih etmesi neyi vurgular?",
+      secenekler: [
+        "Güvenliğin robotun bir özelliği değil, kullanımının bir özelliği olduğunu",
+        "Kobotların artık üretilmediğini",
+        "Sadece belirli markaların işbirlikçi olabileceğini",
+      ],
+      dogru: 0,
+      aciklama: "Aynı robot, bir uygulamada işbirlikçi çalışabilirken taşıdığı alet değiştiğinde ayırma gerektirebilir.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Standartların hepsi aynı yere işaret ediyor: önce risk değerlendirmesi.
+Sıradaki ders bunun nasıl yapıldığını ele alıyor.

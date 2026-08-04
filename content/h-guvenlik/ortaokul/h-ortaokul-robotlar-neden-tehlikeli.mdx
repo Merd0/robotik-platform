@@ -1,0 +1,93 @@
+---
+id: h-ortaokul-robotlar-neden-tehlikeli
+baslik: Robotlar neden tehlikeli olabilir
+hat: h-guvenlik
+seviye: ortaokul
+sure: 10
+sira: 1
+onkosul: []
+kazanimlar:
+  - Bir endüstriyel robotun güçlü ve hızlı olmasının neden başlı başına bir tehlike kaynağı olduğunu açıklayabilme
+  - Robotun etrafındaki insanı "görmediği" sürece durmayacağını, kendi başına dikkatli davranamayacağını fark edebilme
+kaynaklar:
+  - "ISO 10218-2:2025, Robotics — Safety requirements — Part 2: Industrial robot applications and robot cells — robot hücrelerinde operatörün korunmasına ilişkin gereksinimler"
+  - "Occupational Safety and Health Administration (OSHA), Technical Manual, Section IV, Chapter 4: Industrial Robots and Robot System Safety, https://www.osha.gov/otm/section-4-safety-hazards/chapter-4"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - SafetyZone
+durum: taslak
+---
+
+## Kanca
+
+Bir fabrikada robot kolu bir metal parçayı kaldırıp yan tarafa koyuyor.
+Parça senin okul çantandan ağır, kol da senden hızlı hareket ediyor. O
+kol, tam o anda yanında birinin durduğunu kendiliğinden bilmez.
+
+<SafetyZone mode="bolge" theme="ortaokul" />
+
+## Ne oldu
+
+Yukarıdaki sahnede insanı robota doğru yaklaştırdın. Belli bir noktadan
+sonra robot önce yavaşladı, sonra tamamen durdu.
+
+Robot bunu kendi kendine hissederek yapmadı. Birisi ona önceden "şu
+kadar yaklaşan olursa dur" diye ayar yaptı. O ayar olmasaydı robot
+hareketine aynen devam ederdi.
+
+Endüstriyel bir robot üç sebepten tehlikeli olabilir: güçlüdür, hızlıdır
+ve programlandığı şeyi hiç sorgulamadan yapar. İnsan yorulunca yavaşlar,
+tehlikeyi sezince durur; robot bunların hiçbirini yapmaz.
+
+## Gerçek dünyada
+
+Fabrikalarda robotların çoğu bir kafesin veya çitin içinde çalışır.
+Kapıyı açtığında robot otomatik olarak durur — kapı ile robot birbirine
+bağlıdır. Bu, robota güvenildiği için değil, tam tersine güvenilmediği
+için böyledir.
+
+Robotlarla çalışan kişiler bunun için ayrıca eğitim alır. Bir robot
+hücresine girmek, sınıfa girmek gibi değildir.
+
+## Dene
+
+<Quiz
+  sorular={[
+    {
+      soru: "Yukarıdaki sahnede robot, insan yaklaşınca durdu. Bunu neden yaptı?",
+      secenekler: [
+        "Robot insanı görüp korktuğu için",
+        "Birisi robota önceden 'bu kadar yaklaşan olursa dur' ayarını yaptığı için",
+        "Robotlar yorulunca kendiliğinden durur",
+      ],
+      dogru: 1,
+      aciklama: "Robot kendiliğinden dikkatli davranmaz. Durması, önceden kurulmuş bir güvenlik ayarının sonucudur.",
+    },
+    {
+      soru: "Bir robotu tehlikeli yapan şey aşağıdakilerden hangisi değildir?",
+      secenekler: [
+        "Ağır parçaları kaldırabilecek kadar güçlü olması",
+        "İnsandan hızlı hareket edebilmesi",
+        "Zaman zaman kendi kararlarını verip programın dışına çıkması",
+      ],
+      dogru: 2,
+      aciklama: "Robot programın dışına çıkmaz — asıl mesele tam da bu. Kendisine söyleneni, ortamda kim varsa aldırmadan yapar.",
+    },
+    {
+      soru: "Fabrikada robotların çevresindeki kafes ne işe yarar?",
+      secenekler: [
+        "Robotun tozlanmasını engeller",
+        "İnsan ile robotun aynı anda aynı yerde bulunmasını engeller",
+        "Robotun sesini azaltır",
+      ],
+      dogru: 1,
+      aciklama: "Kafes, insan ile robotun çalışma alanlarını ayırır. Kapı açıldığında robot durur.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Robotun neden tehlikeli olabileceğini gördün. Sıradaki ders, bir robotun
+yanında bulunurken uyulması gereken temel kuralları ele alıyor.

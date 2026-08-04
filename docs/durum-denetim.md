@@ -888,3 +888,134 @@ Denetim bir insan gözden geçirmesinin yerine geçmez. 40 ders
 `durum: taslak` kalmaya devam ediyor; `durum: yayinda` için docs/06
 Katman 3 (kaynakların elle karşılaştırılması — özellikle yukarıdaki
 RAPID/KRL/TP listesi) hâlâ gerekli.
+
+---
+
+## Faz 5 — YARIM KALDI (2026-08-04, ara kayıt)
+
+**Bu bölüm tamamlanmış bir faz kaydı DEĞİL.** Faz 5 (v1.0) başlatıldı,
+altı maddeden ikisi bitti, dördü hiç başlamadı. Çalışma
+`faz-5-guvenlik-ve-v1` dalına commit edildi; **main'e merge edilmedi ve
+PR açılmadı** — bu adım faz bitince yapılacak. Sonraki oturum buradan
+devam etmeli.
+
+### Biten
+
+**1. Hat H — güvenlik ve standartlar (10 ders).** `content/h-guvenlik/`
+altında, hepsi `durum: taslak`:
+
+| Seviye | Ders | sıra |
+|---|---|---|
+| Ortaokul | `h-ortaokul-robotlar-neden-tehlikeli` | 1 |
+| Ortaokul | `h-ortaokul-temel-guvenlik-kurallari` | 2 |
+| Lise | `h-lise-kafesli-robot-ve-kobot` | 1 |
+| Lise | `h-lise-acil-durdurma-ve-guvenli-bolge` | 2 |
+| Üniversite | `h-universite-iso-10218-ve-ts-15066` | 1 |
+| Üniversite | `h-universite-risk-degerlendirmesi` | 2 |
+| Üniversite | `h-universite-performans-seviyesi-ve-kategori` | 3 |
+| Üniversite | `h-universite-guc-ve-kuvvet-sinirlama` | 4 |
+| Üniversite | `h-universite-guvenli-durus-hiz-ve-mesafe` | 5 |
+| Üniversite | `h-universite-guvenli-hucre-tasarimi` | 6 |
+
+Bununla 8 hattın tamamı içerik olarak var: **89 ders dosyası.**
+
+**2. Altyapı (Hat H için yazıldı, kalıcı):**
+
+- `lib/robotics/safety.ts` — ayrım mesafesi matematiği (`travelDistance`,
+  `stoppingDistance`, `requiredSeparation`, `zoneState`, `allowedSpeed`).
+  Saf TypeScript, DOM/React importu yok.
+- `lib/robotics/safety.test.ts` — 15 test, hepsi geçiyor.
+- `components/interactive/SafetyZone.tsx` — üç seviyede de kullanılan tek
+  sahne; `mode` prop'u ile sunum derinliği değişiyor (`bolge` /`mesafe` /
+  `hesap`), alttaki hesap aynı. `index.ts`'e kaydedildi.
+- `app/globals.css` — `--color-durum-dur/uyari/serbest` semantik durum
+  renkleri. Her zaman ikon + metinle birlikte kullanılıyor (docs/07:
+  renk tek başına bilgi taşımaz).
+- `lib/content.ts` — `HAT_ETIKET` haritası ve `hatEtiket()` eklendi
+  (daha önce hat adlarının görünen karşılığı hiçbir yerde yoktu).
+
+**3. Sözlük — verisi hazır, sayfası YOK:**
+
+- `content/sozluk.json` — 8 hattın tamamından **72 terim**, Türkçe-İngilizce
+  karşılık + bir cümlelik tanım + hat etiketi. İçerik koddan ayrı tutuldu.
+- `lib/sozluk.ts` — `getSozluk()` ve `getSozlukByHat()` okuyucuları.
+- **Eksik:** `app/sozluk/page.tsx` yazılmadı.
+
+### Kaynak durumu — Hat H için kritik
+
+Kullanıcının açık talimatı vardı: güvenlik standartlarında doğrulanamayan
+hiçbir şey iddia edilmeyecek, PL d/Cat 3 gibi sayısal detaylarda daha az
+iddialı ifadeye çekilecek. Uygulanan yöntem:
+
+**Doğrulanabilenler** (WebSearch/WebFetch ile, birden fazla bağımsız
+kaynaktan teyit edildi):
+
+- ISO 10218-1:2025 ve ISO 10218-2:2025 yayımlandı, 2011 baskılarının
+  yerini aldı.
+- **ISO/TS 15066'nın işbirlikçi uygulama içeriği ISO 10218 serisine
+  alındı.** TS resmen geri çekilmedi; ISO/AWI 15066-1 halefi geliştiriliyor.
+- Standart "kobot" yerine **işbirlikçi uygulama** terimine geçti.
+- **Blok "PL d + Kategori 3" şartı büyük ölçüde terk edildi**, yerine
+  fonksiyon bazlı PLr belirlemesi geldi. Acil durdurma için asgari seviye
+  PL d'den bir kademe aşağıda.
+- ISO 12100 risk değerlendirmesi adımları ve üç adımlı risk azaltma sırası.
+- ISO/TS 15066'nın dört işbirlikçi çalışma biçimi.
+
+**Doğrulanamayanlar** — hiçbiri derste sayı olarak yazılmadı:
+
+- ISO 10218-1/-2:2025, ISO/TS 15066:2016, ISO 12100:2010, ISO 13849-1,
+  ISO 13855, IEC 60204-1 **birincil metinlerinin hiçbirine erişilemedi**
+  (ücretli erişim; iso.org 403 döndü).
+- Bu yüzden bilinçli olarak YAZILMADI: PL'ler için sayısal arıza olasılığı
+  aralıkları, 2025 baskısındaki fonksiyon–seviye tablosu, biyomekanik
+  kuvvet/basınç sınır değerleri, vücut bölgesi sayısı, yay sabitleri,
+  koruyucu ayrım mesafesinin standart formülü, programlama modundaki
+  düşürülmüş hız sınırı, madde numaraları.
+
+Üniversite derslerinin **hepsinde** görünür bir `> **Doğrulama notu.**`
+bloğu var; neyin doğrulanmadığını ve neyin bilinçli olarak yazılmadığını
+okuyucuya doğrudan söylüyor. Ayrıca `> **Uyarı.**` blokları docs/05 §2.3
+gereği "bu ders risk değerlendirmesinin yerine geçmez" diyor.
+
+`SafetyZone`'un arkasındaki model standardın formülü değil; hem
+`lib/robotics/safety.ts` dosya başlığında hem ilgili derste bu açıkça
+belirtildi.
+
+### Yapılmayan — sonraki oturumun listesi
+
+1. **Arama özelliği** — hiç başlanmadı. Planlanan yaklaşım: statik export
+   olduğu için `scripts/build-search-index.mjs` ile `public/arama-index.json`
+   üretip (`prebuild`/`predev`'e bağlanacak, `public/workers/` deseninin
+   aynısı), `app/ara/page.tsx` istemci tarafında tembel yükleyip filtreleyecek.
+   İlk yükleme JS bütçesi (<200 KB) bozulmamalı.
+2. **Sözlük sayfası** — `app/sozluk/page.tsx`. Veri ve okuyucular hazır.
+3. **Erişilebilirlik denetimi** — hiç başlanmadı.
+4. **Performans denetimi (Lighthouse)** — hiç başlanmadı. docs/05 §3
+   hedefleri: FCP < 1.0 sn, TTI < 2.0 sn, ilk yükleme JS < 200 KB,
+   Lighthouse mobil ≥ 90.
+5. **Katkı sürecinin resmileştirilmesi** — `CONTRIBUTING.md`, PR şablonu,
+   `SECURITY.md` (hiçbiri repoda yok; `.github/` altında sadece
+   `workflows/ci.yml` var).
+6. **docs/03-yol-haritasi.md** Faz 5 kutuları işaretlenmedi.
+7. **Commit + PR** açılmadı. Kullanıcının isteği: main'e doğrudan merge
+   YOK, PR açılacak; `gh` CLI kurulu değil, `winget install GitHub.cli`
+   denenecek, olmazsa lokal commit + push ile PR elle açılacak.
+
+**Bilinen sarkan bağlantı:** `h-universite-guvenli-hucre-tasarimi` dersinin
+"Sonraki" bölümü `/sozluk` ve `/ara` sayfalarına link veriyor; o iki sayfa
+henüz yok. Build kırılmıyor (MDX içindeki düz bağlantılar), ama sayfalar
+yazılana kadar 404 verir. Sayfalar yazıldığında bu kendiliğinden düzelir.
+
+### Doğrulama (bu ara kayıt anındaki durum)
+
+`npx vitest run` (6 dosya, **76/76** — safety.ts ile 15 test eklendi),
+`npx eslint .`, `npx tsc --noEmit`, `npx tsx scripts/check-content.ts`
+(**89 ders**, hata yok), `npm run validate-content-graph` (89 ders,
+döngü/eksik referans yok, **0 uyarı**), `npm run build`
+(**95 sayfa**, temiz) — hepsi geçiyor.
+
+### Yapılmayan adım — yine `durum: yayinda` işaretlemesi
+
+Hat H'nin 10 dersi `durum: taslak`. Güvenlik hattı için insan gözden
+geçirmesi diğer hatlardan daha kritik: yukarıdaki "doğrulanamayanlar"
+listesindeki her madde, standardın kendisi alınarak kontrol edilmeli.
