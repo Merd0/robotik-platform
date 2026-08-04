@@ -166,6 +166,33 @@ Dış katkılarda ayrıca en az bir bakımcı incelemesi gerekir.
 
 ---
 
+## Lisans — depoda iki ayrı lisans var
+
+Katkı göndermeden önce bilmen gereken tek hukuki ayrıntı bu.
+
+| Ne | Lisans | Dosya |
+|---|---|---|
+| **Yazılım** — `app/`, `components/`, `lib/`, `scripts/`, `reference-python/`, yapılandırma | MIT | `LICENSE` |
+| **İçerik ve dokümantasyon** — `content/` (dersler + `sozluk.json`), `docs/`, düzyazı metinler | CC BY-SA 4.0 | `LICENSE-CONTENT` |
+
+Ölçüt: **çalıştırılan şey MIT, okunan şey CC BY-SA.** Bir dersin içindeki
+`<JointSliders />` çağrısı içeriğin parçasıdır (CC BY-SA); o bileşenin kendi
+kaynak kodu MIT'tir.
+
+Neden ikisi ayrı: kodun serbestçe (kapalı projelerde bile) kullanılabilmesini
+istiyoruz — MIT bunu sağlar. Ders içeriğinde ise **AynıLisanslaPaylaş** şartı
+işimize yarıyor: birisi bu dersleri alıp geliştirirse, geliştirdiği hâli de
+aynı lisansla paylaşmak zorunda kalır. Türkçe robotik kaynağının havuzu
+böylece büyür, kapanmaz.
+
+**PR gönderdiğinde**, katkının bulunduğu yola göre ilgili lisans altında
+yayınlanmasını kabul etmiş olursun. Ayrı bir CLA imzalatmıyoruz.
+
+Derslerin `kaynaklar` alanında atıf yapılan üçüncü taraf materyaller (ders
+kitapları, standartlar, üretici dokümanları) bu lisansların dışındadır —
+onlara yalnızca atıf yapılır, metinleri yeniden dağıtılmaz. Kaynaktan
+kopyalanmış metin PR'a giremez.
+
 ## Davranış
 
 Kısa tut: iyi niyetli ol, soruyu küçümseme, eleştiriyi işe yönelt kişiye
