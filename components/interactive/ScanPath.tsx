@@ -16,7 +16,7 @@ const THEME = {
     surface: "bg-universite-surface",
     bg: "bg-universite-bg",
     ink: "text-universite-ink",
-    inkMuted: "text-universite-ink/60",
+    inkMuted: "text-universite-ink/70",
     button: "bg-universite-ink text-universite-surface",
     outline: "border-universite-ink/20",
     accent: "bg-universite-accent",
@@ -82,7 +82,9 @@ export function ScanPath({ rows: initialRows = 6, adjustableRows = false, theme 
 
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
+      {/* Salt görsel ızgara; ilerleme aşağıdaki sayısal özette metin olarak var. */}
       <div
+        aria-hidden="true"
         className={`grid w-fit gap-0.5 rounded-lg ${t.bg} p-2`}
         style={{ gridTemplateColumns: `repeat(${COLS}, ${CELL_PX}px)` }}
       >
@@ -132,7 +134,9 @@ export function ScanPath({ rows: initialRows = 6, adjustableRows = false, theme 
         </button>
       </div>
 
-      <div className={`text-sm ${t.ink}`}>Toplanan nokta sayısı: {visited.size}</div>
+      <div role="status" className={`text-sm ${t.ink}`}>
+        Toplanan nokta sayısı: {visited.size} / {rows * COLS}
+      </div>
     </div>
   );
 }

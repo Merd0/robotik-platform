@@ -11,7 +11,7 @@ export function LessonProgressBadge({ slug }: LessonProgressBadgeProps) {
 
   if (!completed) return null;
   return (
-    <span aria-label="Tamamlandı" className="text-ortaokul-accent">
+    <span aria-label="Tamamlandı" className="text-ortaokul-accent-text">
       ✓
     </span>
   );

@@ -7,10 +7,11 @@ out/
 next-env.d.ts
 *.tsbuildinfo
 
-# scripts/build-worker.mjs ve scripts/copy-pyodide-assets.mjs tarafından
-# üretilir, kaynak değil
+# scripts/build-worker.mjs, scripts/copy-pyodide-assets.mjs ve
+# scripts/build-search-index.ts tarafından üretilir, kaynak değil
 public/workers/
 public/pyodide/
+public/arama-index.json
 
 # Test/araç önbellekleri
 .turbo/

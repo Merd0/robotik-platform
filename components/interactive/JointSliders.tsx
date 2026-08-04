@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RobotArm } from "@/components/scene/RobotArm";
+import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { forwardKinematics } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
 
@@ -33,9 +33,15 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-ortaokul-ink/10 bg-ortaokul-surface p-4">
-      <div className="aspect-square w-full overflow-hidden rounded-lg bg-ortaokul-bg sm:aspect-video">
+      {/*
+        Sahnenin bilgi içeriği aşağıdaki kaydırıcı etiketlerinde ve uç nokta
+        özetinde metin olarak var (docs/02 "her sahnenin metin özeti olmalı") —
+        SahneAlani, 3D kutusunu ekran okuyucudan gizler ve görünür olana kadar
+        bağlamaz.
+      */}
+      <SahneAlani className="aspect-square w-full overflow-hidden rounded-lg bg-ortaokul-bg sm:aspect-video">
         <RobotArm robot={robot} jointAngles={jointAngles} />
-      </div>
+      </SahneAlani>
 
       <div className="flex flex-col gap-3">
         {robot.joints.map((joint, index) =>
@@ -75,7 +81,7 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
       </div>
 
       <div className="flex items-center justify-between text-sm">
-        <span>
+        <span role="status">
           Uç nokta: ({round(endEffector.x)}, {round(endEffector.y)})
         </span>
         <button

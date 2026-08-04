@@ -40,7 +40,7 @@ export default async function DersPage({ params }: DersPageProps) {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
-      <p className="text-sm uppercase tracking-wide text-ortaokul-accent">
+      <p className="text-sm uppercase tracking-wide text-ortaokul-accent-text">
         {lesson.frontmatter.seviye}
       </p>
       <h1 className="mt-2 text-3xl font-semibold text-ortaokul-ink">

@@ -20,7 +20,7 @@ export function CompleteLessonButton({ slug }: CompleteLessonButtonProps) {
       onClick={toggle}
       className={`h-11 rounded-md border px-4 text-sm ${
         completed
-          ? "border-ortaokul-accent bg-ortaokul-accent/10 text-ortaokul-accent"
+          ? "border-ortaokul-accent bg-ortaokul-accent/10 text-ortaokul-accent-text"
           : "border-ortaokul-ink/20"
       }`}
     >

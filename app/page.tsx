@@ -20,6 +20,21 @@ export default function HomePage() {
         </p>
       </div>
 
+      <nav aria-label="Site geneli" className="flex flex-wrap gap-3">
+        <Link
+          href="/ara"
+          className="min-h-11 rounded-lg border border-ortaokul-ink/15 px-4 py-2 text-ortaokul-ink hover:border-ortaokul-accent"
+        >
+          Derslerde ara
+        </Link>
+        <Link
+          href="/sozluk"
+          className="min-h-11 rounded-lg border border-ortaokul-ink/15 px-4 py-2 text-ortaokul-ink hover:border-ortaokul-accent"
+        >
+          Sözlük
+        </Link>
+      </nav>
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {SEVIYELER.map(({ seviye, aciklama }) => (
           <Link
@@ -28,7 +43,7 @@ export default function HomePage() {
             className="flex flex-col gap-1 rounded-lg border border-ortaokul-ink/10 p-4 hover:border-ortaokul-accent"
           >
             <span className="font-medium text-ortaokul-ink">{SEVIYE_ETIKET[seviye]}</span>
-            <span className="text-sm text-ortaokul-ink/60">{aciklama}</span>
+            <span className="text-sm text-ortaokul-ink/70">{aciklama}</span>
           </Link>
         ))}
       </div>
@@ -36,7 +51,7 @@ export default function HomePage() {
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-medium text-ortaokul-ink">Yayınlanan dersler</h2>
         {publishedLessons.length === 0 ? (
-          <p className="text-ortaokul-ink/60">
+          <p className="text-ortaokul-ink/70">
             Henüz insan gözden geçirmesinden geçmiş ders yok — içerik hazırlanıyor
             (bkz. docs/06-kalite-ve-topluluk.md).
           </p>
@@ -46,7 +61,7 @@ export default function HomePage() {
               <li key={lesson.slug}>
                 <Link
                   href={`/ders/${lesson.slug}`}
-                  className="text-ortaokul-accent underline decoration-2 underline-offset-4"
+                  className="text-ortaokul-accent-text underline decoration-2 underline-offset-4"
                 >
                   {lesson.frontmatter.baslik}
                 </Link>

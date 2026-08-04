@@ -271,3 +271,55 @@ erken optimizasyon olur — henüz doğrulanacak yeterli düğüm yok.
 Bu tabloyu `docs/03-yol-haritasi.md` ile birlikte oku — her faz bittiğinde
 bu doküman da güncellenir, hangi pratiğin gerçekten işe yaradığı, hangisinin
 gereksiz kaldığı not edilir.
+
+---
+
+## 7. Dal (branch) ve merge kuralı
+
+Faz 1-4 boyunca her faz bir dalda bitirilip PR açılıyor, PR insan onayı
+bekliyordu. Bu, tek kişilik bir projede fiilen bir gecikmeden başka bir şey
+üretmedi: PR'ı açan da onaylayan da aynı kişiydi, ve gerçek kalite kapısı
+zaten PR'ın kendisi değil, **otomatik kontroller + `durum: yayinda`
+işaretlemesi** idi. Kural sadeleştirildi.
+
+### Varsayılan: otomatik merge
+
+Aşağıdaki kontrollerin **hepsi** temiz geçtiyse, PR açıp beklemeye gerek
+yok — dal doğrudan `main`'e merge edilir:
+
+```bash
+npx tsc --noEmit
+npm run lint
+npm test
+npm run check-content
+npm run validate-content-graph
+npm run build
+```
+
+Yeni/değişen ders içeriği varsa buna **`kalite-denetci` subagent'ı** da
+eklenir (mümkün olduğunda — bkz. bölüm 2). Denetçi bulgu raporlarsa,
+bulgular düzeltilip kontroller tekrar koşulmadan merge edilmez.
+
+Bunun güvenli olmasının dayanağı: bu kontroller `kaynaklar` zorunluluğunu,
+ön koşul graph'ının bütünlüğünü, matematik testlerini ve build'i zaten
+kapsıyor. Bir insanın PR ekranında yapacağı ek şey yok. `durum: yayinda`
+işaretlemesi ayrı ve elle kalmaya devam ediyor (docs/06 Katman 3) — merge
+edilmiş olmak "yayınlandı" demek değil.
+
+### Tek istisna: yönetişim (governance) dosyaları
+
+Şunlardan biri değişiyorsa otomatik merge YOK — dur ve kullanıcıya sor:
+
+- `CONTRIBUTING.md`, `SECURITY.md`, PR/issue şablonları, `LICENSE`
+- `CLAUDE.md` (kök veya klasör içi) ve `docs/` altındaki kural
+  dokümanlarının kendisi
+- `.claude/` altındaki kural/hook/subagent tanımları
+
+Gerekçe: bunlar **kuralın kendisini** değiştiren dosyalar. Kodun kuralı
+ihlal edip etmediğini otomatik kontroller yakalar; kuralın kendisinin
+değişmesi gerekip gerekmediğini yakalayacak bir otomasyon yok. Bir ajanın
+kendi üzerindeki kısıtları sessizce gevşetebilmesi istenmeyen bir yetki —
+bu yüzden o kapı elle açılır.
+
+Aynı dalda hem sıradan iş hem governance değişikliği varsa, istisna tüm
+dala uygulanır (governance dosyasını ayırıp iki kez merge etmeye çalışma).
