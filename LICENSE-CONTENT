@@ -1,0 +1,76 @@
+Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+Creative Commons Atıf-AynıLisanslaPaylaş 4.0 Uluslararası (CC BY-SA 4.0)
+
+Copyright (c) 2026 Mert (github.com/Merd0) ve katkıcıları
+
+
+## Neyi kapsar
+
+Bu lisans, depodaki **eğitim içeriğini ve dokümantasyonu** kapsar:
+
+- `content/` — tüm ders dosyaları (`.mdx`) ve sözlük verisi (`sozluk.json`)
+- `docs/` — planlama ve rehber dokümanları
+- `README.md`, `CONTRIBUTING.md`, `SECURITY.md` ve depodaki diğer düzyazı
+  metinler
+
+**Kapsamadığı:** depodaki yazılım — `app/`, `components/`, `lib/`, `scripts/`,
+`reference-python/`, yapılandırma dosyaları ve kod içindeki yorumlar. Bunlar
+MIT lisansı altındadır; bkz. `LICENSE`.
+
+Sınırda kalan bir dosya varsa ölçüt şudur: **çalıştırılan şey MIT, okunan şey
+CC BY-SA.** Bir `.mdx` dosyasının içindeki bileşen çağrısı (`<JointSliders />`)
+içeriğin parçasıdır; o bileşenin kendi kaynak kodu (`components/`) MIT'tir.
+
+
+## Ne yapabilirsin
+
+Bu içeriği **paylaşabilir** (her ortamda kopyalayıp yeniden dağıtabilir) ve
+**uyarlayabilirsin** (karıştırabilir, dönüştürebilir, üzerine inşa
+edebilirsin) — ticari amaçlar dahil, aşağıdaki iki şart altında.
+
+
+## Şartlar
+
+**Atıf (BY).** Uygun künyeyi ver, lisansa bağlantı koy ve değişiklik yapıp
+yapmadığını belirt. Bunu makul her biçimde yapabilirsin ama lisans verenin
+seni veya kullanımını onayladığını ima edecek şekilde değil.
+
+Önerilen künye biçimi:
+
+> "<ders/bölüm adı>", Robotik Öğrenme Platformu
+> (https://github.com/Merd0/robotik-platform), CC BY-SA 4.0 altında.
+> [Değiştirilmiştir.]
+
+**AynıLisanslaPaylaş (SA).** İçeriği karıştırır, dönüştürür veya üzerine bir
+şey inşa edersen, katkılarını orijinaliyle **aynı lisans** altında dağıtmak
+zorundasın.
+
+**Ek kısıtlama yok.** Lisansın izin verdiği şeyleri başkalarına yasaklayan
+hukuki şartlar veya teknolojik önlemler uygulayamazsın.
+
+
+## Lisansın tam metni
+
+Yukarıdaki özet, lisansın yerine geçmez — bağlayıcı olan tam hukuki metindir:
+
+- Türkçe özet: https://creativecommons.org/licenses/by-sa/4.0/deed.tr
+- Tam hukuki metin (İngilizce):
+  https://creativecommons.org/licenses/by-sa/4.0/legalcode
+
+
+## Kaynaklar hakkında not
+
+Derslerdeki `kaynaklar` alanlarında atıf yapılan üçüncü taraf materyaller
+(ders kitapları, standart metinleri, üretici dokümantasyonu, akademik
+yayınlar) **bu lisansa dahil değildir.** Onlar kendi sahiplerinin telif
+hakkı altındadır; bu depo yalnızca onlara atıf yapar, metinlerini
+yeniden dağıtmaz.
+
+
+## Garanti yok
+
+İçerik "olduğu gibi" sunulur. Bu bir eğitim kaynağıdır; hiçbir dersi bir
+mühendislik tasarımının, risk değerlendirmesinin veya güvenlik
+doğrulamasının yerine kullanma. Özellikle Hat H (güvenlik ve endüstriyel
+gerçeklik) dersleri kavramsal giriş metinleridir — gerçek bir robot hücresi
+eğitimli personel ve resmi bir süreç ister.

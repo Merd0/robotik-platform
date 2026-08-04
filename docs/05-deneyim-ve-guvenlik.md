@@ -203,3 +203,38 @@ basit geometri (yüksek çokgenli mesh yok), uzun hesapların Web Worker'a
 taşınması, görsellerin modern formatta ve boyutlandırılmış olması.
 
 Her fazın sonunda Lighthouse koşulur; hedefin altına düşerse faz kapanmaz.
+
+## Bilinen ödünleşim: 3D'li ders sayfaları Lighthouse hedefinin altında
+
+**Bu bilinen ve kabul edilmiş bir durum, gözden kaçmış bir eksiklik değil.**
+Faz 5 denetiminde (2026-08-04) ölçüldü:
+
+| Sayfa türü | Lighthouse performans (mobil) |
+|---|---|
+| Ana sayfa, `/ara`, `/sozluk`, 3D'siz ders | 98-99 ✔ |
+| **3D sahnesi olan ders sayfası** | **73-76** ✘ (hedef ≥ 90) |
+
+Yapılabilecekler yapıldı: 3D `next/dynamic` ile ayrı parçaya alındı (ilk
+yükleme JS'i 434 → 197 KB, bütçenin altına indi), sahne görünür alana
+yaklaşana kadar hiç bağlanmıyor, tembel parça tekilleştirildi (three.js her
+sahne için ayrı kopyalanıyordu).
+
+Kalan maliyet **bayt değil, çalıştırma**: emüle mobil CPU'da three.js'in
+modül başlatması + WebGL bağlamı kurulumu ~1,2 sn ana thread tutuyor. FCP
+(0,8 sn) ve CLS (0) hedefte — sayfa hızlı boyanıyor, kaymıyor; geciken şey
+yalnızca etkileşime hazır olma.
+
+Bunu aşmanın kalan tek yolu `@react-three/drei`'yi tamamen çıkarıp three'nin
+çıplak ilkellerine dönmek. **Bilinçli olarak yapılmadı:** drei'nin `Line`
+bileşeni, çizgiye kalınlık verebilen tek yol (WebGL'in kendi çizgisi her
+zaman 1 piksel) ve **iz çizgisi `07-tasarim-sistemi.md`'de projenin imza
+öğesi.** Onu hairline'a düşürmek, ölçülebilir bir puan için görünür bir
+kimlik kaybı olurdu.
+
+Bu ödünleşim Faz 5 sonrası "cila" fazının maddesi. O zaman yeniden
+değerlendirilir: ya iz çizgisi için drei dışında bir yol bulunur, ya da
+3D'li sayfalar için hedef ayrıca tanımlanır (bu tablodaki tek sayı, bir
+WebGL sahnesiyle açılan sayfa için gerçekçi olmayabilir).
+
+Ölçüm ayrıntısı ve yapılan üç optimizasyon: `docs/durum-denetim.md`,
+"Faz 5 tamamlandı" bölümü.
