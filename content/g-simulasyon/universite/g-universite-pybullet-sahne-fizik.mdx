@@ -59,7 +59,9 @@ def connect(gui: bool = False) -> int:
   (bkz. `reference-python/CLAUDE.md`) — çizmenin kendisi zaman alır, hesabın
   doğruluğunu etkilemez.
 - **Yerçekimi:** `setGravity(0, 0, -9.8)`, z ekseninde dünya yerçekimi
-  ivmesine (yaklaşık 9.8 m/s²) karşılık gelen bir kuvvet vektörü tanımlar.
+  ivmesini (yaklaşık 9.8 m/s²) tanımlar. Bu bir **ivme** vektörüdür,
+  kuvvet değil — cisme etkiyen kuvvet, kütlesiyle çarpılarak çıkar
+  (bu yüzden `baseMass=0` verilen cisim yerçekiminden etkilenmez).
   Bu satır olmadan sahnedeki hiçbir cisim düşmez.
 - **Zemin:** `plane.urdf`, PyBullet'in kendi paketiyle gelen hazır bir
   düzlem modeli — sahnenin "yer" referansı.
@@ -99,9 +101,11 @@ platformun TypeScript karşılığı `lib/robotics/collision.ts` içindeki
 `isPointFree` ve `isSegmentFree`). Yukarıdaki sahnede "Çalıştır"a
 bastığında çalışan tam olarak bu geometrik kontrol — PyBullet'in kendisi
 bu platformda tarayıcı tarafında hiç çalışmıyor (bkz.
-`docs/02-mimari.md` "hesaplama tarayıcıda yapılır"); `reference-python`
-tarafında ise gerçek fizik motoru bu kontrolü doğrulamak ve sahneyi
-gerçekçi göstermek için ayrıca kullanılıyor.
+`docs/02-mimari.md` "hesaplama tarayıcıda yapılır"). `reference-python`
+tarafında PyBullet çalışıyor, ama orada da çarpışma **kararını** o
+vermiyor: depo, engelleri PyBullet sahnesine yalnızca görselleştirme
+için ekler, kararı aynı bağımsız geometrik testle üretir (bkz.
+`reference-python/docs/architecture.md`).
 
 ## Gerçek dünyada
 
@@ -109,10 +113,12 @@ PyBullet, robotik araştırmalarında ve pekiştirmeli öğrenme (reinforcement
 learning) deneylerinde yaygın kullanılan açık kaynaklı bir araç — gerçek
 donanım kırılmadan önce bir kontrol algoritmasını binlerce kez ücretsiz
 "denemeye" izin verir. Bu platformun kendi `reference-python/` projesi
-tam olarak bunu yapıyor: KUKA iiwa'yı gerçek geometrisiyle (URDF üzerinden)
-yükleyip, planlanan bir yolun gerçekten çarpışmasız olup olmadığını hem
-hızlı geometrik testle hem de (video/demo üretiminde) tam fizik motoruyla
-doğruluyor.
+tam olarak bu amaçla kurulmuş: KUKA iiwa'yı gerçek geometrisiyle (URDF
+üzerinden) yükleyip planlanan yolu gözle görülebilir bir sahnede
+oynatıyor. Doğrulamanın kendisi orada da geometrik testle yapılıyor —
+fizik motoru sahneyi gösteriyor, kararı vermiyor. İkisini ayırmak
+önemli: bir simülatörün ekranda bir şey göstermesi, o şeyi doğruladığı
+anlamına gelmez.
 
 ## Dene
 

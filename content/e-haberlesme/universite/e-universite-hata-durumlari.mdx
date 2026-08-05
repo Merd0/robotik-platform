@@ -12,8 +12,8 @@ kazanimlar:
   - "Bir haberleşme hatasında robot kontrol yazılımının neden 'bekle ve tekrar dene' yerine güvenli bir duruşa geçmesi gerektiğini, endüstriyel güvenlik standardı bağlamında açıklayabilme"
   - "Bu platformun neden gerçek bir robotu kontrol eden hata kurtarma kodu ÖNERMEDİĞİNİ ifade edebilme"
 kaynaklar:
-  - "ISO 10218-2:2011, Robots and robotic devices — Safety requirements for industrial robots — Part 2: Robot systems and integration (standart numarasıyla; endüstriyel robot sistemlerinde tanımlı güvenli durma kategorileri gerektirir)"
-  - "OSHA Technical Manual, Section IV: Chapter 4 — Industrial Robots and Robot System Safety (osha.gov/otm) — ANSI/RIA R15.06-2012 ve ISO 10218-2:2011'e atıfla 'safety-rated monitored stop' (Category 2 Stop) tanımı: bir arıza/algılama durumunda tetiklenen izlemeli duruş"
+  - "ISO 10218-2, Robots and robotic devices — Safety requirements for industrial robots — Part 2: Robot systems and integration (standart numarasıyla; endüstriyel robot sistemlerinde tanımlı güvenli durma kategorileri gerektirir. 2011 baskısının yerini 2025 baskısı aldı — bkz. Hat H)"
+  - "OSHA Technical Manual, Section IV: Chapter 4 — Industrial Robots and Robot System Safety (osha.gov/otm) — 'safety-rated monitored stop' tanımı: korunan alana giriş algılandığında etkinleşen izlemeli duruş; NFPA 79-2017'ye göre 'Category 2 Stop'"
 incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
@@ -54,13 +54,24 @@ robotta haberleşme koptuğunda "bekle ve tekrar dene" mantığıyla hareketi
 sürdürmek, çevresindeki insanlar için risk oluşturur — çünkü hücreyi
 denetleyen taraf (PLC, güvenlik rölesi) artık robota müdahale edemiyor
 demektir. Bu yüzden endüstriyel güvenlik standartları, robot sistemlerinde
-tanımlı "güvenli durma" kategorileri ister. OSHA'nın kendi teknik el
-kitabı, ANSI/RIA R15.06-2012 ve ISO 10218-2:2011'e atıfla bunu "safety-rated
-monitored stop" (Category 2 Stop) olarak tanımlıyor: bir arıza veya
-algılama durumunda tetiklenen, izlenen ve tanımlı bir duruş. Bir
-haberleşme hatası da bu kapsamda ele alınması gereken bir arıza
-durumudur — robot "belki birazdan yanıt gelir" diyerek son bilinen
+tanımlı "güvenli durma" kategorileri ister: bir duruşun ne zaman
+tetikleneceği, nasıl izleneceği ve hangi koşulda kaldırılacağı önceden
+tanımlı olmalıdır. Robot "belki birazdan yanıt gelir" diyerek son bilinen
 komutla hareket etmeye devam edemez.
+
+Bu duruş kategorilerinden biri, OSHA'nın teknik el kitabında geçen
+**safety-rated monitored stop** (izlemeli duruş). Kaynağın tanımı net:
+"korunan alana bir giriş algılandığında etkinleşen" bir duruştur ve
+aktüatörlerin gücünü kesmeden izlenen bir duraklama hâlini korur; NFPA
+79-2017'ye göre bir "Category 2 Stop"tur. Dikkat: **bunun tetikleyicisi
+insanın korunan alana girmesidir, bir haberleşme arızası değil.**
+İşbirlikçi çalışma önlemlerinden biridir.
+
+Haberleşme kopması ise ayrı bir kapsamdır — kontrol sistemi güvenliği ve
+tanımlı bir koruyucu duruş (protective stop) tarafına düşer. Ortak nokta
+şudur: her iki durumda da robotun ne yapacağı önceden tanımlanmış
+olmalıdır, "belirsizlikte devam et" hiçbirinde geçerli bir davranış
+değildir.
 
 Bu platform hiçbir yerde "bu kodu gerçek robotunda çalıştır" demez ve
 gerçek bir robota bağlanan bir kontrol yazılımı içermez (bkz.
@@ -117,7 +128,7 @@ birleştiriyor.
         "Bağlantı kendiliğinden düzelene kadar rastgele bekleme sürelerinde denemeye devam etmek",
       ],
       dogru: 1,
-      aciklama: "OSHA'nın atıf yaptığı ANSI/RIA R15.06-2012 ve ISO 10218-2:2011, robot sistemlerinde arıza durumunda tetiklenen tanımlı bir 'güvenli durma' (safety-rated monitored stop) kategorisi ister; belirsizlikte harekete devam etmek bu ilkeye aykırıdır.",
+      aciklama: "Endüstriyel güvenlik standartları, robotun ne zaman ve nasıl duracağının önceden tanımlı olmasını ister; haberleşme koptuğunda robotu artık durdurabilecek bir taraf kalmadığına göre, belirsizlikte harekete devam etmek bu ilkeye aykırıdır.",
     },
     {
       soru: "Zaman aşımı (timeout) ile bağlantı kopması (connection loss) arasındaki fark nedir?",

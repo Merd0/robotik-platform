@@ -11,7 +11,7 @@ kazanimlar:
   - Bir robotu sıralı Python komutlarıyla hareket ettirebilme
   - Kod satırlarının robot üzerinde hangi sırayla etkili olduğunu açıklayabilme
 kaynaklar:
-  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 1 (giriş — robot programlamanın komut dizisi doğası)"
+  - "ABB, RAPID Instructions, Functions and Data Types Reference Manual (3HAC16581-1) — robot programının sıralı talimat metni olarak yapısı: https://library.e.abb.com"
 incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
@@ -38,15 +38,18 @@ print("Robot hazır konuma geldi.")`}
 
 Yukarıdaki kod gerçek bir Python yorumlayıcısında (Pyodide — tarayıcıda
 çalışan WebAssembly CPython) çalıştı, tarayıcı sekmenden hiç çıkmadan.
-`robot.eklem_ac(eklem_no, derece)` çağrısı iki şey yapıyor: hem robotu o
-açıya döndürüyor hem de her çağrıdan sonraki durumu kaydediyor —
-"Çalıştır"a bastığında gördüğün hareket, kodun SATIR SATIR yürütülmesinin
-sonucu.
+`robot.eklem_ac(eklem_no, derece)` çağrısı iki şey yapıyor: eklemi o açıya
+ayarlıyor ve her çağrıdan sonraki durumu kaydediyor. Sahnede gördüğün
+duruş, kodun tamamı bittikten sonraki SON durum — ara adımlar kaydediliyor
+ama tek tek çizilmiyor, yani robotu bir animasyon gibi hareket ederken
+izlemiyorsun.
 
-Sıra önemli: `eklem_ac(0, 45)` önce çalışırsa robot önce omuzunu döndürür,
-sonra dirseğini. Python'da kod yukarıdan aşağıya, yazdığın sırayla
+Yine de sıra önemli, çünkü son durumu belirleyen şey satırların
+yürütülme sırası. Python'da kod yukarıdan aşağıya, yazdığın sırayla
 çalışır — bu robotik programlamanın en temel kuralıdır: **robot, ona
-söylediğin sırayla hareket eder, aklından geçeni değil.**
+söylediğin sırayla hareket eder, aklından geçeni değil.** (Aynı eklemi
+iki kez ayarlarsan son satır kazanır; farklı eklemleri ayarlıyorsan
+sıranın son duruşa etkisi olmaz.)
 
 ## Gerçek dünyada
 

@@ -12,7 +12,7 @@ kazanimlar:
   - "Aynı büyüklüğün tekrarlı ölçümlerinden ortalama ve standart sapmanın nasıl hesaplandığını gösterebilme"
   - "Üretici datasheet'lerinde 'repeatability' ve 'accuracy/linearity' değerlerinin neden ayrı ayrı raporlandığını açıklayabilme"
 kaynaklar:
-  - "JCGM 200:2012, International Vocabulary of Metrology — Basic and General Concepts and Associated Terms (VIM), 3rd edition, madde 2.26 (measurement uncertainty) ve madde 2.21 (repeatability condition of measurement)"
+  - "JCGM 200:2012, International Vocabulary of Metrology — Basic and General Concepts and Associated Terms (VIM), 3rd edition — 'measurement uncertainty' (madde 2.26) ve tekrarlanabilirlik tanımları (madde 2.20-2.21)"
   - "ISO 5725-1:1994, 'Accuracy (trueness and precision) of measurement methods and results — Part 1: General principles and definitions' — trueness (doğruluk/gerçeklik) ve precision (kesinlik) kavramlarının ayrımı"
 incelendi_tarafindan: ""
 incelendi_tarih: ""
@@ -35,7 +35,10 @@ sorduğuna bağlı.
 
 Bir önceki F/Lise dersindeki eşikleme sahnesiyle aynı sahneyi burada
 farklı bir soru için kullanıyoruz. Izgaradaki her hücrenin parlaklığı,
-sabit bir taban değer artı rastgele bir gürültü payından oluşuyor.
+sabit bir taban değer artı bir gürültü payından oluşuyor. (Sahnedeki
+gürültü aslında deterministik bir formülle üretiliyor — aynı hücre her
+açılışta aynı değeri verir; burada onu gerçek bir ölçüm serisinin
+saçılmasına benzetiyoruz.)
 Orada bu gürültünün nesne tespitini nasıl etkilediğine bakmıştık; burada
 aynı gürültüyü, aynı büyüklüğün tekrar tekrar ölçülmesi gibi düşün — her
 hücre, "gerçek" bir taban değerin etrafında saçılan bir ölçüm serisi.
@@ -97,14 +100,14 @@ toleransına göre kabul/red) doğruluk öne çıkar.
 <Quiz
   sorular={[
     {
-      soru: "VIM'e göre 'tekrarlanabilirlik' hangi koşulda tanımlanır?",
+      soru: "Yukarıdaki beş ölçümün (10,01 / 10,03 / 9,98 / 10,02 / 9,98 mm) ortalaması 10,004 mm, standart sapması ≈ 0,029 mm. Parçanın gerçek boyutu 10,000 mm ise bu sensör hakkında ne söylenebilir?",
       secenekler: [
-        "Farklı cihazlar, farklı operatörler, farklı günlerde alınan ölçümler arasında",
-        "Aynı prosedür, aynı gözlemci, aynı cihaz, aynı yer, kısa zaman aralığında tekrarlanan ölçümler arasında",
-        "Sadece kalibre edilmiş referans cihazlarla yapılan ölçümlerde",
+        "Sistematik sapma saçılmadan büyük — asıl sorun kalibrasyon",
+        "Saçılma (≈0,029 mm) sistematik sapmadan (0,004 mm) yaklaşık yedi kat büyük — asıl sınır tekrarlanabilirlik",
+        "İkisi de sıfır, ölçüm kusursuz",
       ],
       dogru: 1,
-      aciklama: "VIM (JCGM 200:2012), tekrarlanabilirliği sabit tutulan koşullar altında (aynı prosedür/gözlemci/cihaz/yer, kısa süre) elde edilen sonuçların yakınlığı olarak tanımlar.",
+      aciklama: "İki sayıyı ayrı ayrı karşılaştır: ortalamanın gerçek değerden farkı sistematik sapmayı, standart sapma ise saçılmayı verir. Hangisi büyükse iyileştirme çabası oraya gider.",
     },
     {
       soru: "Kancadaki iki sensörden 'her zaman 10,02 mm okuyan' sensör hangi özelliği yüksek, hangisini düşük gösteriyor?",

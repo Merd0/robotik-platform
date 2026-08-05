@@ -47,18 +47,22 @@ davranışa yol açabilir.
 
 Zamanlama hatalarının ne kadar ciddi sonuçlar doğurabileceğine dair en çok
 anılan mühendislik vakalarından biri Therac-25 radyasyon tedavi cihazıdır.
-Leveson ve Turner'ın 1993 tarihli incelemesine göre, cihazın kontrol
-yazılımındaki bir yarış durumu — operatörün ekrana çok hızlı veri girmesi
-durumunda iki farklı işlem modunun beklenmedik sırada üst üste binmesi —
-en az üç hastanın ölümüne yol açan aşırı radyasyon dozlarına neden oldu. Bu,
-robot-PLC el sıkışmasıyla birebir aynı senaryo değil, ama aynı ilkeyi
+Leveson ve Turner'ın 1993 tarihli incelemesi, cihazın kazalarında rol
+oynayan birden fazla ayrı yazılım hatası tespit ediyor. Bunlardan biri bir
+yarış durumuydu: operatör ekrana çok hızlı veri girdiğinde iki farklı
+işlem modu beklenmedik sırada üst üste biniyor ve hasta aşırı radyasyon
+dozu alıyordu. Kazaların tamamı tek bir hataya bağlı değil — ama bu
+hatanın kendisi, yalnızca bir sıralama sorunundan doğan ölümcül bir
+arızaydı. Bu, robot-PLC el sıkışmasıyla birebir aynı senaryo değil, ama aynı ilkeyi
 gösteriyor: bir kontrol sisteminde "hangi sinyal önce geldi" sorusunun
 cevabı kozmetik bir detay değil, güvenliğin kendisidir.
 
-Bir robot hücresinde aynı ilke somut olarak şöyle işler: PLC, robotun
-`SetDO doHazirim, 1;` ile açtığı sinyali `WaitDI diHazirim, 1;` ile
-beklemeden kendi "başla" çıkışını açarsa, robot henüz tamamlamadığı bir
-işin ortasında yeni bir komutla karşılaşabilir.
+Bir robot hücresinde aynı ilke somut olarak şöyle işler: robot, işini
+bitirdiğinde RAPID tarafında `SetDO doHazirim, 1;` ile bir çıkış açar.
+PLC kendi programında bu sinyali okumadan "başla" çıkışını açarsa, robot
+henüz tamamlamadığı bir işin ortasında yeni bir komutla karşılaşabilir.
+(`SetDO`/`WaitDI` robot kontrolörünün dili olan RAPID'e aittir; PLC bu
+talimatları çalıştırmaz, yalnızca sinyal hattını okur.)
 
 ## Dene
 

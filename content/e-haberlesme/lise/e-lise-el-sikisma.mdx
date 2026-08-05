@@ -51,9 +51,14 @@ adlandırılan, iki bağımsız birim arasındaki asenkron veri aktarımının
 standart yöntemidir. Tek bir sinyalle ("strobe") yapılan basit bir uyarı,
 alıcının veriyi gerçekten alıp almadığını göndericiye söylemez; el sıkışma
 bunun için ikinci bir onay sinyali ekler. Bir robot hücresinde bu, örneğin
-robot tarafında `SetDO doHazirim, 1;` ile açılan bir çıkışın, PLC
-tarafından `WaitDI diHazirim, 1;` ile beklenmesi ve ardından PLC'nin kendi
-onay çıkışını açması şeklinde kurulur.
+robot tarafında `SetDO doHazirim, 1;` ile bir çıkışın açılması, ardından
+`WaitDI diAldim, 1;` ile PLC'nin onayının beklenmesi şeklinde kurulur.
+Bu iki satır **robot programına** aittir: `SetDO` ve `WaitDI` ABB robot
+kontrolörünün dili olan RAPID'in talimatlarıdır. PLC bu satırları
+çalıştırmaz — o kendi programında (genelde merdiven diyagramı veya
+yapılandırılmış metin) robotun çıkışını okur ve kendi onay çıkışını açar.
+İki taraf da birbirinin dilini bilmez; ortak oldukları tek şey aradaki
+sinyal hatlarıdır.
 
 ## Dene
 

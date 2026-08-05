@@ -42,10 +42,11 @@ ve ortadaki kutu (bir masa gibi düşün). Bu üçü birlikte basit bir
 simülasyon sahnesi kurar — gerçek bir hücrenin küçültülmüş,
 sadeleştirilmiş hali.
 
-Sahneye dokunarak kendi engellerini (küre olarak) ekledin. Her ekleme,
-robotun hesapladığı yolu değiştirdi — motor arka planda
-`lib/robotics/collision.ts` içindeki testlerle "bu nokta dolu mu" diye
-tekrar tekrar sordu, tıpkı önceki derste gördüğün gibi.
+Sahneye dokunarak kendi engellerini (küre olarak) ekledin. Her engel
+eklediğinde ekranda duran yol silinir — çünkü sahne değişmiştir, eski yol
+artık geçerli olmayabilir. Yeni yolu görmek için "Çalıştır" düğmesine
+basman gerekir: planlayıcı o anda baştan çalışır ve "bu nokta dolu mu"
+sorusunu sahnedeki her aday nokta için yeniden sorar.
 
 ## Gerçek dünyada
 
@@ -57,9 +58,11 @@ yerleştirilir, sonra program bu sahne üzerinde test edilir.
 
 ## Dene
 
-Kutunun (masanın) etrafına birkaç küre engel daha ekle, robotun yine de
-bir yol bulup bulamadığını gözlemle. Sonra tüm engelleri temizleyip
-sadece kutuyu bırak — yol nasıl değişiyor?
+Kutunun (masanın) etrafına birkaç küre engel ekle ve her seferinde
+"Çalıştır"a basıp robotun yine de bir yol bulup bulamadığını gözlemle.
+Sonra eklediğin küreleri üzerlerine dokunarak tek tek kaldır ve tekrar
+çalıştır — yol nasıl değişiyor? (Dikkat: "Engelleri temizle" düğmesi
+masayı da siler, çünkü o da sahnedeki engellerden biri.)
 
 <Quiz
   sorular={[

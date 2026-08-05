@@ -12,7 +12,7 @@ kazanimlar:
   - Bir giriş sinyaliyle ona bağlı çıkış sinyali arasında neden küçük bir gecikme olabileceğini açıklayabilme
   - Dijital I/O'nun bir robot kontrolöründe hangi gerçek talimatlarla (ör. SetDO, WaitDI) karşılığını bulduğunu tanıyabilme
 kaynaklar:
-  - "Wikipedia katkıcıları, 'Programmable logic controller' maddesi — dijital giriş/çıkış sinyalleri ve tarama döngüsü (scan cycle) süresi (onlarca milisaniye), https://en.wikipedia.org/wiki/Programmable_logic_controller"
+  - "Mikell P. Groover, Automation, Production Systems, and Computer-Integrated Manufacturing, Pearson — 'Discrete Control Using Programmable Logic Controllers and Personal Computers' bölümü: PLC tarama döngüsü (scan cycle) ve dijital giriş/çıkış sinyalleri"
   - "IEC 61131-2, Programmable controllers — Part 2: Equipment requirements and tests (dijital I/O donanım gereksinimleri)"
   - "ABB RAPID Instructions, Functions and Data Types Reference Manual — SetDO ve WaitDI talimatları (dijital çıkış/giriş sinyalleri)"
 incelendi_tarafindan: ""
@@ -65,8 +65,9 @@ tanımlar.
 
 İki sinyali de sıfırla. "Giriş" satırında 2. adımı aç. "Çıkış" satırında
 ise aynı adımı değil, 4. adımı aç — yani gerçek bir gecikmeyi simüle et.
-Oynat'a bas, okuma başının önce boş bir "Giriş" karesinden geçip birkaç
-adım sonra "Çıkış"ın da açıldığı kareye ulaştığını izle.
+Oynat'a bas: okuma başı önce 2. adımda "Giriş"in açıldığı kareden geçer,
+sonraki iki adımda iki sinyal de kapalıdır, ve ancak 4. adımda "Çıkış"
+açılır. Aradaki bu iki adımlık boşluk, gecikmenin kendisidir.
 
 <Quiz
   sorular={[

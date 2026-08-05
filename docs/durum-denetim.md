@@ -1207,3 +1207,183 @@ Hat H'nin 10 dersi `durum: taslak` kalmaya devam ediyor. Güvenlik hattı
 için insan gözden geçirmesi diğer hatlardan daha kritik: Faz 5 ara
 kaydındaki "doğrulanamayanlar" listesindeki her madde standardın kendisi
 alınarak kontrol edilmeli.
+
+---
+
+## Hat D/E/F/G taslak derslerinin kalite denetimi (2026-08-05)
+
+Hat H dışında yayına alınmamış **40 taslak dersin tamamı** beş maddelik bir
+kontrol listesiyle denetlendi. Amaç bilinçli olarak dar tutuldu: **ölç, sonra
+yalnızca gerçekten eksik olana dokun.** Geçen derse dokunulmadı — çalışan
+içeriği değiştirmek kalite değil risktir.
+
+### Yöntem
+
+Kontrol listesi (docs/04-icerik-rehberi.md'den türetildi):
+
+| | Ölçüt |
+|---|---|
+| M1 | 6 bölüm tam mı (kanca / sahne / açıklama / gerçek dünya / dene / sonraki) |
+| M2 | Seviye kalibrasyonu (ortaokul formülsüz · lise formül var türetme yok · üniversite türetme + sınırlar + gerçek koda link) |
+| M3 | Kazanımlar net ve derste gerçekten karşılanıyor mu |
+| M4 | Alıştırma dersteki sahneyle çözülebiliyor mu, ezber sormuyor mu |
+| M5 | Kaynak var mı ve konuya gerçekten bağlı mı |
+
+8 `kalite-denetci` çalıştırması, **2'şerli gruplar hâlinde sırayla** (oturum
+limitini tek seferde tüketmemek için). Denetçilere açıkça "varsayılan sonuç
+GEÇTİ, bulgu icat etme, cila önerisi yazma" talimatı verildi.
+
+Denetim öncesi mekanik bir yapı taraması yapıldı (bölüm varlığı, sahne, Quiz,
+kaynak sayısı, kod linki) — denetçi raporlarını çapraz kontrol etmek için.
+Bu tarama iki bulguyu bağımsız olarak doğruladı (offline-programlama'da eksik
+bölüm, 5 derste sahne yokluğu).
+
+Denetçilerin kritik iddiaları elle yeniden doğrulandı: `blockProgram.ts:35`
+(mutlak atama), `BlockEditor.tsx:305` (tekrar 20'ye kırpılı),
+`CodeRunner.tsx:104` (yalnızca son duruş), KRL'de tam durmanın varsayılan
+olması (bağımsız kaynak), OSHA'nın SMS tanımı (WebFetch ile birebir),
+tarama yolu satır aritmetiği (elle).
+
+### Sonuç: 40 ders → 12 GEÇTİ (dokunulmadı), 28 DÜZELTİLDİ
+
+Hiçbir ders yeniden yazılmadı; her düzeltme yalnızca eksik çıkan maddeye
+dokundu. 50 ders `durum: taslak` olarak kaldı — insan onayı ayrı adım.
+
+**Dokunulmayan 12 ders:** `d-lise-hareket-komutlari`,
+`d-lise-koordinat-hiz-bekleme`, `e-universite-tcpip-soket`,
+`e-universite-cycle-time-jitter`, `e-universite-plc-master-slave`,
+`f-ortaokul-goz-olmadan-is-yapmak`, `f-lise-piksel-milimetre`,
+`f-lise-esikleme-nesne-bulma`, `f-universite-kamera-kalibrasyonu`,
+`f-universite-lazer-profil-sensoru`, `g-ortaokul-simulasyon-nedir`,
+`g-universite-dijital-ikiz`.
+
+### En ciddi beş bulgu
+
+1. **`f-universite-tarama-yolu-uretimi` — aritmetik hata.** Kapsama
+   `W + (n−1)·s` olduğu hâlde ders `H/s` ile hesaplıyordu: "100/16 = 6,25 →
+   7 satır, %40 artış". Doğrusu `n = ceil((H−W)/s) + 1 = 6` satır ve %20
+   artış (kapsama 20 + 5·16 = tam 100 mm). Formül, örnek ve yüzde düzeltildi.
+2. **`e-universite-hata-durumlari` — standart yanlış atfedilmiş.** OSHA'nın
+   "safety-rated monitored stop" tanımı derste "bir arıza durumunda
+   tetiklenen" deniyordu; kaynağın tanımı **korunan alana giriş
+   algılandığında** etkinleşen duruş. "Category 2 Stop" nitelemesi de
+   ANSI/RIA R15.06-2012 + ISO 10218-2:2011'e değil **NFPA 79-2017**'ye ait.
+   Metin, `kaynaklar` satırı ve Quiz açıklaması hizalandı; haberleşme
+   kopması için ayrı ve doğru bir çerçeve (koruyucu duruş) kuruldu.
+   Kaynak metni WebFetch ile birebir doğrulanarak düzeltildi.
+3. **`g-universite-pybullet-sahne-fizik` — kendi deposuyla çelişiyordu.**
+   "reference-python'da gerçek fizik motoru bu kontrolü doğrulamak için
+   kullanılıyor" ve "yolu tam fizik motoruyla doğruluyor" deniyordu;
+   `reference-python/docs/architecture.md` tersini söylüyor (PyBullet yalnızca
+   görselleştirme, çarpışma kararı bağımsız geometrik test). Ayrıca
+   `setGravity` bir **ivme** vektörüdür, ders "kuvvet vektörü" diyordu.
+4. **`d-universite-kuka-krl` — `FINE` KRL anahtar sözcüğü değil.** Ders
+   `PTP P1 VEL=100% FINE` yazıyor ve `FINE`'ı bir KRL komutu gibi
+   anlatıyordu. KRL'de **tam durma varsayılandır**; adı olan şey
+   yaklaşmadır (`CONT`, genişliği `$APO` ile). Bu, aynı platformdaki FANUC
+   dersiyle de çelişiyordu. Kod bloğu ve açıklama düzeltildi, iki dilin zıt
+   varsayılanları açıkça anlatıldı.
+5. **`e-lise-el-sikisma` + `e-lise-zamanlama-neden-onemli` — yanlış mimari.**
+   `WaitDI diHazirim, 1;` PLC'ye atfedilmişti; RAPID ABB **robot
+   kontrolörünün** dilidir, PLC RAPID çalıştırmaz. İki derste de talimatlar
+   robot tarafına alındı ve PLC'nin kendi programı olduğu belirtildi.
+
+### Diğer düzeltmeler (özet)
+
+- **Sahnenin yapmadığı şeyi vaat eden metinler (7 ders).** En sık bulgu
+  türü buydu: `d-ortaokul-sirali-tekrar-kosul` (mutlak atama yüzünden tek
+  bloklu tekrar hiç hareket üretmiyor; ayrıca kanca "otuz kez" diyor ama
+  bileşen 20'ye kırpıyor), `d-ortaokul-blok-komutlar` ("bloğu sil" —
+  BlockEditor araya ekleme/silme desteklemiyor), `d-lise-python-komut-dizisi`
+  (CodeRunner ara adımları oynatmıyor, yalnızca son duruşu çiziyor),
+  `g-lise-basit-sahne-kurma` (engel ekleyince yol silinir, "Çalıştır"
+  gerekir; "Engelleri temizle" masayı da siler), `f-lise-olcek-perspektif-hatasi`
+  (bozulma sol üst köşede görünmüyor), `f-universite-el-goz-kalibrasyonu`
+  (sahne kaymayı canlandırmıyor), `f-universite-tarama-yolu-uretimi`
+  (satır arası boşluk çizilmiyor).
+- **Kaynak uyumsuzlukları.** "Modern Robotics Bölüm 1" iki derste robot
+  programlamaya kaynak gösterilmişti — o bölüm kitabın "Preview"ıdır ve
+  konuyu hiç işlemez; ABB RAPID kılavuzuyla değiştirildi. Groover künyesi
+  iki derste hatalıydı ("Digital Computers" → "Personal Computers"; bölüm
+  numarası baskıya göre değiştiği için numara yerine bölüm başlığıyla
+  atıf yapıldı). `g-universite-urdf-modelleme` kaynağı `urdf/XML/model`
+  sayfasını gösteriyordu, iddiayı destekleyen sayfa `urdf/XML/joint`.
+  `e-lise-dijital-giris-cikis`'te tarama döngüsü sayısı yalnızca
+  Wikipedia'ya dayanıyordu (docs/04'ün kabul listesinde yok) — Groover'a
+  taşındı.
+- **Kaynaksız/abartılı iddialar.** `e-lise-zamanlama-neden-onemli`
+  Therac-25'te "en az üç ölüm"ü tek bir yarış durumuna bağlıyordu; kayıtlar
+  ölümleri birden fazla ayrı yazılım hatasına dağıtıyor — nedensel bağ
+  daraltıldı. `d-universite-ros2-temelleri` kancası "iki kontrolör birbirine
+  asla doğrudan bir cümle kuramaz" diyordu; platformun kendi Hat E dersleri
+  bunun tersini öğretiyor (PROFINET/EtherNet-IP) — ifade program düzeyine
+  sabitlendi, kaynaksız yaygınlık iddiası daraltıldı.
+  `e-universite-endustriyel-protokoller`'deki "A/B sınıfı"/"C sınıfı" atfı
+  kaynakta yoktu, kaldırıldı; protokol sayılarının koşullu olduğu eklendi.
+- **Eksik üniversite derinliği.** `d-universite-abb-rapid` (`robconf`
+  yalnızca ConfJ/ConfL açıkken bağlayıcı; `wobj` kalibrasyon hatası tüm
+  hedefleri birlikte kaydırır), `d-universite-fanuc-karsilastirma` (teach
+  pendant yaklaşımının sürüm kontrolü sınırı), `f-universite-el-goz-kalibrasyonu`
+  (AX=XB'nin dejenere durumu), `f-universite-nokta-bulutu-yuzey-muayenesi`
+  (ICP yerel arar, kötü başlangıç hizasında yanlış minimuma yakınsar),
+  `g-universite-urdf-modelleme` (URDF bir ağaçtır, kapalı kinematik zincir
+  doğrudan ifade edilemez) — hepsine sınır paragrafı eklendi.
+- **Eksik bölüm.** `d-universite-offline-programlama`'da "Gerçek dünyada"
+  bölümü hiç yoktu (yerindeki "Bu platformla bağlantısı" o işlevi
+  karşılamıyordu, hiçbir OLP aracı adı geçmiyordu). RobotStudio/KUKA.Sim/
+  ROBOGUIDE/RoboDK ve post-processor kavramıyla bölüm eklendi, kaynak
+  eklendi.
+- **Alıştırma sorunları.** `d-universite-mecademic-python`'da bir çeldirici
+  ("Pyodide desteklemiyor") fiilen doğruydu, yani iki doğru cevap vardı —
+  soru kökü niyete sabitlendi. `f-universite-olcum-belirsizligi-tekrarlanabilirlik`'in
+  1. sorusu VIM tanımı ezberiydi — dersin kendi sayısal serisine bağlandı.
+- **Eksik kod bağlantısı.** `g-universite-sim-to-real-farki` manipülabilite
+  formülünü veriyordu ve karşılığı `computeJacobian`'da gerçekten var, ama
+  "Kaynak kodu" satırı yoktu — eklendi. Hat G'nin diğer 7 bağlantısının
+  hepsi (dosya + fonksiyon + satır no) doğrulandı, hatalı yok.
+- **Çapraz referans hataları.** `f-universite-nokta-bulutu` "bir önceki
+  derste görülen boustrophedon" diyordu, terim bir SONRAKİ derste
+  tanımlanıyor. `g-lise-deneme-yanilma-maliyeti` Hat G üniversite
+  derslerinin "ileride eklenecek" olduğunu söylüyordu, o dersler zaten var.
+
+### Bilinçli olarak yapılmayan: sahne eksikliği (5 ders)
+
+`d-universite-abb-rapid`, `d-universite-kuka-krl`,
+`d-universite-fanuc-karsilastirma`, `d-universite-ros2-temelleri` ve
+`e-universite-endustriyel-protokoller` derslerinde **hiç etkileşimli sahne
+yok** (`etkilesimli: []`). Bu gerçek bir M1 eksiği ve docs/05'teki "önce
+oyna" ilkesi bu beş derste hiç işlemiyor.
+
+Bu turda **düzeltilmedi**: sahne eklemek bir etkileşim değişikliğidir ve
+docs/03'e göre cila fazına ertelenmiş durumda. Beşinin de ayrıca içerik
+bulgusu vardı, o bulgular düzeltildi. Cila fazında tutarlı bir grup olarak
+ele alınmalı — yeni bileşen gerekmiyor, mevcut `CodeRunner`/`SignalTimeline`
+yeterli.
+
+### Sistemik bulgular (ders bazında düzeltilmedi, ayrı karar konusu)
+
+1. **`aciklama` alanı ipucu yerine doğru cevabı tekrarlıyor.** docs/04
+   "yanlış cevapta doğruyu söyleme, ipucu ver" diyor; `QuizSorusu.tsx` bu
+   metni yalnızca YANLIŞ seçimde gösteriyor. Desen 89 dersin çoğunda var —
+   Hat D/E/F/G'ye özgü değil, tek tek düzeltmek yerine bütün olarak karar
+   verilmeli.
+2. **Quiz soru sayısı çoğu derste 1**, docs/04 "2-4 soru" diyor. Yine proje
+   geneli bir doküman-uygulama farkı.
+3. **Üretici kaynaklarında doküman numarası/URL eksik** (KUKA KSS, FANUC TP).
+   Bu turda **numara uydurulmadı** — doğrulanamayan künye yazmak projenin
+   temel kuralını ihlal eder. Kılavuzlar kamuya kapalı olduğu için bu ancak
+   elde nüsha olan biri tarafından kapatılabilir.
+4. **Ders metninde okura `bkz. docs/...` iç referansı** — sitede `docs/`
+   rotası yok, ölü bağlantı. 6 derste var.
+5. **`docs/02-mimari.md` KaTeX'i yığında listeliyor ama kurulu değil.**
+   Bu denetim sırasında fark edildi: `remark-math`/`rehype-katex` yok,
+   `compileMDX` yalnızca `remarkGfm` kullanıyor. Dersler formülleri düz
+   metin/kod bloğu olarak yazıyor ve bu çalışıyor — ama `$$...$$` yazan bir
+   katkıcının formülü ham görünür. Ya KaTeX kurulmalı ya docs/02 düzeltilmeli.
+
+### Doğrulama
+
+`npx tsc --noEmit`, `npx eslint .`, `npx vitest run` (86/86),
+`npm run check-content` (89 ders), `npm run validate-content-graph`
+(89 ders, 0 uyarı), `npm run build` — hepsi temiz. 50 ders `durum: taslak`
+olarak korundu.

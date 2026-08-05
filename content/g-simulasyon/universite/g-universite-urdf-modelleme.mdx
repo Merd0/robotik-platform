@@ -13,7 +13,7 @@ kazanimlar:
   - DH parametreleri ile URDF'nin aynı geometriyi neden farklı biçimde kodladığını ayırt edebilme
 kaynaklar:
   - "ROS urdfdom projesi, URDF XML şeması: https://github.com/ros/urdfdom/blob/master/xsd/urdf.xsd"
-  - "ROS Wiki, URDF/XML/model dokümantasyonu: https://wiki.ros.org/urdf/XML/model"
+  - "ROS Wiki, URDF/XML/joint dokümantasyonu: https://wiki.ros.org/urdf/XML/joint — eklem türleri ve limit alanının hangi türlerde gerekli olduğu"
   - "J. Denavit & R. S. Hartenberg, 'A kinematic notation for lower-pair mechanisms based on matrices', ASME Journal of Applied Mechanics, 22(2), 1955"
 incelendi_tarafindan: ""
 incelendi_tarih: ""
@@ -53,9 +53,20 @@ bağlar. `type` özniteliği eklem türünü belirler:
 | `prismatic` | doğrusal kayar, `limit` zorunlu | doğrusal eklem, `d` canlı parametre |
 | `fixed` | hiç hareket etmez | DH zincirinde genelde yer almaz |
 
+Bunlar en sık kullanılan dördü; URDF şeması ayrıca `floating` (altı
+serbestlik dereceli) ve `planar` (bir düzlem içinde hareket) türlerini de
+tanımlar.
+
 Her `joint`in `origin` elemanı, ebeveyn link çerçevesinden bu eklemin
 çerçevesine sabit bir dönüşümü (xyz + roll-pitch-yaw) taşır; `axis` ise
 dönme veya kayma yönünü tanımlar.
+
+**URDF bir ağaçtır.** Her link'in yalnızca bir ebeveyni olabilir,
+dolayısıyla model döngü içeremez. Bunun pratik sonucu şu: delta veya
+paralel robotlar gibi **kapalı kinematik zincirler URDF'de doğrudan
+ifade edilemez** — bu tür mekanizmalar ya açık bir alt zincire
+indirgenerek yaklaşık modellenir, ya da simülatörün kendi ek
+kısıtlarıyla (loop closure) tamamlanır.
 
 **Kritik fark:** DH, ardışık İKİ eklem EKSENİ arasındaki ilişkiyi dört
 sayıyla (a, α, d, θ) özetleyen minimal, akademik bir gösterim —
