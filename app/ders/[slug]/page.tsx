@@ -1,22 +1,50 @@
 import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
-import { getAdjacentLessons, getAllLessons, getLessonBySlug, getPrerequisites } from "@/lib/content";
+import type { Metadata } from "next";
+import {
+  getAdjacentLessons,
+  getPrerequisites,
+  getPublicLessonBySlug,
+  getPublicLessons,
+} from "@/lib/content";
 import { mdxComponents } from "@/components/interactive";
 import { LessonNav } from "@/components/ui/LessonNav";
 import { CompleteLessonButton } from "@/components/ui/CompleteLessonButton";
 
+/**
+ * Yalnızca herkese açık dersler statik sayfa olarak üretilir. Üretim
+ * derlemesinde taslak bir dersin HTML'i hiç oluşmaz — yani slug bilinse bile
+ * sayfa yoktur (bkz. `getPublicLessons`).
+ */
 export function generateStaticParams() {
-  return getAllLessons().map((lesson) => ({ slug: lesson.slug }));
+  return getPublicLessons().map((lesson) => ({ slug: lesson.slug }));
 }
 
 interface DersPageProps {
   params: Promise<{ slug: string }>;
 }
 
+/**
+ * Önizleme derlemesinde (ICERIK_TASLAK_ONIZLEME=1) taslak sayfalar
+ * üretilebiliyor; o durumda en azından arama motorlarına kapatılsınlar.
+ * Üretimde bu sayfalar zaten hiç oluşmuyor.
+ */
+export async function generateMetadata({ params }: DersPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const lesson = getPublicLessonBySlug(slug);
+  if (!lesson) return {};
+
+  const taslak = lesson.frontmatter.durum !== "yayinda";
+  return {
+    title: `${lesson.frontmatter.baslik} — Robotik Öğrenme Platformu`,
+    ...(taslak ? { robots: { index: false, follow: false } } : {}),
+  };
+}
+
 export default async function DersPage({ params }: DersPageProps) {
   const { slug } = await params;
-  const lesson = getLessonBySlug(slug);
+  const lesson = getPublicLessonBySlug(slug);
   if (!lesson) notFound();
 
   const { content } = await compileMDX({

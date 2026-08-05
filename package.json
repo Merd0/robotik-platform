@@ -7,13 +7,14 @@
     "predev": "node scripts/copy-pyodide-assets.mjs && node scripts/build-worker.mjs && tsx scripts/build-search-index.ts",
     "dev": "next dev",
     "prebuild": "node scripts/copy-pyodide-assets.mjs && node scripts/build-worker.mjs && tsx scripts/build-search-index.ts",
-    "build": "next build",
+    "build": "next build && tsx scripts/check-no-draft-pages.ts",
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
     "check-content": "tsx scripts/check-content.ts",
     "validate-content-graph": "tsx scripts/validate-content-graph.ts",
     "build-search-index": "tsx scripts/build-search-index.ts",
+    "check-no-draft-pages": "tsx scripts/check-no-draft-pages.ts",
     "generate-fixtures": "python reference-python/scripts/generate_fixtures.py"
   },
   "dependencies": {
