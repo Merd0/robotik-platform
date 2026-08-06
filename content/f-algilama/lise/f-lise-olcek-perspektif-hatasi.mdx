@@ -47,6 +47,14 @@ noktalarda büyür." Görüntünün ortasındaki bir satranç tahtası kenarı d
 görünürken, kenara yakın bir kısmı hafifçe kavisli görünür — çünkü lens,
 görüş alanının merkezinde ve kenarında aynı geometriyi vermez.
 
+Bir terim ayrımı: yukarıdaki sahnenin modellediği ve OpenCV'nin
+tanımladığı şey **lens (radyal) distorsiyonudur** — merkezden uzaklaştıkça
+büyüyen, lensin optiğinden gelen bir sapma. Buna çoğu zaman "perspektif
+hatası" da eşlik eder: kamera yüzeye tam dik bakmıyorsa ya da ölçtüğün
+nesnenin yüksekliği varsa, tek bir `k` katsayısı yine yetmez. İkisinin
+kaynağı farklı, sonucu benzer — bu yüzden pratikte ikisi birlikte, tam
+bir kalibrasyonla ele alınır.
+
 ## Gerçek dünyada
 
 Tek noktada (genelde görüntünün ortasına yakın) yapılan bir kalibrasyon, o
@@ -68,10 +76,12 @@ tek bir noktada değil, görüş alanının tamamını kaplayan bir ızgara
 ## Dene
 
 Önce "Perspektif hatasını göster" kapalıyken merkeze yakın bir hücreye,
-sonra köşeye yakın bir hücreye tıkla — ikisinin de aynı `k` ile
-hesaplandığını doğrula. Sonra anahtarı aç ve aynı iki hücreye tekrar tıkla:
-merkezdeki sonucun neredeyse değişmediğini, köşedekinin belirgin biçimde
-büyüdüğünü karşılaştır.
+sonra **sağ alt köşeye** yakın bir hücreye tıkla — ikisinin de aynı `k`
+ile hesaplandığını doğrula. Sonra anahtarı aç ve aynı iki hücreye tekrar
+tıkla: merkezdeki sonucun az değiştiğini, köşedekinin belirgin biçimde
+büyüdüğünü karşılaştır. (Sahnedeki bozulma ızgaranın sol üst köşesindeki
+başlangıç noktasından uzaklaştıkça artıyor; bu yüzden sol üst köşedeki
+hücrelerde anahtarın etkisi görünmez.)
 
 <Quiz
   sorular={[

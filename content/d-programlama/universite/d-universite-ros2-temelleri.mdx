@@ -23,10 +23,11 @@ durum: taslak
 
 ## Kanca
 
-ABB'nin kontrolörü RAPID konuşur, KUKA'nınki KRL. Bu iki kontrolör
-birbirine asla doğrudan bir cümle kuramaz — diller uyuşmaz. Ama ikisinin
-üzerinde çalışan bir görüntü işleme yazılımı ya da bir yol planlayıcı,
-aynı ROS 2 düğümü (node) olarak yazılabilir.
+ABB'nin kontrolörü RAPID konuşur, KUKA'nınki KRL. İki kontrolör
+birbirine sinyal ve protokol düzeyinde pekâlâ bağlanır (Hat E'de gördüğün
+gibi), ama tek bir ortak PROGRAM paylaşamazlar — diller uyuşmaz. Ama
+ikisinin üzerinde çalışan bir görüntü işleme yazılımı ya da bir yol
+planlayıcı, aynı ROS 2 düğümü (node) olarak yazılabilir.
 
 ## Ne oldu
 
@@ -90,8 +91,8 @@ istasyonda bir mobil robot, üçüncü bir yerde bir kamera sistemi olsun
 bile, üzerlerine yazılan YÜKSEK SEVİYELİ mantık (yol planlama, görev
 sıralama, kamera-robot koordinasyonu) ROS 2 düğümleri olarak
 yazılabilir ve üretici sınırlarını aşan ortak bir sözlükle haberleşir.
-Bu yüzden ROS 2, akademik robotik araştırmalarında ve çok robotlu
-endüstriyel hücrelerde yaygın bir ortak zemin haline geldi.
+Bu yüzden ROS 2, üretici bağımsız bir yazılım katmanı gerektiğinde sık
+başvurulan ortak zeminlerden biridir.
 
 ## Dene
 

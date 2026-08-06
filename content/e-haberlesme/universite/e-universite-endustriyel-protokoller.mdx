@@ -44,11 +44,18 @@ düğümler çerçeveyi durdurup işlemiyor. Bu yaklaşım çok düşük döngü
 
 **PROFINET.** PI'nin (PROFINET International) kendi tanımıyla, PROFINET üç
 ayrı iletişim kanalı sunuyor: parametre ayarı gibi zaman kritik olmayan
-işler için standart TCP/IP; 1-10 ms döngü süresiyle çalışan RT (Real-Time,
-A/B sınıfı uygulamalar); ve 1 ms'nin altına inen, sürücü (motion) kontrolü
-gibi çok hassas uygulamalar için IRT (Isochronous Real-Time, C sınıfı).
-Yani PROFINET tek bir yöntem değil, ihtiyaca göre seçilen üç ayrı
-performans seviyesi sunuyor.
+işler için standart TCP/IP; 1-10 ms döngü süresiyle çalışan RT
+(Real-Time); ve 1 ms'nin altına inen, sürücü (motion) kontrolü gibi çok
+hassas uygulamalar için IRT (Isochronous Real-Time). Yani PROFINET tek bir
+yöntem değil, ihtiyaca göre seçilen üç ayrı performans seviyesi sunuyor.
+
+**Bu sayılar koşulsuz değil.** Üçü de üretici/organizasyon tarafından
+verilen hedef değerlerdir; bir hatta fiilen ulaşılan döngü süresi düğüm
+sayısına, her düğümün taşıdığı veri miktarına ve topolojiye bağlıdır.
+IRT özellikle sıradan bir ağ kurulumuyla elde edilmez — zaman
+senkronizasyonunu donanımda destekleyen anahtarlar gerektirir. Bir
+projede bu değerler kabul kriteri olacaksa, kataloğa değil kendi
+hattınızda yapılan ölçüme bakılır.
 
 **EtherNet/IP.** ODVA'nın kendi tanımıyla: "EtherNet/IP uses standard
 Ethernet infrastructure, but adds industrial communication services
@@ -95,7 +102,7 @@ Bu son soru (döngü süresi ve jitter) sıradaki dersin konusu.
         "1 ms'nin altına inen, sürücü/motion kontrolü gibi çok hassas senkronizasyon gerektiren uygulamalar",
       ],
       dogru: 2,
-      aciklama: "PI'ye göre IRT, class C uygulamaları için 1 ms altı döngü sürelerine izin veriyor; RT kanalı ise 1-10 ms aralığındaki class A/B uygulamaları için yeterli.",
+      aciklama: "PI'ye göre IRT kanalı 1 ms altı döngü sürelerini hedefler ve sürücü kontrolü gibi çok hassas işler içindir; RT kanalı 1-10 ms aralığında kalır.",
     },
   ]}
 />

@@ -114,14 +114,14 @@ koduyla aynı Python sürecinden yönetmeyi kolaylaştırır.
       aciklama: "Robot bir metin komut sunucusu çalıştırır; Python API bu metinleri senin yerine üretip gönderen bir sarmalayıcıdır (wrapper).",
     },
     {
-      soru: "Bu derste CodeRunner içinde robot.Connect(...) satırı neden çalıştırılmıyor?",
+      soru: "Bu platform teknik olarak bir yol bulsaydı bile robot.Connect(...) satırını yine de çalıştırmazdı. Neden?",
       secenekler: [
-        "Pyodide bu fonksiyonu desteklemediği için",
-        "Bu platform hiçbir zaman gerçek bir robota ağ bağlantısı kurmaz — bu bilinçli bir tasarım kararı",
+        "Ağ bağlantısı sayfayı yavaşlatacağı için",
+        "Gerçek bir robota bağlanmamak bilinçli bir tasarım kararı — güvenlik ve sorumluluk sınırı",
         "mecademicpy kütüphanesi ücretli olduğu için",
       ],
       dogru: 1,
-      aciklama: "Platform statik ve sunucusuz çalışır, gerçek robota bağlanan bir kontrol yazılımı değildir (bkz. docs/00-vizyon.md) — bu güvenlik ve sorumluluk açısından bilinçli bir sınırdır.",
+      aciklama: "Soru teknik engeli değil, kararı soruyor: platform gerçek robota bağlanan bir kontrol yazılımı olmamayı baştan seçti. Gerçek robot eğitimli personel ve risk analizi ister.",
     },
   ]}
 />

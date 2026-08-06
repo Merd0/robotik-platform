@@ -13,6 +13,7 @@ kazanimlar:
   - Bu platformdaki CodeRunner'ın küçük ölçekte bir OLP ortamı olarak nasıl çalıştığını gösterebilme
 kaynaklar:
   - "Pan, Z., Polden, J., Larkin, N., Van Duin, S., Norrish, J. (2012). Recent progress on programming methods for industrial robots. Robotics and Computer-Integrated Manufacturing, 28(2), 87-94. DOI: 10.1016/j.rcim.2011.08.004"
+  - "RoboDK, Offline Programming ürün dokümantasyonu: https://robodk.com/offline-programming — çevrim dışı programlamanın üretim duruşunu ortadan kaldırması ve post-processor ile üreticiye özgü koda dönüştürme"
 incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
@@ -50,6 +51,22 @@ Program hazır olduğunda, gerçek hücreye indirilir; genelde küçük bir
 hücre arasında küçük ölçüm farkları olur — bu farkın kendisi, bu
 platformun ilerideki simülasyon hattında (Hat G) "sim-to-real farkı"
 başlığı altında ayrıca ele alınıyor.
+
+## Gerçek dünyada
+
+Çevrim dışı programlama sahada ayrı bir yazılım kategorisidir ve her
+büyük üretici kendi aracını sunar: ABB'nin RobotStudio'su, KUKA.Sim,
+FANUC'un ROBOGUIDE'ı. Bunların yanında marka bağımsız araçlar da var —
+RoboDK bunlardan biri ve kendi tanıtımında yaklaşımın çözdüğü problemi
+doğrudan adlandırıyor: çevrim dışı programlama, "üretim sahasında
+programlamadan kaynaklanan üretim duruşunu ortadan kaldırır."
+
+Bu araçların ortak iş akışı aynı: parçanın CAD modeli sahneye alınır,
+robot ve çevre elemanları yerleştirilir, yol sanal ortamda üretilip
+çarpışma ve erişilebilirlik açısından kontrol edilir, sonra hedef
+kontrolörün kendi diline (RAPID, KRL, TP) çevrilerek dışa aktarılır. Bu
+son adıma **post-processor** denir — aynı sanal yol, farklı markalar için
+farklı metin dosyalarına dönüşür.
 
 ## Bu platformla bağlantısı
 

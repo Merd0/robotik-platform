@@ -41,9 +41,12 @@ program şöyle görünür:
 
 `J`, RAPID'deki `MoveJ` ve KRL'deki `PTP` ile aynı işi görür: eklem
 uzayında interpolasyon. `L`, `MoveL`/`LIN` ile aynı işi görür:
-Kartezyen uzayda düz çizgi. `P[1]`, `P[2]` gibi kayıtlar (position
-register), diğer dillerdeki `robtarget`/`E6POS` karşılığıdır — konumu
-ve kolun konfigürasyonunu birlikte tutar.
+Kartezyen uzayda düz çizgi. `P[1]`, `P[2]` gibi pozisyon verileri, diğer
+dillerdeki `robtarget`/`E6POS` karşılığıdır — konumu ve kolun
+konfigürasyonunu birlikte tutar. Bunlar programa aittir: `P[n]` yalnızca
+içinde tanımlandığı TP programından görünür. FANUC'ta programlar arasında
+paylaşılan global karşılıkları ayrı bir yapıdır ve `PR[n]` (position
+register) diye yazılır — ikisi karıştırılmamalı.
 
 Hız birimi harekete göre değişir: eklem hareketinde (`J`) hız, o
 eklemin maksimum hızının YÜZDESİ (`100%`); doğrusal harekette (`L`) hız
@@ -71,6 +74,15 @@ Bu tablo aynı zamanda şunu gösteriyor: bir robotik mühendisinin "Python
 biliyorum, yeter" demesi neden yetmiyor. Bir hücrede ABB, bir başkasında
 FANUC varsa, aynı kavramı (eklem hareketi mi Kartezyen hareket mi)
 dört farklı sözdiziminde ifade edebilmen gerekiyor.
+
+**Teach pendant yaklaşımının sınırı.** Son sütun masum görünüyor ama
+pratikte en çok fark yaratan yer orası. TP programı robotun başında,
+elde tutulan bir cihazla oluşturulur — yani programı yazmak için robotun
+yanında olman ve genelde onu üretimden almanı gerekir. Program metin
+dosyası olarak yaşamadığı için sürüm karşılaştırması, kod incelemesi ve
+"iki hafta önceki hâliyle farkı ne" sorusu, metin tabanlı dillerde
+sıradan olan araçlarla yapılamaz. Bir sonraki ders tam bu sınırı aşmaya
+çalışan yaklaşımı ele alıyor.
 
 ## Dene
 

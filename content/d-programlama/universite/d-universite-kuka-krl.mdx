@@ -45,8 +45,8 @@ karşılığı `PTP` ve `LIN`:
 
 ```krl
 DEF ProgramAdi ( )
-  PTP P1 VEL=100% FINE
-  LIN P2 VEL=0.5 M/S CONT
+  PTP P1 VEL=100%
+  LIN P2 CONT VEL=0.5 M/S
 END
 ```
 
@@ -55,10 +55,17 @@ END
 uzayda düz bir çizgide götürür — `MoveL`'in karşılığı. Üçüncü bir
 hareket türü `CIRC` (dairesel), RAPID'deki `MoveC`'ye karşılık gelir.
 
-`FINE` ve `CONT`, RAPID'deki `fine` ve `zXX` (bölge/zone verisi) ile
-aynı işi görür: `FINE` robotun o noktada tam durmasını ister, `CONT`
-bir sonraki harekete yumuşak geçiş (blending) için köşeyi
-yuvarlatmasına izin verir.
+Nokta sonunda durup durmama, RAPID'deki `fine` / `zXX` (bölge/zone
+verisi) ikilisine karşılık gelir — ama KRL bunu ters yönden kurar.
+KRL'de **tam durma varsayılandır**: hiçbir şey yazmazsan robot o noktada
+durur. Yumuşak geçiş istiyorsan `CONT` işaretini eklersin; yaklaşmanın ne
+kadar geniş olacağı ayrıca `$APO` sistem değişkeniyle (`C_DIS` mesafe,
+`C_PTP` eklem yüzdesi gibi ölçütlerle) belirlenir.
+
+Bu, dikkat edilmesi gereken bir fark: ABB ve FANUC tarafında tam durmanın
+`fine` / `FINE` diye açık bir adı var, KRL'de ise adı olan şey
+**yaklaşmadır** (`CONT`), durmanın değil. Aynı davranışı iki dil zıt
+varsayılanlarla ifade ediyor.
 
 **`$BASE` ve `$TOOL`.** RAPID'de bir hedefi hangi çerçeveye göre
 okuyacağını `wobj` ile, hangi uç aletle çalıştığını `tool0` gibi bir

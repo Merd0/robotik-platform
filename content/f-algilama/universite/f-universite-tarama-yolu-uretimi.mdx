@@ -26,7 +26,8 @@ durum: taslak
 Satır aralığını sensörün tarama genişliğine tam eşit seçmek mantıklı
 görünür — üst üste binme (overlap) olmadan, israfsız bir tarama. Ama
 pratikte bu seçim neredeyse her zaman yüzeyin bir kısmını taramadan
-bırakır. Aşağıdaki sahnede satır sayısını azaltıp bunu kendin görebilirsin.
+bırakır. Aşağıdaki sahnede satır sayısını değiştirip aynı yüzeyin kaç
+kesitle örneklendiğini görebilirsin.
 
 <ScanPath rows={4} adjustableRows={true} theme="universite" />
 
@@ -38,8 +39,11 @@ tıpkı bir tarlayı sabanla sürmek gibi. Choset ve Pignon (1997) bu deseni
 robot kapsama (coverage) planlamasının temel yapı taşı olarak tanımlar:
 alan hücrelere bölünür, her hücre bu gidip-gelen desenle tam taranır.
 
-Satır sayısını azalttığında sahnede satırlar arasında taranmamış boşluklar
-kaldığını görürsün. Bunun nedeni basit geometri: sensörün tek geçişte
+Satır sayısını azalttığında sahnede toplanan nokta sayısı düşer: aynı
+yüzey daha az kesitle örneklenir. Sahne satırları yan yana dizdiği için
+aradaki boşluğu ayrıca çizmez — boşluk, gerçek bir hücrede satır
+aralığının sensörün kapsadığı genişliği aşmasıyla oluşur. Bunun nedeni
+basit geometri: sensörün tek geçişte
 kapsadığı gerçek genişliğe **tarama genişliği (footprint, W)** denir.
 Satır aralığı (adım, s) W'ye tam eşit seçilirse, teorikte boşluk kalmaz —
 ama bu, üç varsayımın hepsinin doğru olmasını gerektirir: robotun
@@ -55,12 +59,24 @@ marjı sağlar — kapsama garantisinin bedeli, daha fazla satır ve daha uzun
 tarama süresidir.
 
 **Örnek.** Sensörün tarama genişliği W = 20 mm, taranacak yüzeyin
-yüksekliği 100 mm olsun. Sıfır örtüşmeyle (o = 0), s = 20 mm ve
-100/20 = 5 satır teorik olarak yeter. %20 örtüşme payı eklersen
-(o = 0,2), etkin adım s = 20 · 0,8 = 16 mm'ye iner; 100 mm'yi eksiksiz
-kapsamak için 100/16 = 6,25 → yukarı yuvarlanarak 7 satır gerekir. Satır
-sayısı %40 arttı, ama konumlama hatasına karşı bir güvenlik payı
-kazanıldı.
+yüksekliği H = 100 mm olsun.
+
+Satır sayısını hesaplarken dikkat edilecek nokta şu: n satır, yüzeyde
+W + (n − 1) · s kadar bir şerit kapsar — ilk satır kendi genişliği kadar
+yer kaplar, sonraki her satır üstüne yalnızca s ekler. Buradan
+
+```
+n = ceil((H − W) / s) + 1
+```
+
+çıkar. Doğrudan H / s demek yaygın bir kestirmedir ama son satırın tam
+genişliğini saymadığı için genelde bir satır fazla verir.
+
+Sıfır örtüşmeyle (o = 0), s = 20 mm ve n = ⌈80/20⌉ + 1 = 5 satır yeter
+(kapsama: 20 + 4 · 20 = 100 mm). %20 örtüşme payı eklersen (o = 0,2),
+etkin adım s = 20 · 0,8 = 16 mm'ye iner ve n = ⌈80/16⌉ + 1 = 6 satır
+gerekir (kapsama: 20 + 5 · 16 = 100 mm, tam). Satır sayısı %20 arttı,
+ama konumlama hatasına karşı bir güvenlik payı kazanıldı.
 
 ## Gerçek dünyada
 

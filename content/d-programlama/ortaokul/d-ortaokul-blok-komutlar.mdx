@@ -11,7 +11,7 @@ kazanimlar:
   - Bir robotu blok tabanlı komutlarla, hiç yazı yazmadan, sırayla hareket ettirebilme
   - Blokların ekleniş sırasının robotun izlediği yolu belirlediğini fark edebilme
 kaynaklar:
-  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 1 (giriş — robot programlamanın komut dizisi doğası)"
+  - "ABB, RAPID Instructions, Functions and Data Types Reference Manual (3HAC16581-1) — hareket talimatlarının sıralı bir program metni olarak yazılması: https://library.e.abb.com"
 incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
@@ -48,9 +48,9 @@ ama ikisi de robotu aynı şekilde, sırayla yönetiyor.
 ## Dene
 
 İki hareket bloğu ekle: önce Eklem 1'i 60°'ye, sonra Eklem 2'yi 40°'ye
-götüren blok. Çalıştır ve robotun izlediği yolu izle. Şimdi ikinci
-bloğu sil, yerine ÖNCE Eklem 2'yi, SONRA Eklem 1'i döndüren iki yeni
-blok ekle. Robot aynı son noktaya mı varıyor, yoksa yol farklı mı
+götüren blok. Çalıştır ve robotun izlediği yolu izle. Şimdi "Sıfırla"ya
+bas ve aynı iki bloğu TERS sırada ekle: önce Eklem 2'yi 40°'ye, sonra
+Eklem 1'i 60°'ye. Robot aynı son noktaya mı varıyor, yoksa yol farklı mı
 görünüyor?
 
 <Quiz

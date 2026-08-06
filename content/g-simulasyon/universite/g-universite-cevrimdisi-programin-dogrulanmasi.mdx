@@ -84,7 +84,8 @@ OLP riski azaltır, sıfırlamaz.
 Yukarıdaki kodda hedef koordinatlarını değiştirerek robotun erişim
 alanının içinde ve dışında birer nokta dene. `hedefe_git`in `True`
 döndüğü durumda eklem açılarının robotu görsel olarak nereye
-götürdüğüne, `False` döndüğü durumda hiçbir hareketin gerçekleşmediğine
+götürdüğüne, `False` döndüğü durumda ise `hedefe_git`in eklem açılarını
+hiç değiştirmediğine (robot bir önceki `eklem_ac` duruşunda kaldığına)
 dikkat et — bu ikinci durum, gerçek bir robotta ASLA gerçekleşmemesi
 gereken bir komuttur ve simülasyon onu ÜCRETSİZ yakalamış oldu.
 

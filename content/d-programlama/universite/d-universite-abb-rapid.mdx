@@ -74,10 +74,19 @@ sadece iş nesnesinin çerçevesi güncellenir.
 
 Bir gövde kaynak hücresinde aynı parça, konveyör üzerinde hafif kayıyor
 olabilir. Sabit bir `robtarget` seti bu kaymayı hesaba katmaz. İş
-nesnesini konveyörün hareketine bağlarsan (RAPID'de "conveyor
-tracking" işlevi), robot hareket eden parçayı takip eder — kayan şey
-`wobj`'dur, `robtarget`'ların kendisi değişmez. Bu, iş nesnesi
-soyutlamasının pratikte neden var olduğunu gösteren tipik bir örnek.
+nesnesini hareketli bir çerçeveye bağlarsan, robot hareket eden parçayı
+takip eder — kayan şey `wobj`'dur, `robtarget`'ların kendisi değişmez.
+Bu, iş nesnesi soyutlamasının pratikte neden var olduğunu gösteren tipik
+bir örnek. (ABB bunu ayrı bir seçenek paketiyle, "conveyor tracking"
+adıyla sunar; ayrıntıları bu dersin kaynağı olan veri tipleri
+kılavuzunda değil, kendi uygulama kılavuzundadır.)
+
+**Nerede yetmez.** `robconf` ancak konfigürasyon denetimi açıkken
+(`ConfJ`/`ConfL`) bağlayıcıdır; kapatılırsa kontrolör hedefe en yakın
+çözümü seçer ve program aynı satırlarla farklı bir kol duruşuna
+gidebilir. `wobj` tarafında ise risk kalibrasyondadır: iş nesnesi
+çerçevesi yanlış ölçülmüşse o çerçeveye bağlı TÜM hedefler birlikte
+kayar — tek tek hiçbiri hatalı görünmez, hepsi tutarlı biçimde yanlıştır.
 
 ## Dene
 

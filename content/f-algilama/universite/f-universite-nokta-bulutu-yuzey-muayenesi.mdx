@@ -36,13 +36,18 @@ Bir önceki derste her satırın tek bir profil (bir kesit boyunca yükseklik
 ölçümleri) olduğunu gördün. Yukarıdaki sahnede "toplanan nokta sayısı"
 tam olarak bunu gösteriyor: robot her satırı tararken, o satırdaki
 noktalar birikime eklenir. Tüm satırlar bitince elinde bir **nokta bulutu
-(point cloud)** vardır — üç boyutlu koordinatlarla (x, y, z) tanımlı,
-düzensiz (yapılandırılmamış) bir nokta kümesi.
+(point cloud)** vardır — üç boyutlu koordinatlarla (x, y, z) tanımlı bir
+nokta kümesi. Satır satır taramayla toplandığı için bu bulut aslında
+düzenlidir (PCL terminolojisinde *organized*): noktalar satır/sütun
+yapısını korur. Bu, komşuluk aramasını hızlandırdığı için sonraki
+adımlarda işe yarar; rastgele açılardan toplanan dağınık (*unorganized*)
+bulutlarda bu avantaj yoktur.
 
 **Yüzey muayenesi iş akışı** genelde dört adımdan oluşur:
 
-1. **Tarama.** Robot, bir önceki derste görülen boustrophedon (gidip-gelen)
-   desenle yüzeyi tarar, ham nokta bulutunu toplar. Bu noktalar önce
+1. **Tarama.** Robot, yukarıdaki sahnede görülen boustrophedon
+   (gidip-gelen) desenle yüzeyi tarar — bu desenin nasıl üretildiği bir
+   sonraki dersin konusu. Ham nokta bulutu toplanır; bu noktalar önce
    sensör çerçevesinde, sonra el-göz kalibrasyonuyla (bkz. iki ders önce)
    robot taban çerçevesine taşınır.
 2. **Hizalama (registration).** Taranan nokta bulutu, parçanın referans
@@ -50,7 +55,12 @@ düzensiz (yapılandırılmamış) bir nokta kümesi.
    yöntem **Iterative Closest Point (ICP)**: her iki bulut için en yakın
    nokta çiftleri bulunur, bu çiftler arasındaki ortalama mesafeyi en aza
    indiren rotasyon+öteleme hesaplanır, bu adım yakınsayana kadar tekrar
-   edilir (Besl & McKay, 1992).
+   edilir (Besl & McKay, 1992). ICP'nin sınırı burada: yalnızca yerel
+   olarak arar. Başlangıç hizası kötüyse yanlış bir yerel minimuma
+   yakınsar ve "hizaladım" der; iki bulut yalnızca kısmen örtüşüyorsa
+   örtüşmeyen bölge çözümü kendine doğru çeker. Bu yüzden pratikte önce
+   kaba bir ön hizalama (parçanın bilinen konumu, işaretçiler veya
+   özellik eşleme) yapılır, ICP ondan sonra devreye girer.
 3. **Karşılaştırma.** Hizalanmış tarama, referans CAD yüzeyiyle
    noktasal olarak karşılaştırılır; her nokta için CAD yüzeyine olan
    dik mesafe (sapma) hesaplanır.
