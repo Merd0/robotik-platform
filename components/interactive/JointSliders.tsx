@@ -50,7 +50,7 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
               <span>Eklem {index + 1} (öteleme): {round(jointAngles[index])} m</span>
               <input
                 type="range"
-                className="h-11 touch-none accent-ortaokul-accent"
+                className="h-11 touch-pan-y accent-ortaokul-accent"
                 min={joint.limits.min}
                 max={joint.limits.max}
                 step={0.001}
@@ -69,7 +69,7 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
               </span>
               <input
                 type="range"
-                className="h-11 touch-none accent-ortaokul-accent"
+                className="h-11 touch-pan-y accent-ortaokul-accent"
                 min={toDegrees(joint.limits.min)}
                 max={toDegrees(joint.limits.max)}
                 value={toDegrees(jointAngles[index])}

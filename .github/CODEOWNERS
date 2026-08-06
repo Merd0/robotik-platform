@@ -1,0 +1,7 @@
+# Varsayılan sahiplik: her değişiklik bakımcı incelemesi ister.
+* @Merd0
+
+# Güvenlik ve kalite açısından hassas alanları açıkça belgele.
+/.github/ @Merd0
+/content/ @Merd0
+/lib/robotics/ @Merd0

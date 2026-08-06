@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { getRobotById } from "@/lib/robotics/robots";
 import type { PyodideWorkerRequest, PyodideWorkerResponse } from "@/lib/workers/pyodideWorker";
@@ -55,6 +55,7 @@ type RunState = "hazir" | "yukleniyor" | "calisiyor" | "bitti";
 export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: CodeRunnerProps) {
   const t = THEME[theme];
   const robot = robotId ? getRobotById(robotId) : null;
+  const editorId = useId();
 
   const [code, setCode] = useState(initialCode);
   const [output, setOutput] = useState("");
@@ -140,7 +141,11 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
         </SahneAlani>
       )}
 
+      <label htmlFor={editorId} className={`text-sm font-medium ${t.ink}`}>
+        Python kodu
+      </label>
       <textarea
+        id={editorId}
         value={code}
         onChange={(event) => setCode(event.target.value)}
         spellCheck={false}
@@ -167,12 +172,24 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
         </button>
       </div>
 
-      {(output || error) && (
-        <pre className={`whitespace-pre-wrap rounded-lg border ${t.outline} ${t.bg} p-3 font-mono text-sm ${t.ink}`}>
-          {output}
-          {error && <span className="text-red-600">{"\n" + error}</span>}
-        </pre>
-      )}
+      <div role="status" aria-live="polite" aria-atomic="true">
+        {output || error ? (
+          <pre className={`whitespace-pre-wrap rounded-lg border ${t.outline} ${t.bg} p-3 font-mono text-sm ${t.ink}`}>
+            {output}
+            {error && <span className="text-red-600">{"\n" + error}</span>}
+          </pre>
+        ) : (
+          <span className="sr-only">
+            {state === "yukleniyor"
+              ? "Python yükleniyor."
+              : state === "calisiyor"
+                ? "Kod çalışıyor."
+                : state === "bitti"
+                  ? "Kod çalışması tamamlandı."
+                  : "Kod çalıştırılmaya hazır."}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

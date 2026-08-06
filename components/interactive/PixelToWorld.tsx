@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type KeyboardEvent, type MouseEvent } from "react";
 
 interface PixelToWorldProps {
   /** Varsayılan kalibrasyon: 1 pikselin gerçek dünyada kaç milimetreye karşılık geldiği. */
@@ -43,7 +43,6 @@ const THEME = {
 } as const;
 
 const GRID_SIZE = 8;
-const CELL_PX = 44;
 const OBJECT_COL = 5;
 const OBJECT_ROW = 2;
 const PIXELS_PER_CELL = 10;
@@ -69,6 +68,43 @@ export function PixelToWorld({
   const [calibration, setCalibration] = useState(mmPerPixel);
   const [showDistortion, setShowDistortion] = useState(false);
 
+  function selectCell(col: number, row: number) {
+    setSelected({
+      col: Math.max(0, Math.min(GRID_SIZE - 1, col)),
+      row: Math.max(0, Math.min(GRID_SIZE - 1, row)),
+    });
+  }
+
+  function handleGridClick(event: MouseEvent<HTMLButtonElement>) {
+    // Enter/Space ile üretilen sentetik tıklamada koordinat yoktur. İlk
+    // klavye etkileşimini anlamlı varsayılan olan nesne hücresinden başlat.
+    if (event.detail === 0) {
+      setSelected((current) => current ?? { col: OBJECT_COL, row: OBJECT_ROW });
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    selectCell(
+      Math.floor(((event.clientX - bounds.left) / bounds.width) * GRID_SIZE),
+      Math.floor(((event.clientY - bounds.top) / bounds.height) * GRID_SIZE),
+    );
+  }
+
+  function handleGridKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    const current = selected ?? { col: OBJECT_COL, row: OBJECT_ROW };
+    const directions: Partial<Record<string, { col: number; row: number }>> = {
+      ArrowLeft: { col: -1, row: 0 },
+      ArrowRight: { col: 1, row: 0 },
+      ArrowUp: { col: 0, row: -1 },
+      ArrowDown: { col: 0, row: 1 },
+    };
+    const direction = directions[event.key];
+    if (!direction) return;
+
+    event.preventDefault();
+    selectCell(current.col + direction.col, current.row + direction.row);
+  }
+
   function computeWorld(col: number, row: number) {
     const pixelX = col * PIXELS_PER_CELL;
     const pixelY = row * PIXELS_PER_CELL;
@@ -88,30 +124,36 @@ export function PixelToWorld({
 
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
-      <div
-        className={`grid w-fit gap-0.5 rounded-lg ${t.bg} p-2`}
-        style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, ${CELL_PX}px)` }}
-      >
-        {Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, index) => {
-          const col = index % GRID_SIZE;
-          const row = Math.floor(index / GRID_SIZE);
-          const isObject = col === OBJECT_COL && row === OBJECT_ROW;
-          const isSelected = selected?.col === col && selected?.row === row;
-          return (
-            <button
-              key={index}
-              type="button"
-              aria-label={`Hücre sütun ${col}, satır ${row}${isObject ? " — nesne burada" : ""}`}
-              onClick={() => setSelected({ col, row })}
-              className={`flex items-center justify-center rounded border ${
-                isSelected ? "border-2" : "border"
-              } ${t.outline}`}
-              style={{ width: CELL_PX, height: CELL_PX }}
-            >
-              {isObject && <span className={`h-4 w-4 rounded-full ${t.accent}`} />}
-            </button>
-          );
-        })}
+      <div className={`w-full max-w-92 rounded-lg ${t.bg} p-2`}>
+        <button
+          type="button"
+          onClick={handleGridClick}
+          onKeyDown={handleGridKeyDown}
+          aria-label={
+            selected
+              ? `Piksel ızgarası. Seçili hücre: sütun ${selected.col}, satır ${selected.row}. Ok tuşlarıyla gez.`
+              : "Piksel ızgarası. Bir hücre seç veya ok tuşlarıyla gez."
+          }
+          className="grid aspect-square w-full grid-cols-8 gap-0.5 rounded"
+        >
+          {Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, index) => {
+            const col = index % GRID_SIZE;
+            const row = Math.floor(index / GRID_SIZE);
+            const isObject = col === OBJECT_COL && row === OBJECT_ROW;
+            const isSelected = selected?.col === col && selected?.row === row;
+            return (
+              <span
+                key={index}
+                aria-hidden="true"
+                className={`flex aspect-square min-w-0 items-center justify-center rounded border ${
+                  isSelected ? "border-2" : "border"
+                } ${t.outline}`}
+              >
+                {isObject && <span className={`h-4 w-4 rounded-full ${t.accent}`} />}
+              </span>
+            );
+          })}
+        </button>
       </div>
 
       {adjustableCalibration && (
@@ -124,7 +166,7 @@ export function PixelToWorld({
             step={0.5}
             value={calibration}
             onChange={(event) => setCalibration(Number(event.target.value))}
-            className="h-11 touch-none"
+            className="h-11 touch-pan-y"
           />
         </label>
       )}
@@ -141,7 +183,7 @@ export function PixelToWorld({
         </label>
       )}
 
-      <div className={`text-sm ${t.ink}`}>
+      <div role="status" aria-live="polite" className={`text-sm ${t.ink}`}>
         {selected ? (
           (() => {
             const { pixelX, pixelY, worldX, worldY } = computeWorld(selected.col, selected.row);

@@ -72,7 +72,7 @@ export function AramaKutusu() {
             <li key={kayit.id} className="rounded-lg border border-ortaokul-ink/10 p-4">
               <Link
                 href={`/ders/${kayit.id}`}
-                className="text-ortaokul-accent-text underline decoration-2 underline-offset-4"
+                className="inline-flex min-h-11 items-center text-ortaokul-accent-text underline decoration-2 underline-offset-4"
               >
                 {kayit.baslik}
               </Link>

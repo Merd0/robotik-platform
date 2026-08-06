@@ -115,7 +115,7 @@ export function ScanPath({ rows: initialRows = 6, adjustableRows = false, theme 
               setVisited(new Set());
               setRows(Number(event.target.value));
             }}
-            className="h-11 touch-none"
+            className="h-11 touch-pan-y"
           />
         </label>
       )}

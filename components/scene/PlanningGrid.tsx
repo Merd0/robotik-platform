@@ -62,7 +62,7 @@ export function PlanningGrid({ extent, obstacles, start, goal, paths, onPlaneCli
   const markerRadius = Math.min(0.09, extent * 0.03);
 
   return (
-    <Canvas camera={{ position: [0, 0.3, extent * 1.15], fov: 45 }} dpr={[1, 2]} className="touch-none">
+    <Canvas camera={{ position: [0, 0.3, extent * 1.15], fov: 45 }} dpr={[1, 2]} className="touch-pan-y">
       <ambientLight intensity={0.7} />
       <directionalLight position={[3, 4, 4]} intensity={0.9} />
       <Grid
