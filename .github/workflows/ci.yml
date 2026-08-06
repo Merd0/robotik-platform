@@ -33,6 +33,18 @@ jobs:
       - name: Ön koşul grafiği doğrulaması
         run: npx tsx scripts/validate-content-graph.ts
 
+      # Doğru cevap şık konumu dağılımı: içerikte %89 oranında 2. şıktaydı,
+      # öğrenci soruyu okumadan yüksek puan alabiliyordu. Kararlı karıştırma
+      # (lib/quiz.ts) devrede mi, bu kontrol doğruluyor.
+      - name: Alıştırma şık dağılımı
+        run: npx tsx scripts/check-quiz-dagilimi.ts
+
+      # MDX AST allowlist: içerik yalnızca izinli bileşenleri ve saf veri
+      # prop'larını kullanabilir. blockJS: false ayarının açtığı boşluğu
+      # kapatır (bkz. docs/08-guvenlik-sertlestirme.md).
+      - name: MDX güvenlik denetimi
+        run: npx tsx scripts/check-mdx-guvenlik.ts
+
       # Taslak derslerin üretim çıktısına sızmadığını derleyerek doğrular.
       # docs/06-kalite-ve-topluluk.md Katman 3: insan gözden geçirmesinden
       # geçmemiş içerik herkese açık adreste bulunamaz. `npm run build`

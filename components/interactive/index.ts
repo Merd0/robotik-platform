@@ -10,11 +10,17 @@ import { PixelToWorld } from "./PixelToWorld";
 import { ThresholdViewer } from "./ThresholdViewer";
 import { ScanPath } from "./ScanPath";
 import { SafetyZone } from "./SafetyZone";
+import type { IZINLI_BILESEN_ADLARI } from "@/lib/izinliBilesenler";
 
 /**
  * MDX'e açılan bileşenlerin TEK listesi. Bir ders dosyası burada olmayan bir
  * bileşeni kullanamaz — bkz. CLAUDE.md "içerikte sadece önceden tanımlı
  * components/interactive/ bileşenleri kullanılır".
+ *
+ * Tip, adları `lib/izinliBilesenler.ts`'ten alıyor: o liste MDX güvenlik
+ * denetiminin (lib/mdxGuvenlik.ts) de kaynağı. Böylece bir bileşen ekleyip
+ * listeye yazmamak (ya da tersi) DERLEME hatası veriyor — denetim sessizce
+ * eskiyemiyor.
  */
 export const mdxComponents = {
   JointSliders,
@@ -29,4 +35,7 @@ export const mdxComponents = {
   ThresholdViewer,
   ScanPath,
   SafetyZone,
-};
+  // `satisfies`: anahtarların izinli liste ile birebir aynı olmasını derleme
+  // zamanında zorlar, ama değer tiplerini geniştetmez (compileMDX bileşen
+  // tiplerini görmeye devam eder).
+} satisfies Record<(typeof IZINLI_BILESEN_ADLARI)[number], unknown>;
