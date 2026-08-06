@@ -67,10 +67,16 @@ describe("getPublicLessons — üretim", () => {
     // Denetimin anlamlı olması için gerçekten taslak ders bulunmalı.
     expect(taslaklar.length).toBeGreaterThan(0);
 
-    const sizanlar = taslaklar
-      .filter((ders) => getPublicLessonBySlug(ders.slug) !== undefined)
-      .map((ders) => ders.slug);
+    // Herkese açık küme bir kez hesaplanır; her slug için getPublicLessonBySlug
+    // çağırmak 89 MDX dosyasını taslak sayısı kadar yeniden okurdu (testi
+    // saniyeler süren, zaman aşımına açık bir şeye çevirir). İddia aynı:
+    // taslakların hiçbiri herkese açık kümede olmamalı.
+    const acikSluglar = new Set(getPublicLessons().map((ders) => ders.slug));
+    const sizanlar = taslaklar.map((ders) => ders.slug).filter((slug) => acikSluglar.has(slug));
     expect(sizanlar).toEqual([]);
+
+    // Tekil erişim yolunun kendisi de kapalı olmalı — bir örnekle doğrula.
+    expect(getPublicLessonBySlug(taslaklar[0].slug)).toBeUndefined();
   });
 
   it("Hat H'nin tamamı taslakken hiçbiri erişilebilir değil", () => {
@@ -78,10 +84,11 @@ describe("getPublicLessons — üretim", () => {
     const hatH = getAllLessons().filter((ders) => ders.frontmatter.hat === "h-guvenlik");
     expect(hatH.length).toBeGreaterThan(0);
 
+    const acikSluglar = new Set(getPublicLessons().map((ders) => ders.slug));
     const erisilebilir = hatH
       .filter((ders) => ders.frontmatter.durum !== "yayinda")
-      .filter((ders) => getPublicLessonBySlug(ders.slug) !== undefined)
-      .map((ders) => ders.slug);
+      .map((ders) => ders.slug)
+      .filter((slug) => acikSluglar.has(slug));
     expect(erisilebilir).toEqual([]);
   });
 });
