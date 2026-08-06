@@ -1,6 +1,7 @@
 """A* — grid tabanlı yol arama."""
 
 import heapq
+import math
 import itertools
 import time
 from typing import Sequence
@@ -37,6 +38,40 @@ class AStarPlanner(Planner):
 
     def _heuristic(self, cell: tuple, goal_cell: tuple) -> float:
         return sum((a - b) ** 2 for a, b in zip(cell, goal_cell)) ** 0.5 * self.resolution
+
+    def _segment_free(self, a: Point, b: Point) -> bool:
+        """İki nokta arasındaki doğru parçası serbest mi.
+
+        Yalnızca hücre merkezlerini test etmek yetmiyor: ızgara
+        çözünürlüğünden ince bir engel iki merkez arasına sığdığında
+        görünmez oluyor ve yol engelin içinden geçiyordu.
+        """
+        dist = sum((x - y) ** 2 for x, y in zip(a, b)) ** 0.5
+        steps = max(1, math.ceil(dist / (self.resolution / 2)))
+        for step in range(1, steps + 1):
+            t = step / steps
+            point = tuple(a[i] + (b[i] - a[i]) * t for i in range(3))
+            if not self.collision_checker(point):
+                return False
+        return True
+
+    def _diagonal_allowed(self, cell: tuple, offset: tuple) -> bool:
+        """Çapraz hamlenin geçtiği ara hücreler de serbest mi.
+
+        Yalnızca hedef hücreyi kontrol etmek yetmiyor: iki dolu hücre
+        köşegen olarak komşuysa, aradaki boşluktan geçen bir hamle
+        geometrik olarak engelin içinden geçer. Her eksen bileşenini tek
+        başına uygulayıp o ara hücrenin de serbest olmasını şart koşuyoruz.
+        """
+        for axis, delta in enumerate(offset):
+            if delta == 0:
+                continue
+            step = [0, 0, 0]
+            step[axis] = delta
+            between = tuple(c + s for c, s in zip(cell, step))
+            if not self.collision_checker(self._to_point(between)):
+                return False
+        return True
 
     def plan(self, start: Point, goal: Point, obstacles: Sequence[Obstacle]) -> PlanResult:
         started_at = time.perf_counter()
@@ -76,7 +111,21 @@ class AStarPlanner(Planner):
                     current = came_from[current]
                     path_cells.append(current)
                 path_cells.reverse()
+                # Yol, ilk ve son hücre merkezi yerine tam start/goal ile
+                # kapanıyor; bu iki bağlantı segmenti ızgarada yer almadığı
+                # için ayrıca kontrol edilmeli.
                 path = [start] + [self._to_point(c) for c in path_cells[1:-1]] + [goal]
+                if any(
+                    not self._segment_free(path[i - 1], path[i])
+                    for i in range(1, len(path))
+                ):
+                    return PlanResult(
+                        success=False,
+                        path=[],
+                        elapsed_seconds=time.perf_counter() - started_at,
+                        nodes_expanded=nodes_expanded,
+                        algorithm=self.name,
+                    )
                 return PlanResult(
                     success=True,
                     path=path,
@@ -90,6 +139,14 @@ class AStarPlanner(Planner):
                 if neighbor in visited or not in_bounds(neighbor):
                     continue
                 if not self.collision_checker(self._to_point(neighbor)):
+                    continue
+                # Köşe kesme (corner cutting) engeli: çapraz bir hamle, ancak
+                # her bir eksen bileşeni tek başına da serbestse yapılabilir.
+                # Bu olmadan robot iki dolu hücrenin arasından "sızarak"
+                # engelin köşesini kesiyordu.
+                if not self._diagonal_allowed(current, offset):
+                    continue
+                if not self._segment_free(self._to_point(current), self._to_point(neighbor)):
                     continue
                 step_cost = sum(o ** 2 for o in offset) ** 0.5 * self.resolution
                 new_cost = cost_so_far[current] + step_cost

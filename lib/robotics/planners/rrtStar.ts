@@ -71,8 +71,16 @@ export class RrtStarPlanner extends RrtPlanner {
         }
       }
 
+      // RRT'deki ile aynı kural: hedefe yakın olmak yetmez, son sıçrama da
+      // çarpışmasız olmalı. RRT*'de bu düğüm yalnızca aday olarak
+      // saklandığı için kontrolü burada yapıyoruz — aksi hâlde kontrol
+      // edilmemiş bir son segment en iyi yol olarak seçilebilirdi.
       if (distance(newPoint, goal) <= this.goalTolerance) {
-        if (bestGoalNode === null || (cost.get(newPoint) ?? Infinity) < (cost.get(bestGoalNode) ?? Infinity)) {
+        const sonSegmentGuvenli = newPoint === goal || this.segmentFree(newPoint, goal, isFree);
+        if (
+          sonSegmentGuvenli &&
+          (bestGoalNode === null || (cost.get(newPoint) ?? Infinity) < (cost.get(bestGoalNode) ?? Infinity))
+        ) {
           bestGoalNode = newPoint;
         }
       }

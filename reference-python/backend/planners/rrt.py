@@ -1,5 +1,6 @@
 """RRT — rastgele örneklemeli yol arama."""
 
+import math
 import random
 import time
 from typing import Optional, Sequence
@@ -57,7 +58,9 @@ class RRTPlanner(Planner):
 
     def _segment_free(self, a: Point, b: Point) -> bool:
         dist = _distance(a, b)
-        steps = max(1, int(dist / self.segment_resolution))
+        # ceil: int() asagi kirpip fiili adimi ilan edilen cozunurlukten kaba
+        # yapiyordu; ince engeller ornekler arasina sigip gorunmez oluyordu.
+        steps = max(1, math.ceil(dist / self.segment_resolution))
         for step in range(1, steps + 1):
             t = step / steps
             point = tuple(a[i] + (b[i] - a[i]) * t for i in range(3))
@@ -103,7 +106,14 @@ class RRTPlanner(Planner):
             nodes.append(new_point)
             parent[new_point] = nearest
 
+            # Hedefe yeterince yaklaşmak tek başına yetmez: son sıçrama
+            # (new_point -> goal) da çarpışmasız olmalı. Aksi hâlde
+            # goal_tolerance kadar uzunlukta, hiç kontrol edilmemiş bir
+            # segment yola ekleniyor ve engelin içinden geçen bir yol
+            # "başarılı" olarak dönebiliyordu.
             if _distance(new_point, goal) <= self.goal_tolerance:
+                if new_point != goal and not self._segment_free(new_point, goal):
+                    continue
                 path = self._build_path(parent, new_point, start, goal)
                 return PlanResult(
                     success=True,

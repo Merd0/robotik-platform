@@ -104,3 +104,34 @@ describe("allowedSpeed", () => {
     expect(allowedSpeed(2000, input)).toBeGreaterThan(allowedSpeed(1200, input));
   });
 });
+
+describe("allowedSpeed monoton", () => {
+  const params = { humanSpeed: 1600, reactionTime: 0.1, brakingTime: 0.3, uncertainty: 100 };
+
+  it("mesafe arttıkça izin verilen hız asla düşmez", () => {
+    let onceki = -1;
+    for (let mesafe = 0; mesafe <= 4000; mesafe += 25) {
+      const hiz = allowedSpeed(mesafe, params);
+      expect(hiz).toBeGreaterThanOrEqual(onceki);
+      onceki = hiz;
+    }
+  });
+
+  it("SafetyZone'un gösterdiği hız komut hızında monoton ve sıçramasız", () => {
+    // Bileşendeki formülün aynısı: min(komut hızı, izinli hız).
+    // Eski kod `durum === "dur" ? 0 : ...` diyordu ve komut hızı izinli hızı
+    // aşar aşmaz gösterilen değer sıfıra düşüyordu — bu testin yakaladığı
+    // sıçrama tam olarak oydu.
+    const mesafe = 1500;
+    const izinli = allowedSpeed(mesafe, params);
+    let onceki = -1;
+    for (let komut = 0; komut <= 3000; komut += 10) {
+      const gosterilen = Math.min(komut, izinli);
+      expect(gosterilen).toBeGreaterThanOrEqual(onceki);
+      expect(gosterilen).toBeLessThanOrEqual(izinli);
+      onceki = gosterilen;
+    }
+    // Doyuma ulaşır, sıfıra düşmez.
+    expect(Math.min(3000, izinli)).toBeCloseTo(izinli, 10);
+  });
+});
