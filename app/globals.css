@@ -61,9 +61,21 @@ body {
  * çıkar.
  */
 :focus-visible {
-  outline: 2px solid var(--color-ortaokul-accent-text);
+  outline: 2px solid var(--seviye-focus, var(--color-ortaokul-accent-text));
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+[data-seviye="ortaokul"] {
+  --seviye-focus: var(--color-ortaokul-accent-text);
+}
+
+[data-seviye="lise"] {
+  --seviye-focus: var(--color-lise-accent-text);
+}
+
+[data-seviye="universite"] {
+  --seviye-focus: var(--color-universite-accent-text);
 }
 
 .ders-icerik h2 {

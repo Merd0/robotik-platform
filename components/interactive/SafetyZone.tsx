@@ -165,6 +165,7 @@ export function SafetyZone({ mode = "mesafe", robotSpeed: initialSpeed = 1000, t
           </span>
           <input
             type="range"
+            className="h-11 touch-pan-y"
             min={0}
             max={SCENE_MAX_MM}
             step={50}
@@ -181,6 +182,7 @@ export function SafetyZone({ mode = "mesafe", robotSpeed: initialSpeed = 1000, t
               </span>
               <input
                 type="range"
+                className="h-11 touch-pan-y"
                 min={0}
                 max={2000}
                 step={50}
@@ -194,6 +196,7 @@ export function SafetyZone({ mode = "mesafe", robotSpeed: initialSpeed = 1000, t
               </span>
               <input
                 type="range"
+                className="h-11 touch-pan-y"
                 min={0.05}
                 max={1}
                 step={0.05}
@@ -228,7 +231,7 @@ export function SafetyZone({ mode = "mesafe", robotSpeed: initialSpeed = 1000, t
         <button
           type="button"
           onClick={handleReset}
-          className={`rounded-md px-3 py-1.5 text-sm ${t.button}`}
+          className={`h-11 rounded-md px-3 text-sm ${t.button}`}
         >
           Sıfırla
         </button>

@@ -72,7 +72,7 @@ export function JacobianViz({ robot: robotId }: JacobianVizProps) {
             </span>
             <input
               type="range"
-              className="h-11 touch-none accent-universite-accent"
+              className="h-11 touch-pan-y accent-universite-accent"
               min={toDegrees(joint.limits.min)}
               max={toDegrees(joint.limits.max)}
               value={toDegrees(jointAngles[index])}

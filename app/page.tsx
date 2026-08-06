@@ -61,7 +61,7 @@ export default function HomePage() {
               <li key={lesson.slug}>
                 <Link
                   href={`/ders/${lesson.slug}`}
-                  className="text-ortaokul-accent-text underline decoration-2 underline-offset-4"
+                  className="inline-flex min-h-11 items-center text-ortaokul-accent-text underline decoration-2 underline-offset-4"
                 >
                   {lesson.frontmatter.baslik}
                 </Link>

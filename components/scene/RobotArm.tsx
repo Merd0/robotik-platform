@@ -76,7 +76,7 @@ export function RobotArm({ robot, jointAngles, children }: RobotArmProps) {
     <Canvas
       camera={{ position: [0, 0.4, 4.6], fov: 50 }}
       dpr={[1, 2]}
-      className="touch-none"
+      className="touch-pan-y"
     >
       <ambientLight intensity={0.6} />
       <directionalLight position={[3, 4, 2]} intensity={1} />
