@@ -1708,3 +1708,57 @@ O tarihteki sonuç: `planner-worker.js` 7,6 KB (`astar`/`rrt` kodu içinde),
 `pyodide-worker.js` 20 KB, `npx esbuild --version` → 0.28.1. Yani atlanan
 postinstall'a rağmen esbuild binary'si sağlamdı. Uyarı şu an zararsız,
 ama kırılırsa sessiz kırılacağı için not düşüldü.
+
+---
+
+## Dependabot turu (2026-08-08)
+
+`dependabot.yml` devreye girdikten sonraki ilk parti: **4 PR açıldı,
+1'i merge edildi, 3'ü beklemede.**
+
+### Merge edilen
+
+| PR | Değişim | Tür | CI |
+|---|---|---|---|
+| #3 | `next` 16.2.12 → **16.3.0** | minor | yeşil |
+
+Merge sonrası dokuz kapı yeniden koşuldu (tsc, lint, test 13/146,
+check-content, graph, quiz-dağılımı, mdx-güvenlik, audit, soğuk build) —
+hepsi temiz. `public/workers/` silinip yeniden üretildi, chunk'lar dolu.
+
+### Beklemede (major — karar kullanıcıya ait)
+
+| PR | Değişim | Neden riskli |
+|---|---|---|
+| #1 | `actions/checkout` 4.4.0 → **7.0.1** | Üç major atlıyor. Runner/Node tabanı ve varsayılan davranışlar (submodule, fetch-depth, credential persistence) major'lar arasında değişti. |
+| #2 | `actions/setup-node` 4.4.0 → **7.0.0** | Üç major. Bu proje `node-version-file: .nvmrc` kullanıyor ve cache davranışı major'larda değişti — CI'ın Node 24'ü doğru seçtiği ayrıca doğrulanmalı. |
+| #5 | dev-dependencies grubu, 5 paket | **CI kırmızı.** Grup iki major içeriyor: `eslint` 9.39.5 → **10.8.0** ve `typescript` 6.0.3 → **7.0.2**. Yanında patch'ler var (`@types/three`, `tsx`, `eslint-config-next`). |
+
+#5 hakkında not: Dependabot patch'leri ve major'ları **tek PR'da
+grupluyor**, bu yüzden zararsız `tsx` 4.23.1 → 4.23.5 yükseltmesi,
+TypeScript 7 geçişine rehin kalmış durumda. Grubu bölmek isteniyorsa
+`dependabot.yml`'deki `development-dependencies` grubuna
+`update-types: ["minor", "patch"]` eklenebilir; major'lar o zaman ayrı
+PR olarak gelir. Bu bir yönetişim dosyası değişikliği, ayrıca karar
+verilmeli.
+
+### Bu turda çıkan güvenlik açığı (dependabot'tan bağımsız)
+
+Merge sonrası `npm audit` **1 high** verdi: `nanoid <3.3.17`
+(GHSA-2v37-7h3g-55p8, "custom generators can loop indefinitely when size
+is zero").
+
+**Bunu #3 getirmedi.** `nanoid@3.3.16` merge öncesi `main`'de, merge
+sonrasında ve dependabot dalında birebir aynıydı — advisory bu turdan
+yaklaşık 40 dakika önce yayımlandı, yani `main` zaten etkilenmişti ama
+henüz bilinmiyordu. Aynı gün 23:47'de alınan audit 0 zafiyet gösteriyordu.
+
+Sebep: proje `overrides` ile `postcss`'i 8.5.25'e pinliyor, o sürüm
+`nanoid ^3.3.16` istiyor. `postcss` 8.5.26 `nanoid ^3.3.17` istiyor.
+Pin bir patch yukarı alındı (`package.json`'da iki yerde: `devDependencies`
+ve `overrides`), `nanoid` 3.3.18'e çıktı, audit temizlendi.
+
+Bu, CI'ın `npm audit --audit-level=high` adımını (`.github/workflows/ci.yml`
+satır 62, docs/08 §1) kıracaktı. Ders: **bir PR'ın GitHub'daki yeşil
+rozeti, bugün de yeşil olacağı anlamına gelmiyor** — audit sonucu kod
+değişmeden, yeni advisory yayımlandıkça değişir.
