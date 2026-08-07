@@ -19,6 +19,7 @@ import { getAllLessons } from "../lib/content";
  */
 
 const OUT_DIR = path.join(process.cwd(), "out");
+const SITEMAP_PATH = path.join(OUT_DIR, "sitemap.xml");
 
 function main(): void {
   if (process.env.ICERIK_TASLAK_ONIZLEME === "1") {
@@ -57,8 +58,27 @@ function main(): void {
     process.exit(1);
   }
 
+  if (!fs.existsSync(SITEMAP_PATH)) {
+    console.error("HATA: out/sitemap.xml bulunamadı.");
+    process.exit(1);
+  }
+
+  const sitemap = fs.readFileSync(SITEMAP_PATH, "utf8");
+  const sitemapSizanlar = taslaklar
+    .map((ders) => ders.slug)
+    .filter((slug) => sitemap.includes(`/ders/${slug}`));
+
+  if (sitemapSizanlar.length > 0) {
+    console.error(
+      `HATA: ${sitemapSizanlar.length} taslak ders sitemap.xml içinde listeleniyor:\n` +
+        sitemapSizanlar.map((slug) => `  - ${slug}`).join("\n"),
+    );
+    process.exit(1);
+  }
+
   console.log(
-    `Taslak sayfa kontrolü temiz: ${taslaklar.length} taslak dersin hiçbiri üretim çıktısında yok.`,
+    `Taslak sayfa kontrolü temiz: ${taslaklar.length} taslak dersin hiçbiri ` +
+      "üretim çıktısında veya sitemap.xml içinde yok.",
   );
 }
 

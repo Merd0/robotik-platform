@@ -252,3 +252,64 @@ Tarayıcıyla yapılan görsel/erişilebilirlik denetimi:
    `/sitemap.xml`, `/manifest.webmanifest` ve response header'larını doğrula.
 6. Branch protection GitHub üzerinde repo ayarıdır; bu dal main'e dokunmadığı
    için ayrıca etkinleştirilmelidir.
+
+---
+
+# Codex çalışma durumu — Node, SEO ve kaynak şeffaflığı
+
+Tarih: 2026-08-07
+Dal: `codex-node-seo-kaynak`
+Başlangıç commit'i: `5798631` (`origin/main`)
+
+## Kapsam notu
+
+Çalışmaya başlamadan önce `CLAUDE.md`, `docs/09-ai-muhendisligi.md` ve
+`docs/10-harici-denetim-bulgulari.md` okundu. Görevin içerik, statik dağıtım
+ve tedarik zinciri kapsamı için ayrıca `docs/02-mimari.md`,
+`docs/04-icerik-rehberi.md`, `docs/06-kalite-ve-topluluk.md`,
+`docs/07-tasarim-sistemi.md`, `docs/08-guvenlik-sertlestirme.md` ve
+`content/CLAUDE.md` uygulandı.
+
+Eşzamanlı `codex-buyuk-mimari-onerisi` çalışma ağacındaki kullanıcı
+değişikliklerine dokunulmadı; dal güncel `origin/main` üzerinden ayrı bir Git
+worktree'de oluşturuldu. Görevde korumalı olduğu belirtilen `app/page.tsx`,
+`app/laboratuvar/`, `components/lab/`, `lib/evidence.ts` ve `app/globals.css`
+değiştirilmedi.
+
+## Yapılanlar
+
+- Node ana sürümü LTS `24.x` olarak `package.json` engines alanında ve
+  `.nvmrc` dosyasında sabitlendi. GitHub Actions artık sabit bir `20` değeri
+  yerine `.nvmrc` dosyasını okuyor; Vercel ve CI aynı ana sürümü kullanıyor.
+- Statik `/robots.txt` ve `/sitemap.xml` metadata rotaları eklendi. Canonical
+  adres `https://robotik-platform.vercel.app` olarak kullanıldı.
+- Sitemap dersleri ortamdan bağımsız `getPublishedLessons()` kümesinden
+  alıyor. Taslak önizlemesi açık olsa bile yalnızca `durum: yayinda` dersler
+  ekleniyor; birim testi ve build-sonrası çıktı kontrolü bu sözleşmeyi
+  koruyor.
+- `/manifest.json` eklendi ve kök metadata üzerinden bağlandı. Var olan
+  `app/icon.svg` simgesi ile tasarım sisteminin zemin/tema renkleri yeniden
+  kullanıldı.
+- KUKA KSS ve FANUC TP kaynak kayıtları, doğrulanmış bir numara uydurulmadan
+  `kaynak: ..., doküman numarası doğrulanamadı` biçiminde açıkça işaretlendi.
+
+## Doğrulama
+
+Kontroller Node `v24.19.0` ile çalıştırıldı:
+
+- `npx tsc --noEmit`: geçti.
+- `npm run lint`: geçti.
+- `npm test`: 12 test dosyası, 144/144 test geçti.
+- `npm run check-content`: 89 ders, hata yok.
+- `npm run validate-content-graph`: 89 ders, döngü/eksik referans yok.
+- `npm run check-quiz-dagilimi`: geçti; görünen en yüksek şık konumu %36,7.
+- `npm run check-mdx-guvenlik`: 89 ders, hata yok.
+- `npm audit --audit-level=high`: 0 zafiyet.
+- `npm run build`: geçti; 50 statik rota üretildi.
+- Build çıktısı: `robots.txt`, `sitemap.xml` ve `manifest.json` mevcut;
+  sitemap'te 39 yayınlanmış ders var, 50 taslak dersten sızıntı yok.
+- `git diff --check`: geçti.
+
+Build sırasında yalnızca worktree'nin ana deponun altında bulunmasına bağlı
+Next.js “birden fazla lockfile / workspace root” uyarısı görüldü; sonuçları
+etkilemedi. Dal main'e merge edilmedi.
