@@ -17,6 +17,8 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - IkTarget
+  - PredictionPrompt
+  - TransferChallenge
 durum: yayinda
 ---
 
@@ -25,6 +27,14 @@ durum: yayinda
 Hedefin sana verdiği tek bilgi (x, y) konumu — açıları vermiyor.
 Kosinüs teoremi, kolun bu iki açıyı kendi başına nasıl çözdüğünü
 açıklıyor.
+
+<PredictionPrompt
+  skillId="geometric-ik"
+  prompt="Hedef kolun erişebileceği en uzak sınıra yaklaşınca iki dirsek çözümü ne olur?"
+  options={["Birbirine yaklaşır", "Daha da ayrılır", "Hedef kaybolur"]}
+  correct={0}
+  explanation="Kol düzleşirken θ2 sıfıra yaklaşır; +θ2 ve −θ2 çözümleri aynı duruşa yakınsar."
+/>
 
 <IkTarget robot="generic-2dof" />
 
@@ -73,6 +83,15 @@ gelir. Neden?
       aciklama: "Kosinüs fonksiyonu çift fonksiyondur: cos(θ) = cos(−θ). Bu matematiksel özellik iki çözüme yol açar.",
     },
   ]}
+/>
+
+<TransferChallenge
+  skillId="geometric-ik"
+  prompt="Formülde cos(θ2) için hesaplanan değer 1.2 çıkarsa doğru mühendislik yorumu nedir?"
+  options={["Gerçek açılı çözüm yok; hedef erişim dışında", "θ2 = 1.2°", "İki çözüm de güvenlidir"]}
+  correct={0}
+  hint="Gerçek bir açının kosinüsü hangi aralıkta olabilir?"
+  explanation="cos değeri [−1, 1] dışında kalıyorsa hedef, verilen bağlantı uzunluklarıyla erişilemez."
 />
 
 ## Sonraki

@@ -1,59 +1,47 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getLessonsByLevel, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
+import { getPublicTracksByLevel, hatEtiket, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
 import { LessonProgressBadge } from "@/components/ui/LessonProgressBadge";
 import { SEVIYE_THEME } from "@/lib/seviyeTheme";
 
 const VALID_SEVIYELER: Seviye[] = ["ortaokul", "lise", "universite"];
+const LEVEL_COPY: Record<Seviye, { eyebrow: string; body: string }> = {
+  ortaokul: { eyebrow: "Gör · Oyna · Açıkla", body: "Formülden önce hareketi kurcala; gözlediğin nedeni kendi sözlerinle anlat." },
+  lise: { eyebrow: "Modelle · Ölç · Kodla", body: "Sezgiyi vektör, grafik ve küçük kod deneyleriyle ölçülebilir hale getir." },
+  universite: { eyebrow: "Türet · Sına · Sınırını bul", body: "Matematiksel modeli karşı örnek, tekillik ve gerçek uygulama kısıtlarıyla zorla." },
+};
 
-export function generateStaticParams() {
-  return VALID_SEVIYELER.map((seviye) => ({ seviye }));
-}
+export function generateStaticParams() { return VALID_SEVIYELER.map((seviye) => ({ seviye })); }
 
-interface SeviyePageProps {
-  params: Promise<{ seviye: string }>;
-}
-
-export default async function SeviyePage({ params }: SeviyePageProps) {
+export default async function SeviyePage({ params }: { params: Promise<{ seviye: string }> }) {
   const { seviye } = await params;
   if (!VALID_SEVIYELER.includes(seviye as Seviye)) notFound();
-
   const level = seviye as Seviye;
-  // Sadece insan gözden geçirmesinden geçmiş dersler herkese açık listede
-  // görünür — bkz. CLAUDE.md "Yapay zeka üretimi bir ders, insan gözden
-  // geçirmesi olmadan yayınlanamaz". Taslak dersler doğrudan URL ile
-  // (önizleme amaçlı) hâlâ açılabilir.
-  const lessons = getLessonsByLevel(level).filter((lesson) => lesson.frontmatter.durum === "yayinda");
+  const tracks = getPublicTracksByLevel(level).map((track) => ({ ...track, lessons: track.lessons.filter((lesson) => lesson.frontmatter.durum === "yayinda") })).filter((track) => track.lessons.length > 0);
   const theme = SEVIYE_THEME[level];
+  const lessonCount = tracks.reduce((sum, track) => sum + track.lessons.length, 0);
 
   return (
-    <main data-seviye={level} className={`min-h-screen ${theme.page}`}>
-      <div className="mx-auto max-w-2xl px-6 py-16">
-        <p className={`text-sm uppercase tracking-wide ${theme.accentText}`}>Seviye</p>
-        <h1 className={`mt-2 text-3xl font-semibold ${theme.ink}`}>{SEVIYE_ETIKET[level]}</h1>
+    <main id="ana-icerik" data-seviye={level} className={`min-h-screen ${theme.page}`}>
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
+        <nav aria-label="İçerik yolu" className="flex items-center gap-2 text-sm text-slate-500"><Link href="/" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvar</Link> <span aria-hidden="true">/</span> {SEVIYE_ETIKET[level]}</nav>
+        <header className="mt-8 grid gap-6 lg:grid-cols-[1fr_.45fr] lg:items-end">
+          <div><p className={`text-xs font-semibold uppercase tracking-[.18em] ${theme.accentText}`}>{LEVEL_COPY[level].eyebrow}</p><h1 className={`mt-3 font-heading text-4xl font-semibold tracking-tight sm:text-6xl ${theme.ink}`}>{SEVIYE_ETIKET[level]} laboratuvarı</h1><p className={`mt-4 max-w-2xl text-lg leading-7 ${theme.muted}`}>{LEVEL_COPY[level].body}</p></div>
+          <div className={`rounded-2xl border p-5 ${theme.border} ${theme.surface}`}><strong className="block font-heading text-3xl">{lessonCount}</strong><span className={theme.muted}>yayında ders · {tracks.length} aktif hat</span></div>
+        </header>
 
-        <ul className="mt-8 flex flex-col gap-3">
-          {lessons.map((lesson) => (
-            <li
-              key={lesson.slug}
-              className={`flex items-center justify-between gap-2 rounded-lg border p-4 ${theme.border} ${theme.surface}`}
-            >
-              <Link
-                href={`/ders/${lesson.slug}`}
-                className={`inline-flex min-h-11 items-center underline ${theme.accentText}`}
-              >
-                {lesson.frontmatter.baslik}
+        <section className="mt-10 space-y-4" aria-label="Öğrenme hatları">
+          {tracks.map(({ hat, lessons }, index) => (
+            <article key={hat} className={`group rounded-2xl border ${theme.border} ${theme.surface}`}>
+              <Link href={`/seviye/${level}/hat/${hat}`} className="grid min-h-36 gap-4 p-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:p-7">
+                <span className="grid size-12 place-items-center rounded-2xl bg-slate-950 font-mono text-teal-300">{String.fromCharCode(65 + index)}</span>
+                <span><span className={`block font-heading text-xl font-semibold ${theme.ink}`}>{hatEtiket(hat)}</span><span className={`mt-1 block text-sm ${theme.muted}`}>{lessons.length} ders · {lessons.reduce((sum, lesson) => sum + lesson.frontmatter.sure, 0)} dakika</span><span className="mt-3 flex flex-wrap gap-2">{lessons.slice(0, 3).map((lesson) => <span key={lesson.slug} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">{lesson.frontmatter.baslik}</span>)}</span></span>
+                <span className={`text-sm font-semibold ${theme.accentText}`}>Hattı aç <span aria-hidden="true">→</span></span>
               </Link>
-              <LessonProgressBadge slug={lesson.slug} seviye={level} />
-            </li>
+              <div className="sr-only">{lessons.map((lesson) => <LessonProgressBadge key={lesson.slug} slug={lesson.slug} seviye={level} />)}</div>
+            </article>
           ))}
-        </ul>
-
-        {lessons.length === 0 && (
-          <p className={`mt-8 ${theme.muted}`}>
-            Bu seviyede henüz yayınlanmış ders yok — içerik hazırlanıyor.
-          </p>
-        )}
+        </section>
       </div>
     </main>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useLessonCompletion } from "@/lib/progress";
+import { useLessonEvidence } from "@/components/lesson/LessonEvidenceProvider";
 import type { Seviye } from "@/lib/content";
 import { SEVIYE_THEME } from "@/lib/seviyeTheme";
 
@@ -10,12 +10,11 @@ interface LessonProgressBadgeProps {
 }
 
 export function LessonProgressBadge({ slug, seviye }: LessonProgressBadgeProps) {
-  const completed = useLessonCompletion(slug);
-
-  if (!completed) return null;
+  const evidence = useLessonEvidence(slug);
+  if (!evidence.read) return <span className="text-xs text-slate-400">Başlanmadı</span>;
   return (
-    <span aria-label="Tamamlandı" className={SEVIYE_THEME[seviye].accentText}>
-      ✓
+    <span aria-label={evidence.passed ? "Kanıtlandı" : evidence.tried ? "Denendi" : "Okundu"} className={`whitespace-nowrap text-xs font-semibold ${SEVIYE_THEME[seviye].accentText}`}>
+      {evidence.passed ? "✓ Kanıtlandı" : evidence.tried ? "◐ Denendi" : "○ Okundu"}
     </span>
   );
 }

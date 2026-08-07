@@ -22,4 +22,6 @@ export const IZINLI_BILESEN_ADLARI = [
   "ThresholdViewer",
   "ScanPath",
   "SafetyZone",
+  "PredictionPrompt",
+  "TransferChallenge",
 ] as const;

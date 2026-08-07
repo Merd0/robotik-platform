@@ -10,6 +10,7 @@ import {
 } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
 import type { Vec3 } from "@/lib/robotics/transform";
+import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 
 interface JacobianVizProps {
   robot: string;
@@ -23,6 +24,7 @@ const JOINT_COLORS = ["#0ea5a0", "#f97316"];
 
 /** Ders içine gömülen etkileşimli sahne: Jacobian sütunlarını ve manipülabilite elipsini görselleştirir. */
 export function JacobianViz({ robot: robotId }: JacobianVizProps) {
+  const record = useEvidenceRecorder();
   const robot = useMemo(() => getRobotById(robotId), [robotId]);
   const [jointAngles, setJointAngles] = useState<number[]>(() => [Math.PI / 4, Math.PI / 3]);
 
@@ -35,6 +37,8 @@ export function JacobianViz({ robot: robotId }: JacobianVizProps) {
 
   function handleChange(index: number, degrees: number) {
     setJointAngles((prev) => prev.map((angle, i) => (i === index ? toRadians(degrees) : angle)));
+    const nearStraight = index === 1 && Math.abs(degrees) < 8;
+    record({ skillId: "jacobian-singularity", stage: nearStraight ? "observed" : "tried", result: "success", metrics: { joint: index + 1, degrees: round(degrees), nearStraight } });
   }
 
   function handleReset() {

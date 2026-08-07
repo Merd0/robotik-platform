@@ -120,6 +120,24 @@ export function getLessonsByLevel(seviye: Seviye): Lesson[] {
     .sort((a, b) => (a.frontmatter.sira ?? 0) - (b.frontmatter.sira ?? 0));
 }
 
+/** Yayın/önizleme kuralını koruyarak bir seviyedeki dersleri hat ve sıra düzeninde döndürür. */
+export function getPublicLessonsByLevel(seviye: Seviye): Lesson[] {
+  const hatSirasi = Object.keys(HAT_ETIKET);
+  return getPublicLessons()
+    .filter((lesson) => lesson.frontmatter.seviye === seviye)
+    .sort((a, b) => {
+      const hatFarki = hatSirasi.indexOf(a.frontmatter.hat) - hatSirasi.indexOf(b.frontmatter.hat);
+      return hatFarki || (a.frontmatter.sira ?? 0) - (b.frontmatter.sira ?? 0);
+    });
+}
+
+export function getPublicTracksByLevel(seviye: Seviye): { hat: string; lessons: Lesson[] }[] {
+  const lessons = getPublicLessonsByLevel(seviye);
+  return Object.keys(HAT_ETIKET)
+    .map((hat) => ({ hat, lessons: lessons.filter((lesson) => lesson.frontmatter.hat === hat) }))
+    .filter((group) => group.lessons.length > 0);
+}
+
 /**
  * Aynı hat + seviye içindeki dersler, öğretim sırasına göre.
  * Yalnızca herkese açık dersleri döndürür — aksi hâlde yayınlanmış bir ders,

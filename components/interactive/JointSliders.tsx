@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { forwardKinematics } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
+import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 
 interface JointSlidersProps {
   robot: string;
@@ -15,6 +16,7 @@ const round = (value: number) => Math.round(value * 1000) / 1000;
 
 /** Ders içine gömülen etkileşimli sahne: eklem kaydırıcıları + robot kolu çizimi. */
 export function JointSliders({ robot: robotId }: JointSlidersProps) {
+  const record = useEvidenceRecorder();
   const robot = useMemo(() => getRobotById(robotId), [robotId]);
   const [jointAngles, setJointAngles] = useState<number[]>(() => robot.joints.map(() => 0));
 
@@ -25,6 +27,7 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
 
   function handleChange(index: number, degrees: number) {
     setJointAngles((prev) => prev.map((angle, i) => (i === index ? toRadians(degrees) : angle)));
+    record({ skillId: "forward-kinematics", stage: "tried", result: "success", metrics: { joint: index + 1, degrees: round(degrees) } });
   }
 
   function handleReset() {
@@ -56,10 +59,9 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
                 step={0.001}
                 value={jointAngles[index]}
                 onChange={(event) =>
-                  setJointAngles((prev) =>
-                    prev.map((v, i) => (i === index ? Number(event.target.value) : v)),
-                  )
+                  setJointAngles((prev) => prev.map((v, i) => (i === index ? Number(event.target.value) : v)))
                 }
+                onPointerUp={() => record({ skillId: "forward-kinematics", stage: "observed", result: "success", metrics: { joint: index + 1 } })}
               />
             </label>
           ) : (
