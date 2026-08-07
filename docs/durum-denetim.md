@@ -1387,3 +1387,159 @@ yeterli.
 `npm run check-content` (89 ders), `npm run validate-content-graph`
 (89 ders, 0 uyarı), `npm run build` — hepsi temiz. 50 ders `durum: taslak`
 olarak korundu.
+
+---
+
+## Kalan P0 maddeleri — 3 bitti, 3 bekliyor (2026-08-07)
+
+Bağımsız bir denetim oturumunun bulguları üzerine çalışıldı. **Not: o
+oturumun raporu (`docs/10-harici-denetim-bulgulari.md`) bu depoda hiçbir
+zaman bulunamadı** — çalışma ağacında, `origin/main`'de, hiçbir dalda, git
+geçmişinde ve diskte yok. Maddeler kullanıcının sözlü listesinden alındı ve
+**her iddia kabul edilmeden önce kodda bağımsız olarak doğrulandı.** Dördü
+de gerçek çıktı; ayrıca doğrulama sırasında raporda olmayan iki hata daha
+bulundu.
+
+Dal: `p0-kalan-duzeltmeler`. Commit'ler: `e0cae97`, `18c39c7`.
+
+### Biten 1 — Planlayıcı doğruluk hataları (`e0cae97`)
+
+Dört iddianın dördü de kodda doğrulandı ve düzeltildi. Python referansında
+da **aynı** hatalar vardı; TS'i tek başına düzeltmek fixture'ı bozacağı için
+her iki taraf birlikte düzeltilip fixture yeniden üretildi (docs/02'nin
+"Python doğruluk kaynağıdır" ilkesi korundu).
+
+| Hata | Neydi | Düzeltme |
+|---|---|---|
+| RRT/RRT* son sıçrama | Hedefe `goalTolerance` kadar yaklaşan düğümden goal'e uzanan segment **hiç** kontrol edilmiyordu; engelin içinden geçen yol "başarılı" dönebiliyordu | `segmentFree` kontrolü eklendi (rrt.ts, rrtStar.ts, rrt.py) |
+| A* köşe kesme | Çapraz hamlelerde yalnızca hedef hücrenin merkezi test ediliyordu; iki dolu hücrenin arasından geçen hamle engelin köşesini kesiyordu | `diagonalAllowed` / `_diagonal_allowed` (her iki dilde) |
+| Z ekseni sızıntısı | `PlannerRace` üstten görünen 2B bir sahne ama planlayıcılar 3B arıyordu; yol kullanıcının göremediği z'den dolaşıp engeli "deliyordu" | `planar` seçeneği; PlannerRace kullanıyor |
+| SafetyZone monoton olmayan hız | `durum === "dur" ? 0 : Math.min(robotSpeed, izinliHiz)` — `durum` komut hızına bağlı `required`'a baktığı için, komut hızı izinli hızı aşar aşmaz gösterilen değer kademeli düşmek yerine **sıfıra** düşüyordu. `Math.min` dalı matematiksel olarak hiç çalışmıyordu (durum "dur" olmasıyla `robotSpeed > izinliHiz` aynı koşul) | Gösterilen hız `min(komut, izinli)`; durum fiili sonuçtan türetiliyor |
+
+**Test yazarken çıkan iki ek hata:**
+
+1. **Segment örnekleme yukarı değil aşağı yuvarlıyordu.** `Math.round` /
+   Python `int()` kullanılıyordu; fiili adım ilan edilen çözünürlükten kaba
+   oluyor, ince engeller örnekler arasına sığıyordu. `ceil`e çevrildi
+   (collision.ts, rrt.ts, rrt.py).
+2. **A* yalnızca hücre merkezlerini test ediyordu**; ayrıca yol tam
+   `start`/`goal` ile kapandığı için iki bağlantı segmenti ızgarada hiç yer
+   almıyor ve hiç kontrol edilmiyordu. Kenar ve bağlantı segment kontrolü
+   eklendi (her iki dilde).
+
+**Fixture yeniden üretildi** ve bu, hataların yük taşıdığını kanıtladı: köşe
+kesme fiilen oluşuyormuş (küre vakası 39 → 76 düğüm, kutu vakası 93 → 183;
+yollar da uzadı çünkü artık köşeden sızmıyorlar).
+
+**Test metodolojisi hakkında bir not — bu kayda değer.** İlk yazdığım
+"dönen her yol çarpışmasızdır" değişmez testi **sabotajı yakalamadı**: üç
+düzeltmeyi tek tek geri aldım, testler geçmeye devam etti. Sahneler yeterince
+zorlayıcı değildi. Testler davranışsal biçime çevrildi (köşegen duvarı
+geçebiliyor mu, kapalı duvarın içinden atlıyor mu) ve sabotaj tekrarlandı:
+sırasıyla 6, 4 ve 4 test kırıldı. Hiç kırılmayan bir test, test değildir.
+
+Ayrıca: örnekleme adımından **kısa** bir köşe yalaması, örneklemeye dayalı
+her çarpışma kontrolünün yapısal sınırı — denetimi planlayıcıdan daha ince
+yaparsak test tanım gereği tatmin edilemez hale gelir. Bu sınır gizlenmedi,
+`yol-gecerliligi.test.ts` sonunda ayrı bir testle kayda geçirildi. Gerçek
+çözümü engelleri güvenlik payıyla şişirmek (obstacle inflation); bu
+`CollisionChecker` sözleşmesini değiştirdiği için docs/02 güncellenmeden
+yapılmamalı.
+
+Yan düzeltme: `eslint.config.mjs`'e `.codex-worktree-*/**` hariç tutma
+eklendi — başka bir worktree'nin derleme çıktısı lint ediliyor ve 65 alakasız
+hata üretiyordu.
+
+### Biten 2 — Quiz şık konumu yanlılığı (`18c39c7`)
+
+**Ölçüldü: 139 sorunun %89,2'sinde doğru cevap 1. index'teydi.** Soruyu
+okumadan hep aynı şıkkı seçen bir öğrenci ~%89 doğru yapıyordu — alıştırmaların
+ölçme değeri fiilen sıfırdı.
+
+- `lib/quiz.ts` — sorunun kendi metninden türetilen **kararlı** karıştırma
+  (FNV-1a → mulberry32 → Fisher-Yates). Kararlı olması şart: statik dışa
+  aktarımda sunucu ve istemci aynı sırayı üretmeli (hidrasyon), ve kullanıcı
+  sayfayı yenileyince şıklar yer değiştirmemeli.
+- `QuizSorusu` bunu kullanıyor; doğru cevabın index'i karıştırma sonrasına
+  göre hesaplanıyor.
+- `scripts/check-quiz-dagilimi.ts` + CI — **öğrencinin gördüğü** dağılımı
+  ölçer (yazılıyı değil), tek konum %50'yi aşarsa kırılır. Bu seçim bilinçli:
+  aynı kontrol hem yanlılığı hem de karıştırmanın kaldırılmasını yakalar.
+
+Sonuç: **%89,2 → %36,7** (3 şık için ideal ~%33).
+
+Yazarların 139 soruyu elle dağıtması tercih edilmedi: tek seferlik ve kırılgan
+olurdu, sonraki her yeni soruda aynı eğilim geri gelirdi.
+
+### Biten 3 — MDX güvenlik açığı: AST allowlist (`18c39c7`)
+
+`app/ders/[slug]/page.tsx` MDX'i `blockJS: false` ile derliyor. Bu ayar
+bilinçli ve gerekli (`Quiz`'in `sorular={[...]}` prop'u için), ama açtığı
+boşluk şuydu: bir ders dosyası MDX içinde **istediği JS'i** çalıştırabilirdi —
+`{fetch(...)}`, `{process.env.X}`, `<script>`. docs/08 bu riskin dış katkı
+başlamadan kapatılmasını zaten istiyordu.
+
+`lib/mdxGuvenlik.ts` — AST düzeyinde allowlist:
+
+1. JSX yalnızca izinli bileşenler (+ dar bir güvenli HTML kümesi).
+2. Gövdede serbest `{ifade}` yasak.
+3. `import`/`export` yasak.
+4. Prop ifadeleri **yalnızca saf veri**: dizi, obje, literal, yerleştirmesiz
+   şablon dizesi. Fonksiyon çağrısı, değişken, üye erişimi, yayılım prop'u
+   reddedilir.
+
+Yerleştirmesiz şablon dizesi bilinçli olarak serbest: `CodeRunner
+initialCode` çok satırlı Python'u böyle taşıyor ve o düz metin. İçinde
+`${...}` varsa reddediliyor.
+
+`lib/izinliBilesenler.ts` tek kaynak; `components/interactive/index.ts`
+`satisfies` ile ona bağlı — bir bileşen eklenip listeye yazılmazsa (veya
+tersi) **derleme kırılıyor**, yani denetim sessizce eskiyemiyor. Bu bağın
+çalıştığı, listeden bir ad çıkarılarak doğrulandı (hem tsc hata verdi hem
+denetleyici o bileşeni kullanan 5 dersi işaretledi).
+
+13 test: 8 saldırı denemesi reddediliyor, 5 meşru içerik geçiyor.
+`scripts/check-mdx-guvenlik.ts` + CI.
+
+`unified` / `remark-parse` / `remark-mdx` / `unist-util-visit` örtük
+bağımlılıktı (`next-mdx-remote` ile geliyorlardı); açıkça
+`devDependencies`'e yazıldı — ağaçta zaten vardılar, yeni tedarik zinciri
+yüzeyi eklenmedi.
+
+### Bekleyen 3 madde — YAPILMADI
+
+Bu üçü bu turda **hiç ele alınmadı**, kapsam kullanıcı tarafından burada
+kesildi:
+
+1. **EK: Node sürüm uyuşmazlığı ve eksik site dosyaları.** CI Node 20
+   kullanıyor (`.github/workflows/ci.yml`), yerel geliştirme de öyle, ama
+   `package.json`'da `engines` alanı yok — sürüm hiçbir yerde
+   sabitlenmemiş. Ayrıca `robots.txt`, `sitemap.xml` ve `manifest.json`
+   yok. Bunlardan ilk ikisi SEO açısından önemli (docs/00: "Türkçe
+   aramalarda bulunmak gerek") ve **sitemap yazılırken taslak derslerin
+   dışarıda bırakılması şart** — aksi hâlde az önce kapatılan P0-1 açığı
+   sitemap üzerinden geri gelir.
+2. **Doküman numarası doğrulanamayan kaynakların şeffaf işaretlenmesi.**
+   KUKA KSS ve FANUC TP kılavuzları kamuya kapalı; künyelerinde doküman
+   numarası yok. İstenen biçim: "kaynak: [üretici adı], doküman numarası
+   doğrulanamadı" — uydurmadan ama şeffaf. Önceki turlarda numara
+   **uydurulmadı** (projenin temel kuralı), ama eksiklik de okuyucuya
+   söylenmiyor; yapılacak iş bu boşluğu görünür kılmak.
+3. **KaTeX kararı.** `docs/02-mimari.md` KaTeX'i yığın tablosunda
+   listeliyor ama paket kurulu değil ve `compileMDX` yalnızca `remarkGfm`
+   kullanıyor. İçerik formülleri düz metin/kod bloğu olarak yazıyor ve bu
+   çalışıyor. Karar verilecek: gerçekten matematik render'ı gerekiyor mu —
+   gerekiyorsa kurulup bağlanacak, gerekmiyorsa docs/02'den referans
+   kaldırılacak. (Bu, bir önceki turda Hat F dersine `$$...$$` yazıp ham
+   göründüğünü fark ederek ortaya çıkmıştı.)
+
+### Doğrulama (her iki commit sonrası, dal üzerinde)
+
+`npx tsc --noEmit`, `npx eslint .`, `npx vitest run` (**143/143**),
+`npm run check-content` (89 ders), `npm run validate-content-graph`
+(0 uyarı), `npm run check-quiz-dagilimi` (en yüksek konum %36,7),
+`npm run check-mdx-guvenlik` (89 ders temiz), `npm run build` (taslak
+sızıntı kontrolü dahil), `npm audit --audit-level=high` (0 zafiyet) —
+hepsi temiz.
+
+**Dal `main`'e merge EDİLMEDİ**, kullanıcı incelemesi bekliyor.
