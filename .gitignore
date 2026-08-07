@@ -26,3 +26,8 @@ coverage/
 .DS_Store
 Thumbs.db
 
+# Eşzamanlı ajan oturumlarının git worktree'leri — repo içinde ayrı bir
+# git deposu oldukları için `git add -A` bunları gitlink olarak commit'e
+# sokabiliyor. Kaynak değil, çalışma alanı.
+.codex-worktree-*
+
