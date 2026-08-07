@@ -21,9 +21,9 @@ durum: taslak
 
 ## Kanca
 
-Bir fabrikada robot kolu bir metal parçayı kaldırıp yan tarafa koyuyor.
-Parça senin okul çantandan ağır, kol da senden hızlı hareket ediyor. O
-kol, tam o anda yanında birinin durduğunu kendiliğinden bilmez.
+Depodaki paletleme kolu kapalı bir kutuyu üst sıraya kaldırıyor. Güçlü,
+hızlı ve aynı hareketi yorulmadan tekrarlıyor. Yanına biri girdiğinde ise
+bunu kendiliğinden anlayıp dikkatli davranmıyor.
 
 <SafetyZone mode="bolge" theme="ortaokul" />
 
@@ -36,21 +36,27 @@ Robot bunu kendi kendine hissederek yapmadı. Birisi ona önceden "şu
 kadar yaklaşan olursa dur" diye ayar yaptı. O ayar olmasaydı robot
 hareketine aynen devam ederdi.
 
-Endüstriyel bir robot üç sebepten tehlikeli olabilir: güçlüdür, hızlıdır
-ve programlandığı şeyi hiç sorgulamadan yapar. İnsan yorulunca yavaşlar,
-tehlikeyi sezince durur; robot bunların hiçbirini yapmaz.
+Güç ve hız tek başına yeterince ciddi. Üçüncü özellik riski büyütür:
+robot programlandığı hareketi sorgulamaz. İnsan gibi "burada biri var,
+biraz bekleyeyim" demez. Bu kararı verecek güvenlik sistemi ayrıca
+tasarlanır.
 
 ## Gerçek dünyada
 
-Fabrikalarda robotların çoğu bir kafesin veya çitin içinde çalışır.
-Kapıyı açtığında robot otomatik olarak durur — kapı ile robot birbirine
-bağlıdır. Bu, robota güvenildiği için değil, tam tersine güvenilmediği
-için böyledir.
+Paletleme, kaynak ya da parça taşıma hücresi farklı görünebilir; ayırma
+fikri aynıdır. Robot çoğu uygulamada bir kafesin veya çitin içinde
+çalışır. Kapının açılmasıyla robotun durması, insan davranışı beklemek
+yerine korumayı sisteme bağlar.
 
 Robotlarla çalışan kişiler bunun için ayrıca eğitim alır. Bir robot
 hücresine girmek, sınıfa girmek gibi değildir.
 
 ## Dene
+
+İnsanı hareket ettirmeden önce tahminini söyle: uyarı bölgesinde robot
+yavaşlayacak mı, duracak mı? Kaydırıcıyla kontrol et. Sonra insanı bir
+bölge daha yaklaştır ve tahminini yenile. Renk tek başına cevap değil;
+"Serbest", "Yavaşla" ve "Dur" etiketlerini de oku.
 
 <Quiz
   sorular={[

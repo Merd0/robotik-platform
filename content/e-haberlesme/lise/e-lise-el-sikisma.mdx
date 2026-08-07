@@ -23,23 +23,27 @@ durum: taslak
 
 ## Kanca
 
-Kapıda duran iki görevliyi düşün: biri paketi uzatmadan önce "hazırım"
-demeli, diğeri paketi eline aldığında "aldım" demeli. Sıra karışırsa biri
-boş havaya paket uzatır, öbürü de almadığı bir şeyi "aldım" sanır.
+İlaç dolum hattında robot dolu tepsiyi kapaklama istasyonuna uzatıyor.
+Robot "tepsi hazır" demeden istasyon "aldım" derse ortada onaylanmış bir
+teslim yoktur. İki sinyal doğru sırada buluşmalı.
 
-<SignalTimeline signals={["Robot: Hazırım", "PLC: Aldım"]} theme="lise" />
+<SignalTimeline
+  signals={["Dolum robotu: Tepsi hazır", "Kapaklama PLC: Aldım"]}
+  steps={10}
+  theme="lise"
+/>
 
 ## Ne oldu
 
-Bu, el sıkışma (handshake) mantığının tam iskeleti. İki taraf var — burada
-robot ve PLC — ve ikisi de birbirinin sinyaline bakarak karar veriyor:
+Bu, el sıkışma (handshake) mantığının iskeleti. Dolum robotu ile kapaklama
+PLC'si birbirinin sinyaline bakarak ilerliyor:
 
-1. Robot işini bitirir, "Hazırım" sinyalini açar.
+1. Robot işini bitirir, "Tepsi hazır" sinyalini açar.
 2. PLC bu sinyali görür, kendi işini yapar (ör. parçayı alır) ve "Aldım"
    sinyalini açar.
 3. Robot "Aldım"ı görünce "Hazırım"ı kapatır, bir sonraki işe geçer.
 
-Kritik nokta sıradır: "Aldım" sinyali ancak "Hazırım" sinyali görüldükten
+Kritik nokta sıradır: "Aldım" sinyali ancak "Tepsi hazır" görüldükten
 sonra anlamlıdır. Sıra tersine dönerse — PLC, "Hazırım" hiç açılmamışken
 "Aldım" derse — bu sinyal boş bir onaydan ibaret kalır, çünkü ortada henüz
 alınacak bir şey yoktur.
@@ -62,12 +66,10 @@ sinyal hatlarıdır.
 
 ## Dene
 
-Önce yanlış sırayı kur: sadece "PLC: Aldım" satırında 2. adımı aç, "Robot:
-Hazırım" satırına hiç dokunma. Oynat'a bas, "Aldım" sinyalinin karşılığında
-hiçbir "Hazırım" olmadığını gözlemle. Sonra Sıfırla'ya bas ve doğru sırayla
-dene: "Robot: Hazırım"ı 2. adımda aç, "PLC: Aldım"ı ise 4. adımda (birkaç
-adım sonra) aç. İki denemenin okuma başında nasıl farklı "hissettirdiğini"
-karşılaştır.
+Önce protokolü kasıtlı olarak kır: yalnız "Kapaklama PLC: Aldım" satırında
+2. adımı aç. Oynat'a bas. Sonra sıfırla; "Dolum robotu: Tepsi hazır"ı 2.
+adımda, onayı 4. adımda aç. İlk düzen boş bir onay, ikincisi teslimi
+izleyen onaydır. Fark "hissetmek" değil, sırayı okuyabilmektir.
 
 <Quiz
   sorular={[

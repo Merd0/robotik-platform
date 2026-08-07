@@ -23,18 +23,16 @@ durum: taslak
 
 ## Kanca
 
-Bir üretim hattındaki robot, üretime devam ederken bile yeni bir
-program için hazırlanabilir. Robotun kendisi hiç durmaz, hiçbir hareket
-ıskalanmaz. Bu nasıl mümkün?
+Gıda paketleme hattı sipariş yetiştiriyor. Yarın yeni bir kutu biçimi
+gelecek ama bugünkü üretimi saatlerce durdurup robotun başında program
+yazamazsın. Yeni hareketi başka bir yerde hazırlaman gerekiyor.
 
 ## Ne oldu
 
-Önceki derste gördüğün dört dilin (RAPID, KRL, Mecademic komutları,
-FANUC TP) ortak bir zayıflığı var: dördü de sonunda GERÇEK robotu
-hareket ettirir. Bir programı teach pendant üzerinde satır satır
-oluşturmak veya robotu elle bir noktaya götürüp "burayı kaydet" demek
-— buna **çevrim içi programlama (online programming)** denir — robotu
-o süre boyunca üretimden alıkoyar.
+RAPID, KRL, Mecademic komutları ve FANUC TP sonunda gerçek robota gider.
+Programı teach pendant üzerinde satır satır kurarsan veya robotu elle
+bir noktaya götürüp "burayı kaydet" dersen robot o sırada üretim yapamaz.
+Buna **çevrim içi programlama (online programming)** denir.
 
 **Çevrim dışı programlama (offline programming, OLP)**, aynı programı
 robotun KOPYASI üzerinde, ayrı bir bilgisayarda, genelde hücrenin CAD
@@ -54,12 +52,11 @@ başlığı altında ayrıca ele alınıyor.
 
 ## Gerçek dünyada
 
-Çevrim dışı programlama sahada ayrı bir yazılım kategorisidir ve her
-büyük üretici kendi aracını sunar: ABB'nin RobotStudio'su, KUKA.Sim,
-FANUC'un ROBOGUIDE'ı. Bunların yanında marka bağımsız araçlar da var —
-RoboDK bunlardan biri ve kendi tanıtımında yaklaşımın çözdüğü problemi
-doğrudan adlandırıyor: çevrim dışı programlama, "üretim sahasında
-programlamadan kaynaklanan üretim duruşunu ortadan kaldırır."
+Bu iş için ayrı araçlar var: ABB RobotStudio, KUKA.Sim, FANUC ROBOGUIDE
+ve marka bağımsız RoboDK. İsimler değişiyor, hedef aynı kalıyor:
+programlama işini çalışan hücrenin dışına taşımak. RoboDK bunu üretim
+sahasında programlamadan kaynaklanan duruşu ortadan kaldırmak diye
+özetliyor.
 
 Bu araçların ortak iş akışı aynı: parçanın CAD modeli sahneye alınır,
 robot ve çevre elemanları yerleştirilir, yol sanal ortamda üretilip
@@ -90,6 +87,11 @@ print("Program simulasyonda dogrulandi, gercek robota hic dokunulmadi.")`}
 />
 
 ## Dene
+
+Kodda iki eklem açısını değiştirip programı yeniden çalıştır. Sonra
+çıktı cümlesine paketleme hücresindeki görevin adını ekle. Bu bir **Yaz**
+görevi: aynı sanal hücrede programı değiştiriyor, sonucu görüyor ve gerçek
+robota göndermeden yeni sürümü doğruluyorsun.
 
 <Quiz
   sorular={[

@@ -20,19 +20,18 @@ durum: yayinda
 
 ## Kanca
 
-Bir arkadaşını gözlerini kapatıp bir odada yürüterek yönlendirdiğini
-düşün: "iki adım ileri, sağa dön, dur." Şimdi bunu bir robota yaptırmak
-istiyorsun — ama robot senin gibi odayı görüp anlık karar veremez. Önce
-BAŞTAN SONA bir plan çıkarması gerekiyor.
+Okul kütüphanesinde kitap taşıyan küçük bir araç düşün. Çıkış noktası
+belli, teslim masası belli; arada raflar ve bırakılmış sandalyeler var.
+"İleri git" yetmez. Araç, daha hareket etmeden geçebileceği kareleri
+birbirine bağlamalı.
 
 <PlannerRace algorithms={["astar"]} allowObstacleEdit={true} theme="ortaokul" extent={2.6} />
 
 ## Ne oldu
 
-Yeşil nokta robotun başlangıcı, kırmızı nokta hedefi. Sahneye dokunarak
-engel koydun, robot bunları görmeden önce yolunu hesapladı. Çizilen çizgi
-robotun bulduğu yol — engellere değmeden, adım adım hedefe giden bir
-rota.
+Yeşil nokta başlangıç, kırmızı nokta teslim masası. Eklediğin koyu
+bloklar raf ve sandalye gibi davranıyor. Çizgi, aracın engellere değmeden
+izleyebileceği rota.
 
 Robot bunu şansla bulmuyor: alanı küçük karelere böler, her karede
 "buradan geçebilir miyim?" diye sorar, sonra hedefe en makul şekilde
@@ -41,16 +40,16 @@ yıldız") — ileride bunu ayrıntılı göreceksin.
 
 ## Gerçek dünyada
 
-Depo robotları (ör. Amazon'un raflar arasında dolaşan robotları) tam
-olarak bunu yapar: rafların arasındaki koridor haritasını bilirler, bir
-paketi almak için önce bir yol hesaplarlar, sonra o yolu izlerler. Yeni
-bir kutu koridora düşerse, robot yolunu yeniden hesaplar.
+Kütüphane yerine bir hastane koridoru, sera sırası ya da depo geçidi
+koyabilirsin. Haritanın resmi değişir; planlama sorusu değişmez:
+başlangıçtan hedefe, kapalı bölgelere girmeyen bir rota var mı? Bu
+dersteki A* modeli tam olarak bu soruyu çözüyor.
 
 ## Dene
 
-Başlangıç ile hedef arasına, tek bir geçit bırakacak şekilde bir duvar
-öreriz gibi engeller diz. Robot geçidi bulabiliyor mu? Şimdi geçidi de
-kapat — "Çalıştır" düğmesine bas, ne olduğunu gözlemle.
+Önce tek geçit bırakan bir raf duvarı kur. Aracı çalıştırmadan rotanın
+hangi taraftan geçeceğini tahmin et. Sonra geçidi de kapat: algoritmayı
+"kırabildin" mi, yoksa sana dürüstçe yol olmadığını mı söyledi?
 
 <Quiz
   sorular={[

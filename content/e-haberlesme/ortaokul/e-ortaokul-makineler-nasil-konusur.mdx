@@ -20,11 +20,11 @@ durum: taslak
 
 ## Kanca
 
-Bir fabrikada iki makine birbirine durmadan bir şeyler bildiriyor.
-Aralarında tek bir harf bile geçmiyor — sadece küçük bir ışık yanıp
-sönüyor. Bütün "konuşma" bundan ibaret: açık ya da kapalı.
+Bir fırından çıkan tepsiler paketleme bandına geliyor. Bandın tepsiye
+"adı ne?" diye sorması gerekmiyor. Sensörden tek bir haber yeter:
+**tepsi var** ya da **tepsi yok**.
 
-<SignalTimeline signals={["Sinyal"]} theme="ortaokul" />
+<SignalTimeline signals={["Fırın çıkışı: Tepsi var"]} theme="ortaokul" />
 
 ## Ne oldu
 
@@ -33,25 +33,21 @@ sinyalin AÇIK mı KAPALI mı olacağını sen belirliyorsun. "Oynat"a
 basınca bir okuma başı soldan sağa ilerliyor ve her adımda sinyale
 bakıyor.
 
-Bir makinenin gönderdiği sinyal, senin telefonundaki bir mesaj gibi
-kelimelerden oluşmaz. Elektrik ya akıyordur ya akmıyordur — tıpkı bir
-ışık düğmesi gibi, iki hâlden başka bir şey yoktur. Fabrikalardaki
-bütün makineler birbirleriyle önce bu en basit haliyle konuşmayı
-öğrenir; kelimeler, sayılar, komutlar hep bu iki hâlin farklı
-düzenlerinden inşa edilir.
+Bu sinyal telefon mesajı gibi kelimeler taşımaz. İki hâli vardır: AÇIK
+ve KAPALI. Bir ışık düğmesi kadar sade. Sayılar ve daha uzun komutlar da
+sonunda bu iki hâlin zaman içindeki düzenlerinden kurulur.
 
 ## Gerçek dünyada
 
-Bir üretim hattındaki bir sensör, önünden bir kutu geçtiğinde ışık
-huzmesini kesiyor ve sinyalini AÇIK'a çeviriyor; kutu geçince sinyal
-tekrar KAPALI'ya dönüyor. Kontrolör bu tek sinyali izleyerek kaç kutu
-geçtiğini sayabiliyor — hepsi bu iki durumdan (AÇIK/KAPALI) ibaret.
+Tepsi ışık huzmesini kestiğinde sensör AÇIK olur; aradaki boşlukta tekrar
+KAPALI'ya döner. Kontrolör her yeni AÇIK geçişini sayabilir. Ham veri bir
+kelime değil, zamanında gelen kısa bir değişimdir.
 
 ## Dene
 
-Şeride tıklayarak önce iki kutucuğu AÇIK yap, aralarına bir KAPALI
-bırak, sonra "Oynat"a bas. Okuma başının AÇIK kutucuklarda nasıl
-"yandığını" izle.
+İki tepsiyi aralarında boşluk olmadan gösterirsen sayaç onları ayırabilir
+mi? Önce tahmin et. Ardından iki AÇIK bölümün arasına bir KAPALI adımı
+koyup "Oynat"a bas. Okuma başında farkı izle.
 
 <Quiz
   sorular={[

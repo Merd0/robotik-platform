@@ -36,8 +36,9 @@ tasarımı daha iyi.
 
 ## Ne oldu
 
-Güvenli hücre tasarımı bir donanım listesi değil, bir sıradır. Bu hattın
-önceki derslerindeki parçalar burada birleşiyor.
+Güvenli hücre tasarımı bir alışveriş listesi değildir. Önce işi değiştirir,
+sonra kalan riski değerlendirir, korumayı seçer ve en sonda ölçerek
+doğrularsın. Sırayı bozarsan pahalı donanım, zayıf bir süreci gizleyebilir.
 
 ### 1. Önce görevi ve erişim ihtiyacını tanımla
 
@@ -116,17 +117,26 @@ canlı bir belgedir.
 
 ## Gerçek dünyada
 
-Sahada en sık görülen üç zayıflık şunlardır. Birincisi, güvenliğin
-üretim tasarımından **sonra** düşünülmesi: hücre kurulduktan sonra
-"buraya bir çit çekelim" demek, en pahalı ve en zayıf çözümdür. İkincisi,
-bakım ve programlama modlarının hiç değerlendirilmemesi — koruma
-yalnızca normal üretim için kurgulanır. Üçüncüsü, hücrede bir değişiklik
-yapıldıktan sonra güvenlik dosyasının güncellenmemesi.
+Sahada hücreyi gezerken üç soru sor:
 
-Bu üçünün ortak noktası, hiçbirinin donanım eksikliği olmaması. Üçü de
-süreç eksikliği.
+- **İnsan neden içeri giriyor?** Yanıtı tasarımla ortadan kaldırabiliyorsan
+  sonradan çit eklemekten daha köklü bir önlem bulmuş olursun.
+- **Bakımda ne değişiyor?** Normal üretimde çalışan koruma, programlama
+  veya sıkışma giderme sırasında devre dışı kalabilir.
+- **Son değişiklik dosyada mı?** Yeni alet, parça veya hız değerlendirmeye
+  girmediyse güvenlik dosyası artık hücreyi anlatmıyordur.
+
+Üçü de önce süreç sorusudur. Donanım seçimi sonra gelir.
 
 ## Dene
+
+Sahnedeki modeli kasıtlı olarak zorla: robot hızını ve frenleme süresini
+artır, sonra insanı yaklaştır. Durum ilk nerede değişiyor? Ardından yalnız
+bir parametreyi azaltıp güvenli ayrımın nasıl değiştiğini gözle. Bu bir
+**Optimize et** görevi değilmiş gibi görünür ama hedef tam olarak şudur:
+üretim isteği ile güvenli ayrımı aynı model üzerinde uzlaştırmak. Sonucu
+gerçek hücre tasarım değeri olarak kullanma; dersin doğrulama notu ve
+uyarısı geçerlidir.
 
 <Quiz
   sorular={[

@@ -22,9 +22,9 @@ durum: taslak
 
 ## Kanca
 
-Bir kamera aslında hiçbir şeye "bakmaz". Sadece görüntüyü binlerce küçük
-kareye böler ve her karenin ne kadar aydınlık olduğunu sayar. Robot da
-etrafını işte böyle, sayılardan oluşan bir tablo olarak tanır.
+Elektronik montaj hattında bir soket ters dönmüş. Kamera "soket" diye bir
+kelime görmez; önünde yalnız renk ve parlaklık sayılarından oluşan küçük
+kareler vardır. Tersliği bu sayıların düzeninden yakalar.
 
 <PixelToWorld theme="ortaokul" />
 
@@ -51,18 +51,17 @@ Robotlar çevrelerini üç ana yoldan algılar:
 
 ## Gerçek dünyada
 
-Bir fabrikada bir kamera sensörü, bant üzerinden geçen bir parçanın
-doğru yönde durup durmadığını kontrol eder — parça ters dönmüşse
-görüntüdeki piksel deseni değişir ve sensör bunu yakalar. Mobil bir
-robot, önündeki duvara çarpmamak için ultrasonik bir mesafe sensörüyle
-sürekli "ne kadar yakınım" diye ölçüm alır. Bir paketleme hattında ise
-ince bir ışık huzmesi, önünden geçen her kutuyu tek tek sayar.
+Elektronik montajda kamera soketin yönünü piksel deseninden ayırır. Bir
+sera arabası, öndeki kasaya uzaklığını mesafe sensörüyle izler. Ekmek
+paketleme hattındaki ışık huzmesi de geçen tepsileri sayar. Üç sektör,
+üç ayrı algılama sorusu; her sensörü aynı işe zorlamak gerekmiyor.
 
 ## Dene
 
-Izgarada nesnenin bulunduğu kutucuğa tıkla, sonra bir kutucuk yanına
-tıkla. İkisinin hesaplanan konumu arasındaki farka bak — kamera, tek bir
-pikselin bile hangi karede olduğunu ayırt edebiliyor.
+Nesnenin yanındaki kutucuğa tıklamadan önce yeni koordinatın hangi yönde
+değişeceğini tahmin et. Sonra tıkla ve hesaplanan konumları karşılaştır.
+Görüntüde "bir kutu sağ" ile gerçek sahnedeki yönün nasıl eşleştiğini
+kendin kontrol etmiş olacaksın.
 
 <Quiz
   sorular={[

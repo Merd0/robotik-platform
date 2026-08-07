@@ -313,3 +313,93 @@ Kontroller Node `v24.19.0` ile çalıştırıldı:
 Build sırasında yalnızca worktree'nin ana deponun altında bulunmasına bağlı
 Next.js “birden fazla lockfile / workspace root” uyarısı görüldü; sonuçları
 etkilemedi. Dal main'e merge edilmedi.
+
+---
+
+# Codex çalışma durumu — Dark mode ve yazarlık örneklemesi
+
+Tarih: 2026-08-08
+Dal: `codex-yazarlik-cesitlilik`
+Başlangıç commit'i: `c13ee16` (`main`)
+
+## Kapsam ve sınır
+
+- Mert'in geri bildirimi `docs/11-yazarlik-kalitesi.md` olarak, istenen 116
+  satırla oluşturuldu ve ayrı yerel commit'e alındı: `98e7233`.
+- Dark mode 1. bölüm uyarınca platform genelinde tamamlandı.
+- Yazarlık, örnek ve interaktif çeşitliliği **yalnızca A-H hatlarının her
+  birinden iki ders olmak üzere 16 derste** örneklendi. Kalan 73 ders toplu
+  olarak değiştirilmedi; Mert'in ton onayı bekleniyor.
+- Formül, kaynak ve doğrulanmış sayılar değiştirilmedi. Yeni sektörler bağlam
+  olarak kullanıldı; kaynaksız tolerans, performans veya ürün özelliği
+  eklenmedi.
+- `lib/robotics/` altında hiçbir dosya değiştirilmedi. Dal ayrı worktree'de
+  tutuldu ve `main`e merge edilmedi.
+
+## Dark mode
+
+- İlk yüklemede `prefers-color-scheme` okunuyor; kullanıcı header'daki
+  ay/güneş düğmesiyle seçimini değiştirebiliyor. Manuel tercih
+  `robotik-tema` anahtarıyla yalnız `localStorage`da tutuluyor.
+- Tema betiği boyamadan önce çalışıyor. Genel yüzeyler ile ortaokul, lise ve
+  üniversite renk aileleri için ayrı koyu token'lar var; seviye kişilikleri
+  korunuyor.
+- Robot kolu, hedef, Jacobian vektör/elipsi, planlama ızgarası, engeller,
+  başlangıç/hedef ve A*/RRT/RRT* yol izleri açık/koyu sahne paletlerini
+  kullanıyor.
+- Testler normal metinde en az 4,5:1, işlevsel 3B çizgi/işaretlerde en az
+  3:1 kontrastı koruyor. Header düğmesi 44 × 44 px ve erişilebilir adı tema
+  durumuna göre değişiyor.
+
+## 16 derslik örneklem
+
+| Hat | Örnek dersler | Önce | Sonra / görev çeşitliliği |
+|---|---|---|---|
+| A — Temeller | `a-ortaokul-robot-nedir`, `a-lise-koordinat-sistemleri` | Jenerik fabrika kolu, ev robotu ve kaynak robotu çevresinde dönüyordu. | Sera aracı/konveyör karşılaştırması, hastane ve tarım bağlamları; elektronik montaj tornavidasında alet çerçevesi. Tahmin et ve tanımı sınama görevleri eklendi. |
+| B — Kinematik | `b-ortaokul-eklemleri-oynat`, `b-universite-jacobian` | “Fabrikalardaki robot kolları (ABB, KUKA, Mecademic)” gibi geniş bir liste ve yine iki eklemli soyut kol vardı. | Sera hasadı, elektronik montaj ve laboratuvar numunesi ayrıştırıldı; ABB GoFa/ASELSAN MEOS bağlamı ürün özelliği uydurmadan kullanıldı. Jacobian tekilliği **Kır** görevi oldu. |
+| C — Planlama | `c-ortaokul-labirentte-yol-bulma`, `c-universite-algoritma-karsilastirma-deneyi` | Gözü kapalı arkadaş ve jenerik mobil robot hücresi anlatılıyordu. | Kütüphane teslim aracı ile havalimanı bagaj aracı iki ayrı senaryoya dönüştü. Engel düzeni **Kır**, çoklu planlayıcı deneyi **Optimize et** çerçevesi kazandı. |
+| D — Programlama | `d-lise-hareket-komutlari`, `d-universite-offline-programlama` | Arkadaşa “omzunu/dirseğini döndür” benzetmesi ve genel üretim hattı kullanılıyordu. | Elektronik montaj, batarya kapağı sızdırmazlık hattı ve gıda paketleme OLP bağlamları ayrıldı. CodeRunner değişikliği açık bir **Yaz** görevine çevrildi. |
+| E — Haberleşme | `e-ortaokul-makineler-nasil-konusur`, `e-lise-el-sikisma` | “Sinyal” ile “Robot: Hazırım / PLC: Aldım” etiketleri bağlamsızdı. | Fırın çıkışı tepsi sensörü ile ilaç dolum/kapaklama el sıkışması kullanıldı. `SignalTimeline` 10 adıma çıkarıldı; yanlış sırayı kurup düzeltme **Kır** görevi olarak netleştirildi. |
+| F — Algılama | `f-ortaokul-robot-nasil-gorur`, `f-universite-lazer-profil-sensoru` | Kamera, mobil robot ve paketleme örnekleri tek paragrafta genel geçiyordu; tarama satırı sabitti. | Elektronik soket, sera arabası ve ekmek tepsisi sensör görevlerine ayrıldı. Keyence LJ-X8080, ASELSAN MEOS saha bağlamı olarak ve teknik özellik eklenmeden anıldı. `ScanPath adjustableRows` ile **Optimize et** deneyi eklendi. |
+| G — Simülasyon | `g-ortaokul-simulasyon-nedir`, `g-universite-dijital-ikiz` | Bir başka `generic-2dof` kol ve “her simülasyon dijital ikiz değildir” açıklaması vardı. | Döner + doğrusal `generic-prismatic` paketleme düzeneğine geçildi. NASA uçuş aracı kaynağı dijital ikiz ayrımını taşıyor; sahnede canlı veri bağını arama **Tahmin et/iddia denetimi** oldu. |
+| H — Güvenlik | `h-ortaokul-robotlar-neden-tehlikeli`, `h-universite-guvenli-hucre-tasarimi` | Jenerik metal parça ve üç maddelik düz anlatım baskındı. | Depo paletleme bağlamı, sahada sorulacak üç soruluk kontrol biçimi ve SafetyZone üzerinde parametreleri zorlayan **Tahmin et / Optimize et** görevleri eklendi. Güvenlik uyarıları korunuyor. |
+
+Örneklerde yeni MDX bileşeni eklenmedi. Yalnız mevcut allowlist bileşenleri
+ve desteklenen prop'ları kullanıldı: `JointSliders` robot varyantı,
+`SignalTimeline` sinyal/adım varyantı ve `ScanPath adjustableRows`.
+
+## Doğrulama
+
+Node `v24.19.0` ile:
+
+- `npx tsc --noEmit`: geçti.
+- `npm run lint`: geçti.
+- `npm test`: 14 test dosyası, 152/152 test geçti.
+- `npm run check-content`: 89 ders, hata yok.
+- `npm run validate-content-graph`: 89 ders, döngü/eksik referans yok.
+- `npm run check-quiz-dagilimi`: geçti; görünen en yüksek şık konumu %36,7.
+- `npm run check-mdx-guvenlik`: 89 ders, allowlist temiz.
+- `npm run build`: geçti; 61 statik sayfa üretildi. 50 taslak dersin hiçbiri
+  üretim çıktısına veya sitemap'e girmedi.
+- `git diff --check`: geçti.
+
+Tarayıcı denetimi:
+
+- Sistemden gelen koyu tema yüklendi; manuel açık/koyu geçişi ve yeniden
+  yüklemede tercih kalıcılığı doğrulandı.
+- Ana sayfa, ortaokul dersi ve capstone koyu temada denetlendi. 3B robot
+  sahnesi yüklendi; planlama deneyinde A*, RRT ve RRT* başarılı sonuç ve
+  görünür yol izi üretti.
+- Lazer profil örneğinde satır sayısı 6'dan 2'ye indirildi ve tarama 24/24
+  noktayla tamamlandı.
+- Dar mobil kırılımda yatay taşma yok; marka metni gizleniyor ve tema düğmesi
+  44 × 44 px kalıyor.
+- Tarayıcı konsolunda çalışma zamanı hatası yok. Three.js bağımlılığından
+  gelen iki `THREE.Clock` kullanım-dışı uyarısı görev öncesi kodla ilişkili.
+
+### Kapsam dışı tedarik zinciri bulgusu
+
+`npm audit --audit-level=high`, mevcut `postcss@8.5.25` geçişli bağımlılığı
+`nanoid@3.3.16` için `GHSA-2v37-7h3g-55p8` yüksek önem dereceli bulgusuyla
+başarısız oldu. Bu dal paket/lockfile güncellemesi yapmıyor; bulgu
+genişletilmeden kayda geçirildi.

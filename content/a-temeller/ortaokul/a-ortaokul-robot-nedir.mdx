@@ -20,42 +20,40 @@ durum: yayinda
 
 ## Kanca
 
-Diş fırçan titreşiyor, trafik ışığı yanıp sönüyor, otomatik kapı
-açılıp kapanıyor — üçü de kendi kendine hareket eden birer alet. Ama
-hiçbiri robot sayılmıyor. Bu dersin sonunda neden sayılmadıklarını
-göreceksin.
+Bir sera arabası fide sıraları arasında ilerliyor; önüne kasa çıkınca
+durup başka koridora yöneliyor. Yanındaki konveyör ise düğmeye basıldığı
+sürece aynı bandı döndürüyor. İkisi de motorlu. Peki hangisi robot?
 
 <JointSliders robot="generic-2dof" />
 
 ## Ne oldu
 
-Yukarıdaki kolu oynattın — sen bir komut verdin (kaydırıcıyı çektin),
-kol o komuta göre hareket etti. Uluslararası standart (ISO 8373), bir
-robotu genel olarak şöyle tanımlar: **bir dereceye kadar kendi kararını
-verebilen (özerk), önceden programlanmış, hareket/manipülasyon/
-konumlandırma yapabilen bir mekanizma.** Aynı standart, fabrikalarda
-kullanılan "endüstriyel robot"u ayrıca tanımlarken somut bir sayı da
-verir: üç veya daha fazla eksende programlanabilir olmalı.
+Kaydırıcıyı sen çektin, kol da emri uyguladı. Hareket etmesi tek başına
+onu robot yapmaya yetmez. ISO 8373 bir robotu genel olarak **bir dereceye
+kadar özerk, programlanmış; hareket, manipülasyon veya konumlandırma
+yapabilen bir mekanizma** diye tanımlar. Standart, fabrikalarda kullanılan
+"endüstriyel robot" için bir eşik de koyar: üç veya daha fazla eksende
+programlanabilir olmalı.
 
-Bunun kilit kelimesi "programlanabilir". Bir bulaşık makinesi de
-karmaşık bir programla çalışır ama tek bir sabit hareketi (tamburu
-döndürme) tekrarlar, farklı eksenler arasında yeniden programlanamaz —
-bu yüzden robot sayılmaz. Yukarıdaki kol ise iki ekseninde istediğin
-gibi programlanabiliyor; gerçek bir endüstriyel robot kadar çok eksenli
-olmasa da, aynı temel fikri (programlanabilirlik + eksenler boyunca
-hareket) gösteriyor.
+Kilit kelime "programlanabilir". Bulaşık makinesi karmaşık bir çevrim
+çalıştırabilir ama tamburu yine aynı düzen içinde döndürür; farklı
+eksenlerde yeni bir hareket görevi kuramazsın. Yukarıdaki iki eksenli
+kol da tek başına endüstriyel robot tanımındaki eksen sayısını karşılamaz.
+Yine de programlanabilir eklem hareketinin küçük bir modelini gösterir.
 
 ## Gerçek dünyada
 
-Fabrikalarda parça taşıyan kollar, evlerde zemin süpüren robotlar,
-depo koridorlarında dolaşan taşıyıcılar — hepsi bu tanıma uyar: bir
-görevi yerine getirmek için programlanmış, hareket edebilen makineler.
+Otomotiv hattında parça taşıyan kol, hastanede malzeme götüren mobil
+robot ve tarlada sıra izleyen tarım platformu aynı biçimde görünmez.
+Ortak yanları, hareketlerini bir görev için programlayabilmen ve en az
+bir ölçüde kendi işleyişlerini sürdürebilmendir.
 
 ## Dene
 
-Kaydırıcıları oynatarak kolun ucunu farklı noktalara götür. Şimdi
-"Sıfırla"ya bas — kol hep aynı başlangıç konumuna döner, çünkü sen ne
-zaman ne yapacağını söylüyorsun.
+Kaydırıcıları bırak ve bekle. Kol kendi hedefini seçiyor mu? Hayır. Bu
+sahne robotun mekanizmasını gösteriyor, özerkliğini değil. Şimdi iki
+eklemi farklı konumlara getirip "Sıfırla"ya bas; önceden tanımlanmış bir
+komutla kendi kararını veren davranış arasındaki farkı düşün.
 
 ## Sonraki
 

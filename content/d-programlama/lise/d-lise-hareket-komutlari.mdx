@@ -24,11 +24,10 @@ durum: taslak
 
 ## Kanca
 
-Bir arkadaşına robotun kolunu hareket ettirmesini iki farklı şekilde
-söyleyebilirsin: "omzunu 30 derece, dirseğini 45 derece döndür" ya da
-"elini şu noktaya götür, gerisini sen hesapla". İkisi de aynı sonucu
-doğurabilir ama arkadaşının yapması gereken iş tamamen farklı. Python'da
-robota tam bu iki şekilde emir verebilirsin.
+Elektronik montaj hücresindeki tutucuyu yeni bir yuvaya götüreceksin.
+Kontrolöre eklem açılarını tek tek verebilirsin. Ya da yalnızca yuvanın
+koordinatını söyleyip açı hesabını ona bırakabilirsin. Python örneğinde
+iki komutu yan yana gör.
 
 <CodeRunner
   robot="generic-2dof"
@@ -45,10 +44,10 @@ print("Hedefe ulaşıldı mı:", basarili)`}
 
 ## Ne oldu
 
-`robot.eklem_ac(index, derece)` sana kolay gelir çünkü her eklemin ne
-yapacağını sen söylüyorsun — ama uç noktanın (x, y) nereye vardığını
-kafandan hesaplaman gerekir. Önceki derste (geometrik ters kinematik)
-gördüğün kosinüs teoremi tam bu hesabı yapıyordu.
+`robot.eklem_ac(index, derece)` doğrudan bir ekleme seslenir. Kolay kısmı
+budur. Zor kısmı, bu açıların uç noktayı hangi `(x, y)` konumuna
+götüreceğini hesaplamaktır. Önceki dersteki kosinüs teoremi bu hesabın
+arkasındaydı.
 
 `robot.hedefe_git(x, y)` bu işi tersine çeviriyor: sen sadece hedef NOKTAYI
 veriyorsun, robot açıları kendi içinde (aynı kosinüs teoremiyle) hesaplayıp
@@ -65,20 +64,19 @@ kısalamaz.
 
 ## Gerçek dünyada
 
-Bu iki komut, ABB'nin RAPID dilindeki `MoveJ` ve `MoveL` ayrımının
-basitleştirilmiş bir ön halidir (bu ayrımı üniversite seviyesinde tam
-haliyle göreceksin). `MoveJ`, eklemlerin kendi açı yolunda hareket etmesini
-sağlar — `eklem_ac` gibi düşünülebilir. `MoveL`, uç noktayı doğrudan bir
-hedef koordinata götürür ve robot kontrolörü ters kinematiği kendisi
-çözer — `hedefe_git` gibi düşünülebilir. Gerçek bir RAPID programında bu
-`MoveL p1, v200, z10, tool0;` şeklinde yazılır; `p1` hedef koordinattır.
+Bir batarya kapağına sızdırmazlık hattı çizerken yolun kendisi önemlidir;
+tutucuyu açık alandaki güvenli bir noktaya taşırken çoğu kez yalnız varış
+önemlidir. ABB RAPID'deki `MoveL` ve `MoveJ` ayrımı bu iki ihtiyacı ayırır.
+Bu dersteki `hedefe_git` ve `eklem_ac` onların basitleştirilmiş ön
+modelidir. Gerçek bir RAPID programında doğrusal komut
+`MoveL p1, v200, z10, tool0;` biçiminde yazılır; `p1` hedef koordinattır.
 
 ## Dene
 
-Yukarıdaki kodda `robot.hedefe_git(1.2, 0.5)` satırını `robot.hedefe_git(3, 3)`
-olarak değiştir ve çalıştır — `basarili` değişkeninin `False` bastığını
-gör. Sonra `robot.hedefe_git(1.5, -0.3)` gibi kolun erişim aralığında
-kalan bir noktayla tekrar dene.
+Önce sonucu yazmadan tahmin et. `robot.hedefe_git(1.2, 0.5)` satırını
+`robot.hedefe_git(3, 3)` yapıp çalıştır; `basarili` ne basıyor? Sonra
+`robot.hedefe_git(1.5, -0.3)` ile tekrar dene. Kodun yalnız başarıyı değil,
+başarısızlığı da açıkça ele alması burada asıl görev.
 
 <Quiz
   sorular={[

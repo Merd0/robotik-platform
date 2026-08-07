@@ -66,21 +66,20 @@ ise ikisinin tüm kombinasyonlarının süpürdüğü alan — manipülabilite e
 
 ## Gerçek dünyada
 
-Bir robotu ucundan tutup istediğin yöne "sürüklemek" istediğinde (ör. bir
-kobotu elle programlarken), kontrolör senin uyguladığın kuvveti Jacobian'ın
-tersini kullanarak eklem hızlarına çevirir. Jacobian olmadan bu tür
-sezgisel kontrol mümkün değildir.
+Mert'in ASELSAN MEOS stajında karşılaştığı ABB GoFa bağlamını düşün:
+operatör uca bir hareket yönü verdiğinde kontrolörün bunu eklem hızlarına
+çevirmesi gerekir. Jacobian bu eşlemenin merkezindedir. Sahnede yalnızca
+iki eklem görüyorsun; altı eksenli bir kolda matris büyür, soru aynı
+kalır: istenen uç hızı için eklemler hangi hızlarda dönmeli?
 
 ## Dene
 
-Eklem 2'yi 0°'ye getir (kolu tam aç). Turuncu çizginin (eklem 2'nin hız
-yönü) uzunluğu değişmez — o her zaman ikinci bağlantının uzunluğu kadardır,
-çünkü z ekseniyle çapraz çarpım sadece 90° döndürür, uzunluğu değiştirmez.
-Asıl değişen şey turkuaz (eklem 1) ve turuncu (eklem 2) çizgilerinin
-**doğrultusu**: kol tam açıkken ikisi aynı yönü gösterir (paralel), kol tam
-katlıyken ters yönleri gösterir (ters paralel). İki sütun aynı doğrultuya
-düşünce gri elips bir çizgiye daralır — bu, sıradaki dersin konusu olan
-tekilliğin habercisi.
+Bir "kır" deneyi yap. Eklem 2'yi 0°'ye getir ve kolu tam aç. Turuncu
+çizginin uzunluğu değişmez; z ekseniyle çapraz çarpım onu 90° döndürür,
+uzunluğunu değiştirmez. Fakat turkuaz ve turuncu çizgiler artık aynı
+doğrultudadır. Gri elips çöker. Kolu tam katlayınca da doğrultular ters
+paralel olur ve aynı kayıp ortaya çıkar. İki farklı duruş, aynı uyarı:
+Jacobian bazı yönlerde hız üretemez hâle geliyor.
 
 <Quiz
   sorular={[

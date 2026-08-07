@@ -28,7 +28,7 @@ Bir kamera bir yüzeyin rengini ve dokusunu görür ama düz mü yoksa 2 mm
 kaybolur. Lazer profil sensörü tam bu boşluğu doldurmak için var: renk
 değil yükseklik ölçer, ve bunu dokunmadan yapar.
 
-<ScanPath rows={6} theme="universite" />
+<ScanPath rows={6} adjustableRows={true} theme="universite" />
 
 ## Ne oldu
 
@@ -75,6 +75,11 @@ değil, bir profil çizgisi toplanır.
 
 ## Gerçek dünyada
 
+Bu dersin somut saha bağlamı, Mert'in ASELSAN MEOS stajında karşılaştığı
+Keyence LJ-X8080 gibi bir lazer profil sensörüdür. Burada o modele ait
+yeni bir teknik özellik ya da sayı eklemiyoruz; sahne, kaynaklardaki
+genel üçgenleme ve profil toplama ilkesini görünür kılıyor.
+
 Bu geometrinin sınırları var. Detektörün görüş açısı ve lensin çözünürlüğü
 sabit olduğu için sensörün bir ölçüm menzili (measurement range) vardır —
 yüzey bu menzilin dışına çıkarsa yansıma detektöre hiç düşmez. Ayrıca
@@ -88,6 +93,11 @@ yüzden lazer profil sensörleri mat, diffüz yüzeylerde daha güvenilir
 çalışır.
 
 ## Dene
+
+Satır sayısını önce azalt, sonra artır. "Tara"ya basmadan önce hangi
+ayarda daha çok nokta toplanacağını tahmin et; tarama bitince durum
+satırındaki sayıyla kontrol et. Bu küçük **Optimize et** deneyi, daha çok
+örnek toplamanın daha uzun bir tarama demek olduğunu da görünür kılar.
 
 <Quiz
   sorular={[

@@ -21,36 +21,37 @@ durum: taslak
 
 ## Kanca
 
-Bir mühendis yeni bir hareket denemek istiyor. Robotu çalıştırmadan önce
-aklından tek bir soru geçiyor: "Ya bir yere çarparsa?" Aşağıdaki robotta
-bu soruyu hiç sormana gerek yok.
+Paketleme hücresine döner eklemli, ileri geri kayan bir itici ekledin.
+İlk programın kasayı yanlış yöne sürebilir. Gerçek düzeneği riske atmadan
+önce hareketi ekranda bozup yeniden kurabilirsin.
 
-<JointSliders robot="generic-2dof" />
+<JointSliders robot="generic-prismatic" />
 
 ## Ne oldu
 
-Az önce oynattığın kol gerçek değil. Ekrandaki her şey bir simülasyon:
-gerçek bir robotun davranışını taklit eden ama metalden, motordan
-yapılmamış bir kopya.
+Az önce oynattığın döner ve doğrusal eklemli düzenek gerçek değil.
+Ekrandaki her şey bir simülasyon: bir robot davranışını taklit eden,
+metalden ve motordan yapılmamış bir model.
 
-Kaydırıcıları sonuna kadar çektin, kolu garip duruşlara soktun. Hiçbir
-şey kırılmadı, hiçbir motor ısınmadı, kimse yaralanmadı. Simülasyonun
-gücü tam burada: denemenin hiçbir bedeli yok.
+Doğrusal eklemi sonuna kadar sürdün, döner eklemi ters yöne çevirdin.
+Ekranı sıfırlamak bir düğme sürdü. Fiziksel parça kırılmadı; üretim de
+durmadı. Simülasyon, hatayı güvenli ve tekrarlanabilir bir deneye
+çevirir.
 
 ## Gerçek dünyada
 
-Robotik araştırmacıları yeni bir hareketi genelde önce simülasyonda
-dener. Bu platformun kendi geliştirme sürecinde de kullanılan Bullet
-Physics fizik motoru (PyBullet), resmi tanımında robotik ve makine
-öğrenmesi araştırmaları için tam da bu amaçla var olduğunu söylüyor.
-Fabrikalarda da mühendisler bir hücreyi gerçekten kurmadan önce RoboDK
-gibi yazılımlarla sanal olarak deneyip hataları baştan görürler.
+Robotik araştırmacıları yeni hareketleri simülasyonda sınayabilir. Bullet
+Physics (PyBullet) de resmi tanımında robotik ve makine öğrenmesini
+kullanım alanları arasında sayar. Paketleme hücresini kuran bir mühendis
+ise RoboDK gibi bir çevrim dışı programlama aracında robotu, masayı ve
+fikstürü önceden yerleştirip hareketi deneyebilir.
 
 ## Dene
 
-Kaydırıcıları uçlara kadar götürüp kolu en tuhaf şekle sok. "Sıfırla"
-düğmesine bas — her şey eski haline döner. İstersen tekrar dene, bu
-sefer kolu ekranın kenarına doğru "kaçırmaya" çalış.
+Önce doğrusal eklemi sonuna, sonra döner eklemi ters yöne götür. Modeli
+kasıtlı olarak kötü bir duruşa sok: bu bir **Kır** görevi. Ardından
+"Sıfırla"ya bas ve aynı deneyi farklı sırayla tekrarla. Sonucun bedeli
+yok; gözlemin var.
 
 <Quiz
   sorular={[

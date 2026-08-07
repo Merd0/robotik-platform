@@ -48,19 +48,19 @@ gördüğün koordinatlar bu çerçeveye göredir.
 
 ## Gerçek dünyada
 
-Bir kaynak robotuna "elektrotu 5 mm ileri it" komutu, alet çerçevesine
-göre verilirse robot elektrotun UCU yönünde ilerler — parça hangi açıda
-dursa dursun. Aynı komut dünya çerçevesine göre verilseydi, robot
-parçanın açısına göre YANLIŞ yöne gidebilirdi. Bu yüzden ABB RAPID gibi
-diller her hareket komutunda hangi çerçevenin kullanıldığını açıkça
-belirtir.
+Bir elektronik montaj hücresinde tornavidayı kendi ekseninde 5 mm
+ilerletmek istiyorsun. Kart fikstürü döndürülse bile "ileri", tornavidanın
+baktığı yön olmalı: alet çerçevesi. Aynı ötelemeyi dünya çerçevesinde
+verirsen komut artık zeminin sabit yönlerinden birini izler. ABB RAPID
+gibi diller bu belirsizliği bırakmaz; hareketin hangi çerçevede
+yorumlandığını açıkça belirtir.
 
 ## Dene
 
-Kolu oynat ve son eklemi (uç, alet çerçevesine en yakın eklem)
-izle — onun konumu her eklem değişiminde değişiyor. Şimdi ilk eklemi
-(taban çerçevesine en yakın) düşün: bu eklemin KENDİ konumu, diğer
-eklemler ne yaparsa yapsın hiç değişmiyor. Neden?
+Önce tahmin et: yalnızca son eklemi oynatırsan taban çerçevesi yer
+değiştirir mi? Sonra sahnede dene. Uca en yakın eklemin konumu hareket
+ederken taban çerçevesine en yakın ilk eklemin kendi konumu sabit kalır.
+İkisi aynı robota bağlı; fark, hangi parçayı referans aldığındır.
 
 <Quiz
   sorular={[

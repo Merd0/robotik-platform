@@ -22,9 +22,9 @@ durum: yayinda
 
 ## Kanca
 
-Bir robot kolunun ucuna hiç dokunamazsın — sadece omuzu ve dirseği
-çevirebilirsin. Yine de ucu tam istediğin noktaya götürebilirsin, eklemleri
-doğru açılara getirerek.
+Seradaki bir hasat kolunun ucunu kırmızı bibere yaklaştıracaksın. Ucu
+tutup sürüklemek yok; elinde yalnız omuz ve dirsek düğmeleri var. İki
+açıyı doğru seçersen uç yine hedefe gelir.
 
 <PredictionPrompt
   skillId="forward-kinematics"
@@ -38,20 +38,21 @@ doğru açılara getirerek.
 
 ## Ne oldu
 
-Yukarıdaki kolda iki eklem var. Her kaydırıcı bir eklemi döndürüyor. İkisini
-birlikte oynattığında kolun ucu (yeşil nokta) farklı yerlere gidiyor — buna
-ileri kinematik (forward kinematics) denir: eklem açılarından uç noktanın
-konumunu bulma.
+Yukarıdaki iki kaydırıcının her biri bir eklemi döndürüyor. Birini
+değiştirince yalnız o parça oynamıyor; ondan sonra gelen parçayı ve uç
+noktayı da yanında taşıyor. Eklem açılarından uç noktanın konumunu bulma
+işine **ileri kinematik (forward kinematics)** denir.
 
 Aynı noktaya bazen iki farklı eklem kombinasyonuyla da ulaşabilirsin. Dirseği
 yukarı kırarak ya da aşağı kırarak dene, ikisi de aynı yere gidebilir.
 
 ## Gerçek dünyada
 
-Fabrikalardaki robot kolları (ör. ABB, KUKA, Mecademic) da tam olarak böyle
-çalışır: kontrolör eklem açılarını ayarlar, kolun ucu o açılara göre bir yere
-gider. Bir robot parçayı tam istenen noktaya bırakabiliyorsa, arkasında bu
-derste gördüğün hesap var.
+Bir sera robotu meyveye yaklaşırken, bir elektronik montaj kolu parçayı
+yuvasına bırakırken ya da bir laboratuvar robotu numune taşırken aynı
+soru sorulur: seçilen eklem açıları ucu nereye götürecek? Sahnede iki
+eklem var. Gerçek kolların eklem sayısı ve biçimi değişse de ileri
+kinematiğin yaptığı iş değişmez.
 
 ## Dene
 
@@ -61,8 +62,8 @@ ulaşamayacağını dene.
 
 <TransferChallenge
   skillId="forward-kinematics"
-  prompt="Bir paket sağ üstteyken uç yanlış yerde kaldı. Hedefi doğrudan sürüklemeden neyi değiştirebilirsin?"
-  options={["Robotun iki eklem açısını", "Paketin rengini", "Kol parçalarının çizgi kalınlığını"]}
+  prompt="Seradaki hedef sağ üstteyken uç yanlış yerde kaldı. Hedefi doğrudan sürüklemeden neyi değiştirebilirsin?"
+  options={["Robotun iki eklem açısını", "Hedefin rengini", "Kol parçalarının çizgi kalınlığını"]}
   correct={0}
   hint="Bu deneyde kontrol edebildiğin iki kaydırıcıyı düşün."
   explanation="İleri kinematikte giriş eklem açıları, sonuç uç konumudur."
