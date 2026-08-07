@@ -19,6 +19,17 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
+      # .nvmrc'deki pin gerçekten uygulandı mı? setup-node sessizce başka
+      # bir sürüme düşerse (ör. node-version-file okunamazsa runner'ın
+      # varsayılanı devreye girer) bunu fark etmenin yolu yok: package.json
+      # engines alanı yalnızca uyarı üretir, build'i kırmaz. Bu adım
+      # setup-node major yükseltmelerinde de sessiz regresyonu yakalar.
+      - name: Node sürümü .nvmrc ile eşleşiyor mu
+        run: |
+          echo "Çalışan sürüm: $(node -v)"
+          echo ".nvmrc: $(cat .nvmrc)"
+          test "$(node -v | cut -d. -f1)" = "v$(tr -d '[:space:]' < .nvmrc)"
+
       - run: npm ci
 
       - name: Tip kontrolü

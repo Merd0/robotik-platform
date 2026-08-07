@@ -10,11 +10,22 @@ updates:
       time: "04:00"
       timezone: Europe/Istanbul
     open-pull-requests-limit: 5
+    # update-types neden sınırlı: gruplama, patch'lerle major'ları tek PR'da
+    # birleştiriyordu. İlk turda `tsx` 4.23.1 → 4.23.5 gibi zararsız bir
+    # yükseltme, aynı PR'daki TypeScript 6 → 7 geçişine rehin kaldı ve PR
+    # bütünüyle bekletildi. Minor/patch gruplanır ve hızlı merge edilebilir;
+    # major'lar ayrı PR olarak gelir, tek tek değerlendirilir.
     groups:
       production-dependencies:
         dependency-type: production
+        update-types:
+          - minor
+          - patch
       development-dependencies:
         dependency-type: development
+        update-types:
+          - minor
+          - patch
     labels:
       - dependencies
 
