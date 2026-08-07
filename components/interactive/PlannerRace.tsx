@@ -138,7 +138,21 @@ export function PlannerRace({
               resolve();
             }
             worker!.addEventListener("message", onMessage);
-            const request: PlannerWorkerRequest = { requestId, algorithm, start, goal, obstacles };
+            // Sahne üstten görünen 2B bir çalışma alanı; planlayıcı 3B
+            // arayınca yol z ekseninden dolaşıp engeli delmiş gibi
+            // görünüyordu. Düzlemsel mod bunu kapatır.
+            const request: PlannerWorkerRequest = {
+              requestId,
+              algorithm,
+              start,
+              goal,
+              obstacles,
+              options: {
+                astar: { planar: true },
+                rrt: { planar: true },
+                rrt_star: { planar: true },
+              },
+            };
             worker!.postMessage(request);
           }),
       ),

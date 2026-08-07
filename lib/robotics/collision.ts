@@ -39,7 +39,9 @@ export function isSegmentFree(
   resolution = 0.05,
 ): boolean {
   const dist = distance(a, b);
-  const steps = Math.max(1, Math.round(dist / resolution));
+  // ceil: round/trunc asagi yuvarlayip fiili adimi ilan edilen cozunurlukten
+  // KABA yapabiliyordu; ince engeller ornekler arasina sigip gorunmez oluyordu.
+  const steps = Math.max(1, Math.ceil(dist / resolution));
 
   for (let step = 0; step <= steps; step++) {
     const t = step / steps;

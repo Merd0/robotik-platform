@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { karistir } from "@/lib/quiz";
 
 interface QuizSorusuProps {
   soru: string;
@@ -11,13 +12,23 @@ interface QuizSorusuProps {
 
 export function QuizSorusu({ soru, secenekler, dogru, aciklama }: QuizSorusuProps) {
   const [selected, setSelected] = useState<number | null>(null);
-  const isCorrect = selected === dogru;
+
+  // Şıklar, sorunun metninden türetilen kararlı bir sırayla gösterilir:
+  // içerikte doğru cevap ezici çoğunlukla 2. sıradaydı (%89), bu da soruları
+  // okumadan çözülebilir hale getiriyordu. Kararlı olması şart — statik
+  // dışa aktarımda sunucu ve istemci aynı sırayı üretmeli (bkz. lib/quiz.ts).
+  const { secenekler: gosterilenSecenekler, dogru: gosterilenDogru } = useMemo(
+    () => karistir(secenekler, dogru, soru),
+    [secenekler, dogru, soru],
+  );
+
+  const isCorrect = selected === gosterilenDogru;
 
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="text-sm font-medium">{soru}</legend>
       <div className="flex flex-col gap-2">
-        {secenekler.map((secenek, index) => {
+        {gosterilenSecenekler.map((secenek, index) => {
           const isSelected = selected === index;
           return (
             <button

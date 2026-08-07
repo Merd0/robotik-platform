@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { allowedSpeed, requiredSeparation, zoneState, type ZoneState } from "@/lib/robotics/safety";
+import { allowedSpeed, requiredSeparation, type ZoneState } from "@/lib/robotics/safety";
 
 interface SafetyZoneProps {
   /**
@@ -99,9 +99,18 @@ export function SafetyZone({ mode = "mesafe", robotSpeed: initialSpeed = 1000, t
     uncertainty: DEFAULTS.uncertainty,
   };
   const separation = requiredSeparation({ ...params, robotSpeed });
-  const durum = zoneState(distance, separation.required);
   const izinliHiz = allowedSpeed(distance, params);
-  const gosterilenHiz = durum === "dur" ? 0 : Math.min(robotSpeed, izinliHiz);
+  // Robot komut edilen hızda değil, mesafenin izin verdiği hızda gider:
+  // ikisinin küçüğü. Önceden `durum === "dur" ? 0 : Math.min(...)` yazıyordu;
+  // `durum` komut hızına bağlı `required`'a baktığı için, komut hızı izinli
+  // hızı aştığı anda gösterilen değer kademeli düşmek yerine bir anda SIFIRA
+  // düşüyordu (ve Math.min dalı hiç çalışmıyordu — matematiksel olarak
+  // durum "dur" olmasıyla robotSpeed > izinliHiz olması aynı koşul).
+  const gosterilenHiz = Math.min(robotSpeed, izinliHiz);
+  // Durum artık fiilen ne olduğunu anlatıyor: hız sıfırlandıysa dur, komut
+  // hızı kısıldıysa yavaşla, kısılmadıysa serbest.
+  const durum: ZoneState =
+    gosterilenHiz <= 0 ? "dur" : gosterilenHiz < robotSpeed ? "yavasla" : "serbest";
 
   const d = DURUM[durum];
   const humanPct = Math.min(100, Math.max(0, (distance / SCENE_MAX_MM) * 100));

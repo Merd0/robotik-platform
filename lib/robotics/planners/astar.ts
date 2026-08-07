@@ -99,6 +99,14 @@ export interface AStarOptions {
   /** Arama sınırlarını start/goal kutusunun dışına genişletme payı (metre). */
   padding?: number;
   maxExpansions?: number;
+  /**
+   * Düzlemsel arama: z ekseninde hiç hareket edilmez.
+   *
+   * 2B sahnelerde (PlannerRace üstten görünüm) planlayıcı 3B aradığı için
+   * yol, kullanıcının göremediği z ekseninden dolaşıp engeli "delmiş" gibi
+   * görünüyordu. Bkz. RrtOptions.planar.
+   */
+  planar?: boolean;
 }
 
 /**
@@ -110,11 +118,13 @@ export class AStarPlanner implements Planner {
   private resolution: number;
   private padding: number;
   private maxExpansions: number;
+  private planar: boolean;
 
   constructor(options: AStarOptions = {}) {
     this.resolution = options.resolution ?? 0.05;
     this.padding = options.padding ?? 0.2;
     this.maxExpansions = options.maxExpansions ?? 50000;
+    this.planar = options.planar ?? false;
   }
 
   private toCell(point: Vec3): Cell {
@@ -127,6 +137,51 @@ export class AStarPlanner implements Planner {
 
   private toPoint(cell: Cell): Vec3 {
     return { x: cell[0] * this.resolution, y: cell[1] * this.resolution, z: cell[2] * this.resolution };
+  }
+
+  /**
+   * Çapraz hamlenin geçtiği ara hücreler de serbest mi.
+   *
+   * Yalnızca hedef hücreyi kontrol etmek yetmez: iki dolu hücre köşegen
+   * komşuysa, aradaki boşluktan geçen hamle geometrik olarak engelin
+   * içinden geçer (corner cutting). Her eksen bileşenini tek başına
+   * uygulayıp o ara hücrenin de serbest olmasını şart koşuyoruz.
+   * reference-python/backend/planners/astar.py `_diagonal_allowed` ile aynı.
+   */
+  private diagonalAllowed(cell: Cell, offset: Cell, isFree: CollisionChecker): boolean {
+    for (let axis = 0; axis < 3; axis++) {
+      if (offset[axis] === 0) continue;
+      const between: Cell = [
+        cell[0] + (axis === 0 ? offset[0] : 0),
+        cell[1] + (axis === 1 ? offset[1] : 0),
+        cell[2] + (axis === 2 ? offset[2] : 0),
+      ];
+      if (!isFree(this.toPoint(between))) return false;
+    }
+    return true;
+  }
+
+  /**
+   * İki nokta arasındaki doğru parçası serbest mi.
+   *
+   * A* yalnızca hücre MERKEZLERİNİ test ediyordu; ızgara çözünürlüğünden
+   * ince bir engel iki merkez arasına sığdığında görünmez oluyor ve yol
+   * engelin içinden geçiyordu. Kenarları ve start/goal bağlantılarını
+   * çözünürlüğün yarısı adımla örnekliyoruz.
+   */
+  private segmentFree(a: Vec3, b: Vec3, isFree: CollisionChecker): boolean {
+    const dist = Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z);
+    const steps = Math.max(1, Math.ceil(dist / (this.resolution / 2)));
+    for (let step = 1; step <= steps; step++) {
+      const t = step / steps;
+      const point: Vec3 = {
+        x: a.x + (b.x - a.x) * t,
+        y: a.y + (b.y - a.y) * t,
+        z: a.z + (b.z - a.z) * t,
+      };
+      if (!isFree(point)) return false;
+    }
+    return true;
   }
 
   private heuristic(cell: Cell, goalCell: Cell): number {
@@ -177,11 +232,30 @@ export class AStarPlanner implements Planner {
           cursor = cellKey(prev);
         }
         cells.reverse();
+        // Yol, ilk ve son hücre merkezi yerine tam start/goal ile kapanıyor.
+        // Bu iki bağlantı segmenti ızgarada hiç yer almadığı için ayrıca
+        // kontrol edilmeli — aksi hâlde aralarında duran bir engel
+        // görülmeden "başarılı" bir yol dönebilir.
         const path: Vec3[] = [start, ...cells.slice(1, -1).map((c) => this.toPoint(c)), goal];
+        for (let i = 1; i < path.length; i++) {
+          if (!this.segmentFree(path[i - 1], path[i], isFree)) {
+            return {
+              success: false,
+              path: [],
+              elapsedMs: Date.now() - startedAt,
+              nodesExpanded,
+              algorithm: this.name,
+            };
+          }
+        }
         return { success: true, path, elapsedMs: Date.now() - startedAt, nodesExpanded, algorithm: this.name };
       }
 
-      for (const offset of NEIGHBOR_OFFSETS) {
+      const offsets = this.planar
+        ? NEIGHBOR_OFFSETS.filter((offset) => offset[2] === 0)
+        : NEIGHBOR_OFFSETS;
+
+      for (const offset of offsets) {
         const neighbor: Cell = [
           entry.cell[0] + offset[0],
           entry.cell[1] + offset[1],
@@ -190,6 +264,8 @@ export class AStarPlanner implements Planner {
         const neighborKey = cellKey(neighbor);
         if (visited.has(neighborKey) || !inBounds(neighbor)) continue;
         if (!isFree(this.toPoint(neighbor))) continue;
+        if (!this.diagonalAllowed(entry.cell, offset, isFree)) continue;
+        if (!this.segmentFree(this.toPoint(entry.cell), this.toPoint(neighbor), isFree)) continue;
 
         const stepCost = Math.sqrt(offset[0] ** 2 + offset[1] ** 2 + offset[2] ** 2) * this.resolution;
         const newCost = (costSoFar.get(currentKey) ?? 0) + stepCost;
