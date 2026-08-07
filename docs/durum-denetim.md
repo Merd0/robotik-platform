@@ -1560,3 +1560,107 @@ değiştiren dosyalar elle onay ister).
 
 Yukarıdaki doğrulama sayıları **birleşik ağaç** üzerinde alındı, yani her iki
 çalışma bir arada temiz geçiyor.
+
+---
+
+## Büyük entegrasyon turu (2026-08-07)
+
+Dört ayrı oturumdan biriken paralel dallar tek turda `main`'e alındı ve
+push edildi. Sıra bilinçliydi: önce doğruluk/güvenlik düzeltmeleri, sonra
+erişilebilirlik, sonra mimari, en sonda altyapı.
+
+### Ne girdi
+
+| Sıra | Dal | main'deki merge | İçerik |
+|---|---|---|---|
+| 1 | `p0-kalan-duzeltmeler` | `b6a4859` | Planlayıcı doğruluk hataları (A\* köşe kesme + son segment, RRT/RRT\* z sızıntısı), quiz şık yanlılığı, MDX bileşen allowlist'i |
+| 2 | `codex-p1-erisilebilirlik` | `5798631` | 44×44 dokunmatik hedefler, `lib/seviyeTheme.ts`, `PixelToWorld`/`SignalTimeline` erişilebilirliği, `docs/10`, governance dosyaları |
+| 3 | `codex-buyuk-mimari-onerisi` | `4ce4c94` | Seviye→Hat→Ders, `EvidenceEvent` modeli, yeni ana sayfa, capstone |
+| 4 | `codex-node-seo-kaynak` | `014de62` | Node 24 pin, `robots.ts`/`sitemap.ts`, taslak sızıntı korumasının sitemap'e genişletilmesi |
+
+### Fork noktası tuzağı (iki kez çıktı)
+
+3. ve 4. dallar, kendilerinden önceki merge'lerden **önce** dallanmıştı.
+Bu yüzden `git diff main <dal>` çıktısı, o dalın hiç dokunmadığı dosyaları
+**silinmiş** gösteriyordu — 3. dalda `docs/10-harici-denetim-bulgulari.md`,
+4. dalda mimari işin tamamı (capstone, `lib/evidence.ts`, `HeroExperiment`…).
+
+Düz diff'i uygulayan bir "temiz branch" çıkarma girişimi bu dosyaları
+silerdi. Doğru yöntem her iki seferde de güncel `main`'den dallanıp 3'lü
+birleştirme yapmaktı; çakışmayan taraf otomatik korunuyor.
+
+**Kural:** paralel dalları birleştirirken `diff` değil `merge` kullan.
+Diff yönü, "bu dal bunu sildi" ile "bu dal bunu hiç görmedi"yi ayırt etmez.
+
+### Çakışma kararları (4. dal)
+
+- **Node 24** alındı (`.nvmrc`, `package.json` engines). Dalın kasıtlı
+  katkısı ve Node 20 artık EOL. **Açık uç:** geliştirme makinesi hâlâ
+  `v20.19.4`; `engine-strict` tanımlı olmadığı için yerelde yalnızca
+  uyarı üretir, CI `.nvmrc`'yi okuduğu için orada 24'e geçer.
+- **`app/sitemap.ts`** — `main`'in sürümü korundu; hat sayfalarını,
+  capstone'u ve `lastModified` alanını içeriyor, dalın sürümü bunları
+  bilmiyordu.
+- **`app/robots.ts`** — `main`'in `disallow` kuralları + dalın `SITE_URL`
+  sabiti birleştirildi.
+- **`public/manifest.json` kaldırıldı** — `app/manifest.ts` aynı işi
+  yapıyor ve `check-release-output.ts` onu doğruluyor; iki manifest
+  tutmak yerine üretilen tek kaynak bırakıldı.
+- **`vitest.config.ts`'e `@` alias'ı eklendi** — dalın sitemap testi,
+  `main`'in `@/lib/content` import'unu çözemediği için patlıyordu.
+  Alias yoktu; Next tarafında çalışıyor, Vitest kendi çözümleyicisini
+  kullanıyor.
+
+### Düzeltilen iki bulgu (tarayıcıda gezerek)
+
+- **Koyu panellerde beyaz-üstüne-beyaz metin.** `.lab-panel` katmansız düz
+  CSS olduğu için Tailwind'in utility katmanını yeniyordu; `bg-slate-950
+  text-white` yazan kartlarda zemin beyaz kalıyor, metin de beyaz olduğu
+  için başlık tamamen görünmez oluyordu. Kural `@layer components` içine
+  alındı. Ölçülen sonuç: zemin `rgb(2,6,24)`, başlık kontrastı **20.16:1**,
+  gövde **13.56:1** ve **7.66:1** — docs/07'nin WCAG AA şartının üstünde.
+- **Ders breadcrumb'ı** `Laboratuvar / lise / Hat` yazıyordu; mevcut
+  `SEVIYE_ETIKET` ve `hatEtiket()` kullanılarak
+  `Laboratuvar / Lise / Hareket ve kinematik` yapıldı.
+
+### Yanlış alarm: "capstone sayfası donuyor"
+
+Tarayıcı denetimi sırasında `/laboratuvar/robot-hucresi` sayfasının
+donduğu raporlandı — ekran görüntüsü ve script enjeksiyonu 30 sn'de zaman
+aşımına uğruyordu, temiz sekmede de tekrar üretildi. **Bu teşhis
+yanlıştı.** Ölçüm şunu gösterdi:
+
+```
+{ gorunurluk: "hidden", fps: 0, kare: 0 }
+```
+
+Sekme görünür değildi. Chrome görünmeyen sekmede `requestAnimationFrame`'i
+ve kompozisyonu durdurur; yeni kare üretilmediği için CDP'nin
+`Page.captureScreenshot` çağrısı zaman aşımına uğrar. Aracın verdiği
+"renderer may be frozen" mesajı yanıltıcı.
+
+Sayfanın sağlıklı olduğunun kanıtı: aynı sekmede senkron JS anında
+çalışıyor ve capstone uçtan uca oynandı — kalibrasyon, rota, komut sırası
+ve güvenli hız doğrulandı, **4/4 kanıt · %100 · "Hücre devreye alındı"**.
+
+**Not:** aynı sebeple 3D sahneli ders sayfasında `canvas: 0` çıktı, yani
+three.js sahnesi hiç mount olmadı. **3D performansı bu turda ölçülemedi**;
+docs/05'teki bilinen ödünleşim hakkında yeni veri yok.
+
+### Doğrulama
+
+Her merge'den sonra sekiz kapı ayrı ayrı koşuldu: `tsc --noEmit`, `lint`,
+`test`, `check-content`, `validate-content-graph`, `check-quiz-dagilimi`,
+`check-mdx-guvenlik`, `build`. Son durum: **13 test dosyası / 146 test**,
+89 ders, 50 taslağın hiçbiri üretim çıktısında veya `sitemap.xml`'de yok.
+
+### Açık uçlar
+
+- `durum: yayinda` işaretlemesi ve `incelendi_tarafindan` doldurulması hâlâ
+  elle ve insana ait (docs/06 Katman 3). Merge edilmiş olmak yayınlanmış
+  demek değil.
+- Geliştirme makinesindeki Node sürümü (20.19.4) ile yeni pin (24)
+  arasındaki fark kapatılmalı.
+- Dependabot ilk PR'larını açtı (P1'de gelen `dependabot.yml` devrede);
+  docs/08 gereği otomatik merge kapalı, her biri insan onayı bekliyor.
+- 3D sahneli sayfaların gerçek performans ölçümü yapılmadı.
