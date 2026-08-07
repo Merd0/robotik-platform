@@ -1543,3 +1543,20 @@ sızıntı kontrolü dahil), `npm audit --audit-level=high` (0 zafiyet) —
 hepsi temiz.
 
 **Dal `main`'e merge EDİLMEDİ**, kullanıcı incelemesi bekliyor.
+
+### Dal hakkında bir uyarı
+
+`p0-kalan-duzeltmeler` dalı **yalnızca yukarıdaki P0 çalışmasını içermiyor.**
+Çalışma sırasında dala başka bir oturumun commit'i de girdi:
+`e4e30f5 "fix: address P1 mobile accessibility findings"` — P1 mobil
+erişilebilirlik bulguları (dokunmatik hedefler, `touch-pan-y`, seviyeye göre
+odak rengi, `PixelToWorld`/`CodeRunner` düzenlemeleri), ayrıca
+`.github/CODEOWNERS`, `.github/dependabot.yml` ve `AGENTS.md`.
+
+Bu commit bu turun kapsamında değildi ve incelenmedi. Dal merge edilmeden
+önce onun da ayrıca gözden geçirilmesi gerekiyor — özellikle `AGENTS.md` ve
+`.github/CODEOWNERS` yönetişim dosyası sayılır (docs/09 §7: kuralın kendisini
+değiştiren dosyalar elle onay ister).
+
+Yukarıdaki doğrulama sayıları **birleşik ağaç** üzerinde alındı, yani her iki
+çalışma bir arada temiz geçiyor.
