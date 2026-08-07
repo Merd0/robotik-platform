@@ -1,6 +1,28 @@
 @import "tailwindcss";
 
 @theme {
+  --color-site-bg: #f8fafc;
+  --color-site-surface: #ffffff;
+  --color-site-soft: #f1f5f9;
+  --color-site-border: #cbd5e1;
+  --color-site-muted: #475569;
+  --color-site-subtle: #64748b;
+  --color-site-ink: #0f172a;
+  --color-site-accent: #0d9488;
+  --color-site-accent-text: #0f766e;
+  --color-site-strong: #0f172a;
+  --color-site-on-strong: #f8fafc;
+
+  --color-success-surface: #ecfdf5;
+  --color-success-border: #6ee7b7;
+  --color-success-ink: #065f46;
+  --color-warning-surface: #fffbeb;
+  --color-warning-border: #fcd34d;
+  --color-warning-ink: #78350f;
+  --color-danger-surface: #fef2f2;
+  --color-danger-border: #fca5a5;
+  --color-danger-ink: #b91c1c;
+
   /*
    * Her seviyede iki vurgu tonu var, aynı hue ailesinden:
    *
@@ -47,10 +69,63 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-site-bg: #071115;
+  --color-site-surface: #0d1c21;
+  --color-site-soft: #14272d;
+  --color-site-border: #35505a;
+  --color-site-muted: #b3c4c9;
+  --color-site-subtle: #94a3b8;
+  --color-site-ink: #f1f5f9;
+  --color-site-accent: #2dd4bf;
+  --color-site-accent-text: #5eead4;
+  --color-site-strong: #5eead4;
+  --color-site-on-strong: #06201d;
+
+  --color-success-surface: #0b2d24;
+  --color-success-border: #2f8f70;
+  --color-success-ink: #86efac;
+  --color-warning-surface: #34240a;
+  --color-warning-border: #b7791f;
+  --color-warning-ink: #fde68a;
+  --color-danger-surface: #351517;
+  --color-danger-border: #b45359;
+  --color-danger-ink: #fca5a5;
+
+  --color-ortaokul-bg: #071918;
+  --color-ortaokul-surface: #0d2624;
+  --color-ortaokul-accent: #2dd4bf;
+  --color-ortaokul-accent-text: #5eead4;
+  --color-ortaokul-ink: #ecfdf5;
+
+  --color-lise-bg: #0a1518;
+  --color-lise-surface: #102126;
+  --color-lise-accent: #22c1b5;
+  --color-lise-accent-text: #5eead4;
+  --color-lise-ink: #ecfeff;
+
+  --color-universite-bg: #111318;
+  --color-universite-surface: #1a1d24;
+  --color-universite-accent: #94a3b8;
+  --color-universite-accent-text: #cbd5e1;
+  --color-universite-ink: #f8fafc;
+
+  --color-durum-dur: #f87171;
+  --color-durum-uyari: #fbbf24;
+  --color-durum-serbest: #4ade80;
+}
+
 body {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: var(--color-site-bg);
+  color: var(--color-site-ink);
   font-family: var(--font-sans);
+  transition: background-color 160ms ease, color 160ms ease;
 }
 
 /*
@@ -62,11 +137,22 @@ body {
  */
 @layer components {
   .lab-panel {
-    border: 1px solid #dbe3ea;
+    border: 1px solid var(--color-site-border);
     border-radius: 1.5rem;
-    background: rgba(255, 255, 255, 0.94);
+    background: color-mix(in srgb, var(--color-site-surface) 94%, transparent);
     box-shadow: 0 24px 70px -46px rgba(15, 23, 42, 0.6);
   }
+}
+
+input,
+textarea,
+select {
+  color: inherit;
+}
+
+::placeholder {
+  color: var(--color-site-subtle);
+  opacity: 1;
 }
 
 .lab-grid {

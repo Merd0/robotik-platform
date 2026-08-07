@@ -5,6 +5,8 @@ import { Canvas } from "@react-three/fiber";
 import { Grid, Line } from "@react-three/drei";
 import type { Vec3 } from "@/lib/robotics/transform";
 import type { Obstacle } from "@/lib/robotics/collision";
+import { useTheme } from "@/components/ui/ThemeProvider";
+import { SCENE_PALETTES } from "@/lib/theme";
 
 export interface PlannerPathDisplay {
   algorithm: string;
@@ -22,9 +24,6 @@ interface PlanningGridProps {
   onPlaneClick?: (point: Vec3) => void;
 }
 
-const START_COLOR = "#0ea5a0";
-const GOAL_COLOR = "#dc2626";
-const OBSTACLE_COLOR = "#475569";
 // Görünmez tıklama düzlemi, engellerin önünde durur ki tıklama her zaman
 // engel geometrisi yerine bu düzlemi vursun (raycasting kameraya en yakın
 // nesneyi seçer).
@@ -34,13 +33,13 @@ function toVector3(p: Vec3): [number, number, number] {
   return [p.x, p.y, p.z];
 }
 
-function ObstacleMesh({ obstacle }: { obstacle: Obstacle }) {
+function ObstacleMesh({ obstacle, color }: { obstacle: Obstacle; color: string }) {
   if (obstacle.kind === "sphere") {
     const [radius] = obstacle.size;
     return (
       <mesh position={toVector3(obstacle.center)}>
         <sphereGeometry args={[radius, 20, 20]} />
-        <meshStandardMaterial color={OBSTACLE_COLOR} />
+        <meshStandardMaterial color={color} />
       </mesh>
     );
   }
@@ -48,7 +47,7 @@ function ObstacleMesh({ obstacle }: { obstacle: Obstacle }) {
   return (
     <mesh position={toVector3(obstacle.center)}>
       <boxGeometry args={[halfX * 2, halfY * 2, Math.max(halfZ * 2, 0.08)]} />
-      <meshStandardMaterial color={OBSTACLE_COLOR} />
+      <meshStandardMaterial color={color} />
     </mesh>
   );
 }
@@ -60,17 +59,19 @@ function ObstacleMesh({ obstacle }: { obstacle: Obstacle }) {
  */
 export function PlanningGrid({ extent, obstacles, start, goal, paths, onPlaneClick }: PlanningGridProps) {
   const markerRadius = Math.min(0.09, extent * 0.03);
+  const { theme } = useTheme();
+  const palette = SCENE_PALETTES[theme];
 
   return (
-    <Canvas camera={{ position: [0, 0.3, extent * 1.15], fov: 45 }} dpr={[1, 2]} className="touch-pan-y">
+    <Canvas camera={{ position: [0, 0.3, extent * 1.15], fov: 45 }} dpr={[1, 2]} className="touch-pan-y" style={{ background: palette.background }}>
       <ambientLight intensity={0.7} />
       <directionalLight position={[3, 4, 4]} intensity={0.9} />
       <Grid
         position={[0, 0, -0.02]}
         rotation={[Math.PI / 2, 0, 0]}
         args={[extent, extent]}
-        cellColor="#cbd5e1"
-        sectionColor="#94a3b8"
+        cellColor={palette.grid}
+        sectionColor={palette.gridSection}
         fadeDistance={extent * 2.5}
       />
 
@@ -88,7 +89,7 @@ export function PlanningGrid({ extent, obstacles, start, goal, paths, onPlaneCli
       )}
 
       {obstacles.map((obstacle, index) => (
-        <ObstacleMesh key={index} obstacle={obstacle} />
+        <ObstacleMesh key={index} obstacle={obstacle} color={palette.obstacle} />
       ))}
 
       {paths
@@ -99,11 +100,11 @@ export function PlanningGrid({ extent, obstacles, start, goal, paths, onPlaneCli
 
       <mesh position={toVector3(start)}>
         <sphereGeometry args={[markerRadius, 20, 20]} />
-        <meshStandardMaterial color={START_COLOR} />
+        <meshStandardMaterial color={palette.start} />
       </mesh>
       <mesh position={toVector3(goal)}>
         <sphereGeometry args={[markerRadius, 20, 20]} />
-        <meshStandardMaterial color={GOAL_COLOR} />
+        <meshStandardMaterial color={palette.goal} />
       </mesh>
     </Canvas>
   );

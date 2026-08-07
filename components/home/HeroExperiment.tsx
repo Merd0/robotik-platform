@@ -37,29 +37,29 @@ export function HeroExperiment() {
     <section className="lab-panel overflow-hidden" aria-labelledby="hero-deney-baslik">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,.95fr)]">
         <div className="flex flex-col justify-center gap-6 p-6 sm:p-10 lg:p-12">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-teal-800">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-site-accent-text">
             <span aria-hidden="true" className="size-2 animate-pulse rounded-full bg-teal-500" />
             Canlı İz Laboratuvarı
           </div>
           <div className="space-y-4">
-            <h1 id="hero-deney-baslik" className="max-w-3xl font-heading text-4xl font-semibold leading-[1.04] tracking-tight text-slate-950 sm:text-6xl">
-              Robotu izleme. <span className="text-teal-700">Önce ne yapacağını tahmin et.</span>
+            <h1 id="hero-deney-baslik" className="max-w-3xl font-heading text-4xl font-semibold leading-[1.04] tracking-tight text-site-ink sm:text-6xl">
+              Robotu izleme. <span className="text-site-accent-text">Önce ne yapacağını tahmin et.</span>
             </h1>
-            <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+            <p className="max-w-2xl text-base leading-7 text-site-muted sm:text-lg">
               Burada her kavram bir deneydir: tahmin et, çalıştır, farkı gör ve nedenini kanıtla. İlk deneyin on saniye sürüyor.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Link href="/seviye/ortaokul" className="inline-flex min-h-11 items-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800">
+            <Link href="/seviye/ortaokul" className="inline-flex min-h-11 items-center rounded-full bg-site-strong px-5 py-2.5 text-sm font-semibold text-site-on-strong transition hover:opacity-90">
               Seviyeni seç
             </Link>
-            <Link href="/laboratuvar/robot-hucresi" className="inline-flex min-h-11 items-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-teal-600">
+            <Link href="/laboratuvar/robot-hucresi" className="inline-flex min-h-11 items-center rounded-full border border-site-border bg-site-surface px-5 py-2.5 text-sm font-semibold text-site-ink transition hover:border-site-accent">
               Robot hücresini aç
             </Link>
           </div>
         </div>
 
-        <div className="relative border-t border-slate-200 bg-slate-950 p-5 text-white lg:border-l lg:border-t-0 sm:p-7">
+        <div className="relative border-t border-site-border bg-slate-950 p-5 text-white lg:border-l lg:border-t-0 sm:p-7">
           <div className="pointer-events-none absolute inset-0 lab-grid opacity-25" />
           <div className="relative flex h-full flex-col gap-4">
             <div className="flex items-center justify-between text-xs uppercase tracking-[0.14em] text-slate-400">

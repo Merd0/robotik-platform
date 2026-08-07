@@ -12,13 +12,13 @@ import {
 } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
+import { useTheme } from "@/components/ui/ThemeProvider";
+import { SCENE_PALETTES } from "@/lib/theme";
 
 interface IkTargetProps {
   robot: string;
 }
 
-const REACHABLE_COLOR = "#0ea5a0";
-const UNREACHABLE_COLOR = "#dc2626";
 const round = (value: number) => Math.round(value * 1000) / 1000;
 
 function solveIk(
@@ -39,6 +39,8 @@ function solveIk(
 /** Ders içine gömülen etkileşimli sahne: hedefi sürükle, robot ters kinematikle uzansın. */
 export function IkTarget({ robot: robotId }: IkTargetProps) {
   const record = useEvidenceRecorder();
+  const { theme } = useTheme();
+  const palette = SCENE_PALETTES[theme];
   const robot = useMemo(() => getRobotById(robotId), [robotId]);
   const maxReach = useMemo(
     () => robot.joints.reduce((sum, joint) => sum + joint.dhParams.a, 0),
@@ -93,7 +95,7 @@ export function IkTarget({ robot: robotId }: IkTargetProps) {
             }}
           >
             <sphereGeometry args={[0.09, 24, 24]} />
-            <meshStandardMaterial color={reachable ? REACHABLE_COLOR : UNREACHABLE_COLOR} />
+            <meshStandardMaterial color={reachable ? palette.reachable : palette.unreachable} />
           </mesh>
           {dragging && (
             <mesh

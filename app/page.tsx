@@ -22,10 +22,10 @@ export default function HomePage() {
         <section aria-labelledby="seviye-baslik" className="space-y-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal-800">Aynı laboratuvar, üç derinlik</p>
+              <p className="text-xs font-semibold uppercase tracking-[.16em] text-site-accent-text">Aynı laboratuvar, üç derinlik</p>
               <h2 id="seviye-baslik" className="mt-2 font-heading text-3xl font-semibold tracking-tight">Nereden başlamak istiyorsun?</h2>
             </div>
-            <p className="max-w-xl text-sm leading-6 text-slate-600">Seviye yalnızca renk değil; açıklama, matematik, sınır durumları ve kanıt beklentisi birlikte değişir.</p>
+            <p className="max-w-xl text-sm leading-6 text-site-muted">Seviye yalnızca renk değil; açıklama, matematik, sınır durumları ve kanıt beklentisi birlikte değişir.</p>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {SEVIYELER.map(({ seviye, aciklama }) => (
@@ -35,9 +35,9 @@ export default function HomePage() {
             data-seviye={seviye}
             className="group lab-panel flex min-h-48 flex-col justify-between gap-6 p-5 transition hover:-translate-y-1 hover:border-teal-500"
           >
-            <span className="font-heading text-2xl font-semibold text-slate-950">{SEVIYE_ETIKET[seviye]}</span>
-            <span className="text-sm leading-6 text-slate-600">{aciklama}</span>
-            <span className="text-sm font-semibold text-teal-800">Hatları keşfet <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span></span>
+            <span className="font-heading text-2xl font-semibold text-site-ink">{SEVIYE_ETIKET[seviye]}</span>
+            <span className="text-sm leading-6 text-site-muted">{aciklama}</span>
+            <span className="text-sm font-semibold text-site-accent-text">Hatları keşfet <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span></span>
           </Link>
         ))}
           </div>
@@ -45,13 +45,13 @@ export default function HomePage() {
 
         <section className="grid gap-6 lg:grid-cols-[1fr_.72fr]">
           <div className="lab-panel p-6 sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal-800">Müfredat haritası</p>
+            <p className="text-xs font-semibold uppercase tracking-[.16em] text-site-accent-text">Müfredat haritası</p>
             <h2 className="mt-2 font-heading text-2xl font-semibold">Tek tek içerikler değil, birbirine bağlanan robotik hatları</h2>
             <div className="mt-6 grid gap-2 sm:grid-cols-2">
               {tracks.map((track, index) => (
-                <div key={track} className="flex min-h-14 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm">
-                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-950 font-mono text-xs text-teal-300">{String.fromCharCode(65 + index)}</span>
-                  <span className="font-medium text-slate-800">{HAT_ETIKET[track]}</span>
+                <div key={track} className="flex min-h-14 items-center gap-3 rounded-xl border border-site-border bg-site-soft px-4 py-2 text-sm">
+                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-site-strong font-mono text-xs text-site-on-strong">{String.fromCharCode(65 + index)}</span>
+                  <span className="font-medium text-site-ink">{HAT_ETIKET[track]}</span>
                 </div>
               ))}
             </div>
@@ -68,7 +68,7 @@ export default function HomePage() {
 
         <section aria-label="Platform sayıları" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[[publishedLessons.length, "yayında ders"], [interactiveCount, "etkileşimli ders"], [tracks.length, "öğrenme hattı"], [allLessons.length, "toplam içerik altyapısı"]].map(([value, label]) => (
-            <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-4"><strong className="block font-heading text-3xl">{value}</strong><span className="text-xs text-slate-600">{label}</span></div>
+            <div key={String(label)} className="rounded-2xl border border-site-border bg-site-surface p-4"><strong className="block font-heading text-3xl">{value}</strong><span className="text-xs text-site-muted">{label}</span></div>
           ))}
         </section>
       </div>

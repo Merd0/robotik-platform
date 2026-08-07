@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { SiteFooter } from "@/components/ui/SiteFooter";
 import { SiteHeader } from "@/components/ui/SiteHeader";
+import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,12 +24,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr">
-      <body className="min-h-screen bg-slate-50 text-slate-950 antialiased">
-        <a href="#ana-icerik" className="sr-only z-[100] rounded bg-white p-3 focus:not-sr-only focus:fixed focus:left-3 focus:top-3">Ana içeriğe geç</a>
-        <SiteHeader />
-        {children}
-        <SiteFooter />
+    <html lang="tr" suppressHydrationWarning>
+      <head>
+        <Script src="/theme-init.js" strategy="beforeInteractive" />
+      </head>
+      <body className="min-h-screen bg-site-bg text-site-ink antialiased">
+        <ThemeProvider>
+          <a href="#ana-icerik" className="sr-only z-[100] rounded bg-site-surface p-3 text-site-ink focus:not-sr-only focus:fixed focus:left-3 focus:top-3">Ana içeriğe geç</a>
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+        </ThemeProvider>
       </body>
     </html>
   );

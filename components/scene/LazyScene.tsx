@@ -24,7 +24,7 @@ function SahneIskeleti() {
   return (
     <div
       role="status"
-      className="flex h-full w-full items-center justify-center bg-black/5 text-sm text-black/50"
+      className="flex h-full w-full items-center justify-center bg-site-soft text-sm text-site-muted"
     >
       Sahne yükleniyor…
     </div>

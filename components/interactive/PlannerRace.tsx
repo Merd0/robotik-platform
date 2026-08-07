@@ -8,6 +8,8 @@ import { PLANNER_IDS, pathLength, type PlanResult, type PlannerId } from "@/lib/
 import type { Vec3 } from "@/lib/robotics/transform";
 import type { PlannerWorkerRequest, PlannerWorkerResponse } from "@/lib/workers/plannerWorker";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
+import { useTheme } from "@/components/ui/ThemeProvider";
+import { SCENE_PALETTES } from "@/lib/theme";
 
 interface PlannerRaceProps {
   /** Yarışa girecek algoritmalar; tek algoritma verilirse "yarış" değil tek sahne olur. */
@@ -24,12 +26,6 @@ const ALGORITHM_LABELS: Record<PlannerId, string> = {
   astar: "A*",
   rrt: "RRT",
   rrt_star: "RRT*",
-};
-
-const ALGORITHM_COLORS: Record<PlannerId, string> = {
-  astar: "#0ea5a0",
-  rrt: "#f59e0b",
-  rrt_star: "#7c3aed",
 };
 
 const THEME = {
@@ -82,6 +78,13 @@ export function PlannerRace({
   theme = "universite",
 }: PlannerRaceProps) {
   const record = useEvidenceRecorder();
+  const { theme: colorMode } = useTheme();
+  const palette = SCENE_PALETTES[colorMode];
+  const algorithmColors: Record<PlannerId, string> = {
+    astar: palette.astar,
+    rrt: palette.rrt,
+    rrt_star: palette.rrtStar,
+  };
   const t = THEME[theme];
   const half = extent / 2;
   const start: Vec3 = useMemo(() => ({ x: -half + 0.35, y: -half + 0.35, z: 0 }), [half]);
@@ -167,7 +170,7 @@ export function PlannerRace({
 
   const paths: PlannerPathDisplay[] = algorithms
     .filter((id) => results[id]?.success)
-    .map((id) => ({ algorithm: id, color: ALGORITHM_COLORS[id], points: results[id]!.path }));
+    .map((id) => ({ algorithm: id, color: algorithmColors[id], points: results[id]!.path }));
 
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
@@ -270,7 +273,7 @@ export function PlannerRace({
                         <span
                           aria-hidden="true"
                           className="inline-block size-3 shrink-0 rounded-sm"
-                          style={{ backgroundColor: ALGORITHM_COLORS[id] }}
+                          style={{ backgroundColor: algorithmColors[id] }}
                         />
                         {ALGORITHM_LABELS[id]}
                       </span>

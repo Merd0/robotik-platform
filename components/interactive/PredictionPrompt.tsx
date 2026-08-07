@@ -23,13 +23,13 @@ export function PredictionPrompt({ skillId, prompt, options, correct, explanatio
   }
 
   return (
-    <fieldset className="my-2 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
-      <legend className="px-2 text-xs font-bold uppercase tracking-[.14em] text-amber-900">1 · Tahminini kilitle</legend>
-      <p className="text-sm font-semibold text-slate-900">{prompt}</p>
+    <fieldset className="my-2 rounded-2xl border border-warning-border bg-warning-surface p-4 sm:p-5">
+      <legend className="px-2 text-xs font-bold uppercase tracking-[.14em] text-warning-ink">1 · Tahminini kilitle</legend>
+      <p className="text-sm font-semibold text-site-ink">{prompt}</p>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        {options.map((option, index) => <button key={option} type="button" disabled={locked} aria-pressed={selected === index} onClick={() => setSelected(index)} className={`min-h-11 rounded-xl border px-3 py-2 text-left text-sm ${selected === index ? "border-amber-700 bg-white text-slate-950" : "border-amber-200 bg-white/60 text-slate-700"} disabled:opacity-80`}>{option}</button>)}
+        {options.map((option, index) => <button key={option} type="button" disabled={locked} aria-pressed={selected === index} onClick={() => setSelected(index)} className={`min-h-11 rounded-xl border px-3 py-2 text-left text-sm ${selected === index ? "border-warning-ink bg-site-surface text-site-ink" : "border-warning-border bg-site-surface/60 text-site-muted"} disabled:opacity-80`}>{option}</button>)}
       </div>
-      {!locked ? <button type="button" disabled={selected === null} onClick={lockPrediction} className="mt-3 min-h-11 rounded-xl bg-amber-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">Tahmini kilitle</button> : <p className="mt-3 text-sm text-amber-950" role="status">Tahmin kaydedildi. Şimdi deneyi çalıştır; sonuçtan sonra karşılaştır. <span className="sr-only">{explanation}</span></p>}
+      {!locked ? <button type="button" disabled={selected === null} onClick={lockPrediction} className="mt-3 min-h-11 rounded-xl bg-warning-ink px-4 py-2 text-sm font-semibold text-warning-surface disabled:opacity-40">Tahmini kilitle</button> : <p className="mt-3 text-sm text-warning-ink" role="status">Tahmin kaydedildi. Şimdi deneyi çalıştır; sonuçtan sonra karşılaştır. <span className="sr-only">{explanation}</span></p>}
     </fieldset>
   );
 }

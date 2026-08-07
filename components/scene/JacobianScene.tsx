@@ -4,6 +4,8 @@ import { Line } from "@react-three/drei";
 import { RobotArm } from "./RobotArm";
 import type { RobotSpec } from "@/lib/robotics/kinematics";
 import type { Vec3 } from "@/lib/robotics/transform";
+import { useTheme } from "@/components/ui/ThemeProvider";
+import { SCENE_PALETTES } from "@/lib/theme";
 
 /**
  * Jacobian görselleştirmesinin 3D kısmı: robot kolu + her eklemin uç noktada
@@ -18,7 +20,6 @@ import type { Vec3 } from "@/lib/robotics/transform";
 
 const VECTOR_SCALE = 0.35;
 const ELLIPSE_SAMPLES = 48;
-const ELLIPSE_COLOR = "#64748b";
 
 function addScaled(base: Vec3, direction: Vec3, scale: number): [number, number, number] {
   return [base.x + direction.x * scale, base.y + direction.y * scale, base.z + direction.z * scale];
@@ -61,6 +62,8 @@ export function JacobianScene({
   columns,
   jointColors,
 }: JacobianSceneProps) {
+  const { theme } = useTheme();
+
   return (
     <RobotArm robot={robot} jointAngles={jointAngles}>
       {columns.map((column, index) => (
@@ -74,7 +77,7 @@ export function JacobianScene({
           lineWidth={3}
         />
       ))}
-      <Line points={ellipsePoints(columns, endEffector)} color={ELLIPSE_COLOR} lineWidth={1.5} />
+      <Line points={ellipsePoints(columns, endEffector)} color={SCENE_PALETTES[theme].ellipse} lineWidth={1.5} />
     </RobotArm>
   );
 }
