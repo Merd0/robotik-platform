@@ -1,0 +1,20 @@
+{
+  "name": "Robotik Öğrenme Platformu",
+  "short_name": "Robotik",
+  "description": "Robotiği tarayıcıda oynayarak öğreten, açık ve ücretsiz Türkçe öğrenme platformu.",
+  "lang": "tr",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fafaf7",
+  "theme_color": "#16231f",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -73,6 +73,17 @@ export function getAllLessons(): Lesson[] {
   });
 }
 
+/**
+ * İnsan incelemesi tamamlanmış ve yayına alınmış dersler.
+ *
+ * Bu küme ortamdan bağımsızdır: taslak önizlemesi açıkken bile taslak veya
+ * incelemedeki dersleri içermez. Sitemap gibi herkese açık dağıtım çıktıları
+ * bu fonksiyona dayanmalıdır.
+ */
+export function getPublishedLessons(): Lesson[] {
+  return getAllLessons().filter((lesson) => lesson.frontmatter.durum === "yayinda");
+}
+
 export function getLessonBySlug(slug: string): Lesson | undefined {
   return getAllLessons().find((lesson) => lesson.slug === slug);
 }
@@ -104,9 +115,8 @@ export function taslakOnizlemeAcik(): boolean {
  * dayanır — böylece "listede görünmüyor ama URL çalışıyor" durumu oluşamaz.
  */
 export function getPublicLessons(): Lesson[] {
-  const lessons = getAllLessons();
-  if (taslakOnizlemeAcik()) return lessons;
-  return lessons.filter((lesson) => lesson.frontmatter.durum === "yayinda");
+  if (taslakOnizlemeAcik()) return getAllLessons();
+  return getPublishedLessons();
 }
 
 /** Slug herkese açık mı — değilse ders sayfası 404 vermeli. */
