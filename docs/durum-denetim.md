@@ -1659,8 +1659,52 @@ Her merge'den sonra sekiz kapı ayrı ayrı koşuldu: `tsc --noEmit`, `lint`,
 - `durum: yayinda` işaretlemesi ve `incelendi_tarafindan` doldurulması hâlâ
   elle ve insana ait (docs/06 Katman 3). Merge edilmiş olmak yayınlanmış
   demek değil.
-- Geliştirme makinesindeki Node sürümü (20.19.4) ile yeni pin (24)
-  arasındaki fark kapatılmalı.
+- ~~Geliştirme makinesindeki Node sürümü (20.19.4) ile yeni pin (24)
+  arasındaki fark kapatılmalı.~~ **Kapandı (2026-08-07):** makine
+  `v24.19.0`'a çıkarıldı, sekiz kapı + `npm ci` + `npm audit` Node 24
+  altında yeniden koşuldu, hepsi temiz.
 - Dependabot ilk PR'larını açtı (P1'de gelen `dependabot.yml` devrede);
   docs/08 gereği otomatik merge kapalı, her biri insan onayı bekliyor.
 - 3D sahneli sayfaların gerçek performans ölçümü yapılmadı.
+
+### Kalıcı not: npm 11 postinstall script'lerini atlıyor
+
+Node 24 / npm 11 geçişinde ortaya çıktı. `npm ci` artık bazı paketlerin
+postinstall script'lerini **varsayılan olarak çalıştırmıyor**, sadece
+uyarıyor:
+
+```
+npm warn allow-scripts   esbuild@0.28.1 (postinstall: node install.js)
+npm warn allow-scripts   unrs-resolver@1.12.2 (postinstall: node postinstall.js)
+npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review
+```
+
+Bu, tedarik zinciri açısından iyi bir varsayılan (docs/08 §1) — ama bu
+projede bir bağımlılığı var: **`scripts/build-worker.mjs` esbuild'e
+dayanıyor** ve worker'ları `public/workers/` altına önceden derliyor
+(bkz. `docs/02-mimari.md`, "Worker nasıl derleniyor").
+
+**npm'in bu davranışı sertleşirse (uyarı yerine script'i tamamen bloke
+ederse) ilk kırılacak yer `scripts/build-worker.mjs`'dir — worker
+chunk'larının boş çıkıp çıkmadığı düzenli kontrol edilmeli.**
+
+Bu, teorik bir endişe değil: docs/02'de kayıtlı olduğu üzere Faz 2'de
+tam olarak bu semptom yaşandı — derlenen worker chunk'ına gerçek kod hiç
+girmiyordu, dosya vardı ama boştu ve statik export'ta worker isteği
+sonsuza kadar "pending" kalıyordu. Boş bir worker dosyası build'i
+kırmaz, sessizce çalışma zamanında kırılır; bu yüzden dosyanın *varlığı*
+yeterli kanıt değildir.
+
+Kontrol yöntemi (2026-08-07'de bu şekilde doğrulandı — `npm ci` sonrası
+`public/workers/` silinip sıfırdan build alındı):
+
+```bash
+rm -rf public/workers && npm run build
+ls -l public/workers/            # dosyalar var mı, boyut makul mü
+grep -c "astar\|rrt" public/workers/planner-worker.js   # gerçek kod girmiş mi
+```
+
+O tarihteki sonuç: `planner-worker.js` 7,6 KB (`astar`/`rrt` kodu içinde),
+`pyodide-worker.js` 20 KB, `npx esbuild --version` → 0.28.1. Yani atlanan
+postinstall'a rağmen esbuild binary'si sağlamdı. Uyarı şu an zararsız,
+ama kırılırsa sessiz kırılacağı için not düşüldü.
