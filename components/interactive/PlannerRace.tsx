@@ -7,6 +7,7 @@ import { isPointFree, type Obstacle } from "@/lib/robotics/collision";
 import { PLANNER_IDS, pathLength, type PlanResult, type PlannerId } from "@/lib/robotics/planners";
 import type { Vec3 } from "@/lib/robotics/transform";
 import type { PlannerWorkerRequest, PlannerWorkerResponse } from "@/lib/workers/plannerWorker";
+import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 
 interface PlannerRaceProps {
   /** Yarışa girecek algoritmalar; tek algoritma verilirse "yarış" değil tek sahne olur. */
@@ -80,6 +81,7 @@ export function PlannerRace({
   extent = 3,
   theme = "universite",
 }: PlannerRaceProps) {
+  const record = useEvidenceRecorder();
   const t = THEME[theme];
   const half = extent / 2;
   const start: Vec3 = useMemo(() => ({ x: -half + 0.35, y: -half + 0.35, z: 0 }), [half]);
@@ -125,6 +127,7 @@ export function PlannerRace({
     if (!worker || running) return;
     setRunning(true);
     setResults({});
+    record({ skillId: "planner-comparison", stage: "tried", result: "neutral", metrics: { obstacles: obstacles.length, algorithms: algorithms.length } });
 
     await Promise.all(
       algorithms.map(
@@ -135,6 +138,7 @@ export function PlannerRace({
               if (event.data.requestId !== requestId) return;
               worker!.removeEventListener("message", onMessage);
               setResults((prev) => ({ ...prev, [algorithm]: event.data.result }));
+              record({ skillId: "planner-comparison", stage: "observed", result: event.data.result.success ? "success" : "retry", metrics: { algorithm, nodes: event.data.result.nodesExpanded, elapsedMs: round(event.data.result.elapsedMs) } });
               resolve();
             }
             worker!.addEventListener("message", onMessage);

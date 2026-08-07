@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { karistir } from "@/lib/quiz";
+import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 
 interface QuizSorusuProps {
   soru: string;
@@ -12,6 +13,8 @@ interface QuizSorusuProps {
 
 export function QuizSorusu({ soru, secenekler, dogru, aciklama }: QuizSorusuProps) {
   const [selected, setSelected] = useState<number | null>(null);
+  const [attempts, setAttempts] = useState(0);
+  const record = useEvidenceRecorder();
 
   // Şıklar, sorunun metninden türetilen kararlı bir sırayla gösterilir:
   // içerikte doğru cevap ezici çoğunlukla 2. sıradaydı (%89), bu da soruları
@@ -24,6 +27,13 @@ export function QuizSorusu({ soru, secenekler, dogru, aciklama }: QuizSorusuProp
 
   const isCorrect = selected === gosterilenDogru;
 
+  function choose(index: number) {
+    const nextAttempts = attempts + 1;
+    setSelected(index);
+    setAttempts(nextAttempts);
+    record({ skillId: `quiz:${soru.slice(0, 48)}`, stage: "observed", result: index === gosterilenDogru ? "success" : "retry", attempts: nextAttempts });
+  }
+
   return (
     <fieldset className="flex flex-col gap-2">
       <legend className="text-sm font-medium">{soru}</legend>
@@ -34,7 +44,7 @@ export function QuizSorusu({ soru, secenekler, dogru, aciklama }: QuizSorusuProp
             <button
               key={index}
               type="button"
-              onClick={() => setSelected(index)}
+              onClick={() => choose(index)}
               aria-pressed={isSelected}
               className={`min-h-11 rounded-md border px-4 py-2 text-left text-sm ${
                 isSelected
@@ -51,7 +61,7 @@ export function QuizSorusu({ soru, secenekler, dogru, aciklama }: QuizSorusuProp
       </div>
       {selected !== null && (
         <p className={`text-sm ${isCorrect ? "text-ortaokul-accent-text" : "text-ortaokul-ink/70"}`}>
-          {isCorrect ? "Doğru." : `Şuna dikkat et: ${aciklama}`}
+          {isCorrect ? `Doğru. ${aciklama}` : attempts === 1 ? "Henüz değil. Sahnedeki değişkenin neyi değiştirdiğine bakıp bir kez daha dene." : `Şuna dikkat et: ${aciklama}`}
         </p>
       )}
     </fieldset>

@@ -15,6 +15,8 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
+  - TransferChallenge
 durum: yayinda
 ---
 
@@ -23,6 +25,14 @@ durum: yayinda
 Bir robot kolunun ucuna hiç dokunamazsın — sadece omuzu ve dirseği
 çevirebilirsin. Yine de ucu tam istediğin noktaya götürebilirsin, eklemleri
 doğru açılara getirerek.
+
+<PredictionPrompt
+  skillId="forward-kinematics"
+  prompt="Yalnızca dirseği döndürürsen robotun turuncu ucu sabit kalır mı?"
+  options={["Sabit kalır", "Bir yay çizerek yer değiştirir"]}
+  correct={1}
+  explanation="Dirsek açısı ikinci kol parçasının yönünü değiştirir; uç bir yay üzerinde taşınır."
+/>
 
 <JointSliders robot="generic-2dof" />
 
@@ -48,6 +58,15 @@ derste gördüğün hesap var.
 Kaydırıcıları kullanarak kolun ucunu ekranın sağ üst köşesine götürmeye
 çalış. Sonra aynı noktaya farklı bir eklem kombinasyonuyla ulaşıp
 ulaşamayacağını dene.
+
+<TransferChallenge
+  skillId="forward-kinematics"
+  prompt="Bir paket sağ üstteyken uç yanlış yerde kaldı. Hedefi doğrudan sürüklemeden neyi değiştirebilirsin?"
+  options={["Robotun iki eklem açısını", "Paketin rengini", "Kol parçalarının çizgi kalınlığını"]}
+  correct={0}
+  hint="Bu deneyde kontrol edebildiğin iki kaydırıcıyı düşün."
+  explanation="İleri kinematikte giriş eklem açıları, sonuç uç konumudur."
+/>
 
 ## Sonraki
 
