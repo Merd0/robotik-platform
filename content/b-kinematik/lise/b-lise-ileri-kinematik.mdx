@@ -16,6 +16,8 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
+  - TransferChallenge
 durum: yayinda
 ---
 
@@ -24,6 +26,14 @@ durum: yayinda
 Ortaokul dersinde kaydırıcıyı oynatıp kolun ucunun nereye gittiğini gözle
 gördün. Şimdi aynı şeyi hesapla: eklem açılarını bilsen, uç noktanın (x, y)
 konumunu kâğıt üzerinde bulabilir misin?
+
+<PredictionPrompt
+  skillId="forward-kinematics-formula"
+  prompt="θ1 = 0° ve θ2 = 0° iken iki kol parçası nasıl konumlanır?"
+  options={["Aynı doğrultuda uzanır", "Birbirine dik olur", "Uç başlangıca döner"]}
+  correct={0}
+  explanation="Her iki açı sıfırken cos terimleri 1, sin terimleri 0 olur; uzunluklar x yönünde toplanır."
+/>
 
 <JointSliders robot="generic-2dof" />
 
@@ -65,6 +75,15 @@ elle hesapla, ekrandaki "Uç nokta" değeriyle karşılaştır.
       aciklama: "cos(0°) = 1 olduğundan x = a1 + a2 = 1.8 çıkar.",
     },
   ]}
+/>
+
+<TransferChallenge
+  skillId="forward-kinematics-formula"
+  prompt="a1 = 1, a2 = 0.8, θ1 = 90° ve θ2 = 0° için uç hangi eksen üzerindedir?"
+  options={["Pozitif Y, yaklaşık 1.8", "Pozitif X, yaklaşık 1.8", "Orijinde"]}
+  correct={0}
+  hint="cos(90°) ve sin(90°) değerlerini iki terimde de kullan."
+  explanation="İki bağlantı da 90° yönünde olduğundan x = 0, y = 1 + 0.8 olur."
 />
 
 ## Sonraki

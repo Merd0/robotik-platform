@@ -16,6 +16,8 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - IkTarget
+  - PredictionPrompt
+  - TransferChallenge
 durum: yayinda
 ---
 
@@ -24,6 +26,14 @@ durum: yayinda
 Bu sefer eklemleri değil, hedefi sen sürüklüyorsun. Yeşil noktayı bir yere
 götür — kol oraya nasıl ulaşacağına kendisi karar veriyor. Ama dikkat: aynı
 noktaya iki farklı şekilde de uzanabilir.
+
+<PredictionPrompt
+  skillId="multiple-ik-solutions"
+  prompt="Hedef hiç yer değiştirmeden dirsek düğmesine basarsan robotun ucu kayar mı?"
+  options={["Evet, hedef değişir", "Hayır, duruş değişir ama uç hedefte kalır"]}
+  correct={1}
+  explanation="Aynı hedef için dirsek yukarı ve dirsek aşağı olmak üzere iki eklem çözümü vardır."
+/>
 
 <IkTarget robot="generic-2dof" />
 
@@ -62,6 +72,15 @@ izle.
       aciklama: "Hedef aynı kalıyor, sadece eklemlerin aldığı açı kombinasyonu değişiyor.",
     },
   ]}
+/>
+
+<TransferChallenge
+  skillId="multiple-ik-solutions"
+  prompt="Dirsek-yukarı duruşu bir rafa çarpıyor. Hedef konumunu koruyarak ilk hangi çözümü sınarsın?"
+  options={["Dirsek-aşağı çözümünü", "Robotun kolunu uzatmayı", "Hedefi silmeyi"]}
+  correct={0}
+  hint="Aynı uç konumunu veren ikinci duruşu deneyebilirsin."
+  explanation="Ters kinematiğin çoklu çözümleri, hedefi değiştirmeden çarpışmadan kaçma seçeneği sunar."
 />
 
 ## Sonraki

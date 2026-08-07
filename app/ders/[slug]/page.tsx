@@ -7,11 +7,16 @@ import {
   getPrerequisites,
   getPublicLessonBySlug,
   getPublicLessons,
+  hatEtiket,
+  SEVIYE_ETIKET,
 } from "@/lib/content";
 import { mdxComponents } from "@/components/interactive";
 import { LessonNav } from "@/components/ui/LessonNav";
-import { CompleteLessonButton } from "@/components/ui/CompleteLessonButton";
 import { SEVIYE_THEME } from "@/lib/seviyeTheme";
+import { LessonEvidenceProvider } from "@/components/lesson/LessonEvidenceProvider";
+import { LessonCompletionPanel } from "@/components/lesson/LessonCompletionPanel";
+import { LessonTrustPanel } from "@/components/lesson/LessonTrustPanel";
+import Link from "next/link";
 
 /**
  * Yalnızca herkese açık dersler statik sayfa olarak üretilir. Üretim
@@ -38,7 +43,8 @@ export async function generateMetadata({ params }: DersPageProps): Promise<Metad
 
   const taslak = lesson.frontmatter.durum !== "yayinda";
   return {
-    title: `${lesson.frontmatter.baslik} — Robotik Öğrenme Platformu`,
+    title: lesson.frontmatter.baslik,
+    description: lesson.frontmatter.kazanimlar[0],
     ...(taslak ? { robots: { index: false, follow: false } } : {}),
   };
 }
@@ -70,17 +76,21 @@ export default async function DersPage({ params }: DersPageProps) {
   const theme = SEVIYE_THEME[seviye];
 
   return (
-    <main data-seviye={seviye} className={`min-h-screen ${theme.page}`}>
-      <div className="mx-auto max-w-2xl px-6 py-16">
-        <p className={`text-sm uppercase tracking-wide ${theme.accentText}`}>{seviye}</p>
-        <h1 className={`mt-2 text-3xl font-semibold ${theme.ink}`}>{lesson.frontmatter.baslik}</h1>
-        <article className="ders-icerik mt-8 flex flex-col gap-5">{content}</article>
-
-        <div className="mt-8">
-          <CompleteLessonButton slug={lesson.slug} seviye={seviye} />
-        </div>
-
-        <LessonNav prerequisites={prerequisites} previous={previous} next={next} seviye={seviye} />
+    <main id="ana-icerik" data-seviye={seviye} className={`min-h-screen ${theme.page}`}>
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
+        <LessonEvidenceProvider lessonId={lesson.slug} contentVersion={lesson.frontmatter.incelendi_tarih ?? "v1"}>
+          <nav aria-label="İçerik yolu" className={`flex flex-wrap items-center gap-2 text-sm ${theme.muted}`}><Link href="/" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvar</Link><span>/</span><Link href={`/seviye/${seviye}`} className="inline-flex min-h-11 items-center underline underline-offset-4">{SEVIYE_ETIKET[seviye]}</Link><span>/</span><Link href={`/seviye/${seviye}/hat/${lesson.frontmatter.hat}`} className="inline-flex min-h-11 items-center underline underline-offset-4">{hatEtiket(lesson.frontmatter.hat)}</Link></nav>
+          <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+            <div className="min-w-0">
+              <p className={`text-xs font-semibold uppercase tracking-[.18em] ${theme.accentText}`}>Deney dersi · {lesson.frontmatter.sure} dakika</p>
+              <h1 className={`mt-3 max-w-4xl font-heading text-4xl font-semibold tracking-tight sm:text-5xl ${theme.ink}`}>{lesson.frontmatter.baslik}</h1>
+              <article className="ders-icerik mt-8 flex min-w-0 flex-col gap-5">{content}</article>
+              <div className="mt-10"><LessonCompletionPanel seviye={seviye} /></div>
+              <LessonNav prerequisites={prerequisites} previous={previous} next={next} seviye={seviye} />
+            </div>
+            <LessonTrustPanel lesson={lesson} />
+          </div>
+        </LessonEvidenceProvider>
       </div>
     </main>
   );

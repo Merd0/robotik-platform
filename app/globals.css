@@ -48,9 +48,45 @@
 }
 
 body {
-  background-color: var(--color-ortaokul-bg);
-  color: var(--color-ortaokul-ink);
+  background-color: #f8fafc;
+  color: #0f172a;
   font-family: var(--font-sans);
+}
+
+/*
+ * @layer components şart: katmansız düz CSS, Tailwind'in utility katmanını
+ * yener. Katmansız haliyle `.lab-panel bg-slate-950 text-white` yazan koyu
+ * kartlarda zemin beyaz kalıyor ama metin beyaz olduğu için başlık tamamen
+ * görünmez oluyordu (docs/07: kontrast WCAG AA pazarlıksız). Katmana
+ * alınınca bg-* utility'si panelin varsayılan zeminini ezebiliyor.
+ */
+@layer components {
+  .lab-panel {
+    border: 1px solid #dbe3ea;
+    border-radius: 1.5rem;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 24px 70px -46px rgba(15, 23, 42, 0.6);
+  }
+}
+
+.lab-grid {
+  background-image:
+    linear-gradient(rgba(94, 234, 212, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(94, 234, 212, 0.09) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.arm-motion {
+  transition: all 650ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.trace-path {
+  stroke-dasharray: 4 4;
+  animation: trace-dash 1.2s linear infinite;
+}
+
+@keyframes trace-dash {
+  to { stroke-dashoffset: -16; }
 }
 
 /*
@@ -93,6 +129,15 @@ body {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+}
+
+.ders-icerik > :is(p, h2, h3, ul, ol, blockquote, pre, table) {
+  max-width: 46rem;
+}
+
+.ders-icerik :is(ul, ol) {
+  padding-left: 1.25rem;
+  line-height: 1.7;
 }
 
 .ders-icerik th,

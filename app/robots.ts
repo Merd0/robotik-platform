@@ -1,0 +1,11 @@
+import type { MetadataRoute } from "next";
+
+export const dynamic = "force-static";
+
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: { userAgent: "*", allow: "/", disallow: ["/_next/", "/workers/"] },
+    sitemap: "https://robotik-platform.vercel.app/sitemap.xml",
+    host: "https://robotik-platform.vercel.app",
+  };
+}

@@ -11,6 +11,7 @@ import {
   type RobotSpec,
 } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
+import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 
 interface IkTargetProps {
   robot: string;
@@ -37,6 +38,7 @@ function solveIk(
 
 /** Ders içine gömülen etkileşimli sahne: hedefi sürükle, robot ters kinematikle uzansın. */
 export function IkTarget({ robot: robotId }: IkTargetProps) {
+  const record = useEvidenceRecorder();
   const robot = useMemo(() => getRobotById(robotId), [robotId]);
   const maxReach = useMemo(
     () => robot.joints.reduce((sum, joint) => sum + joint.dhParams.a, 0),
@@ -58,8 +60,10 @@ export function IkTarget({ robot: robotId }: IkTargetProps) {
     if (solved) {
       setAngles(solved);
       setReachable(true);
+      record({ skillId: "inverse-kinematics", stage: "tried", result: "success", metrics: { x: round(point.x), y: round(point.y), elbow: elbowChoice } });
     } else {
       setReachable(false);
+      record({ skillId: "inverse-kinematics", stage: "observed", result: "retry", metrics: { unreachable: true } });
     }
   }
 
@@ -67,6 +71,7 @@ export function IkTarget({ robot: robotId }: IkTargetProps) {
     const next = elbow === "up" ? "down" : "up";
     setElbow(next);
     applyTarget(target, next);
+    record({ skillId: "multiple-ik-solutions", stage: "observed", result: "success", metrics: { elbow: next } });
   }
 
   function handleReset() {

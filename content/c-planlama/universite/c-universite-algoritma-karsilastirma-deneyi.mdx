@@ -16,6 +16,8 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - PlannerRace
+  - PredictionPrompt
+  - TransferChallenge
 durum: yayinda
 ---
 
@@ -25,6 +27,14 @@ Bir mühendis olarak yeni bir mobil robot hücresi için hareket
 planlayıcısı seçmen isteniyor. Hücrede bazen çok az engel var, bazen
 sıkışık bir raf düzeni. Tek bir algoritmayı mı seçersin, yoksa duruma
 göre mi değişir? Bunu varsayımla değil, deneyle cevapla.
+
+<PredictionPrompt
+  skillId="planner-comparison"
+  prompt="Dar bir koridorda tek çalıştırmanın süresi, planlayıcı seçmek için tek başına yeterli midir?"
+  options={["Evet, en hızlı sayı her zaman kazanır", "Hayır, başarı oranı ve yol kalitesi de tekrarlı ölçülmelidir"]}
+  correct={1}
+  explanation="Özellikle örneklemeli planlayıcılarda seed ve tekrar sayısı sonucu etkiler."
+/>
 
 <PlannerRace algorithms={["astar", "rrt", "rrt_star"]} allowObstacleEdit={true} theme="universite" extent={3} />
 
@@ -73,6 +83,15 @@ oranı düşer mi? Neden olabilir (ipucu: rastgele örnekleme dar bir geçidi
       aciklama: "RRT'nin gücü rastgele örneklemesinden gelir, ama bu aynı zamanda zayıf noktasıdır: dar bir geçidin içine düşen bir örnek nadir olduğu için ağaç o geçidi 'keşfetmekte' zorlanır. Bu, dar-geçit problemi (narrow passage problem) olarak bilinir.",
     },
   ]}
+/>
+
+<TransferChallenge
+  skillId="planner-comparison"
+  prompt="RRT bir kez 8 ms, dokuz kez başarısız; A* on kez 22 ms ve başarılı. Dar koridor görevi için savunulabilir seçim hangisi?"
+  options={["Sadece en düşük süreye bakıp RRT", "Başarı oranını gerekçe gösterip A*", "Ölçümleri yok sayıp rastgele seçim"]}
+  correct={1}
+  hint="Başarısız koşuların görevi tamamlamadığını metrik hesabına kat."
+  explanation="Bu görevde güvenilir başarı, tek bir uç hız ölçümünden daha değerlidir; seçim ölçülen görev ölçütüne dayanır."
 />
 
 ## Sonraki

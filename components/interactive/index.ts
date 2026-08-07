@@ -10,6 +10,8 @@ import { PixelToWorld } from "./PixelToWorld";
 import { ThresholdViewer } from "./ThresholdViewer";
 import { ScanPath } from "./ScanPath";
 import { SafetyZone } from "./SafetyZone";
+import { PredictionPrompt } from "./PredictionPrompt";
+import { TransferChallenge } from "./TransferChallenge";
 import type { IZINLI_BILESEN_ADLARI } from "@/lib/izinliBilesenler";
 
 /**
@@ -35,6 +37,8 @@ export const mdxComponents = {
   ThresholdViewer,
   ScanPath,
   SafetyZone,
+  PredictionPrompt,
+  TransferChallenge,
   // `satisfies`: anahtarların izinli liste ile birebir aynı olmasını derleme
   // zamanında zorlar, ama değer tiplerini geniştetmez (compileMDX bileşen
   // tiplerini görmeye devam eder).

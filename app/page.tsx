@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getAllLessons, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
+import { HeroExperiment } from "@/components/home/HeroExperiment";
+import { getAllLessons, getPublicLessons, HAT_ETIKET, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
 
 const SEVIYELER: { seviye: Seviye; aciklama: string }[] = [
   { seviye: "ortaokul", aciklama: "Görsel, sezgisel, matematiksiz. \"Vay be\" hissi." },
@@ -8,67 +9,68 @@ const SEVIYELER: { seviye: Seviye; aciklama: string }[] = [
 ];
 
 export default function HomePage() {
-  const publishedLessons = getAllLessons().filter((lesson) => lesson.frontmatter.durum === "yayinda");
+  const allLessons = getAllLessons();
+  const publishedLessons = getPublicLessons().filter((lesson) => lesson.frontmatter.durum === "yayinda");
+  const tracks = [...new Set(publishedLessons.map((lesson) => lesson.frontmatter.hat))];
+  const interactiveCount = publishedLessons.filter((lesson) => lesson.frontmatter.etkilesimli.length > 0).length;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-10 px-6 py-16">
-      <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-semibold text-ortaokul-ink">Robotik Öğrenme Platformu</h1>
-        <p className="text-ortaokul-ink/80">
-          Robotiği tarayıcıda oynayarak öğreten, ortaokuldan mühendis seviyesine kadar
-          kademeli ilerleyen, açık ve ücretsiz bir Türkçe kaynak.
-        </p>
-      </div>
+    <main id="ana-icerik" className="min-h-screen overflow-hidden">
+      <div className="mx-auto flex max-w-7xl flex-col gap-14 px-4 py-8 sm:px-6 sm:py-12">
+        <HeroExperiment />
 
-      <nav aria-label="Site geneli" className="flex flex-wrap gap-3">
-        <Link
-          href="/ara"
-          className="min-h-11 rounded-lg border border-ortaokul-ink/15 px-4 py-2 text-ortaokul-ink hover:border-ortaokul-accent"
-        >
-          Derslerde ara
-        </Link>
-        <Link
-          href="/sozluk"
-          className="min-h-11 rounded-lg border border-ortaokul-ink/15 px-4 py-2 text-ortaokul-ink hover:border-ortaokul-accent"
-        >
-          Sözlük
-        </Link>
-      </nav>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <section aria-labelledby="seviye-baslik" className="space-y-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal-800">Aynı laboratuvar, üç derinlik</p>
+              <h2 id="seviye-baslik" className="mt-2 font-heading text-3xl font-semibold tracking-tight">Nereden başlamak istiyorsun?</h2>
+            </div>
+            <p className="max-w-xl text-sm leading-6 text-slate-600">Seviye yalnızca renk değil; açıklama, matematik, sınır durumları ve kanıt beklentisi birlikte değişir.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {SEVIYELER.map(({ seviye, aciklama }) => (
           <Link
             key={seviye}
             href={`/seviye/${seviye}`}
-            className="flex flex-col gap-1 rounded-lg border border-ortaokul-ink/10 p-4 hover:border-ortaokul-accent"
+            data-seviye={seviye}
+            className="group lab-panel flex min-h-48 flex-col justify-between gap-6 p-5 transition hover:-translate-y-1 hover:border-teal-500"
           >
-            <span className="font-medium text-ortaokul-ink">{SEVIYE_ETIKET[seviye]}</span>
-            <span className="text-sm text-ortaokul-ink/70">{aciklama}</span>
+            <span className="font-heading text-2xl font-semibold text-slate-950">{SEVIYE_ETIKET[seviye]}</span>
+            <span className="text-sm leading-6 text-slate-600">{aciklama}</span>
+            <span className="text-sm font-semibold text-teal-800">Hatları keşfet <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span></span>
           </Link>
         ))}
-      </div>
+          </div>
+        </section>
 
-      <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium text-ortaokul-ink">Yayınlanan dersler</h2>
-        {publishedLessons.length === 0 ? (
-          <p className="text-ortaokul-ink/70">
-            Henüz insan gözden geçirmesinden geçmiş ders yok — içerik hazırlanıyor
-            (bkz. docs/06-kalite-ve-topluluk.md).
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {publishedLessons.map((lesson) => (
-              <li key={lesson.slug}>
-                <Link
-                  href={`/ders/${lesson.slug}`}
-                  className="inline-flex min-h-11 items-center text-ortaokul-accent-text underline decoration-2 underline-offset-4"
-                >
-                  {lesson.frontmatter.baslik}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <section className="grid gap-6 lg:grid-cols-[1fr_.72fr]">
+          <div className="lab-panel p-6 sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal-800">Müfredat haritası</p>
+            <h2 className="mt-2 font-heading text-2xl font-semibold">Tek tek içerikler değil, birbirine bağlanan robotik hatları</h2>
+            <div className="mt-6 grid gap-2 sm:grid-cols-2">
+              {tracks.map((track, index) => (
+                <div key={track} className="flex min-h-14 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm">
+                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-950 font-mono text-xs text-teal-300">{String.fromCharCode(65 + index)}</span>
+                  <span className="font-medium text-slate-800">{HAT_ETIKET[track]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <aside className="lab-panel flex flex-col justify-between gap-6 bg-slate-950 p-6 text-white sm:p-8">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal-300">Amiral gemisi deney</p>
+              <h2 className="mt-2 font-heading text-3xl font-semibold">Tek robot hücresi, dört disiplin.</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-300">Kalibrasyon, hareket, program sırası ve güvenliği aynı sahnede birleştir. Sonuç ezber değil, indirilebilir bir beceri kanıtı.</p>
+            </div>
+            <Link href="/laboratuvar/robot-hucresi" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-300 px-4 py-2 text-sm font-bold text-slate-950">Capstone’u başlat</Link>
+          </aside>
+        </section>
+
+        <section aria-label="Platform sayıları" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[[publishedLessons.length, "yayında ders"], [interactiveCount, "etkileşimli ders"], [tracks.length, "öğrenme hattı"], [allLessons.length, "toplam içerik altyapısı"]].map(([value, label]) => (
+            <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-4"><strong className="block font-heading text-3xl">{value}</strong><span className="text-xs text-slate-600">{label}</span></div>
+          ))}
+        </section>
       </div>
     </main>
   );

@@ -16,6 +16,8 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JacobianViz
+  - PredictionPrompt
+  - TransferChallenge
 durum: yayinda
 ---
 
@@ -25,6 +27,14 @@ durum: yayinda
 burada." Ama bir robotu gerçek zamanlı sürerken asıl soru genelde şu:
 "eklemler şu anda şu hızda dönüyorsa, uç nokta hangi yönde ve ne hızda
 hareket ediyor?" Bu sorunun cevabı Jacobian matrisi.
+
+<PredictionPrompt
+  skillId="jacobian-singularity"
+  prompt="İki Jacobian sütunu aynı doğrultuya düşerse hız elipsinin alanı ne olur?"
+  options={["Sıfıra yaklaşır", "Sonsuza gider", "Değişmez"]}
+  correct={0}
+  explanation="Doğrusal bağımsızlık kaybolur; manipülabilite elipsi çizgiye daralır."
+/>
 
 <JacobianViz robot="generic-2dof" />
 
@@ -88,6 +98,15 @@ tekilliğin habercisi.
 />
 
 **Kaynak kodu:** [`computeJacobian`](https://github.com/Merd0/robotik-platform/blob/main/lib/robotics/kinematics.ts#L183)
+
+<TransferChallenge
+  skillId="jacobian-singularity"
+  prompt="Kol tam açıkken uçtan kol doğrultusunda anlık hız isteniyor; kontrolör ne beklemeli?"
+  options={["O yönde hız üretilemeyebilir; sönümlü ters veya yeniden duruş gerekir", "Her eklemi iki kat hızlı döndürmek yeterlidir", "Jacobian konumdan bağımsızdır"]}
+  correct={0}
+  hint="Daralan elipsin kısa ekseni hangi hız yönünün kaybolduğunu anlatır."
+  explanation="Tekillikte Jacobian rank kaybeder; bazı Kartezyen hızlar sonlu eklem hızlarıyla üretilemez."
+/>
 
 ## Sonraki
 

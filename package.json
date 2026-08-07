@@ -3,11 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "predev": "node scripts/copy-pyodide-assets.mjs && node scripts/build-worker.mjs && tsx scripts/build-search-index.ts",
     "dev": "next dev",
     "prebuild": "node scripts/copy-pyodide-assets.mjs && node scripts/build-worker.mjs && tsx scripts/build-search-index.ts",
-    "build": "next build && tsx scripts/check-no-draft-pages.ts",
+    "build": "next build && tsx scripts/check-no-draft-pages.ts && tsx scripts/check-release-output.ts",
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
@@ -15,6 +18,7 @@
     "validate-content-graph": "tsx scripts/validate-content-graph.ts",
     "build-search-index": "tsx scripts/build-search-index.ts",
     "check-no-draft-pages": "tsx scripts/check-no-draft-pages.ts",
+    "check-release-output": "tsx scripts/check-release-output.ts",
     "check-quiz-dagilimi": "tsx scripts/check-quiz-dagilimi.ts",
     "check-mdx-guvenlik": "tsx scripts/check-mdx-guvenlik.ts",
     "generate-fixtures": "python reference-python/scripts/generate_fixtures.py"
