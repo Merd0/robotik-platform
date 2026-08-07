@@ -119,7 +119,7 @@ export function IkTarget({ robot: robotId }: IkTargetProps) {
             </span>
             <input
               type="range"
-              className="h-11 touch-none accent-lise-accent"
+              className="h-11 touch-pan-y accent-lise-accent"
               min={-maxReach}
               max={maxReach}
               step={0.01}

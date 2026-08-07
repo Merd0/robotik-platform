@@ -11,6 +11,7 @@ import {
 import { mdxComponents } from "@/components/interactive";
 import { LessonNav } from "@/components/ui/LessonNav";
 import { CompleteLessonButton } from "@/components/ui/CompleteLessonButton";
+import { SEVIYE_THEME } from "@/lib/seviyeTheme";
 
 /**
  * Yalnızca herkese açık dersler statik sayfa olarak üretilir. Üretim
@@ -65,22 +66,22 @@ export default async function DersPage({ params }: DersPageProps) {
 
   const prerequisites = getPrerequisites(lesson);
   const { previous, next } = getAdjacentLessons(lesson);
+  const seviye = lesson.frontmatter.seviye;
+  const theme = SEVIYE_THEME[seviye];
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-16">
-      <p className="text-sm uppercase tracking-wide text-ortaokul-accent-text">
-        {lesson.frontmatter.seviye}
-      </p>
-      <h1 className="mt-2 text-3xl font-semibold text-ortaokul-ink">
-        {lesson.frontmatter.baslik}
-      </h1>
-      <article className="ders-icerik mt-8 flex flex-col gap-5">{content}</article>
+    <main data-seviye={seviye} className={`min-h-screen ${theme.page}`}>
+      <div className="mx-auto max-w-2xl px-6 py-16">
+        <p className={`text-sm uppercase tracking-wide ${theme.accentText}`}>{seviye}</p>
+        <h1 className={`mt-2 text-3xl font-semibold ${theme.ink}`}>{lesson.frontmatter.baslik}</h1>
+        <article className="ders-icerik mt-8 flex flex-col gap-5">{content}</article>
 
-      <div className="mt-8">
-        <CompleteLessonButton slug={lesson.slug} />
+        <div className="mt-8">
+          <CompleteLessonButton slug={lesson.slug} seviye={seviye} />
+        </div>
+
+        <LessonNav prerequisites={prerequisites} previous={previous} next={next} seviye={seviye} />
       </div>
-
-      <LessonNav prerequisites={prerequisites} previous={previous} next={next} />
     </main>
   );
 }

@@ -94,7 +94,7 @@ export function ThresholdViewer({ theme = "lise" }: ThresholdViewerProps) {
           max={255}
           value={threshold}
           onChange={(event) => setThreshold(Number(event.target.value))}
-          className="h-11 touch-none"
+          className="h-11 touch-pan-y"
         />
       </label>
 

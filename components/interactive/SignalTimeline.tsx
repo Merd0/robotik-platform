@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 
 interface SignalTimelineProps {
   /** Her satırın adı, ör. ["Sinyal"] veya ["Robot: Hazır", "PLC: Başla"]. */
@@ -96,11 +96,21 @@ export function SignalTimeline({ signals, steps = 8, theme = "ortaokul" }: Signa
 
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
-      <div className="flex flex-col gap-3">
-        {signals.map((name, signalIndex) => (
-          <div key={signalIndex} className="flex flex-col gap-1">
-            <span className={`text-sm ${t.inkMuted}`}>{name}</span>
-            <div className="flex flex-wrap gap-1">
+      <div className="overflow-x-auto overscroll-x-contain pb-2">
+        <div
+          className="grid w-max min-w-full items-center gap-1"
+          style={{ gridTemplateColumns: `minmax(8rem, 1fr) repeat(${steps}, 2.75rem)` }}
+        >
+          <span className={`text-xs ${t.inkMuted}`}>Sinyal</span>
+          {Array.from({ length: steps }, (_, stepIndex) => (
+            <span key={stepIndex} aria-hidden="true" className={`text-center text-xs ${t.inkMuted}`}>
+              {stepIndex + 1}
+            </span>
+          ))}
+
+          {signals.map((name, signalIndex) => (
+            <Fragment key={signalIndex}>
+              <span className={`pr-2 text-sm ${t.inkMuted}`}>{name}</span>
               {pattern[signalIndex].map((on, stepIndex) => (
                 <button
                   key={stepIndex}
@@ -113,9 +123,9 @@ export function SignalTimeline({ signals, steps = 8, theme = "ortaokul" }: Signa
                   } ${on ? t.on : t.bg} ${on ? "" : `border ${t.outline}`}`}
                 />
               ))}
-            </div>
-          </div>
-        ))}
+            </Fragment>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

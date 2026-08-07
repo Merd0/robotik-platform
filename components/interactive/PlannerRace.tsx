@@ -194,7 +194,7 @@ export function PlannerRace({
                 </span>
                 <input
                   type="range"
-                  className="h-11 touch-none"
+                  className="h-11 touch-pan-y"
                   min={-half}
                   max={half}
                   step={0.05}
