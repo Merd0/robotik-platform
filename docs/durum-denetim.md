@@ -1762,3 +1762,60 @@ Bu, CI'ın `npm audit --audit-level=high` adımını (`.github/workflows/ci.yml`
 satır 62, docs/08 §1) kıracaktı. Ders: **bir PR'ın GitHub'daki yeşil
 rozeti, bugün de yeşil olacağı anlamına gelmiyor** — audit sonucu kod
 değişmeden, yeni advisory yayımlandıkça değişir.
+
+### Dependabot turu — ikinci parti (2026-08-08)
+
+İlk partide bekletilen üç PR ele alındı ve gruplama kuralı düzeltildi.
+**Toplam: 4 merge, 0 beklemede, 2 major bilinçli ertelendi.**
+
+| PR | Değişim | Sonuç |
+|---|---|---|
+| #2 | `actions/setup-node` v4 → **v7.0.0** | merge |
+| #1 | `actions/checkout` v4 → **v7.0.1** | merge |
+| #7 | dev-dependencies: `@types/three` 0.185.4, `eslint-config-next` 16.3.0, `tsx` 4.23.5 | merge |
+| #5 | eski gruplama (5 paket, 2 major) | Dependabot kapattı, yerine #7 geldi |
+
+**Ertelendi (ayrı değerlendirilecek):** `eslint` 9.39.5 → 10.8.0 ve
+`typescript` 6.0.3 → 7.0.2.
+
+### Gruplama düzeltmesi
+
+`dependabot.yml`'deki iki gruba `update-types: [minor, patch]` eklendi.
+Öncesinde Dependabot patch'leri ve major'ları tek PR'da birleştiriyordu:
+zararsız `tsx` 4.23.1 → 4.23.5 yükseltmesi, aynı PR'daki TypeScript 6 → 7
+geçişine rehin kalmış ve PR bütünüyle bekletilmişti.
+
+Sonuç doğrulandı: Dependabot #5'i kapatıp #7'yi açtı; yeni PR **yalnızca
+3 minor/patch** içeriyor, iki major dışarıda kaldı. Kural işliyor.
+
+### Node 24 doğrulaması — kalıcı bir CI adımına dönüştü
+
+`setup-node` v7'nin `.nvmrc`'yi doğru okuduğunu kanıtlamak gerekiyordu.
+Actions log'larını indirmek depo admin yetkisi ister (API `403`), o yüzden
+log okumak yerine **CI'a kendi kendini doğrulayan bir adım** eklendi:
+
+```yaml
+- name: Node sürümü .nvmrc ile eşleşiyor mu
+  run: |
+    echo "Çalışan sürüm: $(node -v)"
+    echo ".nvmrc: $(cat .nvmrc)"
+    test "$(node -v | cut -d. -f1)" = "v$(tr -d '[:space:]' < .nvmrc)"
+```
+
+Bu, log satırı okumaktan daha güçlü bir kanıt: adım geçtiyse çalışan Node
+major'ı `.nvmrc` ile aynıdır, geçmediyse CI kırmızıya döner. `44bf71a` ve
+`5c5dd3a` koşularında adım **success** — yani CI gerçekten Node 24'te.
+
+Kalıcı değeri: `package.json` `engines` alanı yalnızca uyarı üretir,
+build'i kırmaz. `setup-node` sessizce runner varsayılanına düşerse (ör.
+`node-version-file` okunamazsa) bunu yakalayacak başka bir kontrol yoktu.
+Gelecekteki `setup-node` major yükseltmelerinde de sessiz regresyonu bu
+adım yakalar.
+
+### Not: PR'ın yeşil rozeti anlık bir ölçüm
+
+`actions/checkout` PR'ı (#1) merge edildiğinde GitHub onu "merged" değil
+"closed" olarak işaretledi — Dependabot aynı yükseltme için #6'yı da
+açmıştı ve değişiklik `main`'e girince ikisini birden kapattı. Yükseltme
+`main`'de mevcut (`ci.yml`'de v7.0.1 hash'i) ve CI 14 adımın tamamında
+yeşil; PR'ın rozeti bu durumu tam yansıtmıyor.
