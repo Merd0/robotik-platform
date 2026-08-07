@@ -53,11 +53,20 @@ body {
   font-family: var(--font-sans);
 }
 
-.lab-panel {
-  border: 1px solid #dbe3ea;
-  border-radius: 1.5rem;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 24px 70px -46px rgba(15, 23, 42, 0.6);
+/*
+ * @layer components şart: katmansız düz CSS, Tailwind'in utility katmanını
+ * yener. Katmansız haliyle `.lab-panel bg-slate-950 text-white` yazan koyu
+ * kartlarda zemin beyaz kalıyor ama metin beyaz olduğu için başlık tamamen
+ * görünmez oluyordu (docs/07: kontrast WCAG AA pazarlıksız). Katmana
+ * alınınca bg-* utility'si panelin varsayılan zeminini ezebiliyor.
+ */
+@layer components {
+  .lab-panel {
+    border: 1px solid #dbe3ea;
+    border-radius: 1.5rem;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 24px 70px -46px rgba(15, 23, 42, 0.6);
+  }
 }
 
 .lab-grid {

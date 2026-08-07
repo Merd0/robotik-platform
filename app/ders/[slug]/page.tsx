@@ -7,6 +7,8 @@ import {
   getPrerequisites,
   getPublicLessonBySlug,
   getPublicLessons,
+  hatEtiket,
+  SEVIYE_ETIKET,
 } from "@/lib/content";
 import { mdxComponents } from "@/components/interactive";
 import { LessonNav } from "@/components/ui/LessonNav";
@@ -77,7 +79,7 @@ export default async function DersPage({ params }: DersPageProps) {
     <main id="ana-icerik" data-seviye={seviye} className={`min-h-screen ${theme.page}`}>
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
         <LessonEvidenceProvider lessonId={lesson.slug} contentVersion={lesson.frontmatter.incelendi_tarih ?? "v1"}>
-          <nav aria-label="İçerik yolu" className={`flex flex-wrap items-center gap-2 text-sm ${theme.muted}`}><Link href="/" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvar</Link><span>/</span><Link href={`/seviye/${seviye}`} className="inline-flex min-h-11 items-center underline underline-offset-4">{seviye}</Link><span>/</span><Link href={`/seviye/${seviye}/hat/${lesson.frontmatter.hat}`} className="inline-flex min-h-11 items-center underline underline-offset-4">Hat</Link></nav>
+          <nav aria-label="İçerik yolu" className={`flex flex-wrap items-center gap-2 text-sm ${theme.muted}`}><Link href="/" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvar</Link><span>/</span><Link href={`/seviye/${seviye}`} className="inline-flex min-h-11 items-center underline underline-offset-4">{SEVIYE_ETIKET[seviye]}</Link><span>/</span><Link href={`/seviye/${seviye}/hat/${lesson.frontmatter.hat}`} className="inline-flex min-h-11 items-center underline underline-offset-4">{hatEtiket(lesson.frontmatter.hat)}</Link></nav>
           <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
             <div className="min-w-0">
               <p className={`text-xs font-semibold uppercase tracking-[.18em] ${theme.accentText}`}>Deney dersi · {lesson.frontmatter.sure} dakika</p>
