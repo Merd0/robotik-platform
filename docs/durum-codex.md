@@ -320,7 +320,8 @@ etkilemedi. Dal main'e merge edilmedi.
 
 Tarih: 2026-08-08
 Dal: `codex-yazarlik-cesitlilik`
-Başlangıç commit'i: `c13ee16` (`main`)
+İlk çalışma tabanı: `c13ee16`
+Son rebase tabanı: `29befe0` (`main`; istenen `5c5dd3a` commit'ini içerir)
 
 ## Kapsam ve sınır
 
@@ -397,9 +398,9 @@ Tarayıcı denetimi:
 - Tarayıcı konsolunda çalışma zamanı hatası yok. Three.js bağımlılığından
   gelen iki `THREE.Clock` kullanım-dışı uyarısı görev öncesi kodla ilişkili.
 
-### Kapsam dışı tedarik zinciri bulgusu
+### Rebase sonrası tedarik zinciri durumu
 
-`npm audit --audit-level=high`, mevcut `postcss@8.5.25` geçişli bağımlılığı
-`nanoid@3.3.16` için `GHSA-2v37-7h3g-55p8` yüksek önem dereceli bulgusuyla
-başarısız oldu. Bu dal paket/lockfile güncellemesi yapmıyor; bulgu
-genişletilmeden kayda geçirildi.
+Dal, `5c5dd3a` commit'ini içeren güncel `main` (`29befe0`) üzerine
+çakışmasız rebase edildi. Main'deki `postcss@8.5.26` ve lockfile'daki
+`nanoid@3.3.18` korundu. Temiz `npm ci` sonrasında
+`npm audit --audit-level=high` sonucu: **0 zafiyet**.
