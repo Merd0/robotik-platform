@@ -11,7 +11,7 @@ interface PredictionPromptProps {
   explanation: string;
 }
 
-export function PredictionPrompt({ skillId, prompt, options, correct, explanation }: PredictionPromptProps) {
+export function PredictionPrompt({ skillId, prompt, options }: PredictionPromptProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const [locked, setLocked] = useState(false);
   const record = useEvidenceRecorder();
@@ -19,7 +19,7 @@ export function PredictionPrompt({ skillId, prompt, options, correct, explanatio
   function lockPrediction() {
     if (selected === null) return;
     setLocked(true);
-    record({ skillId, stage: "predicted", result: selected === correct ? "success" : "neutral", metrics: { selected, correct } });
+    record({ skillId, stage: "predicted", result: "neutral", metrics: { selected } });
   }
 
   return (
@@ -29,7 +29,7 @@ export function PredictionPrompt({ skillId, prompt, options, correct, explanatio
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {options.map((option, index) => <button key={option} type="button" disabled={locked} aria-pressed={selected === index} onClick={() => setSelected(index)} className={`min-h-11 rounded-xl border px-3 py-2 text-left text-sm ${selected === index ? "border-warning-ink bg-site-surface text-site-ink" : "border-warning-border bg-site-surface/60 text-site-muted"} disabled:opacity-80`}>{option}</button>)}
       </div>
-      {!locked ? <button type="button" disabled={selected === null} onClick={lockPrediction} className="mt-3 min-h-11 rounded-xl bg-warning-ink px-4 py-2 text-sm font-semibold text-warning-surface disabled:opacity-40">Tahmini kilitle</button> : <p className="mt-3 text-sm text-warning-ink" role="status">Tahmin kaydedildi. Şimdi deneyi çalıştır; sonuçtan sonra karşılaştır. <span className="sr-only">{explanation}</span></p>}
+      {!locked ? <button type="button" disabled={selected === null} onClick={lockPrediction} className="mt-3 min-h-11 rounded-xl bg-warning-ink px-4 py-2 text-sm font-semibold text-warning-surface disabled:opacity-40">Tahmini kilitle</button> : <p className="mt-3 text-sm text-warning-ink" role="status">Tahmin kaydedildi. Şimdi deneyi çalıştır; sonuçtan sonra karşılaştır.</p>}
     </fieldset>
   );
 }

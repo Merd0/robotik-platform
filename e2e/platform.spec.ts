@@ -33,6 +33,33 @@ test("taslak ders statik üretim çıktısında bulunmaz", async ({ request }) =
   expect(response.status()).toBe(404);
 });
 
+test("kavram kontrolü tek başına değil, kayıtlı deney predicate'iyle kanıt üretir", async ({ page }) => {
+  await page.goto("/ders/c-universite-algoritma-karsilastirma-deneyi");
+  await page.getByRole("button", { name: "Başarı oranını gerekçe gösterip A*" }).click();
+  await expect(page.getByText("Kavram kontrolü tamamlandı.", { exact: false })).toBeVisible();
+  let evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { stage?: string }) => event.stage === "passed")).toBe(false);
+
+  await page.getByRole("button", { name: "Yarıştır" }).click();
+  await expect(page.getByRole("table")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Yarıştır" })).toBeEnabled({ timeout: 10_000 });
+  evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "planner-three-way-comparison-v1",
+  )).toBe(true);
+});
+
+test("yerel kayıt silme işlemi iki adımlıdır", async ({ page }) => {
+  await page.goto("/ders/a-ortaokul-robot-nedir");
+  await page.getByRole("button", { name: "Okumayı kaydet" }).click();
+  await page.getByRole("button", { name: "Yerel kaydı sil" }).click();
+  await expect(page.getByText("Bu tarayıcıdaki tüm deney kayıtları silinecek.")).toBeVisible();
+  await page.getByRole("button", { name: "Silmeyi onayla" }).click();
+  expect(await page.evaluate(() => localStorage.getItem("robotik-platform:evidence:v2"))).toBeNull();
+});
+
 test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
   for (const url of ["/", "/ders/a-ortaokul-robot-nedir"]) {
     await page.goto(url);

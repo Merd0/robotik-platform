@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getPublicTracksByLevel, hatEtiket, HAT_ETIKET, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
 import { LessonProgressBadge } from "@/components/ui/LessonProgressBadge";
 import { SEVIYE_THEME } from "@/lib/seviyeTheme";
+import { computeLessonArtifactHash } from "@/lib/lessonArtifact";
 
 const LEVELS: Seviye[] = ["ortaokul", "lise", "universite"];
 
@@ -31,7 +32,7 @@ export default async function HatPage({ params }: { params: Promise<{ seviye: st
             <li key={lesson.slug} className="relative pl-14 sm:pl-20">
               <span aria-hidden="true" className="absolute left-0 top-6 z-10 grid size-12 place-items-center rounded-full border-4 border-site-surface bg-site-strong font-mono text-sm text-site-on-strong sm:left-2">{index + 1}</span>
               <Link href={`/ders/${lesson.slug}`} className={`group flex min-h-28 flex-col justify-center gap-2 rounded-2xl border p-5 transition hover:-translate-y-0.5 hover:shadow-lg ${theme.border} ${theme.surface}`}>
-                <span className="flex items-center justify-between gap-3"><strong className={`font-heading text-lg ${theme.ink}`}>{lesson.frontmatter.baslik}</strong><LessonProgressBadge slug={lesson.slug} seviye={level} /></span>
+                <span className="flex items-center justify-between gap-3"><strong className={`font-heading text-lg ${theme.ink}`}>{lesson.frontmatter.baslik}</strong><LessonProgressBadge slug={lesson.slug} seviye={level} contentVersion={computeLessonArtifactHash(lesson)} /></span>
                 <span className={`text-sm ${theme.muted}`}>{lesson.frontmatter.sure} dk · {lesson.frontmatter.kazanimlar[0]}</span>
               </Link>
             </li>

@@ -1,11 +1,11 @@
 "use client";
 
 import { createContext, useCallback, useContext, useSyncExternalStore, type ReactNode } from "react";
-import { appendEvidence, EMPTY_EVIDENCE, getEvidenceEvents, subscribeEvidence, summarizeEvidence, type EvidenceResult, type EvidenceStage } from "@/lib/evidence";
+import { appendEvidence, EMPTY_EVIDENCE, getEvidenceEvents, getEvidencePersistence, subscribeEvidence, summarizeEvidence, type EvidenceResult, type RecordableEvidenceStage } from "@/lib/evidence";
 
 interface EvidenceInput {
   skillId: string;
-  stage: EvidenceStage;
+  stage: RecordableEvidenceStage;
   result?: EvidenceResult;
   metrics?: Record<string, number | string | boolean>;
   attempts?: number;
@@ -32,9 +32,14 @@ export function useEvidenceRecorder() {
   return context?.record ?? (() => undefined);
 }
 
-export function useLessonEvidence(lessonId?: string) {
+export function useLessonEvidence(lessonId?: string, contentVersion?: string) {
   const context = useContext(EvidenceContext);
   const targetLesson = lessonId ?? context?.lessonId ?? "";
   const events = useSyncExternalStore(subscribeEvidence, getEvidenceEvents, () => EMPTY_EVIDENCE);
-  return summarizeEvidence(events, targetLesson);
+  return summarizeEvidence(events, targetLesson, contentVersion ?? (lessonId ? undefined : context?.contentVersion));
+}
+
+export function useEvidencePersistence() {
+  useSyncExternalStore(subscribeEvidence, getEvidenceEvents, () => EMPTY_EVIDENCE);
+  return getEvidencePersistence();
 }

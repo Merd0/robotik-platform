@@ -75,7 +75,7 @@ robotik-platform/
 │   │   ├── planners/         astar.ts, rrt.ts, rrtStar.ts
 │   │   └── robots/           robot tanımları (DH parametreleri)
 │   ├── content.ts            MDX okuma, frontmatter ayrıştırma
-│   └── progress.ts           ilerleme takibi (tarayıcı belleğinde)
+│   └── evidence.ts           sürümlü deney olayları (tarayıcı belleğinde)
 ├── components/
 │   ├── scene/                3D sahne bileşenleri
 │   │   ├── RobotArm.tsx
@@ -187,6 +187,21 @@ SHA-256 hash'ine, tam kaynak commit'ine, inceleyen kişiye, tarihe ve ayrı
 `source`, `technical`, `pedagogical`, gerektiğinde `safety` kapsamlarına bağlanır.
 Öğrencinin gördüğü içerik değişirse hash değişir ve eski makbuz otomatik olarak
 geçersiz görünür.
+
+### 5. Evidence v2
+
+Yerel öğrenme kaydı `robotik-platform:evidence:v2` anahtarında, ders artifact
+hash'iyle birlikte tutulur. `read`, `predicted`, `tried`, `observed` ve
+`assessed` kullanıcı/bileşen olaylarıdır; bunların hiçbiri doğrudan başarı
+değildir. `passed` yalnız `lib/evidence.ts` içindeki kayıtlı predicate'in aynı
+ders ve aynı artifact sürümündeki ölçülebilir olay dizisini doğrulamasıyla
+üretilen `registry-predicate` olayıdır.
+
+V1 olayları ve eski manuel "tamamlandı" kimlikleri önce v2'ye
+`legacy-unverified` olarak yazılır; yalnız başarılı yazımdan sonra eski
+anahtarlar silinir. Eski `passed` olayı doğrulanmış başarıya yükseltilmez.
+Depolama engellenirse oturum içi bellek kullanılır ve UI bunu açıkça söyler.
+Kullanıcı tüm kaydı JSON olarak dışa aktarabilir veya iki adımlı onayla silebilir.
 
 ---
 
