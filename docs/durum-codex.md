@@ -404,3 +404,29 @@ Dal, `5c5dd3a` commit'ini içeren güncel `main` (`29befe0`) üzerine
 çakışmasız rebase edildi. Main'deki `postcss@8.5.26` ve lockfile'daki
 `nanoid@3.3.18` korundu. Temiz `npm ci` sonrasında
 `npm audit --audit-level=high` sonucu: **0 zafiyet**.
+
+## Sözlük açıklama derinliği
+
+Tek cümle kuralı, ilk kez karşılaşılan soyut kavramları açıklamak için
+yetersizdi. Sözlükteki 70 terimin Türkçe/İngilizce karşılığı ve hat
+ataması korunarak 66 tanım iki veya üç kısa cümleye genişletildi. `eklem`,
+`döner eklem`, `doğrusal eklem` ve `çalışma uzayı` tek cümlede zaten açık
+olduğu için uzatılmadı.
+
+Genişletilen maddelerde ilk cümle tanımı, sonraki cümle ise zihinsel modeli,
+somut örneği veya sık karıştırılan kavramdan farkı veriyor. Özellikle şu
+ayrımlar açık hâle getirildi:
+
+- ileri/ters kinematik, yol/yörünge ve eklem/doğrusal hareket;
+- gerçek zamanlılık/hız, döngü süresi/seğirme ve el sıkışma/yarış
+  durumu;
+- iç/dış kamera parametreleri, tekrarlanabilirlik/doğruluk ve simülasyon/
+  dijital ikiz;
+- acil/koruyucu durdurma, geçici/yarı-statik temas, kategori/performans
+  seviyesi ve `kobot`/işbirlikçi uygulama ayrımı.
+
+Sözlük sayfasının metadata ve giriş metni yeni yapıyla eşlendi. Yeni terim,
+ders veya kaynak eklenmedi; kaynağı olmayan tolerans, sınır değeri ya da
+ürün özelliği yazılmadı. Bu değişiklikten sonra TypeScript,
+lint, 152 test, içerik/graph/quiz/MDX kapıları, `npm audit` ve 61 sayfalık
+production build yeniden temiz geçti.

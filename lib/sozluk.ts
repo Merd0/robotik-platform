@@ -8,7 +8,7 @@ export interface Terim {
   en: string;
   /** Terimin ilk geçtiği konu hattı. */
   hat: string;
-  /** Bir cümlelik tanım. */
+  /** Kısa tanım; soyut kavramlarda zihinsel model, örnek veya ayrım da içerebilir. */
   tanim: string;
 }
 

@@ -6,7 +6,7 @@ import { getSozluk, getSozlukByHat } from "@/lib/sozluk";
 export const metadata: Metadata = {
   title: "Sözlük — Robotik Öğrenme Platformu",
   description:
-    "Robotik terimlerinin Türkçe-İngilizce karşılıkları ve birer cümlelik tanımları, konu hatlarına göre.",
+    "Robotik terimlerinin Türkçe-İngilizce karşılıkları, anlaşılır tanımları ve kısa örnekleri, konu hatlarına göre.",
 };
 
 export default function SozlukPage() {
@@ -22,6 +22,8 @@ export default function SozlukPage() {
       <p className="mt-4 text-ortaokul-ink/80">
         Sektörde İngilizce konuşuluyor, o yüzden her terimin ikisini de bilmen
         gerekiyor. Aşağıda {toplam} terim, geçtiği konu hattına göre gruplu.
+        Soyut kavramlarda tanımın ardından kısa bir örnek veya karıştırılan
+        terimden farkı da var.
       </p>
 
       <nav aria-label="Konu hatları" className="mt-8 flex flex-wrap gap-2">
