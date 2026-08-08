@@ -25,22 +25,22 @@ export function HeroExperiment() {
   return (
     <section className="lab-panel overflow-hidden" aria-labelledby="hero-deney-baslik">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,.95fr)]">
-        <div className="flex flex-col justify-center gap-6 p-6 sm:p-10 lg:p-12">
+        <div className="flex flex-col justify-center gap-4 p-4 lg:gap-6 lg:p-12">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-site-accent-text">
             <span aria-hidden="true" className="size-2 animate-pulse rounded-full bg-teal-500" />
             Canlı İz Laboratuvarı
           </div>
           <div className="space-y-4">
-            <h1 id="hero-deney-baslik" className="max-w-3xl font-heading text-4xl font-semibold leading-[1.04] tracking-tight text-site-ink sm:text-6xl">
+            <h1 id="hero-deney-baslik" className="max-w-3xl font-heading text-3xl font-semibold leading-[1.04] tracking-tight text-site-ink lg:text-6xl">
               Robotu izleme. <span className="text-site-accent-text">Önce ne yapacağını tahmin et.</span>
             </h1>
-            <p className="max-w-2xl text-base leading-7 text-site-muted sm:text-lg">
+            <p className="max-w-2xl text-sm leading-6 text-site-muted lg:text-lg lg:leading-7">
               Burada her kavram bir deneydir: tahmin et, çalıştır, farkı gör ve sonucu açıklamaya başla. İlk deney kısa ve kurulum gerektirmiyor.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/seviye/ortaokul" className="inline-flex min-h-11 items-center rounded-full bg-site-strong px-5 py-2.5 text-sm font-semibold text-site-on-strong transition hover:opacity-90">
-              Ortaokul yolundan başla
+          <div className="hidden flex-wrap gap-3 lg:flex">
+            <Link href="#seviye-baslik" className="inline-flex min-h-11 items-center rounded-full bg-site-strong px-5 py-2.5 text-sm font-semibold text-site-on-strong transition hover:opacity-90">
+              Seviyeni seç
             </Link>
             <Link href="/laboratuvar/robot-hucresi" className="inline-flex min-h-11 items-center rounded-full border border-site-border bg-site-surface px-5 py-2.5 text-sm font-semibold text-site-ink transition hover:border-site-accent">
               Robot hücresini aç
@@ -48,7 +48,7 @@ export function HeroExperiment() {
           </div>
         </div>
 
-        <div className="relative border-t border-site-border bg-slate-950 p-5 text-white lg:border-l lg:border-t-0 sm:p-7">
+        <div className="relative border-t border-site-border bg-slate-950 p-4 text-white lg:border-l lg:border-t-0 lg:p-7">
           <div className="pointer-events-none absolute inset-0 lab-grid opacity-25" />
           <div className="relative flex h-full flex-col gap-4">
             <div className="flex items-center justify-between text-xs uppercase tracking-[0.14em] text-slate-400">
@@ -56,8 +56,8 @@ export function HeroExperiment() {
               <span className="rounded-full border border-teal-300/30 bg-teal-300/10 px-2.5 py-1 text-teal-200">tarayıcıda canlı</span>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-              <svg viewBox="0 0 240 160" className="aspect-[3/2] w-full" role="img" aria-label={`İki eklemli robot kolu. Uç nokta x ${Math.round(points.end.x)}, y ${Math.round(points.end.y)} konumunda.`}>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2 lg:p-3">
+              <svg viewBox="0 0 240 160" className="mx-auto aspect-[3/2] max-h-40 w-full lg:max-h-none" role="img" aria-label={`İki eklemli robot kolu. Uç nokta x ${Math.round(points.end.x)}, y ${Math.round(points.end.y)} konumunda.`}>
                 <path d="M18 136 H222 M32 25 V143" stroke="#334155" strokeWidth="1" strokeDasharray="3 5" />
                 {played && <path d={`M${before.end.x} ${before.end.y} Q${before.end.x + 18} ${before.end.y - 24} ${points.end.x} ${points.end.y}`} fill="none" stroke="#2dd4bf" strokeWidth="2" strokeDasharray="4 4" className="trace-path" />}
                 <circle cx={before.end.x} cy={before.end.y} r="5" fill="none" stroke="#64748b" strokeWidth="1.5" />
@@ -102,6 +102,15 @@ export function HeroExperiment() {
               ) : "Önce seçimini kilitle; hareket ancak sonra gösterilecek."}
             </p>
           </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 border-t border-site-border bg-site-surface p-4 lg:hidden">
+          <Link href="#seviye-baslik" className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full bg-site-strong px-4 py-2 text-sm font-semibold text-site-on-strong">
+            Seviyeni seç
+          </Link>
+          <Link href="/laboratuvar/robot-hucresi" className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-site-border px-4 py-2 text-center text-sm font-semibold text-site-ink">
+            Robot hücresi
+          </Link>
         </div>
       </div>
     </section>

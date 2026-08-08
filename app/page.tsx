@@ -1,18 +1,39 @@
 import Link from "next/link";
 import { HeroExperiment } from "@/components/home/HeroExperiment";
 import { getAllLessons, getPublicLessons, HAT_ETIKET, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
+import { getLessonReviewStatus } from "@/lib/reviewReceipts";
 
 const SEVIYELER: { seviye: Seviye; aciklama: string }[] = [
-  { seviye: "ortaokul", aciklama: "Görsel, sezgisel, matematiksiz. \"Vay be\" hissi." },
-  { seviye: "lise", aciklama: "Trigonometri, vektörler ve yol planlamayla görsel deneyler." },
-  { seviye: "universite", aciklama: "Matris, DH, Jacobian ve planlayıcıların matematiksel temeli." },
+  { seviye: "ortaokul", aciklama: "Robot kavramı, eklem hareketi ve labirent planlamayı görerek dene." },
+  { seviye: "lise", aciklama: "Koordinatlar, iki eklemli kinematik ve rota kararlarını ölçerek açıkla." },
+  { seviye: "universite", aciklama: "DH, Jacobian, nümerik IK ve planlayıcıları matematiksel sınırlarıyla sına." },
 ];
+
+const ETKILESIM_ETIKETI: Record<string, string> = {
+  JointSliders: "eklem kontrolü",
+  IkTarget: "hedef ve IK",
+  JacobianViz: "Jacobian görselleştirme",
+  PlannerRace: "planlayıcı karşılaştırma",
+  MazePlanner: "labirent planlama",
+  PredictionPrompt: "tahmin",
+  TransferChallenge: "kavram kontrolü",
+};
 
 export default function HomePage() {
   const allLessons = getAllLessons();
   const publishedLessons = getPublicLessons().filter((lesson) => lesson.frontmatter.durum === "yayinda");
   const tracks = [...new Set(publishedLessons.map((lesson) => lesson.frontmatter.hat))];
   const interactiveCount = publishedLessons.filter((lesson) => lesson.frontmatter.etkilesimli.length > 0).length;
+  const verifiedCount = publishedLessons.filter((lesson) => getLessonReviewStatus(lesson).state === "verified").length;
+  const levelCards = SEVIYELER.map((card) => {
+    const lessons = publishedLessons.filter((lesson) => lesson.frontmatter.seviye === card.seviye);
+    const interactions = [...new Set(lessons.flatMap((lesson) => lesson.frontmatter.etkilesimli))]
+      .map((name) => ETKILESIM_ETIKETI[name])
+      .filter((label): label is string => Boolean(label))
+      .slice(0, 3);
+    const reviewed = lessons.filter((lesson) => getLessonReviewStatus(lesson).state === "verified").length;
+    return { ...card, lessons, interactions, reviewed };
+  });
 
   return (
     <main id="ana-icerik" className="min-h-screen overflow-hidden">
@@ -28,7 +49,7 @@ export default function HomePage() {
             <p className="max-w-xl text-sm leading-6 text-site-muted">Seviye yalnızca renk değil; açıklama, matematik, sınır durumları ve kanıt beklentisi birlikte değişir.</p>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {SEVIYELER.map(({ seviye, aciklama }) => (
+        {levelCards.map(({ seviye, aciklama, lessons, interactions, reviewed }) => (
           <Link
             key={seviye}
             href={`/seviye/${seviye}`}
@@ -37,7 +58,11 @@ export default function HomePage() {
           >
             <span className="font-heading text-2xl font-semibold text-site-ink">{SEVIYE_ETIKET[seviye]}</span>
             <span className="text-sm leading-6 text-site-muted">{aciklama}</span>
-            <span className="text-sm font-semibold text-site-accent-text">Hatları keşfet <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span></span>
+            <span className="text-xs leading-5 text-site-subtle">{lessons.length} yayınlı ders · {interactions.join(" · ")}</span>
+            <span className={`rounded-lg border px-2.5 py-2 text-xs ${reviewed === lessons.length ? "border-success-border bg-success-surface text-success-ink" : "border-warning-border bg-warning-surface text-warning-ink"}`}>
+              {reviewed === lessons.length ? "Tüm başlangıç dersleri güncel review makbuzlu" : `${reviewed}/${lessons.length} ders güncel review makbuzlu`}
+            </span>
+            <span className="text-sm font-semibold text-site-accent-text">Yayınlı yolu ve review durumunu gör <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span></span>
           </Link>
         ))}
           </div>
@@ -67,10 +92,11 @@ export default function HomePage() {
         </section>
 
         <section aria-label="Platform sayıları" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[[publishedLessons.length, "yayında ders"], [interactiveCount, "etkileşimli ders"], [tracks.length, "öğrenme hattı"], [allLessons.length, "toplam içerik altyapısı"]].map(([value, label]) => (
+          {[[publishedLessons.length, "yayında ders"], [interactiveCount, "etkileşim bileşenli ders"], [tracks.length, "öğrenme hattı"], [verifiedCount, "güncel review makbuzlu ders"]].map(([value, label]) => (
             <div key={String(label)} className="rounded-2xl border border-site-border bg-site-surface p-4"><strong className="block font-heading text-3xl">{value}</strong><span className="text-xs text-site-muted">{label}</span></div>
           ))}
         </section>
+        <p className="-mt-10 text-center text-xs text-site-subtle">{allLessons.length - publishedLessons.length} taslak içerik production sayfalarına dahil değildir.</p>
       </div>
     </main>
   );

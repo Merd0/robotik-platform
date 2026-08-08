@@ -11,6 +11,18 @@ test("ana sayfa taşmadan güvenilir bir başlangıç sunar", async ({ page }) =
   expect(overflows).toBe(false);
 });
 
+test("hero ilk anlamlı kontrolü ilk viewport içinde gösterir", async ({ page }) => {
+  await page.goto("/");
+  const prediction = page.getByRole("button", { name: "Aşağı iner" });
+  await expect(prediction).toBeVisible();
+  const box = await prediction.boundingBox();
+  const viewport = page.viewportSize();
+  expect(box).not.toBeNull();
+  expect(viewport).not.toBeNull();
+  expect(box!.y + box!.height).toBeLessThanOrEqual(viewport!.height);
+  await expect(page.getByRole("link", { name: "Seviyeni seç" })).toHaveAttribute("href", "#seviye-baslik");
+});
+
 test("seviye, hat ve yayınlı ders rotası erişilebilir", async ({ page }) => {
   await page.goto("/seviye/ortaokul");
   const firstTrack = page.locator('a[href*="/seviye/ortaokul/"]').first();
@@ -31,6 +43,13 @@ test("review borcu yeşil insan incelemesi gibi sunulmaz", async ({ page }) => {
 test("taslak ders statik üretim çıktısında bulunmaz", async ({ request }) => {
   const response = await request.get("/ders/d-lise-python-komut-dizisi");
   expect(response.status()).toBe(404);
+});
+
+test("404 durumu taslak yayın sınırını açıklar", async ({ page }) => {
+  const response = await page.goto("/ders/d-lise-python-komut-dizisi");
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "Bu deney production haritasında yok." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Yayınlı derslerde ara" })).toBeVisible();
 });
 
 test("kavram kontrolü tek başına değil, kayıtlı deney predicate'iyle kanıt üretir", async ({ page }) => {

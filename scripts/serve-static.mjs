@@ -43,8 +43,10 @@ function resolveRequest(url) {
 const server = createServer((request, response) => {
   const file = resolveRequest(request.url ?? "/");
   if (!file) {
-    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
-    response.end("Bulunamadı");
+    const notFound = path.join(root, "404.html");
+    response.writeHead(404, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
+    if (existsSync(notFound)) createReadStream(notFound).pipe(response);
+    else response.end("Bulunamadı");
     return;
   }
   response.writeHead(200, {

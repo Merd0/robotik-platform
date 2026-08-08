@@ -58,6 +58,13 @@ birlikte olgunlaşan bir renk ailesi var.**
   benzeri) — eklem açıları, koordinatlar, kod blokları hep bu ailede. Bu,
   "burada gerçek bir sayı var" sinyalini verir, süs değildir.
 
+İlk production çekirdeğinde harici veya depoya gömülü font dosyası yoktur.
+Bu nedenle uygulanmış tokenlar yüklüymüş gibi `Inter`/`JetBrains Mono` adı
+vermez: gövde ve başlık için platformun sistem sans ailesi; teknik veri için
+`Cascadia Code`/`SFMono-Regular`/`Consolas` sıralı sistem monospace stack'i
+kullanılır. Özel font ancak dosyası, lisansı, preload davranışı ve ölçülmüş
+performans etkisi birlikte eklendiğinde tokena yazılabilir.
+
 ### İmza öğesi (signature element)
 
 Her sayfanın hatırlanacağı tek bir görsel unsur: **ince, sürekli çizilen bir
@@ -92,6 +99,21 @@ yol izi) olarak tekrar eder. Dekorasyon ile işlev aynı görsel dile sahip.
 - Etkileşimli sahne bileşenleri (`components/scene/`) seviyeden bağımsızdır;
   seviyeye göre değişen şey çerçeveleme metni ve renk temasıdır, sahnenin
   kendisi değil (bkz. `05-deneyim-ve-guvenlik.md` "seviyeye göre doz").
+
+### Ürün durumları
+
+- `app/loading.tsx` sakin bir iskelet gösterir ve `aria-busy` ile yüklenme
+  durumunu bildirir.
+- `app/error.tsx` deneyi yeniden başlatma ve ana laboratuvara dönme yollarını
+  birlikte sunar; hata ayrıntısını veya kişisel veriyi ekrana basmaz.
+- `app/not-found.tsx`, bilinmeyen adres ile production dışında tutulan taslağı
+  aynı güvenli 404 sınırında açıklar ve yalnız yayınlı arama/ana sayfaya bağlar.
+- Bu durumlar imza iz çizgisini yalnız yön ve durum anlatmak için kullanır;
+  işlevsiz dekoratif animasyon eklemez.
+
+Ana sayfadaki ders, etkileşim ve review sayıları production içerik
+manifestinden hesaplanır. Bir seviye kartı kodda bulunmayan laboratuvarı veya
+mevcut olmayan insan review makbuzunu vaat edemez.
 
 ## Erişilebilirlik ve kalite tabanı (pazarlıksız)
 
