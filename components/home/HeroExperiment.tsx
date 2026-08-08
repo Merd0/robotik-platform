@@ -46,12 +46,12 @@ export function HeroExperiment() {
               Robotu izleme. <span className="text-site-accent-text">Önce ne yapacağını tahmin et.</span>
             </h1>
             <p className="max-w-2xl text-base leading-7 text-site-muted sm:text-lg">
-              Burada her kavram bir deneydir: tahmin et, çalıştır, farkı gör ve nedenini kanıtla. İlk deneyin on saniye sürüyor.
+              Burada her kavram bir deneydir: tahmin et, çalıştır, farkı gör ve sonucu açıklamaya başla. İlk deney kısa ve kurulum gerektirmiyor.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/seviye/ortaokul" className="inline-flex min-h-11 items-center rounded-full bg-site-strong px-5 py-2.5 text-sm font-semibold text-site-on-strong transition hover:opacity-90">
-              Seviyeni seç
+              Ortaokul yolundan başla
             </Link>
             <Link href="/laboratuvar/robot-hucresi" className="inline-flex min-h-11 items-center rounded-full border border-site-border bg-site-surface px-5 py-2.5 text-sm font-semibold text-site-ink transition hover:border-site-accent">
               Robot hücresini aç

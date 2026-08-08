@@ -1,10 +1,10 @@
-# Yazarlık kalitesi ve deneyim çeşitliliği — Mert'in geri bildirimi
+# Yazarlık kalitesi ve deneyim çeşitliliği
 
 Kalite denetimlerimizin hiçbiri bunu ölçmedi: hepsi DOĞRULUK'a baktı
 (kaynak doğru mu, formül doğru mu). Bu dosya farklı bir eksen: İLGİ
 ÇEKİCİLİK. Doğru ama sıkıcı bir ders de başarısızlıktır.
 
-Mert'in kendi cümleleri: "yazılar çok yapay chatgpt genel... hep aynı 3
+Bakım geri bildirimindeki temel sorun: "yazılar çok yapay chatgpt genel... hep aynı 3
 eklem 6 eklem kullanılmış, koymak için koyulmuş... çok tek düze... dark
 plan da olsun beyaz gözü yoruyor."
 
@@ -69,12 +69,11 @@ Somut yönler:
 - Aynı hat (örn. Hat B) içinde ardışık derslerde aynı senaryo tekrar
   etmesin — tıpkı kanca çeşitliliği kuralı gibi, senaryo çeşitliliği de
   komşu derslere bakılarak kontrol edilsin.
-- Mert'in stajından (ASELSAN MEOS — ABB GoFa, Mecademic Meca500, Keyence
-  LJ-X8080) gelen gerçek bağlamlar zaten bazı derslerde var (Hat D'nin
-  robot dilleri kısmı) — bu tarz somutluk diğer hatlara da (özellikle
-  A, B, C — temel/kinematik/planlama) yayılabilir mi, değerlendir.
-  Ama uydurma teknik detay ekleme — sadece SENARYO/BAĞLAM çeşitlendir,
-  teknik iddia eklemiyorsan (kaynak gerektirmeyen kısım) serbestsin.
+- Somutluğu kişisel işyeri veya staj ayrıntılarından değil; kamuya açık üretici
+  dokümanı, akademik çalışma ya da açık eğitim senaryosundan kur. Şirket içi
+  proje, ekipman envanteri ve kişisel çalışma geçmişi ders bağlamı değildir.
+  İsimli bir robot veya sensör kullanılıyorsa teknik iddiaları birincil kaynağa
+  bağla; kaynak yoksa vendor-neutral bir senaryo kullan.
 - Sayısal değerler: aynı 2-DOF kol hep aynı a1=1.0/a2=0.8 gibi sabit
   değerlerle mi anlatılıyor? Ders ders farklı, gerçekçi ölçek/birim
   kullan (mm yerine bazen m, farklı bağlantı uzunlukları) — ama

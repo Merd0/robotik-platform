@@ -74,7 +74,7 @@ export function RobotCellCapstone() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <section className="lab-panel overflow-hidden bg-slate-950 text-white">
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 text-xs uppercase tracking-[.14em] text-slate-400"><span>Hücre RC-01 · seed {SEED}</span><span>{progress}/4 kanıt</span></div>
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 text-xs uppercase tracking-[.14em] text-slate-400"><span>Hücre RC-01 · seed {SEED}</span><span>{progress}/4 görev</span></div>
         <div className="relative p-4 sm:p-6"><div className="pointer-events-none absolute inset-0 lab-grid opacity-20" />
           <svg viewBox="0 0 640 390" className="relative aspect-[1.64/1] w-full rounded-2xl bg-slate-900" role="img" aria-label="Robot kolu, kamera, fikstür, parça ve insan içeren iki boyutlu robot hücresi">
             <rect x="42" y="40" width="556" height="305" rx="18" fill="none" stroke="#334155" strokeWidth="2" />
@@ -101,7 +101,7 @@ export function RobotCellCapstone() {
           {step === 3 && <div className="space-y-4"><p className="text-sm leading-6 text-site-muted">İnsan yaklaşırken robot hızını fiziksel modelin izin verdiği sınıra indir.</p><label className="block text-sm">Ayrım: {distance} mm<input type="range" min="300" max="2000" step="50" value={distance} onChange={(event) => setDistance(Number(event.target.value))} className="h-11 w-full touch-pan-y accent-teal-700" /></label><label className="block text-sm">Komut hızı: {speed} mm/s<input type="range" min="0" max="1600" step="50" value={speed} onChange={(event) => setSpeed(Number(event.target.value))} className="h-11 w-full touch-pan-y accent-teal-700" /></label><p className="rounded-xl bg-site-soft p-3 text-sm">Model üst sınırı: <strong>{Math.round(allowed)} mm/s</strong></p><button type="button" onClick={checkSafety} className="min-h-11 w-full rounded-xl bg-site-strong px-4 font-semibold text-site-on-strong">Güvenliği doğrula</button></div>}
         </div>
 
-        {progress === 4 && <div className="mt-4 rounded-2xl border border-success-border bg-success-surface p-4"><strong className="text-success-ink">Hücre devreye alındı.</strong><p className="mt-1 text-sm text-success-ink">Dört hattaki kararların tek, sürümlü bir kanıta bağlandı.</p><button type="button" onClick={exportEvidence} className="mt-3 min-h-11 rounded-xl bg-success-ink px-4 text-sm font-semibold text-success-surface">Kanıt JSON’unu indir</button></div>}
+        {progress === 4 && <div className="mt-4 rounded-2xl border border-success-border bg-success-surface p-4"><strong className="text-success-ink">Beta senaryo tamamlandı.</strong><p className="mt-1 text-sm text-success-ink">Dört mini görevdeki seçimlerin bu cihazdaki deney kaydına eklendi.</p><button type="button" onClick={exportEvidence} className="mt-3 min-h-11 rounded-xl bg-success-ink px-4 text-sm font-semibold text-success-surface">Deney kaydı JSON’unu indir</button></div>}
       </section>
     </div>
   );

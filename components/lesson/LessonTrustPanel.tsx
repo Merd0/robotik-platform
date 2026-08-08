@@ -1,5 +1,6 @@
 import type { Lesson } from "@/lib/content";
 import { hatEtiket, SEVIYE_ETIKET } from "@/lib/content";
+import { getReviewDebtStatus } from "@/lib/reviewDebt";
 
 function kaynakGoster(kaynak: string) {
   const url = kaynak.match(/https?:\/\/[^\s)]+/)?.[0];
@@ -9,6 +10,7 @@ function kaynakGoster(kaynak: string) {
 
 export function LessonTrustPanel({ lesson }: { lesson: Lesson }) {
   const { frontmatter } = lesson;
+  const reviewStatus = getReviewDebtStatus(lesson.slug);
   return (
     <aside className="lab-panel p-5 lg:sticky lg:top-24" aria-labelledby="guven-paneli-baslik">
       <p className="text-xs font-semibold uppercase tracking-[.16em] text-site-accent-text">Ders kimliği</p>
@@ -31,9 +33,15 @@ export function LessonTrustPanel({ lesson }: { lesson: Lesson }) {
         <ul className="mt-2 space-y-2 text-xs leading-5 text-site-muted">
           {frontmatter.kaynaklar.map((kaynak) => <li key={kaynak}>{kaynakGoster(kaynak)}</li>)}
         </ul>
-        <p className="mt-3 rounded-xl bg-success-surface p-3 text-xs leading-5 text-success-ink">
-          <strong className="block">İnsan incelemesi: {frontmatter.incelendi_tarafindan ?? "belirtilmemiş"}</strong>
-          {frontmatter.incelendi_tarih ? `${frontmatter.incelendi_tarih} · ` : ""}Yayınlanan sürüm
+        <p className="mt-3 rounded-xl border border-warning-border bg-warning-surface p-3 text-xs leading-5 text-warning-ink" data-review-state={reviewStatus.state}>
+          <strong className="block">{reviewStatus.label}</strong>
+          <span className="mt-1 block">{reviewStatus.explanation}</span>
+          {(frontmatter.incelendi_tarafindan || frontmatter.incelendi_tarih) && (
+            <span className="mt-2 block">
+              Eski kayıt: {frontmatter.incelendi_tarafindan ?? "kişi belirtilmemiş"}
+              {frontmatter.incelendi_tarih ? ` · ${frontmatter.incelendi_tarih}` : ""}
+            </span>
+          )}
         </p>
       </div>
       <p className="mt-4 text-[11px] leading-4 text-site-subtle">Hesaplar tarayıcında çalışır. Ders ilerlemesi sunucuya gönderilmez; bu cihazda tutulur.</p>

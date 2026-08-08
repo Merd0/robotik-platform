@@ -4,8 +4,8 @@ import { getAllLessons, getPublicLessons, HAT_ETIKET, SEVIYE_ETIKET, type Seviye
 
 const SEVIYELER: { seviye: Seviye; aciklama: string }[] = [
   { seviye: "ortaokul", aciklama: "Görsel, sezgisel, matematiksiz. \"Vay be\" hissi." },
-  { seviye: "lise", aciklama: "Trigonometri ve vektörle bağ kurma, basit Python." },
-  { seviye: "universite", aciklama: "Matris, DH, Jacobian, gerçek protokoller." },
+  { seviye: "lise", aciklama: "Trigonometri, vektörler ve yol planlamayla görsel deneyler." },
+  { seviye: "universite", aciklama: "Matris, DH, Jacobian ve planlayıcıların matematiksel temeli." },
 ];
 
 export default function HomePage() {
@@ -58,9 +58,9 @@ export default function HomePage() {
           </div>
           <aside className="lab-panel flex flex-col justify-between gap-6 bg-slate-950 p-6 text-white sm:p-8">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal-300">Amiral gemisi deney</p>
-              <h2 className="mt-2 font-heading text-3xl font-semibold">Tek robot hücresi, dört disiplin.</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-300">Kalibrasyon, hareket, program sırası ve güvenliği aynı sahnede birleştir. Sonuç ezber değil, indirilebilir bir beceri kanıtı.</p>
+              <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal-300">Beta bütünleştirme deneyi</p>
+              <h2 className="mt-2 font-heading text-3xl font-semibold">Tek robot hücresi, dört mini görev.</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-300">Kalibrasyon, rota seçimi, program sırası ve güvenli hız kararını aynı eğitim sahnesinde dene. İndirdiğin dosya bir deney kaydıdır; doğrulanmış beceri belgesi değildir.</p>
             </div>
             <Link href="/laboratuvar/robot-hucresi" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-300 px-4 py-2 text-sm font-bold text-slate-950">Capstone’u başlat</Link>
           </aside>
