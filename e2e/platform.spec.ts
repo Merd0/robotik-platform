@@ -111,10 +111,43 @@ test("C-space pilotu fiziksel çarpışmayı açı uzayındaki yasak bölgeye ba
 });
 
 test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
-  for (const url of ["/", "/ders/a-ortaokul-robot-nedir"]) {
+  for (const url of ["/", "/ders/a-ortaokul-robot-nedir", "/ders/a-universite-robot-mimarileri", "/ders/b-lise-ileri-kinematik"]) {
     await page.goto(url);
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
     const blocking = results.violations.filter((violation) => ["critical", "serious"].includes(violation.impact ?? ""));
     expect(blocking, `${url}: ${blocking.map((item) => `${item.id} (${item.nodes.length})`).join(", ")}`).toEqual([]);
   }
+});
+
+test("Robot Seçim Masası tek kısıt değişimini ve dört ölçülü kararı kanıtlar", async ({ page }) => {
+  await page.goto("/ders/a-universite-robot-mimarileri");
+  await page.getByRole("button", { name: /Hat içi malzeme taşıma/ }).click();
+  const k05 = page.locator('[data-candidate-id="kivnon-k05"]');
+  await expect(k05).toHaveAttribute("data-decision-status", "review");
+  await page.getByLabel(/Yerleşim sık değişiyor/).check();
+  await expect(k05).toHaveAttribute("data-decision-status", "fail");
+
+  const mir = page.locator('[data-candidate-id="mir250"]');
+  await mir.getByRole("button", { name: "Bu adayı incele" }).click();
+  const numericEvidence = page.locator("fieldset").filter({ hasText: "Savunmana katacağın en az dört sayısal kriter" });
+  for (const checkbox of await numericEvidence.locator('input[type="checkbox"]').all()) await checkbox.check();
+  await page.getByLabel(/Karar notu/).fill("Dört sayısal sınırı karşılıyor; koruyucu alan ve trafik senaryosu sahada ayrıca doğrulanmalı.");
+  await page.getByRole("button", { name: "Kararı test et" }).click();
+  await expect(page.getByText(/Kararın kanıtlandı/)).toBeVisible();
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { predicateId?: string; stage?: string }) => event.stage === "passed" && event.predicateId === "robot-selection-four-criteria-v1")).toBe(true);
+});
+
+test("İz Laboratuvarı sahne, matris, grafik ve kodu aynı son örneğe taşır", async ({ page }) => {
+  await page.goto("/ders/b-lise-ileri-kinematik");
+  await page.getByRole("button", { name: "Azalır" }).click();
+  await page.getByRole("button", { name: "Programı çalıştır" }).click();
+  for (let step = 0; step < 3; step++) await page.getByRole("button", { name: "Sonraki örnek" }).click();
+  await expect(page.getByText(/Tahminin ölçümle uyuştu/)).toBeVisible();
+  await expect(page.getByRole("img", { name: /Örnek 3: uç nokta/ })).toBeVisible();
+  await expect(page.locator('[aria-current="step"]')).toContainText("q[0] = 75");
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { predicateId?: string; stage?: string }) => event.stage === "passed" && event.predicateId === "four-lens-fk-trace-v1")).toBe(true);
 });

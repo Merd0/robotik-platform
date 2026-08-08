@@ -4,6 +4,7 @@
   "recordedAt": "2026-08-09",
   "staleAfterContentChange": [
     "a-universite-homojen-donusum",
+    "a-universite-robot-mimarileri",
     "a-lise-koordinat-sistemleri",
     "a-ortaokul-robot-nedir",
     "b-lise-geometrik-ters-kinematik",
@@ -27,7 +28,6 @@
     "a-universite-dh-parametreleri",
     "a-universite-kinematik-zincir",
     "a-universite-poz-gosterimleri",
-    "a-universite-robot-mimarileri",
     "b-lise-aci-birimleri",
     "b-lise-eklem-limitleri",
     "b-ortaokul-erisemedigi-noktalar",

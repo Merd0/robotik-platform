@@ -1,93 +1,121 @@
 ---
 id: a-universite-robot-mimarileri
-baslik: "Robot mimarileri: seri, SCARA, delta, kartezyen, paralel"
+baslik: "Robot mimarileri: görevden teknik seçime"
 hat: a-temeller
 seviye: universite
-sure: 16
+sure: 24
 sira: 4
 onkosul:
   - a-universite-dh-parametreleri
 kazanimlar:
-  - Beş yaygın robot mimarisini kinematik yapılarına göre ayırt edebilme
-  - Bir görev için mimari seçiminin hangi kısıtlara (hız, hassasiyet, çalışma uzayı) dayandığını açıklayabilme
+  - Robot ailesi ile belirli robot varyantını birbirinden ayırabilme
+  - Bir görev için payload, erişim, repeatability, DOF ve ortam kısıtlarını karşılaştırabilme
+  - Robot seçimini en az dört sayısal kriter ve açık doğrulama borcuyla savunabilme
 kaynaklar:
-  - "B. Siciliano, L. Sciavicco, L. Villani, G. Oriolo, Robotics: Modelling, Planning and Control, Springer, 2009, Bölüm 2 (Kinematics)"
-  - "ISO 8373:2021, Robots and robotic devices — Vocabulary, madde 3.11-3.15 (robot mimarisi türleri)"
+  - kind: book
+    title: "Robotics: Modelling, Planning and Control, Bölüm 2"
+    publisher: Springer
+    version: "2009"
+  - kind: standard
+    title: "Robots and robotic devices — Vocabulary"
+    publisher: ISO
+    version: "ISO 8373:2021"
+  - kind: official-doc
+    title: "Epson Robot Specifications Catalog"
+    publisher: Epson
+    version: "CPD-54833R4"
+    url: "https://files.support.epson.com/far/docs/epson_robot_specification_catalog_cpd-54833r4.pdf"
+    accessedAt: "2026-08-09"
+  - kind: official-doc
+    title: "Product specification — IRB 1100"
+    publisher: ABB
+    version: "3HAC064993-001 Rev A"
+    url: "https://library.e.abb.com/public/6bf82ab9fa474c1a827cf216ddc254a3/3HAC064993%20PS%20IRB%201100-en.pdf"
+    accessedAt: "2026-08-09"
+  - kind: official-doc
+    title: "UR10e User Manual"
+    publisher: Universal Robots
+    version: "711-039-00 · SW 5.25"
+    url: "https://www.universal-robots.com/manuals/EN/PDF/SW5_25/user-manual-UR10e-PDF_online/711-039-00_UR10e_User_Manual_en_Global.pdf"
+    accessedAt: "2026-08-09"
+  - kind: official-doc
+    title: "MiR250 specifications"
+    publisher: Mobile Industrial Robots
+    version: "live product page"
+    url: "https://mobile-industrial-robots.com/products/robots/mir250/specifications"
+    accessedAt: "2026-08-09"
+  - kind: official-doc
+    title: "K05 Twister technical specifications"
+    publisher: Kivnon
+    version: "live product page"
+    url: "https://www.kivnon.com/en-uk/k05-model/"
+    accessedAt: "2026-08-09"
 incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
-  - JointSliders
+  - RobotSelectionTable
 durum: yayinda
 ---
 
 ## Kanca
 
-Bir delta robot saniyede birkaç kez parça toplayıp yerleştirir, bir
-kartezyen robot aynı işi çok daha yavaş ama çok daha hassas yapar —
-ikisi de "robot", ikisi de doğru tasarım; sadece farklı bir
-hız/hassasiyet ödünleşimi seçmişler.
+“En hızlı robotu seç” iyi bir mühendislik şartnamesi değildir. Hızlı bir delta,
+parçaya erişemiyorsa; yüksek payload’lı bir mafsallı kol, çevrim süresini
+karşılamıyorsa; “cobot” adı taşıyan bir kolun uygulaması risk değerlendirmesinden
+geçmediyse seçim savunulamaz.
 
-<JointSliders robot="generic-6dof" />
+Bu derste robot kartı ezberlemeyeceksin. Görevi sayılara çevirecek, adayları hard
+constraint’lerle eleyecek ve bekleyen doğrulamaları kararının parçası yapacaksın.
+
+<RobotSelectionTable />
 
 ## Ne oldu
 
-Yukarıdaki kol **seri (serial)** mimaride: eklemler tek bir zincirde
-art arda dizili (bkz. "kinematik zincir" dersi). Endüstride yaygın
-diğer dört mimari:
+Robot ailesi, belirli bir model veya varyant değildir:
 
-- **SCARA:** iki dönel eklem yatay düzlemde, bir doğrusal eklem dikeyde
-  hareket eder. Yatayda hızlı ama sadece SINIRLI bir yönelim
-  sağlayabilir — toplama-yerleştirme (pick-and-place) görevlerinde
-  yaygındır.
-- **Kartezyen:** üçü de doğrusal, birbirine dik üç eksen (bkz. "robot
-  türleri" dersi). Basit kontrol, yüksek hassasiyet, ama büyük ve
-  hantal bir çalışma hacmi gerektirir.
-- **Delta (paralel):** tepedeki sabit bir platformdan aşağıdaki hareketli
-  platforma üç kol paralel bağlanır — KAPALI bir kinematik zincir (bkz.
-  "kinematik zincir" dersi). Çok hafif hareketli parçalar sayesinde
-  olağanüstü hızlıdır, ama çalışma uzayı küçüktür.
-- **Paralel (genel):** delta'nın genellemesi — birden fazla kol aynı
-  platforma bağlanır. Yüksek sertlik (rijitlik) ve yük kapasitesi
-  sağlar (kuvvet kollara dağılır), ama ters kinematik hesaplaması
-  seri mimariden çok daha karmaşıktır.
+- **Mafsallı robot:** Seri döner eklemler, geniş yönelim yeteneği ve düzensiz
+  çalışma uzayı sunar. “Altı eksen” yaygın bir endüstriyel örnektir; ailenin
+  bütün üyeleri için değişmez bir sayı değildir.
+- **SCARA:** XY düzleminde seçici uyumluluğa sahip, Z yönünde daha rijit bir
+  pick-and-place yapısıdır. Kısıtlı yönelim, bazı montajlarda avantaj; bazılarında
+  engeldir.
+- **Delta:** Motorları tabanda taşıyan paralel yapı, düşük hareketli kütleyle
+  yüksek ivmeye izin verir. Payload ve çalışma alanı varyanta göre okunur.
+- **Kartezyen:** Birbirine dik doğrusal eksenler, açık bir kutu çalışma alanı ve
+  basit eksen eşlemesi sağlar; gerekli strok fiziksel hacmi büyütür.
+- **Cobot:** Bir robot ailesinden çok işbirlikçi uygulamalara yönelik özellikler
+  kümesini anlatır. Koruyucu duruş, elle yönlendirme, hız/mesafe izleme veya
+  güç-kuvvet sınırlama gibi yöntemlerin seçimi uygulamaya özgüdür.
+- **AGV ve AMR:** İkisi de malzeme taşıyabilir. AGV tanımlı kılavuz/rota
+  altyapısına dayanabilir; AMR harita ve algıyla daha dinamik rota kurabilir.
+  Bu ayrım, bütün ürünleri tek etikette genelleştirme izni vermez.
 
-Seçim bir "hangisi daha iyi" sorusu değil, göreve göre değişen bir
-mühendislik kararıdır.
+## Datasheet nasıl okunur?
+
+`Payload`, bileğe bağlanan toplam parça + end-effector yüküdür; yalnız taşınan
+parça değildir. `Reach`, her pozda kullanılabilen küresel bir mesafe değildir;
+çalışma alanı ve tekillikler ayrıca incelenir. `Repeatability`, robota aynı
+komutu verdiğinde aynı poza ne kadar yakın döndüğünü; `accuracy` ise hedeflenen
+mutlak poza ne kadar yakın olduğunu anlatır. İkisi aynı metrik değildir.
+
+Üreticilerin çevrim, repeatability ve konumlama testleri farklı koşullarda
+yapılabilir. Bu nedenle masadaki sayılar önce hard constraint kontrolü içindir;
+adaylar arası kesin performans sıralaması değildir. Kaynağı veya test koşulu
+olmayan değer “belirtilmemiş” kalır.
 
 ## Gerçek dünyada
 
-Bir elektronik kartına küçük parçaları saniyede birkaç kez yerleştiren
-bir hat, delta robot kullanır (hız birincil öncelik). Bir otomobil
-gövdesini kaynak eden robot seri mimaridir (geniş çalışma uzayı ve
-esnek yönelim gerekir). Bir 3B yazıcı kartezyendir (basitlik ve
-hassasiyet yeterli, hız ikincil).
+Seçimden sonra hâlâ gripper kütlesi ve momenti, kablo yönlendirmesi, kontrolör,
+I/O, çevrim profili, koruyucu alan, zemin ve ortam sınıfı doğrulanır. İnsanla
+alan paylaşma veya mobil robot trafiği söz konusuysa risk değerlendirmesi,
+ürün kartındaki “collaborative” ya da “safe” ifadesinin yerine geçemez.
 
-## Dene
-
-Yukarıdaki seri kolu oynat ve şunu düşün: bu kolun ucu bir yöne
-giderken, TÜM eklemler bir miktar hareket etmek zorunda kalıyor mu,
-yoksa bazıları sabit kalabiliyor mu? Kartezyen bir robotta aynı hareket
-için sadece TEK bir eksenin hareket etmesi yeterli olurdu — bu fark,
-neden kartezyen robotların kontrolünün daha basit sayıldığını açıklar.
-
-<Quiz
-  sorular={[
-    {
-      soru: "Delta (paralel) robotların çok hızlı olmasının temel nedeni nedir?",
-      secenekler: [
-        "Daha güçlü motorlar kullanmaları",
-        "Hareket eden platformun hafif olması ve kollara dağılan kuvvetin yüksek ivmeye izin vermesi",
-        "Daha az eklemleri olması",
-      ],
-      dogru: 1,
-      aciklama: "Paralel yapıda motorlar sabit tabanda durur, sadece hafif kollar ve platform hareket eder — düşük hareketli kütle, yüksek ivme demektir.",
-    },
-  ]}
-/>
-
-**Kaynak kodu:** [`RobotSpec`](https://github.com/Merd0/robotik-platform/blob/main/lib/robotics/kinematics.ts#L12)
+Bu laboratuvar simülasyon ve eğitim içindir; satın alma veya gerçek robotu
+devreye alma talimatı değildir. Teknik, pedagojik ve safety insan incelemesi
+tamamlanmadan kaynaklı veriler “yayınlanmış uzman onayı” sayılmamalıdır.
 
 ## Sonraki
 
-Beş mimariyi de gördün. Son ders, bir robotun yönelimini (sadece konumu
-değil) sayılarla ifade etmenin farklı yollarını ele alıyor.
+Bir robot ailesini ve varyantı kısa listeye aldın. Sıradaki derste pozun yalnız
+konum değil, yönelim de taşıdığını ve bunun sayılarla nasıl gösterildiğini
+inceleyeceksin.

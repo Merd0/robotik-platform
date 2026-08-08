@@ -97,4 +97,40 @@ describe("controlled pilot predicates", () => {
     ];
     expect(predicate.evaluate(events).passed).toBe(true);
   });
+
+  it("requires a matching observation and four-criterion robot decision", () => {
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "robot-selection-four-criteria-v1")!;
+    const observation = event("observed", "neutral", {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      metrics: { taskId: "electronics", candidateId: "epson-gx4-350" },
+      contentVersion: "pilot-v1",
+    });
+    const assessment = event("assessed", "success", {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      metrics: { taskId: "electronics", candidateId: "epson-gx4-350", decisionStatus: "fit", numericCriteria: 4, rationaleLength: 45 },
+      contentVersion: "pilot-v1",
+    });
+    expect(predicate.evaluate([assessment]).passed).toBe(false);
+    expect(predicate.evaluate([observation, assessment]).passed).toBe(true);
+  });
+
+  it("requires the first and final synchronized FK samples", () => {
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "four-lens-fk-trace-v1")!;
+    const sample = (sampleIndex: number) => event("observed", "neutral", {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      metrics: { sampleIndex },
+      contentVersion: "pilot-v1",
+    });
+    const assessment = event("assessed", "success", {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      metrics: { finalSample: 3 },
+      contentVersion: "pilot-v1",
+    });
+    expect(predicate.evaluate([sample(0), assessment]).passed).toBe(false);
+    expect(predicate.evaluate([sample(0), sample(3), assessment]).passed).toBe(true);
+  });
 });

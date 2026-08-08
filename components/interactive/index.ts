@@ -15,6 +15,8 @@ import { TransferChallenge } from "./TransferChallenge";
 import { TransformOrderLab } from "./TransformOrderLab";
 import { DlsTraceLab } from "./DlsTraceLab";
 import { CspaceLab } from "./CspaceLab";
+import { RobotSelectionTable } from "./RobotSelectionTable";
+import { FourLensTraceLab } from "./FourLensTraceLab";
 import type { IZINLI_BILESEN_ADLARI } from "@/lib/izinliBilesenler";
 
 /**
@@ -45,6 +47,8 @@ export const mdxComponents = {
   TransformOrderLab,
   DlsTraceLab,
   CspaceLab,
+  RobotSelectionTable,
+  FourLensTraceLab,
   // `satisfies`: anahtarların izinli liste ile birebir aynı olmasını derleme
   // zamanında zorlar, ama değer tiplerini geniştetmez (compileMDX bileşen
   // tiplerini görmeye devam eder).

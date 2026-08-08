@@ -208,6 +208,49 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
       };
     },
   },
+  {
+    id: "robot-selection-four-criteria-v1",
+    lessonId: "a-universite-robot-mimarileri",
+    skillId: "robot-selection",
+    evaluate: (events) => {
+      const successfulDecision = events.find((event) =>
+        event.skillId === "robot-selection" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        typeof event.metrics?.numericCriteria === "number" && event.metrics.numericCriteria >= 4 &&
+        typeof event.metrics?.rationaleLength === "number" && event.metrics.rationaleLength >= 40 &&
+        event.metrics?.decisionStatus !== "fail",
+      );
+      const observedSameCandidate = Boolean(successfulDecision && events.some((event) =>
+        event.skillId === "robot-selection" &&
+        event.stage === "observed" &&
+        event.metrics?.taskId === successfulDecision.metrics?.taskId &&
+        event.metrics?.candidateId === successfulDecision.metrics?.candidateId,
+      ));
+      return {
+        passed: Boolean(successfulDecision && observedSameCandidate),
+        metrics: { requiredNumericCriteria: 4, requiredRationaleLength: 40 },
+      };
+    },
+  },
+  {
+    id: "four-lens-fk-trace-v1",
+    lessonId: "b-lise-ileri-kinematik",
+    skillId: "four-lens-forward-kinematics",
+    evaluate: (events) => {
+      const samples = new Set(events
+        .filter((event) => event.skillId === "four-lens-forward-kinematics" && event.stage === "observed")
+        .map((event) => event.metrics?.sampleIndex)
+        .filter((sample): sample is number => typeof sample === "number"));
+      const assessedFinal = events.some((event) =>
+        event.skillId === "four-lens-forward-kinematics" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.finalSample === 3,
+      );
+      return { passed: samples.has(0) && samples.has(3) && assessedFinal, metrics: { observedSamples: samples.size, requiredFinalSample: 3 } };
+    },
+  },
 ] as const;
 
 const listeners = new Set<() => void>();

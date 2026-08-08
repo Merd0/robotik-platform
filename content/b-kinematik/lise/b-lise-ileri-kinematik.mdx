@@ -1,92 +1,87 @@
 ---
 id: b-lise-ileri-kinematik
-baslik: İki eklemli kolda ileri kinematik
+baslik: İki eklemli kolda ileri kinematik ve program izi
 hat: b-kinematik
 seviye: lise
-sure: 15
+sure: 18
 sira: 1
 onkosul:
   - b-ortaokul-eklemleri-oynat
 kazanimlar:
   - Eklem açılarından uç nokta konumunu trigonometri ile hesaplayabilme
-  - Açı değişiminin uç noktayı nasıl etkilediğini formülle açıklayabilme
+  - Aynı çalışma örneğini sahne, matris, grafik ve kod satırında izleyebilme
+  - Bir açı değişiminin uç nokta üzerindeki yönünü çalıştırmadan önce tahmin edip ölçümle sınayabilme
 kaynaklar:
-  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 4"
+  - kind: book
+    title: "Modern Robotics: Mechanics, Planning, and Control, Bölüm 4"
+    publisher: Cambridge University Press
+    version: "2017 preprint"
+    url: "https://hades.mech.northwestern.edu/images/7/7f/MR.pdf"
+    accessedAt: "2026-08-09"
 incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
-  - JointSliders
-  - PredictionPrompt
+  - FourLensTraceLab
   - TransferChallenge
 durum: yayinda
 ---
 
 ## Kanca
 
-Ortaokul dersinde kaydırıcıyı oynatıp kolun ucunun nereye gittiğini gözle
-gördün. Şimdi aynı şeyi hesapla: eklem açılarını bilsen, uç noktanın (x, y)
-konumunu kâğıt üzerinde bulabilir misin?
+Bir robot programında yalnız kod satırına bakarsan hareketi; yalnız animasyona
+bakarsan hesabı kaçırabilirsin. Aynı anda çalışan dört ayrı “video” da çözüm
+değildir: aralarında bir örnek kayarsa yanlış neden-sonuç öğrenirsin.
 
-<PredictionPrompt
-  skillId="forward-kinematics-formula"
-  prompt="θ1 = 0° ve θ2 = 0° iken iki kol parçası nasıl konumlanır?"
-  options={["Aynı doğrultuda uzanır", "Birbirine dik olur", "Uç başlangıca döner"]}
-  correct={0}
-  explanation="Her iki açı sıfırken cos terimleri 1, sin terimleri 0 olur; uzunluklar x yönünde toplanır."
-/>
+Önce son hareketin yönünü tahmin et. Sonra tek bir çalışma izini sahne, matris,
+grafik ve kod görünümünde birlikte ilerlet.
 
-<JointSliders robot="generic-2dof" />
+<FourLensTraceLab />
 
 ## Ne oldu
 
-İki eklemli bir kolda, birinci eklemin açısı θ₁ ve ikinci eklemin açısı θ₂
-ise (ikinci açı birinciye göre ölçülür), uç noktanın konumu şu formülle
-bulunur:
+İki eklemli düzlemsel kolda birinci açı `θ₁`, ikinci eklemin birinci bağlantıya
+göre açısı `θ₂` olsun. Bağ uzunlukları `a₁ = 1 m` ve `a₂ = 0,8 m` ise uç nokta:
 
+```text
+x = a₁·cos(θ₁) + a₂·cos(θ₁ + θ₂)
+y = a₁·sin(θ₁) + a₂·sin(θ₁ + θ₂)
 ```
-x = a1·cos(θ1) + a2·cos(θ1 + θ2)
-y = a1·sin(θ1) + a2·sin(θ1 + θ2)
-```
 
-Burada a1 ve a2 kolun iki parçasının uzunluğu. İlk terim birinci eklemin
-ucunu bulur, ikinci terim ondan itibaren ikinci parçanın nereye gittiğini
-ekler — tıpkı iki vektörü uç uca eklemek gibi.
+İkinci bağlantının dünya yönü yalnız `θ₂` değildir; seri zincirde önceki
+eklemin dönüşünü de taşır. Bu yüzden formülde `θ₁ + θ₂` görünür. İz
+Laboratuvarı’nda sahne kolu, grafikteki dereceler ve 4×4 matrisin son sütunu
+aynı örnek nesnesinden üretilir. Matrisin `(0,3)` ve `(1,3)` hücreleri,
+sahnedeki `(x,y)` metre değerleriyle aynıdır.
 
-Yukarıdaki sahnede kaydırıcıyı 90°'ye getirirsen, cos(90°) = 0 ve
-sin(90°) = 1 olduğundan hesap kafanda da doğrulanabilir.
+## Hata ayıkla
+
+“q₁ arttıysa x mutlaka artar” genellemesi yanlıştır. Sonuç, iki bağlantının
+toplam yönüne bağlıdır. Kolu geri sar; son iki örnekte kodun değiştirdiği tek
+değişkeni, grafikteki sıçramayı ve x sütunundaki sayıyı karşılaştır. Birimlerin
+değişmediğini de kontrol et: kod ve grafik derece, trigonometrik hesap radyan,
+sahne ve matris metre kullanır.
 
 ## Gerçek dünyada
 
-Bir robot kontrolörü her döngüde tam olarak bu hesabı yapar — sadece iki
-değil, altı-yedi eklem için, üç boyutta. Prensip aynı kalır: eklem
-açılarından uç noktanın konumunu bulmak.
+Bir kontrolör aynı prensibi altı veya daha fazla eklem için, üç boyutlu
+dönüşüm matrislerini art arda çarparak uygular. Gerçek sistemde encoder ofseti,
+esneklik, kalibrasyon ve sayısal yuvarlama nedeniyle model ile ölçülen TCP pozu
+arasında fark olabilir. Bu laboratuvar ideal rijit bağlantı modelidir; gerçek
+robot doğruluğu iddiası değildir.
 
-## Dene
-
-Kaydırıcıları θ1 = 90°, θ2 = 0° yap. Sonra yukarıdaki formülle x ve y'yi
-elle hesapla, ekrandaki "Uç nokta" değeriyle karşılaştır.
-
-<Quiz
-  sorular={[
-    {
-      soru: "θ1 = 0°, θ2 = 0° iken uç noktanın x konumu nedir (a1 = 1, a2 = 0.8)?",
-      secenekler: ["0", "1.8", "0.8"],
-      dogru: 1,
-      aciklama: "cos(0°) = 1 olduğundan x = a1 + a2 = 1.8 çıkar.",
-    },
-  ]}
-/>
+## Transfer görevi
 
 <TransferChallenge
-  skillId="forward-kinematics-formula"
-  prompt="a1 = 1, a2 = 0.8, θ1 = 90° ve θ2 = 0° için uç hangi eksen üzerindedir?"
-  options={["Pozitif Y, yaklaşık 1.8", "Pozitif X, yaklaşık 1.8", "Orijinde"]}
+  skillId="four-lens-forward-kinematics"
+  prompt="q₁ sabitken q₂ değiştirildiğinde hangi bilgi doğrudan aynı kalır?"
+  options={["Birinci bağlantının dünya yönü", "Uç noktanın x konumu", "T₀₂ matrisinin tüm elemanları"]}
   correct={0}
-  hint="cos(90°) ve sin(90°) değerlerini iki terimde de kullan."
-  explanation="İki bağlantı da 90° yönünde olduğundan x = 0, y = 1 + 0.8 olur."
+  hint="İlk bağlantının yönünü hangi eklem belirliyor?"
+  explanation="q₁ sabitse ilk bağlantının dünya yönü sabit kalır; ikinci bağlantı ve uç poz değişir."
 />
 
 ## Sonraki
 
-Formül sana uç noktayı veriyor. Peki tersi mümkün mü — hedefi bilip açıları
-bulmak? Sıradaki ders tam bunu ele alıyor.
+İleri kinematik açıdan konuma gider. Sonraki derste hedef konumdan olası eklem
+açılarına gitmeyi ve aynı hedefin neden birden fazla çözümü olabileceğini
+inceleyeceksin.
