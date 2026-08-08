@@ -219,6 +219,14 @@ TypeScript matematiği doğru mu? Üç katman:
   tek bir klasik (non-module) script'e derlenip `public/workers/` altına
   yazılıyor; bileşen ona sabit bir yoldan (`new Worker("/workers/planner-worker.js")`)
   bağlanıyor. `public/workers/` gitignore'da — kaynak değil, üretilen dosya.
+- Planlayıcı deneyi her algoritma koşusu için yeni worker açar ve en geç 5
+  saniyede sonlandırır. İstek bir `seed` taşır; RRT/RRT* bu seed'den üretilen
+  RNG'yi kullanır. Worker'ın döndürdüğü başarılı yol başlangıç/hedef, sonlu
+  koordinat, düzlemsellik ve **bütün segmentlerde** çarpışmasızlık açısından
+  doğrulanmadan UI'a aktarılmaz.
+- `CodeRunner` istekleri temiz bir Python globals sözlüğünde çalışır. UI worker'ı
+  8 saniyede sonlandırır; worker 64 KiB/100 çıktı olayı ve 500 eklem izi örneği
+  sınırını uygular. Kesilen çıktı başarı gibi gizlenmez, kullanıcıya işaretlenir.
 - İlk yükleme 200 KB JS altında kalsın; 3D ve Pyodide tembel yüklensin.
 - Mobilde çalışmalı — Türkiye'de öğrencilerin çoğu telefondan girecek.
   Dokunmatik kontroller ilk sınıf vatandaş.

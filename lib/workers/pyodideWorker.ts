@@ -1,5 +1,6 @@
 import { loadPyodide, type PyodideAPI } from "pyodide";
 import { inverseKinematicsAnalytical2Dof, type RobotSpec } from "@/lib/robotics/kinematics";
+import { BoundedTextCollector, BoundedTraceCollector } from "@/lib/workers/executionLimits";
 
 /**
  * Kullanıcının Python kodunu Pyodide (WebAssembly CPython) ile Web Worker
@@ -42,6 +43,11 @@ export interface PyodideWorkerResponse {
   stdout: string;
   error: string | null;
   jointTrace: number[][];
+  limits: {
+    outputTruncated: boolean;
+    traceTruncated: boolean;
+    outputEmissions: number;
+  };
 }
 
 let pyodidePromise: Promise<PyodideAPI> | null = null;
@@ -65,50 +71,70 @@ function getPyodide(): Promise<PyodideAPI> {
 
 ctx.onmessage = async (event) => {
   const { requestId, code, jointCount, robotSpec } = event.data;
-  const outputLines: string[] = [];
-  const jointTrace: number[][] = [];
+  const output = new BoundedTextCollector();
+  const jointTrace = new BoundedTraceCollector<number[]>();
   let errorMessage: string | null = null;
 
   try {
     const pyodide = await getPyodide();
-    pyodide.setStdout({ batched: (msg: string) => outputLines.push(msg) });
-    pyodide.setStderr({ batched: (msg: string) => outputLines.push(msg) });
+    pyodide.setStdout({ batched: (msg: string) => output.push(msg) });
+    pyodide.setStderr({ batched: (msg: string) => output.push(msg) });
+    const namespace = pyodide.runPython("dict()");
 
     const currentAngles = new Array(jointCount ?? 0).fill(0);
-    if (jointCount) {
-      pyodide.globals.set("_eklem_ac", (index: number, derece: number) => {
-        currentAngles[index] = (derece * Math.PI) / 180;
-        jointTrace.push([...currentAngles]);
-      });
-
-      const canUseIk = robotSpec && robotSpec.joints.length === 2;
-      if (canUseIk) {
-        pyodide.globals.set("_hedefe_git", (x: number, y: number) => {
-          const angles = inverseKinematicsAnalytical2Dof(robotSpec, { x, y });
-          if (!angles) return false;
-          currentAngles[0] = angles[0];
-          currentAngles[1] = angles[1];
+    try {
+      if (jointCount) {
+        namespace.set("_eklem_ac", (index: number, derece: number) => {
+          if (!Number.isInteger(index) || index < 0 || index >= currentAngles.length) {
+            throw new RangeError(`Eklem indeksi 0-${currentAngles.length - 1} aralığında olmalı.`);
+          }
+          if (!Number.isFinite(derece)) throw new TypeError("Eklem açısı sonlu bir sayı olmalı.");
+          currentAngles[index] = (derece * Math.PI) / 180;
           jointTrace.push([...currentAngles]);
-          return true;
         });
+
+        const canUseIk = robotSpec && robotSpec.joints.length === 2;
+        if (canUseIk) {
+          namespace.set("_hedefe_git", (x: number, y: number) => {
+            const angles = inverseKinematicsAnalytical2Dof(robotSpec, { x, y });
+            if (!angles) return false;
+            currentAngles[0] = angles[0];
+            currentAngles[1] = angles[1];
+            jointTrace.push([...currentAngles]);
+            return true;
+          });
+        }
+
+        await pyodide.runPythonAsync(
+          "class _Robot:\n" +
+            "    def eklem_ac(self, index, derece):\n" +
+            "        _eklem_ac(index, derece)\n" +
+            (canUseIk
+              ? "    def hedefe_git(self, x, y):\n" +
+                "        return _hedefe_git(x, y)\n"
+              : "") +
+            "robot = _Robot()\n",
+          { globals: namespace },
+        );
       }
 
-      await pyodide.runPythonAsync(
-        "class _Robot:\n" +
-          "    def eklem_ac(self, index, derece):\n" +
-          "        _eklem_ac(index, derece)\n" +
-          (canUseIk
-            ? "    def hedefe_git(self, x, y):\n" +
-              "        return _hedefe_git(x, y)\n"
-            : "") +
-          "robot = _Robot()\n",
-      );
+      await pyodide.runPythonAsync(code, { globals: namespace, filename: "<robotik-lab>" });
+    } finally {
+      namespace.destroy();
     }
-
-    await pyodide.runPythonAsync(code);
   } catch (error) {
     errorMessage = error instanceof Error ? error.message : String(error);
   }
 
-  ctx.postMessage({ requestId, stdout: outputLines.join("\n"), error: errorMessage, jointTrace });
+  ctx.postMessage({
+    requestId,
+    stdout: output.toString(),
+    error: errorMessage,
+    jointTrace: jointTrace.values,
+    limits: {
+      outputTruncated: output.truncated,
+      traceTruncated: jointTrace.truncated,
+      outputEmissions: output.emissions,
+    },
+  });
 };

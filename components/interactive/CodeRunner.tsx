@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { getRobotById } from "@/lib/robotics/robots";
 import type { PyodideWorkerRequest, PyodideWorkerResponse } from "@/lib/workers/pyodideWorker";
+import { MAX_CODE_RUNTIME_MS } from "@/lib/workers/executionLimits";
 
 interface CodeRunnerProps {
   /** Editörde başlangıçta görünen kod. */
@@ -63,10 +64,12 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
   const [state, setState] = useState<RunState>("hazir");
   const [jointAngles, setJointAngles] = useState<number[]>(() => robot?.joints.map(() => 0) ?? []);
   const workerRef = useRef<Worker | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
       workerRef.current?.terminate();
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
@@ -99,7 +102,15 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
     function onMessage(event: MessageEvent<PyodideWorkerResponse>) {
       if (event.data.requestId !== requestId) return;
       worker.removeEventListener("message", onMessage);
-      setOutput(event.data.stdout);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+      const warnings = [
+        event.data.limits.outputTruncated ? "[çıktı güvenlik kotasında kesildi]" : null,
+        event.data.limits.traceTruncated ? "[eklem izi 500 örnekte kesildi]" : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+      setOutput([event.data.stdout, warnings].filter(Boolean).join("\n"));
       setError(event.data.error);
       if (robot && event.data.jointTrace.length > 0) {
         setJointAngles(event.data.jointTrace[event.data.jointTrace.length - 1]);
@@ -107,6 +118,15 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
       setState("bitti");
     }
     worker.addEventListener("message", onMessage);
+    timeoutRef.current = setTimeout(() => {
+      worker.removeEventListener("message", onMessage);
+      worker.terminate();
+      workerRef.current = null;
+      timeoutRef.current = null;
+      setError(`Kod ${MAX_CODE_RUNTIME_MS / 1000} saniyelik çalışma sınırını aştı.`);
+      setOutput("[worker süre aşımı nedeniyle sonlandırıldı]");
+      setState("bitti");
+    }, MAX_CODE_RUNTIME_MS);
 
     const request: PyodideWorkerRequest = {
       requestId,
@@ -118,6 +138,8 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
   }
 
   function handleStop() {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = null;
     workerRef.current?.terminate();
     workerRef.current = null;
     setState("hazir");

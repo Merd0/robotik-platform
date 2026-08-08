@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { PlanningGrid, SahneAlani } from "@/components/scene/LazyScene";
 import type { PlannerPathDisplay } from "@/components/scene/PlanningGrid";
 import { isPointFree, type Obstacle } from "@/lib/robotics/collision";
 import { PLANNER_IDS, pathLength, type PlanResult, type PlannerId } from "@/lib/robotics/planners";
 import type { Vec3 } from "@/lib/robotics/transform";
-import type { PlannerWorkerRequest, PlannerWorkerResponse } from "@/lib/workers/plannerWorker";
+import type { PlannerWorkerRequest } from "@/lib/workers/plannerWorker";
+import { runPlannerInWorker } from "@/lib/workers/runPlannerWorker";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SCENE_PALETTES } from "@/lib/theme";
@@ -92,24 +93,11 @@ export function PlannerRace({
 
   const [obstacles, setObstacles] = useState<Obstacle[]>(initialObstacles);
   const [results, setResults] = useState<Partial<Record<PlannerId, PlanResult>>>({});
+  const [errors, setErrors] = useState<Partial<Record<PlannerId, string>>>({});
   const [running, setRunning] = useState(false);
+  const [seed, setSeed] = useState(240807);
   // Klavye ile engel koymak için imleç konumu (sahneye dokunmanın alternatifi).
   const [cursor, setCursor] = useState<Vec3>({ x: 0, y: 0, z: 0 });
-  const workerRef = useRef<Worker | null>(null);
-
-  useEffect(() => {
-    // /workers/planner-worker.js, scripts/build-worker.mjs tarafından
-    // lib/workers/plannerWorker.ts'ten önceden derlenir (bkz. o script'in
-    // başındaki not — Next'in kendi worker bundling'i bu projede güvenilmez
-    // çıktı, bu yüzden esbuild ile elle derliyoruz).
-    const worker = new Worker("/workers/planner-worker.js");
-    workerRef.current = worker;
-    return () => {
-      worker.terminate();
-      workerRef.current = null;
-    };
-  }, []);
-
   function handlePlaneClick(point: Vec3) {
     if (!allowObstacleEdit) return;
     setObstacles((prev) => {
@@ -118,39 +106,32 @@ export function PlannerRace({
       return [...prev, { kind: "sphere", center: point, size: [DEFAULT_OBSTACLE_RADIUS] }];
     });
     setResults({});
+    setErrors({});
   }
 
   function handleClear() {
     setObstacles([]);
     setResults({});
+    setErrors({});
   }
 
   async function handleRace() {
-    const worker = workerRef.current;
-    if (!worker || running) return;
+    if (running) return;
     setRunning(true);
     setResults({});
-    record({ skillId: "planner-comparison", stage: "tried", result: "neutral", metrics: { obstacles: obstacles.length, algorithms: algorithms.length } });
+    setErrors({});
+    record({ skillId: "planner-comparison", stage: "tried", result: "neutral", metrics: { obstacles: obstacles.length, algorithms: algorithms.length, seed } });
 
     await Promise.all(
-      algorithms.map(
-        (algorithm) =>
-          new Promise<void>((resolve) => {
-            const requestId = `${algorithm}-${Date.now()}-${Math.random()}`;
-            function onMessage(event: MessageEvent<PlannerWorkerResponse>) {
-              if (event.data.requestId !== requestId) return;
-              worker!.removeEventListener("message", onMessage);
-              setResults((prev) => ({ ...prev, [algorithm]: event.data.result }));
-              record({ skillId: "planner-comparison", stage: "observed", result: event.data.result.success ? "success" : "retry", metrics: { algorithm, nodes: event.data.result.nodesExpanded, elapsedMs: round(event.data.result.elapsedMs) } });
-              resolve();
-            }
-            worker!.addEventListener("message", onMessage);
+      algorithms.map(async (algorithm) => {
+            const requestId = `${algorithm}-${Date.now()}-${seed}`;
             // Sahne üstten görünen 2B bir çalışma alanı; planlayıcı 3B
             // arayınca yol z ekseninden dolaşıp engeli delmiş gibi
             // görünüyordu. Düzlemsel mod bunu kapatır.
             const request: PlannerWorkerRequest = {
               requestId,
               algorithm,
+              seed,
               start,
               goal,
               obstacles,
@@ -160,9 +141,15 @@ export function PlannerRace({
                 rrt_star: { planar: true },
               },
             };
-            worker!.postMessage(request);
-          }),
-      ),
+            const response = await runPlannerInWorker(request);
+            if (response.status === "error") {
+              setErrors((prev) => ({ ...prev, [algorithm]: response.error.message }));
+              record({ skillId: "planner-comparison", stage: "observed", result: "retry", metrics: { algorithm, seed, error: response.error.code } });
+              return;
+            }
+            setResults((prev) => ({ ...prev, [algorithm]: response.result }));
+            record({ skillId: "planner-comparison", stage: "observed", result: response.result.success ? "success" : "retry", metrics: { algorithm, seed, nodes: response.result.nodesExpanded, elapsedMs: round(response.result.elapsedMs) } });
+      }),
     );
 
     setRunning(false);
@@ -222,6 +209,23 @@ export function PlannerRace({
           </button>
         </div>
       )}
+
+      <label className={`flex max-w-56 flex-col gap-1 text-sm ${t.ink}`}>
+        <span>Deney seed’i</span>
+        <input
+          type="number"
+          inputMode="numeric"
+          value={seed}
+          onChange={(event) => {
+            const nextSeed = Number(event.target.value);
+            if (Number.isSafeInteger(nextSeed)) setSeed(nextSeed);
+            setResults({});
+            setErrors({});
+          }}
+          className={`h-11 rounded-md border ${t.outline} ${t.bg} px-3 font-mono ${t.ink}`}
+        />
+        <span className={t.inkMuted}>Aynı sahne ve seed aynı rastlantısal deneyi üretir.</span>
+      </label>
 
       <div className={`flex flex-wrap items-center justify-between gap-2 text-sm ${t.ink}`}>
         <span role="status" className={t.inkMuted}>
@@ -287,6 +291,13 @@ export function PlannerRace({
               })}
             </tbody>
           </table>
+        </div>
+      )}
+      {Object.keys(errors).length > 0 && (
+        <div role="alert" className="rounded-md border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-700 dark:text-red-300">
+          {algorithms.filter((id) => errors[id]).map((id) => (
+            <p key={id}>{ALGORITHM_LABELS[id]}: {errors[id]}</p>
+          ))}
         </div>
       )}
     </div>

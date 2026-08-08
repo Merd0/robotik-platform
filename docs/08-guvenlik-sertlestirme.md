@@ -119,8 +119,11 @@ tekrar bilinçli verilmeli, varsayılan olarak sürüklenmemeli.
   kullanıcının kendi tarayıcı sekmesinde çalışır. Bu koda ağ erişimi
   verilmez (fetch/XHR devre dışı bırakılır) — kullanıcı kendi kodunu
   çalıştırırken bile dışarıya veri gönderemez.
-- **Çalışma süresi sınırı.** Kullanıcı kodu sonsuz döngüye girerse sekmeyi
-  kilitlemesin diye zaman aşımı ve "durdur" kontrolü olur.
+- **Çalışma ve kaynak sınırları.** Kullanıcı kodu sonsuz döngüye girerse worker
+  8 saniyede sonlandırılır; kullanıcı ayrıca "durdur" kontrolünü kullanabilir.
+  Tek çalıştırma en çok 64 KiB/100 çıktı olayı ve 500 eklem izi örneği üretir.
+  Her istek temiz bir Python globals sözlüğünde yürütülür; önceki çalıştırmanın
+  değişkenleri yeni isteğe taşınmaz.
 - **İzole `iframe` + `sandbox` özniteliği**, eğer kullanıcı kodu çalıştırma
   ayrı bir çerçevede yapılırsa (teknik detay build aşamasında netleşir),
   ana sayfanın DOM'una erişimi olmaz.

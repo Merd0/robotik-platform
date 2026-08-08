@@ -76,6 +76,15 @@ jobs:
       - name: Derleme + taslak sayfa sızıntısı kontrolü
         run: npm run build
 
+      - name: Başlangıç performans bütçesi
+        run: npm run check-performance-budget
+
+      - name: Chromium kur
+        run: npx playwright install --with-deps chromium
+
+      - name: Üç viewport erişilebilirlik ve kullanıcı akışı
+        run: npm run test:e2e
+
       # docs/08-guvenlik-sertlestirme.md "Otomatik zafiyet taraması"
       # kuralı: yüksek/kritik zafiyet varsa build kırılır.
       - name: Bağımlılık güvenlik taraması
