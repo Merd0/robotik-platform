@@ -5,6 +5,8 @@ import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { getRobotById } from "@/lib/robotics/robots";
 import type { PyodideWorkerRequest, PyodideWorkerResponse } from "@/lib/workers/pyodideWorker";
 import { MAX_CODE_RUNTIME_MS } from "@/lib/workers/executionLimits";
+import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
+import { evaluateCodeLab } from "@/lib/codeLab";
 
 interface CodeRunnerProps {
   /** Editörde başlangıçta görünen kod. */
@@ -12,6 +14,12 @@ interface CodeRunnerProps {
   /** Verilirse, Python'daki `robot.eklem_ac(index, derece)` çağrıları bu robotu sürer. */
   robot?: string;
   theme?: "ortaokul" | "lise" | "universite";
+  /** Ölçülebilir laboratuvar görevi; yalnız istem değil, çalıştırılan çıktıyla doğrulanır. */
+  taskTitle?: string;
+  expectedOutput?: string;
+  expectedFinalDegrees?: number[];
+  toleranceDegrees?: number;
+  skillId?: string;
 }
 
 const THEME = {
@@ -53,8 +61,18 @@ type RunState = "hazir" | "yukleniyor" | "calisiyor" | "bitti";
  * sertlestirme.md "Çalışma süresi sınırı"). Pyodide kendi alan adımızdan
  * servis edilir (public/pyodide/, bkz. scripts/copy-pyodide-assets.mjs).
  */
-export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: CodeRunnerProps) {
+export function CodeRunner({
+  initialCode,
+  robot: robotId,
+  theme = "lise",
+  taskTitle,
+  expectedOutput,
+  expectedFinalDegrees,
+  toleranceDegrees = 0.5,
+  skillId = "python-robot-programming",
+}: CodeRunnerProps) {
   const t = THEME[theme];
+  const record = useEvidenceRecorder();
   const robot = robotId ? getRobotById(robotId) : null;
   const editorId = useId();
 
@@ -63,6 +81,9 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<RunState>("hazir");
   const [jointAngles, setJointAngles] = useState<number[]>(() => robot?.joints.map(() => 0) ?? []);
+  const [jointTrace, setJointTrace] = useState<number[][]>([]);
+  const [traceIndex, setTraceIndex] = useState(0);
+  const [testPassed, setTestPassed] = useState<boolean | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -112,9 +133,22 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
         .join("\n");
       setOutput([event.data.stdout, warnings].filter(Boolean).join("\n"));
       setError(event.data.error);
+      setJointTrace(event.data.jointTrace);
+      setTraceIndex(Math.max(0, event.data.jointTrace.length - 1));
       if (robot && event.data.jointTrace.length > 0) {
         setJointAngles(event.data.jointTrace[event.data.jointTrace.length - 1]);
       }
+      const { outputMatches, poseMatches, hasAutomaticTest, passed } = evaluateCodeLab(
+        { expectedOutput, expectedFinalDegrees, toleranceDegrees },
+        event.data,
+      );
+      setTestPassed(hasAutomaticTest ? passed : null);
+      record({
+        skillId,
+        stage: hasAutomaticTest ? "assessed" : "observed",
+        result: !event.data.error && (!hasAutomaticTest || passed) ? "success" : "retry",
+        metrics: { outputMatches, poseMatches, traceSteps: event.data.jointTrace.length },
+      });
       setState("bitti");
     }
     worker.addEventListener("message", onMessage);
@@ -150,13 +184,24 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
     setCode(initialCode);
     setOutput("");
     setError(null);
+    setJointTrace([]);
+    setTraceIndex(0);
+    setTestPassed(null);
     if (robot) setJointAngles(robot.joints.map(() => 0));
+  }
+
+  function showTraceStep(index: number) {
+    if (!robot || jointTrace.length === 0) return;
+    const bounded = Math.max(0, Math.min(jointTrace.length - 1, index));
+    setTraceIndex(bounded);
+    setJointAngles(jointTrace[bounded]);
   }
 
   const running = state === "yukleniyor" || state === "calisiyor";
 
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
+      {taskTitle && <div className={`rounded-lg border ${t.outline} ${t.bg} p-3 text-sm ${t.ink}`}><span className="font-bold">Otomatik görev:</span> {taskTitle}</div>}
       {robot && (
         <SahneAlani className={`aspect-video w-full overflow-hidden rounded-lg ${t.bg}`}>
           <RobotArm robot={robot} jointAngles={jointAngles} />
@@ -212,6 +257,17 @@ export function CodeRunner({ initialCode, robot: robotId, theme = "lise" }: Code
           </span>
         )}
       </div>
+
+      {jointTrace.length > 0 && robot && <div className={`rounded-lg border ${t.outline} ${t.bg} p-3`}>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span className={`font-semibold ${t.ink}`}>Çalışma izi · komut {traceIndex + 1}/{jointTrace.length}</span>
+          <span className={`font-mono ${t.inkMuted}`}>{jointAngles.map((angle, index) => `θ${index + 1}=${(angle * 180 / Math.PI).toFixed(1)}°`).join(" · ")}</span>
+        </div>
+        <input aria-label="Çalışma izi adımı" type="range" min="0" max={jointTrace.length - 1} value={traceIndex} onChange={(event) => showTraceStep(Number(event.target.value))} className="mt-2 h-11 w-full" />
+        <div className="flex gap-2"><button type="button" onClick={() => showTraceStep(traceIndex - 1)} className={`min-h-11 flex-1 rounded-md border ${t.outline}`}>Geri</button><button type="button" onClick={() => showTraceStep(traceIndex + 1)} className={`min-h-11 flex-1 rounded-md border ${t.outline}`}>İleri</button></div>
+      </div>}
+
+      {testPassed !== null && <p className={`rounded-lg border p-3 text-sm font-semibold ${testPassed ? "border-success-border bg-success-surface text-success-ink" : "border-warning-border bg-warning-surface text-warning-ink"}`} role="status">{testPassed ? "Otomatik test geçti. Çıktı ve robot duruşu görevle uyuşuyor." : "Otomatik test henüz geçmedi. Çıktıyı veya son eklem açılarını görevle karşılaştır."}</p>}
     </div>
   );
 }

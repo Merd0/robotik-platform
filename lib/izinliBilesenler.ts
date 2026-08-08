@@ -24,4 +24,7 @@ export const IZINLI_BILESEN_ADLARI = [
   "SafetyZone",
   "PredictionPrompt",
   "TransferChallenge",
+  "TransformOrderLab",
+  "DlsTraceLab",
+  "CspaceLab",
 ] as const;

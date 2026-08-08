@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { migrateLegacyEvidence, summarizeEvidence, type EvidenceEvent } from "./evidence";
+import { EVIDENCE_PREDICATES, migrateLegacyEvidence, summarizeEvidence, type EvidenceEvent } from "./evidence";
 
 const event = (
   stage: EvidenceEvent["stage"],
@@ -57,5 +57,44 @@ describe("v1 ve manuel ilerleme göçü", () => {
     );
     expect(migrated.filter((item) => item.lessonId === "ders-1")).toHaveLength(1);
     expect(migrated.find((item) => item.lessonId === "ders-2")).toMatchObject({ stage: "read", verification: "legacy-unverified" });
+  });
+});
+
+describe("controlled pilot predicates", () => {
+  const pilotEvent = (
+    lessonId: string,
+    skillId: string,
+    stage: "observed" | "assessed",
+    metrics: Record<string, string>,
+  ) => event(stage, "success", { lessonId, skillId, metrics, contentVersion: "pilot-v1" });
+
+  it("requires both transform orders plus the executable code assessment", () => {
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "transform-order-comparison-v1")!;
+    const observations = [
+      pilotEvent(predicate.lessonId, predicate.skillId, "observed", { order: "translation-then-rotation" }),
+      pilotEvent(predicate.lessonId, predicate.skillId, "observed", { order: "rotation-then-translation" }),
+    ];
+    expect(predicate.evaluate(observations).passed).toBe(false);
+    expect(predicate.evaluate([...observations, pilotEvent(predicate.lessonId, predicate.skillId, "assessed", {})]).passed).toBe(true);
+  });
+
+  it("requires low and damped DLS runs plus transfer", () => {
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "dls-damping-comparison-v1")!;
+    const events = [
+      pilotEvent(predicate.lessonId, predicate.skillId, "observed", { dampingBand: "dusuk" }),
+      pilotEvent(predicate.lessonId, predicate.skillId, "observed", { dampingBand: "sonumlu" }),
+      pilotEvent(predicate.lessonId, predicate.skillId, "assessed", {}),
+    ];
+    expect(predicate.evaluate(events).passed).toBe(true);
+  });
+
+  it("requires a safe and colliding configuration plus transfer", () => {
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "configuration-space-boundary-v1")!;
+    const events = [
+      pilotEvent(predicate.lessonId, predicate.skillId, "observed", { configuration: "safe" }),
+      pilotEvent(predicate.lessonId, predicate.skillId, "observed", { configuration: "collision" }),
+      pilotEvent(predicate.lessonId, predicate.skillId, "assessed", {}),
+    ];
+    expect(predicate.evaluate(events).passed).toBe(true);
   });
 });

@@ -3,6 +3,7 @@
   "baselineCommit": "deddffcd174aa9e1aeebbb753ee25a694433bdf2",
   "recordedAt": "2026-08-09",
   "staleAfterContentChange": [
+    "a-universite-homojen-donusum",
     "a-lise-koordinat-sistemleri",
     "a-ortaokul-robot-nedir",
     "b-lise-geometrik-ters-kinematik",
@@ -12,6 +13,7 @@
     "b-universite-jacobian",
     "b-universite-ters-kinematik",
     "c-ortaokul-labirentte-yol-bulma",
+    "c-universite-c-space",
     "c-universite-algoritma-karsilastirma-deneyi"
   ],
   "legacyUnverified": [
@@ -23,7 +25,6 @@
     "a-ortaokul-robot-ile-makine-farki",
     "a-ortaokul-robot-turleri",
     "a-universite-dh-parametreleri",
-    "a-universite-homojen-donusum",
     "a-universite-kinematik-zincir",
     "a-universite-poz-gosterimleri",
     "a-universite-robot-mimarileri",
@@ -40,7 +41,6 @@
     "c-lise-grid-arama-maliyet",
     "c-ortaokul-en-kisa-yol-her-zaman-en-iyi-mi",
     "c-universite-carpisma-kontrolu",
-    "c-universite-c-space",
     "c-universite-optimallik-hiz-odunlesimi",
     "c-universite-rrt-rrt-star-prm",
     "c-universite-yol-duzlestirme"

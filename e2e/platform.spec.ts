@@ -79,6 +79,37 @@ test("yerel kayıt silme işlemi iki adımlıdır", async ({ page }) => {
   expect(await page.evaluate(() => localStorage.getItem("robotik-platform:evidence:v2"))).toBeNull();
 });
 
+test("homojen dönüşüm pilotu iki işlem sırasını ölçülebilir biçimde ayırır", async ({ page }) => {
+  await page.goto("/ders/a-universite-homojen-donusum");
+  await page.getByRole("button", { name: "Y ekseni" }).click();
+  await page.getByRole("button", { name: "Dönüşümü uygula" }).click();
+  await expect(page.getByText("(0.000, 1.000, 0) m")).toBeVisible();
+
+  await page.getByRole("button", { name: /Önce döndür, sonra ötele/ }).click();
+  await page.getByRole("button", { name: "X ekseni" }).click();
+  await page.getByRole("button", { name: "Dönüşümü uygula" }).click();
+  await expect(page.getByText("(1.000, 0.000, 0) m")).toBeVisible();
+});
+
+test("DLS pilotu gerçek yineleme izini ve hata eğrisini gösterir", async ({ page }) => {
+  await page.goto("/ders/b-universite-ters-kinematik");
+  await page.getByRole("button", { name: "80 adıma kadar çöz" }).click();
+  await expect(page.getByText(/Yakınsadı · \d+ iterasyon/)).toBeVisible();
+  await expect(page.getByRole("img", { name: "DLS hata normunun iterasyonlara göre azalışı" })).toBeVisible();
+  await expect(page.getByRole("slider", { name: /İz adımı/ })).toBeVisible();
+});
+
+test("C-space pilotu fiziksel çarpışmayı açı uzayındaki yasak bölgeye bağlar", async ({ page }) => {
+  await page.goto("/ders/c-universite-c-space");
+  await page.getByRole("button", { name: /Serbest örneğe git/ }).click();
+  await expect(page.getByText(/Serbest: bu nokta/)).toBeVisible();
+  await page.getByRole("button", { name: "Bu konfigürasyonu kaydet" }).click();
+  await page.getByRole("button", { name: /Çarpışan örneğe git/ }).click();
+  await expect(page.getByText(/Çarpışma: bu nokta/)).toBeVisible();
+  await page.getByRole("button", { name: "Bu konfigürasyonu kaydet" }).click();
+  await expect(page.getByText(/Serbest ✓ · Çarpışan ✓/)).toBeVisible();
+});
+
 test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
   for (const url of ["/", "/ders/a-ortaokul-robot-nedir"]) {
     await page.goto(url);

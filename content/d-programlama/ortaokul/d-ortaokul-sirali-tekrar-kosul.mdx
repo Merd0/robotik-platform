@@ -12,7 +12,11 @@ kazanimlar:
   - Eğer bloğuyla robotun duruma göre iki farklı hareket kümesinden birini seçmesini sağlayabilme
   - Bu iki bloğun gerçek robot dillerindeki karşılıklarının döngü ve koşul olduğunu söyleyebilme
 kaynaklar:
-  - "ABB RAPID Instructions, Functions and Data Types Reference Manual — FOR ve IF...THEN...ENDIF talimatları"
+  - kind: official-doc
+    title: "Blockly Docs: Block-code generators"
+    url: https://docs.blockly.com/guides/create-custom-blocks/code-generation/block-code/
+    publisher: Raspberry Pi Foundation
+    accessedAt: "2026-08-09"
 incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
@@ -27,7 +31,7 @@ editörde kırk bloğu alt alta dizebilirsin — ya da iki blok koyup yanına
 "yirmi kez" yazabilirsin. İkisi de aynı işi yapar, ama biri ekrana
 sığar.
 
-<BlockEditor robot="generic-2dof" />
+<BlockEditor robot="generic-2dof" task="condition" />
 
 ## Ne oldu
 
@@ -42,18 +46,17 @@ tekrarlarsan robot ilk seferde o açıya gider, sonraki tekrarlarda zaten
 orada olduğu için yerinde durur. Tekrarın gözle görülmesi için içeride
 en az iki farklı hareket olmalı — örneğin git ve geri dön.
 
-"Eğer" bloğu farklı bir şey yapar: robot, "Engel var" anahtarına
+"Eğer" bloğu farklı bir şey yapar: simüle edilen robot, "Engel var" anahtarına
 bakarak İKİ ayrı blok grubundan birini seçer. Anahtar açıksa üstteki
 grup, kapalıysa alttaki ("Değilse") grup çalışır — aynı anda ikisi
 birden değil.
 
 ## Gerçek dünyada
 
-Gerçek robot dillerinde bu iki fikrin de birer karşılığı var. ABB'nin
-RAPID dilinde `FOR` talimatı bir blok komutu tekrar tekrar çalıştırır,
-`IF...THEN...ENDIF` talimatı ise bir koşula göre iki farklı komut
-grubundan birini seçer. "Tekrarla" bloğun `FOR`'a, "Eğer" bloğun
-`IF...THEN...ENDIF`'e karşılık geliyor.
+Metin tabanlı diller de tekrar ve koşul yapıları kullanır. Blokların görünüşü
+değişse de içteki program ağacı; bir statement bloğunu, içindeki statement
+bloklarını ve sıradaki bloğu ayrı tutar. Bu yüzden aynı düşünceyi daha sonra
+Python'daki `for` ve `if/else` yapısına aktarabilirsin.
 
 ## Dene
 
@@ -64,7 +67,7 @@ tek blok bırakıp tekrar dene: hareket bir kez olur, sonra durur.
 Sonra bir "Eğer" bloğu ekle, üst
 gruba bir hareket, alt gruba ("Değilse") farklı bir hareket koy.
 "Engel var" anahtarını önce kapalı, sonra açık bırakarak iki kez
-çalıştır — robot her seferinde hangi grubu seçiyor?
+çalıştır. Görev ancak iki dal da çalışma izinde görüldüğünde tamamlanır.
 
 <Quiz
   sorular={[

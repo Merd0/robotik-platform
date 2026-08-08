@@ -12,6 +12,9 @@ import { ScanPath } from "./ScanPath";
 import { SafetyZone } from "./SafetyZone";
 import { PredictionPrompt } from "./PredictionPrompt";
 import { TransferChallenge } from "./TransferChallenge";
+import { TransformOrderLab } from "./TransformOrderLab";
+import { DlsTraceLab } from "./DlsTraceLab";
+import { CspaceLab } from "./CspaceLab";
 import type { IZINLI_BILESEN_ADLARI } from "@/lib/izinliBilesenler";
 
 /**
@@ -39,6 +42,9 @@ export const mdxComponents = {
   SafetyZone,
   PredictionPrompt,
   TransferChallenge,
+  TransformOrderLab,
+  DlsTraceLab,
+  CspaceLab,
   // `satisfies`: anahtarların izinli liste ile birebir aynı olmasını derleme
   // zamanında zorlar, ama değer tiplerini geniştetmez (compileMDX bileşen
   // tiplerini görmeye devam eder).

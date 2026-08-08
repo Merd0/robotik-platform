@@ -11,7 +11,11 @@ kazanimlar:
   - Bir robotu blok tabanlı komutlarla, hiç yazı yazmadan, sırayla hareket ettirebilme
   - Blokların ekleniş sırasının robotun izlediği yolu belirlediğini fark edebilme
 kaynaklar:
-  - "ABB, RAPID Instructions, Functions and Data Types Reference Manual (3HAC16581-1) — hareket talimatlarının sıralı bir program metni olarak yazılması: https://library.e.abb.com"
+  - kind: official-doc
+    title: "Blockly Docs: Block-code generators"
+    url: https://docs.blockly.com/guides/create-custom-blocks/code-generation/block-code/
+    publisher: Raspberry Pi Foundation
+    accessedAt: "2026-08-09"
 incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
@@ -21,17 +25,19 @@ durum: taslak
 
 ## Kanca
 
-Gerçek bir fabrika robotuna görev veren kişi çoğu zaman hiç yazı yazmaz.
-Ekrandaki hazır parçaları birbirine tıklayarak sıraya dizer, robot da o
-sırayı harfiyen izler.
+Bir robot iki komutu da doğru yapıp yine de yanlış yolu izleyebilir. Sorun
+komutlarda değil, sırada olabilir. Önce iki blok kur; sonra robotun her komut
+sonrasındaki duruşunu geri sar.
 
-<BlockEditor robot="generic-2dof" allowedBlocks={["move"]} />
+<BlockEditor robot="generic-2dof" allowedBlocks={["move"]} task="sequence" />
 
 ## Ne oldu
 
 "Hareket ekle" düğmesine her bastığında listeye yeni bir blok katıldı.
 Her blok, seçtiğin eklemi seçtiğin dereceye döndürüyor. "Çalıştır"a
-basınca robot blokları YUKARIDAN AŞAĞIYA, tam eklediğin sırayla uyguladı.
+basınca robot blokları yukarıdan aşağıya, tam eklediğin sırayla uyguladı.
+“Adım adım iz” kaydırıcısı her bloktan sonra iki eklem açısını derece olarak
+gösterir; son poza bakıp ara hareketleri tahmin etmek zorunda kalmazsın.
 
 Blokların sırasını değiştirirsen robotun izlediği yol da değişir. Aynı
 iki blok, farklı sırada eklenince robotu farklı bir yoldan geçirir —
@@ -39,11 +45,10 @@ bazen aynı son noktaya varsa bile, oraya farklı bir şekilde ulaşır.
 
 ## Gerçek dünyada
 
-Fabrikalardaki gerçek robot kontrolörlerinde de mantık aynıdır: bir
-hareket programı, satır satır yazılmış bir komut listesidir (ABB'de
-RAPID, KUKA'da KRL — bunları ileride göreceksin). Sen bloklarla
-sürüklüyorsun, gerçek bir robot programcısı bunları yazıyla yazıyor —
-ama ikisi de robotu aynı şekilde, sırayla yönetiyor.
+Bloklar burada güvenli bir simülasyon dili oluşturur. Endüstriyel robotlarda
+programlama; öğretme kumandası, çevrimdışı araçlar veya vendor dilleriyle
+yapılabilir. Arayüz farklı olsa da sıralı talimat ve çalışma iziyle hata
+ayıklama fikri değişmez. Bu ders gerçek robota komut göndermez.
 
 ## Dene
 

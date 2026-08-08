@@ -163,6 +163,51 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
       };
     },
   },
+  {
+    id: "transform-order-comparison-v1",
+    lessonId: "a-universite-homojen-donusum",
+    skillId: "transform-order",
+    evaluate: (events) => {
+      const orders = new Set(events
+        .filter((event) => event.skillId === "transform-order" && event.stage === "observed")
+        .map((event) => event.metrics?.order)
+        .filter((order): order is string => typeof order === "string"));
+      return {
+        passed: orders.has("translation-then-rotation") && orders.has("rotation-then-translation") && hasSuccessfulAssessment(events, "transform-order"),
+        metrics: { comparedOrders: orders.size },
+      };
+    },
+  },
+  {
+    id: "dls-damping-comparison-v1",
+    lessonId: "b-universite-ters-kinematik",
+    skillId: "dls-convergence",
+    evaluate: (events) => {
+      const bands = new Set(events
+        .filter((event) => event.skillId === "dls-convergence" && event.stage === "observed")
+        .map((event) => event.metrics?.dampingBand)
+        .filter((band): band is string => typeof band === "string"));
+      return {
+        passed: bands.has("dusuk") && bands.has("sonumlu") && hasSuccessfulAssessment(events, "dls-convergence"),
+        metrics: { comparedDampingBands: bands.size },
+      };
+    },
+  },
+  {
+    id: "configuration-space-boundary-v1",
+    lessonId: "c-universite-c-space",
+    skillId: "configuration-space",
+    evaluate: (events) => {
+      const configurations = new Set(events
+        .filter((event) => event.skillId === "configuration-space" && event.stage === "observed")
+        .map((event) => event.metrics?.configuration)
+        .filter((configuration): configuration is string => typeof configuration === "string"));
+      return {
+        passed: configurations.has("safe") && configurations.has("collision") && hasSuccessfulAssessment(events, "configuration-space"),
+        metrics: { observedConfigurationClasses: configurations.size },
+      };
+    },
+  },
 ] as const;
 
 const listeners = new Set<() => void>();
