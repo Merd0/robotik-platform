@@ -62,6 +62,9 @@ jobs:
       - name: Yayın review borcu bütünlüğü
         run: npm run check-review-debt
 
+      - name: Sürüme bağlı review makbuzu bütünlüğü
+        run: npm run check-review-integrity
+
       - name: İşyeri ve gizlilik terimleri denetimi
         run: npm run check-sensitive-terms
 

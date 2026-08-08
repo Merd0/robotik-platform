@@ -157,8 +157,14 @@ kazanimlar:
   - Eklem açılarından uç nokta konumunu trigonometri ile hesaplayabilme
   - Açı değişiminin uç noktayı nasıl etkilediğini açıklayabilme
 kaynaklar:
-  - "Lynch & Park, Modern Robotics, Bölüm 4"
-  - "https://mecademic.com/... (Meca500 teknik veri sayfası)"
+  - kind: book
+    title: "Modern Robotics, Bölüm 4"
+    publisher: "Cambridge University Press"
+  - kind: official-doc
+    title: "Meca500 teknik veri sayfası"
+    publisher: "Mecademic"
+    url: "https://www.mecademic.com/..."
+    accessedAt: "2026-08-09"
 etkilesimli:
   - JointSliders
 durum: taslak           # taslak | inceleme | yayinda
@@ -167,6 +173,20 @@ durum: taslak           # taslak | inceleme | yayinda
 
 `kaynaklar` alanı boş bırakılamaz — gizlilik kuralının teknik zorlayıcısı budur.
 Bir CI kontrolü, `durum: yayinda` olan ve `kaynaklar` boş olan dersi reddeder.
+
+Yeni yayınlarda kaynaklar yapılandırılmış `SourceRef` nesneleridir. Eski metin
+kaynaklar yalnızca mevcut legacy yayınları okuyabilmek için desteklenir. URL
+kaynaklarında erişim tarihi; yazılım dokümantasyonunda ayrıca sürüm zorunludur.
+
+### 4. Sürüme bağlı insan incelemesi
+
+`incelendi_tarafindan` ve `incelendi_tarih` alanları legacy kayıttır; tek başına
+güncel sürümün incelendiğini kanıtlamaz. Yeni model `content/review-receipts.json`
+içindeki Review Receipt v1 kayıtlarıdır. Makbuz, `lesson-artifact-v1` kanonik
+SHA-256 hash'ine, tam kaynak commit'ine, inceleyen kişiye, tarihe ve ayrı
+`source`, `technical`, `pedagogical`, gerektiğinde `safety` kapsamlarına bağlanır.
+Öğrencinin gördüğü içerik değişirse hash değişir ve eski makbuz otomatik olarak
+geçersiz görünür.
 
 ---
 

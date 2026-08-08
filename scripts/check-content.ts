@@ -4,6 +4,8 @@ import matter from "gray-matter";
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
 const REQUIRED_FIELDS = ["id", "baslik", "hat", "seviye", "sure"] as const;
+const SOURCE_KINDS = new Set(["official-doc", "software-doc", "book", "paper", "standard", "dataset", "other"]);
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function findMdxFiles(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
@@ -29,6 +31,28 @@ function checkFile(filePath: string): string[] {
     errors.push(
       `${relativePath}: "kaynaklar" alanı boş olamaz (gizlilik koruması, bkz. docs/00-vizyon.md).`,
     );
+  }
+  if (Array.isArray(data.kaynaklar)) {
+    data.kaynaklar.forEach((source: unknown, index: number) => {
+      if (typeof source === "string") {
+        if (!source.trim()) errors.push(`${relativePath}: kaynaklar[${index}] boş metin olamaz.`);
+        return;
+      }
+      if (!source || typeof source !== "object") {
+        errors.push(`${relativePath}: kaynaklar[${index}] metin veya SourceRef nesnesi olmalı.`);
+        return;
+      }
+      const ref = source as Record<string, unknown>;
+      if (typeof ref.title !== "string" || !ref.title.trim()) errors.push(`${relativePath}: kaynaklar[${index}].title zorunlu.`);
+      if (typeof ref.kind !== "string" || !SOURCE_KINDS.has(ref.kind)) errors.push(`${relativePath}: kaynaklar[${index}].kind geçersiz.`);
+      if (ref.url !== undefined) {
+        if (typeof ref.url !== "string" || !/^https:\/\//.test(ref.url)) errors.push(`${relativePath}: kaynaklar[${index}].url HTTPS olmalı.`);
+        if (typeof ref.accessedAt !== "string" || !DATE_PATTERN.test(ref.accessedAt)) errors.push(`${relativePath}: URL kaynağında accessedAt YYYY-MM-DD zorunlu.`);
+      }
+      if (ref.kind === "software-doc" && (typeof ref.version !== "string" || !ref.version.trim())) {
+        errors.push(`${relativePath}: software-doc kaynağında version zorunlu.`);
+      }
+    });
   }
 
   if (data.durum === "yayinda") {
