@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
-import { allowedSpeed } from "@/lib/robotics/safety";
+import { allowedSpeed, assessSafetySpeed } from "@/lib/robotics/safety";
 import { getEvidenceEvents } from "@/lib/evidence";
 
 const SEED = 240807;
@@ -32,7 +32,6 @@ export function RobotCellCapstone() {
     setDone(next);
     record({ skillId: `robot-cell:${STEPS[index].toLocaleLowerCase("tr")}`, stage: "observed", result: "success", seed: SEED, metrics });
     if (index < STEPS.length - 1) setStep(index + 1);
-    if (next.every(Boolean)) record({ skillId: "cross-track-robot-cell", stage: "passed", result: "success", seed: SEED, attempts: 1, metrics: { scale, route: route ?? "ust", distance, speed } });
   }
 
   function checkCalibration() {
@@ -58,8 +57,21 @@ export function RobotCellCapstone() {
   }
 
   function checkSafety() {
-    if (speed <= allowed + 0.5) { setMessage(`Güvenli hız doğrulandı: bu mesafede üst sınır ${Math.round(allowed)} mm/s.`); complete(3, { distance, speed, allowed: Math.round(allowed) }); }
-    else { setMessage(`Hız fazla. ${distance} mm ayrımda izin verilen üst sınır ${Math.round(allowed)} mm/s.`); record({ skillId: "robot-cell:güvenlik", stage: "tried", result: "retry", seed: SEED, metrics: { distance, speed, allowed: Math.round(allowed) } }); }
+    const assessment = assessSafetySpeed(speed, allowed, 50);
+    if (assessment === "fastest-safe-step") {
+      setMessage(`En hızlı güvenli adımı buldun: ${speed} mm/s, model üst sınırı ${Math.round(allowed)} mm/s.`);
+      complete(3, { distance, speed, allowed: Math.round(allowed), assessment });
+      return;
+    }
+    const feedback = assessment === "stopped"
+      ? "0 mm/s güvenli olsa da seçim problemi çözülmedi. En hızlı güvenli pozitif 50 mm/s adımını bul."
+      : assessment === "no-positive-speed"
+        ? "Bu ayrımda pozitif güvenli hız adımı yok. Ayrımı artır, sonra en hızlı güvenli adımı seç."
+        : assessment === "safe-but-not-maximal"
+          ? "Bu hız sınırın altında ama en hızlı güvenli adım değil. 50 mm/s artışlarla sınırı aşmadan yaklaş."
+          : `Hız fazla. ${distance} mm ayrımda model üst sınırı ${Math.round(allowed)} mm/s.`;
+    setMessage(feedback);
+    record({ skillId: "robot-cell:güvenlik", stage: "tried", result: "retry", seed: SEED, metrics: { distance, speed, allowed: Math.round(allowed), assessment } });
   }
 
   function resetProgram() { setProgram([]); setDone((values) => values.map((value, i) => i === 2 ? false : value)); }
@@ -98,7 +110,7 @@ export function RobotCellCapstone() {
           {step === 0 && <div className="space-y-4"><p className="text-sm leading-6 text-site-muted">Kamerada fikstürün 120 px genişliği, gerçek hücrede 300 mm. Ölçeği bul.</p><label className="block text-sm font-medium">mm / piksel<input type="number" step="0.1" value={scale} onChange={(event) => setScale(Number(event.target.value))} className="mt-2 min-h-11 w-full rounded-xl border border-site-border bg-site-surface px-3" /></label><button type="button" onClick={checkCalibration} className="min-h-11 w-full rounded-xl bg-site-strong px-4 font-semibold text-site-on-strong">Kalibrasyonu doğrula</button></div>}
           {step === 1 && <div className="space-y-4"><p className="text-sm leading-6 text-site-muted">Turuncu uçtan mavi kutuya giden iki aday yol var. Fikstürle çarpışmayanı seç.</p><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => checkRoute("duz")} className="min-h-11 rounded-xl border border-site-border px-3">Düz rota</button><button type="button" onClick={() => checkRoute("ust")} className="min-h-11 rounded-xl border border-site-border px-3">Üst rota</button></div></div>}
           {step === 2 && <div className="space-y-4"><p className="text-sm leading-6 text-site-muted">Komutları güvenli çalışma sırasıyla seç.</p><div className="grid gap-2">{PROGRAM.map(([id, label]) => <button key={id} type="button" disabled={program.includes(id)} onClick={() => addInstruction(id)} className="min-h-11 rounded-xl border border-site-border px-3 text-left text-sm disabled:opacity-40">{label}</button>)}</div><p className="min-h-8 rounded-lg bg-site-soft p-2 font-mono text-xs">{program.length ? program.join(" → ") : "sıra boş"}</p><button type="button" onClick={resetProgram} className="min-h-11 text-sm underline underline-offset-4">Sırayı temizle</button></div>}
-          {step === 3 && <div className="space-y-4"><p className="text-sm leading-6 text-site-muted">İnsan yaklaşırken robot hızını fiziksel modelin izin verdiği sınıra indir.</p><label className="block text-sm">Ayrım: {distance} mm<input type="range" min="300" max="2000" step="50" value={distance} onChange={(event) => setDistance(Number(event.target.value))} className="h-11 w-full touch-pan-y accent-teal-700" /></label><label className="block text-sm">Komut hızı: {speed} mm/s<input type="range" min="0" max="1600" step="50" value={speed} onChange={(event) => setSpeed(Number(event.target.value))} className="h-11 w-full touch-pan-y accent-teal-700" /></label><p className="rounded-xl bg-site-soft p-3 text-sm">Model üst sınırı: <strong>{Math.round(allowed)} mm/s</strong></p><button type="button" onClick={checkSafety} className="min-h-11 w-full rounded-xl bg-site-strong px-4 font-semibold text-site-on-strong">Güvenliği doğrula</button></div>}
+          {step === 3 && <div className="space-y-4"><p className="text-sm leading-6 text-site-muted">İnsan yaklaşırken 50 mm/s çözünürlükte en hızlı güvenli pozitif hız adımını seç.</p><label className="block text-sm">Ayrım: {distance} mm<input type="range" min="300" max="2000" step="50" value={distance} onChange={(event) => setDistance(Number(event.target.value))} className="h-11 w-full touch-pan-y accent-teal-700" /></label><label className="block text-sm">Komut hızı: {speed} mm/s<input type="range" min="0" max="1600" step="50" value={speed} onChange={(event) => setSpeed(Number(event.target.value))} className="h-11 w-full touch-pan-y accent-teal-700" /></label><p className="rounded-xl bg-site-soft p-3 text-sm">Basitleştirilmiş eğitim modeli üst sınırı: <strong>{Math.round(allowed)} mm/s</strong><span className="mt-1 block text-xs text-site-subtle">Standart hesabı veya gerçek hücre güvenlik onayı değildir.</span></p><button type="button" onClick={checkSafety} className="min-h-11 w-full rounded-xl bg-site-strong px-4 font-semibold text-site-on-strong">Güvenliği doğrula</button></div>}
         </div>
 
         {progress === 4 && <div className="mt-4 rounded-2xl border border-success-border bg-success-surface p-4"><strong className="text-success-ink">Beta senaryo tamamlandı.</strong><p className="mt-1 text-sm text-success-ink">Dört mini görevdeki seçimlerin bu cihazdaki deney kaydına eklendi.</p><button type="button" onClick={exportEvidence} className="mt-3 min-h-11 rounded-xl bg-success-ink px-4 text-sm font-semibold text-success-surface">Deney kaydı JSON’unu indir</button></div>}

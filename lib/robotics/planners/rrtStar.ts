@@ -8,6 +8,20 @@ export interface RrtStarOptions extends RrtOptions {
   rewireRadius?: number;
 }
 
+export function propagateDescendantCosts(
+  root: Vec3,
+  delta: number,
+  children: Map<Vec3, Set<Vec3>>,
+  cost: Map<Vec3, number>,
+): void {
+  const pending = [root];
+  while (pending.length > 0) {
+    const node = pending.pop()!;
+    cost.set(node, (cost.get(node) ?? 0) + delta);
+    for (const child of children.get(node) ?? []) pending.push(child);
+  }
+}
+
 /**
  * RRT* — komşu yeniden bağlama (rewire) ile yol maliyetini düşüren RRT
  * varyantı. reference-python/backend/planners/rrt_star.py'nin TS portu.
@@ -32,9 +46,10 @@ export class RrtStarPlanner extends RrtPlanner {
     const bounds = this.workspaceBounds(start, goal);
     const nodes: Vec3[] = [start];
     const parent = new Map<Vec3, Vec3 | null>([[start, null]]);
+    const children = new Map<Vec3, Set<Vec3>>([[start, new Set()]]);
     const cost = new Map<Vec3, number>([[start, 0]]);
     let nodesExpanded = 0;
-    let bestGoalNode: Vec3 | null = null;
+    const goalCandidates: Vec3[] = [];
 
     for (let i = 0; i < this.maxIterations; i++) {
       nodesExpanded++;
@@ -61,13 +76,19 @@ export class RrtStarPlanner extends RrtPlanner {
       nodes.push(newPoint);
       parent.set(newPoint, bestParent);
       cost.set(newPoint, bestCost);
+      children.set(newPoint, new Set());
+      children.get(bestParent)?.add(newPoint);
 
       for (const neighbor of neighbors) {
         if (neighbor === bestParent) continue;
         const candidateCost = bestCost + distance(newPoint, neighbor);
         if (candidateCost < (cost.get(neighbor) ?? Infinity) && this.segmentFree(newPoint, neighbor, isFree)) {
+          const previousCost = cost.get(neighbor) ?? Infinity;
+          const previousParent = parent.get(neighbor);
+          if (previousParent) children.get(previousParent)?.delete(neighbor);
           parent.set(neighbor, newPoint);
-          cost.set(neighbor, candidateCost);
+          children.get(newPoint)?.add(neighbor);
+          propagateDescendantCosts(neighbor, candidateCost - previousCost, children, cost);
         }
       }
 
@@ -77,14 +98,16 @@ export class RrtStarPlanner extends RrtPlanner {
       // edilmemiş bir son segment en iyi yol olarak seçilebilirdi.
       if (distance(newPoint, goal) <= this.goalTolerance) {
         const sonSegmentGuvenli = newPoint === goal || this.segmentFree(newPoint, goal, isFree);
-        if (
-          sonSegmentGuvenli &&
-          (bestGoalNode === null || (cost.get(newPoint) ?? Infinity) < (cost.get(bestGoalNode) ?? Infinity))
-        ) {
-          bestGoalNode = newPoint;
-        }
+        if (sonSegmentGuvenli) goalCandidates.push(newPoint);
       }
     }
+
+    const bestGoalNode = goalCandidates.reduce<Vec3 | null>((best, candidate) => {
+      if (best === null) return candidate;
+      const candidateCost = (cost.get(candidate) ?? Infinity) + distance(candidate, goal);
+      const bestCost = (cost.get(best) ?? Infinity) + distance(best, goal);
+      return candidateCost < bestCost ? candidate : best;
+    }, null);
 
     if (bestGoalNode === null) {
       return { success: false, path: [], elapsedMs: Date.now() - startedAt, nodesExpanded, algorithm: this.name };

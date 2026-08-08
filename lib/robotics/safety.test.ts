@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   allowedSpeed,
+  assessSafetySpeed,
   requiredSeparation,
   stoppingDistance,
   travelDistance,
@@ -20,6 +21,22 @@ describe("travelDistance", () => {
   it("sonlu olmayan girdiyi reddeder", () => {
     expect(() => travelDistance(Number.NaN, 1)).toThrow();
     expect(() => travelDistance(1, Number.POSITIVE_INFINITY)).toThrow();
+  });
+});
+
+describe("assessSafetySpeed", () => {
+  it("sıfır hızı güvenli başarı diye kabul etmez", () => {
+    expect(assessSafetySpeed(0, 400, 50)).toBe("stopped");
+  });
+
+  it("50 mm/s çözünürlükte en hızlı güvenli pozitif adımı kabul eder", () => {
+    expect(assessSafetySpeed(350, 374, 50)).toBe("fastest-safe-step");
+    expect(assessSafetySpeed(300, 374, 50)).toBe("safe-but-not-maximal");
+    expect(assessSafetySpeed(400, 374, 50)).toBe("too-fast");
+  });
+
+  it("pozitif güvenli adım yoksa önce mesafenin artırılmasını ister", () => {
+    expect(assessSafetySpeed(0, 20, 50)).toBe("no-positive-speed");
   });
 });
 

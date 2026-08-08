@@ -2,21 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { classifyVerticalMovement, HERO_ARM, heroArmPoints } from "@/lib/robotics/heroKinematics";
 
 type Prediction = "yukari" | "asagi";
-
-const DEG = Math.PI / 180;
-const SHOULDER = { x: 104, y: 116 };
-const L1 = 62;
-const L2 = 54;
-
-function armPoints(q1: number, q2: number) {
-  const a1 = -q1 * DEG;
-  const a2 = -(q1 + q2) * DEG;
-  const elbow = { x: SHOULDER.x + L1 * Math.cos(a1), y: SHOULDER.y + L1 * Math.sin(a1) };
-  const end = { x: elbow.x + L2 * Math.cos(a2), y: elbow.y + L2 * Math.sin(a2) };
-  return { elbow, end };
-}
 
 export function HeroExperiment() {
   const [prediction, setPrediction] = useState<Prediction | null>(null);
@@ -24,9 +12,10 @@ export function HeroExperiment() {
   const [q1, setQ1] = useState(24);
   const initialQ2 = 8;
   const targetQ2 = 64;
-  const points = useMemo(() => armPoints(q1, played ? targetQ2 : initialQ2), [q1, played]);
-  const before = useMemo(() => armPoints(q1, initialQ2), [q1]);
-  const correct = prediction === "yukari";
+  const points = useMemo(() => heroArmPoints(q1, played ? targetQ2 : initialQ2), [q1, played]);
+  const before = useMemo(() => heroArmPoints(q1, initialQ2), [q1]);
+  const actualMovement = classifyVerticalMovement(before.end.y, heroArmPoints(q1, targetQ2).end.y);
+  const correct = (prediction === "yukari" && actualMovement === "up") || (prediction === "asagi" && actualMovement === "down");
 
   function reset() {
     setPlayed(false);
@@ -72,9 +61,9 @@ export function HeroExperiment() {
                 <path d="M18 136 H222 M32 25 V143" stroke="#334155" strokeWidth="1" strokeDasharray="3 5" />
                 {played && <path d={`M${before.end.x} ${before.end.y} Q${before.end.x + 18} ${before.end.y - 24} ${points.end.x} ${points.end.y}`} fill="none" stroke="#2dd4bf" strokeWidth="2" strokeDasharray="4 4" className="trace-path" />}
                 <circle cx={before.end.x} cy={before.end.y} r="5" fill="none" stroke="#64748b" strokeWidth="1.5" />
-                <line x1={SHOULDER.x} y1={SHOULDER.y} x2={points.elbow.x} y2={points.elbow.y} stroke="#f8fafc" strokeWidth="12" strokeLinecap="round" className="arm-motion" />
+                <line x1={HERO_ARM.shoulder.x} y1={HERO_ARM.shoulder.y} x2={points.elbow.x} y2={points.elbow.y} stroke="#f8fafc" strokeWidth="12" strokeLinecap="round" className="arm-motion" />
                 <line x1={points.elbow.x} y1={points.elbow.y} x2={points.end.x} y2={points.end.y} stroke="#94a3b8" strokeWidth="10" strokeLinecap="round" className="arm-motion" />
-                <circle cx={SHOULDER.x} cy={SHOULDER.y} r="9" fill="#0f172a" stroke="#5eead4" strokeWidth="3" />
+                <circle cx={HERO_ARM.shoulder.x} cy={HERO_ARM.shoulder.y} r="9" fill="#0f172a" stroke="#5eead4" strokeWidth="3" />
                 <circle cx={points.elbow.x} cy={points.elbow.y} r="7" fill="#0f172a" stroke="#5eead4" strokeWidth="3" className="arm-motion" />
                 <circle cx={points.end.x} cy={points.end.y} r="7" fill="#f97316" className="arm-motion" />
                 <text x="18" y="18" fill="#94a3b8" fontSize="9">uç nokta izi</text>
@@ -104,7 +93,13 @@ export function HeroExperiment() {
               <button type="button" onClick={reset} className="min-h-11 rounded-xl border border-white/15 px-4 py-2 text-sm text-slate-300">Sıfırla</button>
             </div>
             <p aria-live="polite" className="min-h-10 text-sm leading-5 text-slate-300">
-              {played ? (correct ? "İsabet. İz yukarı kıvrıldı; iki eklemin açısı uç konumu birlikte belirledi." : "Tahminin şaştı — iyi. Dirseğin dönüşü bu omuz açısında ucu yukarı taşıdı; omuz açısını değiştirip yeniden dene.") : "Önce seçimini kilitle; hareket ancak sonra gösterilecek."}
+              {played ? (
+                actualMovement === "steady"
+                  ? "Uç noktanın dikey konumu neredeyse değişmedi; bu omuz açısı iki etkinin sınırında. Açıyı bir derece değiştirip yeniden dene."
+                  : correct
+                    ? `İsabet. İz ${actualMovement === "up" ? "yukarı" : "aşağı"} kıvrıldı; iki eklemin açısı uç konumu birlikte belirledi.`
+                    : `Tahminin şaştı — iyi. Dirseğin dönüşü bu omuz açısında ucu ${actualMovement === "up" ? "yukarı" : "aşağı"} taşıdı; omuz açısını değiştirip yeniden dene.`
+              ) : "Önce seçimini kilitle; hareket ancak sonra gösterilecek."}
             </p>
           </div>
         </div>

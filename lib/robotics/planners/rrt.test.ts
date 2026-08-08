@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RrtPlanner } from "./rrt";
-import { RrtStarPlanner } from "./rrtStar";
+import { propagateDescendantCosts, RrtStarPlanner } from "./rrtStar";
 import { createCollisionChecker, type Obstacle } from "../collision";
 import type { Vec3 } from "../transform";
 import type { CollisionChecker, Planner } from "./base";
@@ -55,8 +55,7 @@ function assertValidPath(planner: Planner, isFree: CollisionChecker) {
   expect(last.y).toBeCloseTo(GOAL.y, 9);
   expect(last.z).toBeCloseTo(GOAL.z, 9);
 
-  // Son adım (goal_tolerance içinde "yapıştırma") hariç her segment çarpışmasız olmalı.
-  for (let i = 0; i < result.path.length - 2; i++) {
+  for (let i = 0; i < result.path.length - 1; i++) {
     expect(isFree(result.path[i])).toBe(true);
     expect(segmentRespectsFree(result.path[i], result.path[i + 1], isFree)).toBe(true);
   }
@@ -120,4 +119,20 @@ describe("RrtStarPlanner — özellik testleri", () => {
     },
     15000,
   );
+
+  it("rewire maliyet farkını komşunun bütün alt ağacına taşır", () => {
+    const root = { x: 0, y: 0, z: 0 };
+    const child = { x: 1, y: 0, z: 0 };
+    const grandchild = { x: 2, y: 0, z: 0 };
+    const children = new Map<Vec3, Set<Vec3>>([
+      [root, new Set([child])],
+      [child, new Set([grandchild])],
+      [grandchild, new Set()],
+    ]);
+    const cost = new Map<Vec3, number>([[root, 4], [child, 5], [grandchild, 6]]);
+    propagateDescendantCosts(root, -2, children, cost);
+    expect(cost.get(root)).toBe(2);
+    expect(cost.get(child)).toBe(3);
+    expect(cost.get(grandchild)).toBe(4);
+  });
 });

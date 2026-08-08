@@ -7,7 +7,7 @@ import pytest
 from backend.planners.astar import AStarPlanner
 from backend.planners.base import Obstacle
 from backend.planners.rrt import RRTPlanner
-from backend.planners.rrt_star import RRTStarPlanner
+from backend.planners.rrt_star import RRTStarPlanner, _propagate_descendant_costs
 from backend.planners.straight_line import StraightLinePlanner
 from backend.simulation.obstacles import is_collision_free, is_path_segment_free
 
@@ -125,3 +125,13 @@ def test_rrt_star_planner_ayni_sahnede_rrt_den_daha_kisa_yol_uretir():
     assert rrt_result.success is True
     assert rrt_star_result.success is True
     assert rrt_star_result.path_length < rrt_result.path_length
+
+
+def test_rrt_star_rewire_maliyetini_tum_alt_agaca_tasir():
+    root, child, grandchild = (0, 0, 0), (1, 0, 0), (2, 0, 0)
+    children = {root: {child}, child: {grandchild}, grandchild: set()}
+    cost = {root: 4.0, child: 5.0, grandchild: 6.0}
+
+    _propagate_descendant_costs(root, -2.0, children, cost)
+
+    assert cost == {root: 2.0, child: 3.0, grandchild: 4.0}

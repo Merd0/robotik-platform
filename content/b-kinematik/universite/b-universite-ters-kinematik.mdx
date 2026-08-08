@@ -28,7 +28,7 @@ düzlemsel bir kol için işe yarıyordu; altı eklemli bir endüstriyel kolda
 böyle bir formül genelde yok — kontrolör hedefe adım adım yaklaşarak
 ulaşır.
 
-<IkTarget robot="generic-2dof" />
+<IkTarget robot="generic-2dof" solver="dls" />
 
 ## Ne oldu
 
@@ -63,10 +63,10 @@ dereceli (redundant) kollarda sayısal yönteme düşülür.
 
 ## Dene
 
-Yukarıdaki sahnede yeşil noktayı hızlıca farklı yerlere sürükle. Kolun her
-karede yeni bir hedefe "yakınsadığını", sıçramadan yumuşak geçiş
-yaptığını gözlemle — bu, sayısal çözücünün her karede birkaç iterasyonla
-hedefe ulaşmasının sonucu.
+Yukarıdaki sahnede yeşil noktayı farklı yerlere sürükle. Her hedef değişiminde
+DLS çözücü önceki eklem açılarını başlangıç tahmini alır ve hata toleransın
+altına inene kadar yineler. Sahnenin altındaki iterasyon ve son hata değerlerini
+izle; ulaşılamayan bir hedefte çözücü başarı iddiası üretmez.
 
 <Quiz
   sorular={[
