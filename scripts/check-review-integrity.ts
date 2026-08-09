@@ -1,6 +1,7 @@
 import { getAllLessons, type Lesson } from "../lib/content";
 import { computeLessonSubjectHashes } from "../lib/lessonArtifact";
 import {
+  findLegacyTextSources,
   getLessonReviewStatus,
   getRequiredReviewScopes,
   REVIEW_DECISIONS,
@@ -54,7 +55,7 @@ for (const lesson of lessons.filter((candidate) => candidate.frontmatter.durum =
       .join(", ");
     errors.push(`${lesson.slug}: yeni yayın için gerekli her kapsamda güncel Review Receipt zorunlu (${pending}).`);
   }
-  if (!inDebt && lesson.frontmatter.kaynaklar.some((source) => typeof source === "string")) {
+  if (!inDebt && findLegacyTextSources(lesson).length > 0) {
     errors.push(`${lesson.slug}: yeni yayınlarda kaynaklar yapılandırılmış SourceRef olmalı; legacy metin kaynak kabul edilmez.`);
   }
 }

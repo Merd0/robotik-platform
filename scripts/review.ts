@@ -5,8 +5,10 @@ import { getAllLessons, type Lesson, type SourceRef } from "../lib/content";
 import { computeLessonSubjectHashes } from "../lib/lessonArtifact";
 import { reviewDebt } from "../lib/reviewDebt";
 import {
+  findLegacyTextSources,
   getLessonReviewStatus,
   getRequiredReviewScopes,
+  requiresStructuredSources,
   REVIEW_SCOPE_LABELS,
   REVIEW_SCOPES,
   REVIEWER_ROLES,
@@ -337,11 +339,21 @@ function komutOnayla(args: Args): void {
     );
   }
 
-  if (yayinla) {
-    const duzMetin = lesson.frontmatter.kaynaklar.filter((kaynak) => typeof kaynak === "string");
+  // Onay dersi legacy borçtan düşürür; düşer düşmez yapılandırılmış kaynak
+  // kuralı devreye girer. Bu yüzden kontrol yalnız --yayinla'ya değil, dersin
+  // zaten yayında olmasına da bakmalı — yoksa onaydan hemen sonra CI kırılır.
+  if (requiresStructuredSources(lesson, { yayinaAliniyor: yayinla })) {
+    const duzMetin = findLegacyTextSources(lesson);
     if (duzMetin.length > 0) {
-      dur(`Yayına almadan önce ${duzMetin.length} düz metin kaynak yapılandırılmış SourceRef'e çevrilmeli.`);
+      dur(
+        `Bu onay dersi legacy borçtan düşürür; önce ${duzMetin.length} düz metin kaynak yapılandırılmış SourceRef'e çevrilmeli.\n` +
+          duzMetin.map((kaynak) => `    - ${kaynak}`).join("\n") +
+          "\n  Biçim: kind / title, varsa publisher, url, version, accessedAt (bkz. docs/04-icerik-rehberi.md).",
+      );
     }
+  }
+
+  if (yayinla) {
     const eksik = gerekli.filter((kapsam) => !kapsamlar.includes(kapsam));
     if (eksik.length > 0 || karar !== "approved") {
       dur(`--yayinla için gerekli her kapsam bu çağrıda onaylanmalı. Eksik: ${eksik.join(", ") || "(karar approved değil)"}`);

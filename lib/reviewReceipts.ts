@@ -68,6 +68,33 @@ const SUBJECT_LABELS: Record<ReviewSubjectKey, string> = {
   teachingHash: "ders metni",
 };
 
+/**
+ * Legacy düz metin kaynaklar.
+ *
+ * Yapılandırılmış `SourceRef` zorunluluğu, legacy borç kaydından çıkan her
+ * yayın için geçerlidir — dersin bu çağrıda yayına alınıp alınmadığından
+ * bağımsız. `check-review-integrity` bunu yayın kümesi üzerinde zorlar;
+ * `npm run review onayla` de aynı kuralı ONAY ANINDA uygular, çünkü onay
+ * dersi borçtan düşürür ve düşer düşmez CI kuralı devreye girer.
+ */
+export function findLegacyTextSources(lesson: Pick<Lesson, "frontmatter">): string[] {
+  return lesson.frontmatter.kaynaklar.filter((kaynak): kaynak is string => typeof kaynak === "string");
+}
+
+/**
+ * Bu onay, dersi yapılandırılmış kaynak zorunluluğuna sokuyor mu?
+ *
+ * Ders zaten yayındaysa onay onu borçtan düşürür; `--yayinla` verilmemiş
+ * olması kuralı atlatmaz. Bu ayrımı kaçırmak, onaydan hemen sonra kırmızı
+ * CI üretir.
+ */
+export function requiresStructuredSources(
+  lesson: Pick<Lesson, "frontmatter">,
+  options: { yayinaAliniyor: boolean },
+): boolean {
+  return options.yayinaAliniyor || lesson.frontmatter.durum === "yayinda";
+}
+
 export function getRequiredReviewScopes(lesson: Pick<Lesson, "frontmatter">): ReviewScope[] {
   const scopes: ReviewScope[] = ["source", "technical", "pedagogical"];
   if (lesson.frontmatter.hat === "h-guvenlik") scopes.push("safety");

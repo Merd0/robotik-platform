@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { getAllLessons } from "./content";
+import { getAllLessons, type DersDurum, type DersFrontmatter, type SourceRef } from "./content";
 import { computeLessonSubjectHashes } from "./lessonArtifact";
 import { reviewDebt, reviewDebtBaseline, getOpenReviewDebtIds } from "./reviewDebt";
 import {
+  findLegacyTextSources,
   getLessonReviewStatus,
   getRequiredReviewScopes,
+  requiresStructuredSources,
   reviewReceipts,
   SCOPE_SUBJECT_KEYS,
 } from "./reviewReceipts";
@@ -44,6 +46,49 @@ describe("Review Receipt v2", () => {
     const hashes = computeLessonSubjectHashes(lesson);
     expect(hashes.sourceHash).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(hashes.teachingHash).toMatch(/^sha256:[0-9a-f]{64}$/);
+  });
+});
+
+describe("yapılandırılmış kaynak zorunluluğu", () => {
+  const ders = (durum: DersDurum, kaynaklar: Array<string | SourceRef>): { frontmatter: DersFrontmatter } => ({
+    frontmatter: {
+      id: "test",
+      baslik: "T",
+      hat: "a-temeller",
+      seviye: "lise",
+      sure: 10,
+      onkosul: [],
+      kazanimlar: [],
+      etkilesimli: [],
+      durum,
+      kaynaklar,
+    },
+  });
+
+  it("zaten yayında olan ders, --yayinla verilmese de kurala tabidir", () => {
+    // Regresyon: onay dersi legacy borçtan düşürür, düşer düşmez CI
+    // yapılandırılmış kaynak ister. Kontrol yalnız --yayinla'ya bakarsa,
+    // onaydan hemen sonra build kırılır.
+    expect(requiresStructuredSources(ders("yayinda", ["düz metin"]), { yayinaAliniyor: false })).toBe(true);
+  });
+
+  it("bu çağrıda yayına alınan taslak da kurala tabidir", () => {
+    expect(requiresStructuredSources(ders("taslak", ["düz metin"]), { yayinaAliniyor: true })).toBe(true);
+  });
+
+  it("yayına alınmayan taslak kurala tabi değildir", () => {
+    expect(requiresStructuredSources(ders("taslak", ["düz metin"]), { yayinaAliniyor: false })).toBe(false);
+    expect(requiresStructuredSources(ders("inceleme", ["düz metin"]), { yayinaAliniyor: false })).toBe(false);
+  });
+
+  it("düz metin kaynakları ayıklar, SourceRef'lere dokunmaz", () => {
+    const karisik = ders("yayinda", [
+      "düz metin kaynak",
+      { kind: "book", title: "Modern Robotics" },
+      "ikinci düz metin",
+    ]);
+    expect(findLegacyTextSources(karisik)).toEqual(["düz metin kaynak", "ikinci düz metin"]);
+    expect(findLegacyTextSources(ders("yayinda", [{ kind: "book", title: "X" }]))).toEqual([]);
   });
 });
 
