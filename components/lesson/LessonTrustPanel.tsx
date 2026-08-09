@@ -47,8 +47,8 @@ export function LessonTrustPanel({ lesson }: { lesson: Lesson }) {
         <p className={`mt-3 rounded-xl border p-3 text-xs leading-5 ${verified ? "border-success-border bg-success-surface text-success-ink" : "border-warning-border bg-warning-surface text-warning-ink"}`} data-review-state={reviewStatus.state}>
           <strong className="block">{reviewStatus.label}</strong>
           <span className="mt-1 block">{reviewStatus.explanation}</span>
-          {reviewStatus.receipt ? (
-            <span className="mt-2 block">Makbuz: {reviewStatus.receipt.reviewer.displayName} · {reviewStatus.receipt.reviewedAt}</span>
+          {reviewStatus.latestReceipt ? (
+            <span className="mt-2 block">Son inceleme: {reviewStatus.latestReceipt.reviewer.displayName} · {reviewStatus.latestReceipt.reviewedAt}</span>
           ) : (frontmatter.incelendi_tarafindan || frontmatter.incelendi_tarih) && (
             <span className="mt-2 block">
               Eski kayıt: {frontmatter.incelendi_tarafindan ?? "kişi belirtilmemiş"}
@@ -57,16 +57,17 @@ export function LessonTrustPanel({ lesson }: { lesson: Lesson }) {
           )}
         </p>
         <ul className="mt-3 grid gap-1 text-[11px] text-site-subtle" aria-label="İnceleme kapsamları">
-          {reviewStatus.requiredScopes.map((scope) => (
-            <li key={scope} className="flex items-center justify-between gap-3">
-              <span>{REVIEW_SCOPE_LABELS[scope]}</span>
-              <span className={reviewStatus.verifiedScopes.includes(scope) ? "text-success-ink" : "text-warning-ink"}>
-                {reviewStatus.verifiedScopes.includes(scope) ? "doğrulandı" : "bekliyor"}
-              </span>
+          {reviewStatus.scopeStatuses.map((scope) => (
+            <li key={scope.scope} className="flex items-center justify-between gap-3" data-scope={scope.scope} data-scope-state={scope.state}>
+              <span>{REVIEW_SCOPE_LABELS[scope.scope]}</span>
+              <span className={scope.state === "verified" ? "text-success-ink" : "text-warning-ink"}>{scope.label}</span>
             </li>
           ))}
         </ul>
-        <p className="mt-2 break-all font-mono text-[10px] leading-4 text-site-subtle">Artifact: {reviewStatus.artifactHash}</p>
+        <p className="mt-2 text-[11px] leading-4 text-site-subtle">
+          Ders metni sürümü <span className="font-mono">{reviewStatus.hashes.teachingHash.replace("sha256:", "").slice(0, 12)}</span>.
+          İnceleme bu sürüme bağlanır; dersi yayına almak veya süresini düzeltmek incelemeyi geçersiz kılmaz.
+        </p>
       </div>
       <p className="mt-4 text-[11px] leading-4 text-site-subtle">Hesaplar tarayıcında çalışır. Ders ilerlemesi sunucuya gönderilmez; bu cihazda tutulur.</p>
     </aside>

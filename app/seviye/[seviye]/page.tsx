@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getPublicTracksByLevel, hatEtiket, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
 import { LessonProgressBadge } from "@/components/ui/LessonProgressBadge";
 import { SEVIYE_THEME } from "@/lib/seviyeTheme";
-import { computeLessonArtifactHash } from "@/lib/lessonArtifact";
+import { computeTeachingHash } from "@/lib/lessonArtifact";
 
 const VALID_SEVIYELER: Seviye[] = ["ortaokul", "lise", "universite"];
 const LEVEL_COPY: Record<Seviye, { eyebrow: string; body: string }> = {
@@ -39,7 +39,7 @@ export default async function SeviyePage({ params }: { params: Promise<{ seviye:
                 <span><span className={`block font-heading text-xl font-semibold ${theme.ink}`}>{hatEtiket(hat)}</span><span className={`mt-1 block text-sm ${theme.muted}`}>{lessons.length} ders · {lessons.reduce((sum, lesson) => sum + lesson.frontmatter.sure, 0)} dakika</span><span className="mt-3 flex flex-wrap gap-2">{lessons.slice(0, 3).map((lesson) => <span key={lesson.slug} className="rounded-full bg-site-soft px-2.5 py-1 text-xs text-site-muted">{lesson.frontmatter.baslik}</span>)}</span></span>
                 <span className={`text-sm font-semibold ${theme.accentText}`}>Hattı aç <span aria-hidden="true">→</span></span>
               </Link>
-              <div className="sr-only">{lessons.map((lesson) => <LessonProgressBadge key={lesson.slug} slug={lesson.slug} seviye={level} contentVersion={computeLessonArtifactHash(lesson)} />)}</div>
+              <div className="sr-only">{lessons.map((lesson) => <LessonProgressBadge key={lesson.slug} slug={lesson.slug} seviye={level} contentVersion={computeTeachingHash(lesson)} />)}</div>
             </article>
           ))}
         </section>

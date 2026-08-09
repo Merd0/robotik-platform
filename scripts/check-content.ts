@@ -1,8 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import type { DersFrontmatter } from "../lib/content";
+import { findUnpartitionedFrontmatterKeys } from "../lib/lessonArtifact";
+import { reviewDebtBaseline } from "../lib/reviewDebt";
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
+const LEGACY_REVIEW_BASELINE = reviewDebtBaseline;
 const REQUIRED_FIELDS = ["id", "baslik", "hat", "seviye", "sure"] as const;
 const SOURCE_KINDS = new Set(["official-doc", "software-doc", "book", "paper", "standard", "dataset", "other"]);
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -55,12 +59,29 @@ function checkFile(filePath: string): string[] {
     });
   }
 
-  if (data.durum === "yayinda") {
+  // Her frontmatter alanı, ders sürüm köklerinden birine (kaynak / ders metni /
+  // sunum) atanmış olmalı. Kapsam dışı kalan bir alan, hangi insan incelemesini
+  // eskiteceği kararlaştırılmadan içeriğe girmiş demektir.
+  const kapsamDisi = findUnpartitionedFrontmatterKeys(data as DersFrontmatter);
+  if (kapsamDisi.length > 0) {
+    errors.push(
+      `${relativePath}: şu frontmatter alanları hiçbir sürüm köküne atanmamış: ${kapsamDisi.join(", ")} ` +
+        "(bkz. lib/lessonArtifact.ts — SOURCE_FIELDS / TEACHING_FIELDS / PRESENTATION_FIELDS).",
+    );
+  }
+
+  // Legacy inceleme alanları yalnız dondurulmuş borç baseline'ındaki 39 ders
+  // için zorunlu kalır. Bu kümenin dışındaki bir yayının kanıtı artık
+  // frontmatter alanı değil, sürüme bağlı Review Receipt'tir; onu
+  // `check-review-integrity` zorunlu tutar. Legacy alanı yeni yayınlara da
+  // dayatmak, projenin "bu alan tek başına kanıt değildir" kararıyla çelişir
+  // (docs/06 "Sürüme bağlı inceleme kaydı").
+  if (data.durum === "yayinda" && LEGACY_REVIEW_BASELINE.has(data.id)) {
     if (!data.incelendi_tarafindan) {
-      errors.push(`${relativePath}: durum: yayinda için "incelendi_tarafindan" dolu olmalı.`);
+      errors.push(`${relativePath}: durum: yayinda için "incelendi_tarafindan" dolu olmalı (legacy baseline dersi).`);
     }
     if (!data.incelendi_tarih) {
-      errors.push(`${relativePath}: durum: yayinda için "incelendi_tarih" dolu olmalı.`);
+      errors.push(`${relativePath}: durum: yayinda için "incelendi_tarih" dolu olmalı (legacy baseline dersi).`);
     }
   }
 

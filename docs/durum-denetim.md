@@ -1951,3 +1951,404 @@ kapanmadı.
 **4. `scripts/check-sensitive-terms.ts` yalnızca `content/` tarıyor.**
 Bugünkü `docs/` sızıntısı tam da bu yüzden otomatik yakalanmadı, elle
 bulundu. Taramanın `docs/` ve `README`'yi de kapsaması değerlendirilmeli.
+
+---
+
+# Büyüme planı — Claude Code değerlendirmesi
+
+Tarih: 2026-08-09
+İncelenen taban: `main`, b240f45. Kod değiştirilmedi; bu bölüm yalnız
+değerlendirmedir. `docs/12-buyume-plani.md` ve `docs/durum-codex.md`
+içindeki bağımsız değerlendirme okundu, ama aşağıdaki hükümler kod
+tabanına doğrudan bakılarak kuruldu.
+
+## Kısa hüküm
+
+Planın yönü doğru. Ama plandaki (ve Codex'in sıralamasındaki) örtük varsayım
+şu: **önce kaliteyi bitir, sonra büyümeye bak.** Bu varsayım bir yerde
+kırılıyor — sitenin şu anki ana sayfası ziyaretçiye kendi eliyle
+"**0** güncel review makbuzlu ders" yazıyor (`app/page.tsx:95`), her seviye
+kartı turuncu "0/N ders güncel review makbuzlu" rozeti taşıyor
+(`app/page.tsx:62-63`) ve 39 yayının 39'unda ders sayfası uyarı renginde
+"inceleme doğrulanamadı" paneli gösteriyor (`LessonTrustPanel.tsx:47`).
+Yani review borcu bir iç kalite meselesi değil, **şu anda sitenin en görünür
+pazarlama mesajı.** Bu, review işini "kalite" başlığından çıkarıp doğrudan
+büyümenin önündeki tek numaralı engel yapar.
+
+İkinci hüküm: review sisteminin sorunu **modeli değil, ritüeli.** Model
+(`lessonArtifact` + `reviewReceipts` + `reviewDebt`) dürüst ve doğru
+kurulmuş. Sorun, bir tek dersi onaylamanın bugün 4 dosyaya dokunmayı ve
+bunlardan birinin `docs/09` bölüm 7'ye göre **elle onay isteyen bir
+governance script'i** olmasını gerektirmesi. 39 kez tekrarlanacak bir iş
+için bu, okuma süresinden daha pahalı bir plumbing yükü.
+
+---
+
+## 1. Önceliklendirmeye katılıyor muyum?
+
+### Önce bir düzeltme: docs/12'nin iki "hemen" maddesinden biri bitti
+
+b240f45 (`fix: show 6-dof orientation and compact controls`) J6 yönelim
+görünürlüğünü, `components/scene/robotFrames.ts`'i, kompakt kontrol
+yerleşimini, `lib/robotFramesRenderer.test.ts` birim testini ve
+`e2e/platform.spec.ts`'e 41 satır kabul testini birlikte getirdi. Codex'in
+P0 #1'i **kapandı** ve doğru biçimde kapandı (teşhis + kabul testi
+birlikte). `docs/12` bu maddede güncellenmeli.
+
+Kalan "hemen" listesi tek maddelik: review.
+
+### Kendi sıralamam
+
+| Sıra | İş | Neden burada |
+|---|---|---|
+| **P0-a** | Review **plumbing**'i tek komuta indir (`npm run review`) | 1 günlük iş, 39 dersin tamamının önünü açar. Bu yapılmadan her onay 4 dosya + 1 governance dosyası düzenlemesi |
+| **P0-b** | Artifact hash'ini **kapsam başına** ayır | Yayına alma paradoksunu (aşağıda) ve öğrenci ilerlemesinin sıfırlanmasını aynı anda çözer. Yarım günlük iş |
+| **P1-a** | 39 yayını risk sırasıyla oku ve makbuza bağla | ~4 saat insan okuma, 2 haftaya yayılır |
+| **P1-b** | **Paralel:** arama yüzeyi (sözlük terim sayfaları, ders başına OG kartı, JSON-LD) | Review işiyle hiç çakışmaz, tek kullanıcı getiren kalem |
+| **P2** | Taslakları dikey dilimler hâlinde açmak | Codex'e katılıyorum: "50 yayın" bir hedef değil |
+| **P2** | Capstone laboratuvarını ölçmek ve büyütmek | Zaten var, yeniden yazılmamalı (aşağıda) |
+| **P3** | Öğretmen görüşmeleri | Katılıyorum ki ucuz — ama **P1-a'dan sonra** (gerekçe aşağıda) |
+
+### Codex'ten ayrıldığım üç nokta
+
+**(a) Büyüme işini tamamen kaliteden sonraya koymuyorum.** Codex'in
+"hemen" listesi dört madde ve dördü de içeri dönük. Review turu ~2-4
+haftalık bir takvim; o süre boyunca sitenin edinim yüzeyi büyümüyor.
+Sözlük terim sayfaları ve OG kartları review'dan **bağımsız**, veri zaten
+elde, bakım yükü sıfıra yakın. Bunları bekletmenin bir gerekçesi yok.
+
+**(b) Paylaşılabilir deney durumu yerine önce arama yüzeyi.** Codex'in
+"deney durumunu URL/QR ile paylaş" fikri iyi ve ben de değerli buluyorum —
+ama paylaşım **var olan bir kitleyi çoğaltır**, kitle yaratmaz. Bugün
+kitle ~0. `docs/00-vizyon.md`'nin kendi başarı ölçütü de arama tabanlı
+("Türkçe arayan bir lise öğrencisi bu siteye düşsün"). Bu yüzden aynı
+efor bütçesinde önce arama, sonra paylaşım.
+
+**(c) Öğretmen görüşmeleri "hemen" değil, review turundan hemen sonra.**
+Codex haklı: 5-8 görüşme ucuz. Ama bugün bir öğretmene link verirsen
+açtığı her ders sayfası turuncu "inceleme doğrulanamadı" paneli gösterir
+ve ana sayfa "0 makbuzlu ders" der. İlk izlenim bir kez oluşur; bunu
+2 hafta beklemenin maliyeti, kaybedilen ilk izlenimden düşük.
+
+### Katıldığım noktalar
+
+Forum/topluluk yapılmaması, blogun uzak kalması, "89 bitmeden yeni ders
+eklememe" ilkesi, Hat H'nin bağımsız safety kapısı, "50 yayın bir kalite
+ölçütü değildir", ve küçük araçlar listesinin (açı çevirici vb.) olduğu
+gibi ayırt edici olmadığı — hepsine katılıyorum, tekrar etmiyorum.
+
+---
+
+## 2. Review makbuzu sistemi — kendi tasarım önerim
+
+Amaç net: **Mert'in bir dersi onaylama maliyeti "15-20 dk okuma + 0 dk
+plumbing" olmalı.** Bugün plumbing tarafı okumadan pahalı.
+
+### Bugün bir dersi onaylamanın gerçek maliyeti
+
+Bu dosyanın bir üst bölümünde 4 adım olarak zaten kayıtlı; kodda
+doğruladım:
+
+1. `content/review-receipts.json`'a makbuz yaz — **ama artifact hash'ini
+   hesaplayan hiçbir komut yok.** `computeLessonArtifactHash` yalnız
+   `check-review-integrity.ts`, sayfa bileşenleri ve testlerden çağrılıyor.
+   Mert bu 64 karakteri elde etmek için ya siteyi ayağa kaldırıp güven
+   panelindeki satırı (`LessonTrustPanel.tsx:69`) kopyalayacak ya da tek
+   seferlik script yazacak.
+2. `content/review-debt.json`'dan kaydı sil.
+3. `scripts/check-review-debt.ts:5`'teki `FROZEN_LEGACY_DEBT_FINGERPRINT`
+   sabitini yeniden hesapla — bu bir **script düzenlemesi**, yani
+   `docs/09` bölüm 7'ye göre otomatik merge yasak, elle onay gerekli.
+   **39 kez.**
+4. `kaynaklar`'ı `SourceRef`'e çevir (`check-review-integrity.ts:40`).
+
+### Kritik tasarım hatası: donan şey yanlış küme
+
+`check-review-debt.ts` **bugünkü** borç kümesinin hash'ini donduruyor
+(`recordedIds` tam olarak yayın kümesine eşit olmalı ve fingerprint sabitle
+eşleşmeli). Korunmak istenen özellik doğru — "yeni ders sessizce borç
+listesine eklenemesin". Ama uygulama, borcun **azalmasını** da aynı
+duvarla engelliyor. Doğrusu:
+
+> Baseline kümesi **veri olarak** dondurulsun (`review-debt.json` içine
+> `baselineIds` + `baselineFingerprint`), ve kural
+> `current ⊆ baseline` (monoton küçülme) olsun.
+
+Bu tek değişiklik, güvenlik özelliğini aynen korur (yeni bir id baseline'da
+olmadığı için giremez) ama borç eritmeyi governance dosyası düzenlemeden
+mümkün kılar. Adım 3 tamamen ortadan kalkar.
+
+### İkinci tasarım hatası: yayına alma paradoksu
+
+`lessonArtifact.ts:25-29` frontmatter'dan yalnız `incelendi_tarafindan` ve
+`incelendi_tarih`'i çıkarıyor. **`durum` hash'in içinde.** Sonuç:
+
+- Bir taslağı incelersin, hash'i H1 olur, makbuzu yazarsın.
+- `durum: taslak` → `yayinda` yaparsın; hash H2 olur.
+- `check-review-integrity.ts:37` "yeni yayın için güncel makbuz zorunlu"
+  diye kırılır, çünkü makbuz H1'e bağlı.
+
+Yani 50 taslağın hiçbiri, "önce incele sonra yayınla" sırasıyla
+yayınlanamaz. Doğru sıra "önce `durum`u çevir, sonra hash'i hesapla, sonra
+makbuzu yaz" — ama bu hiçbir yerde yazılı değil ve sezgiye aykırı. Ayrıca
+`sourceCommit` aynı sorunun ikinci yüzü: makbuz içeriğin kendisiyle aynı
+commit'te yazılırsa, o commit'in SHA'sı yazılırken henüz yok.
+(`check-review-integrity.ts:61` yalnız 40 hex biçimi arıyor, varlığı
+aramıyor — bu yüzden bugün sessizce "uydurma ama biçimsel olarak geçerli"
+bir değer yazılabilir.)
+
+### Üçüncü sorun: tek hash iki işi birden yapıyor
+
+`computeLessonArtifactHash` aynı zamanda öğrencinin ilerleme kaydının
+sürüm anahtarı (`app/ders/[slug]/page.tsx:82` → `LessonEvidenceProvider
+contentVersion`, `lib/evidence.ts:372`). Yani **bir kaynağın erişim
+tarihini güncellemek veya `sira` alanına dokunmak, o dersi çalışmış her
+öğrencinin yerel "passed" kaydını geçersiz kılıyor.** Review
+invalidation'ı ile öğrenme kaydı invalidation'ı aynı şey değil; ayrılmalı.
+
+### Önerim: üç aşama, ilki bir gün
+
+**Aşama 0 — `npm run review` (1 gün, tek script, kapsam değişmiyor)**
+
+`scripts/review.ts`, üç alt komut:
+
+- `review kuyruk` → risk sıralı liste. Sıralama girdileri **zaten elde
+  var**: `reviewDebt` durumu, `validate-content-graph`'tan önkoşul
+  merkeziliği (kaç ders bu derse dayanıyor), `hat === "h-guvenlik"`,
+  `kaynaklar` içinde düz metin kalıp kalmadığı, URL kaynaklarının
+  `accessedAt` yaşı. Çıktı: `id · risk · neden · engellenen ders sayısı`.
+- `review goster <id>` → tek ekranda: güncel artifact hash, kaynak listesi
+  (canlı link kontrolüyle), kazanımlar, ders içindeki sayısal iddialar ve
+  `etkilesimli` bileşen listesi + o bileşenlerin son değişiklik tarihi.
+  Yani Mert'in tarayıcıda 6 sekme açmasına gerek kalmaz.
+- `review onayla <id> --kapsam source,technical,pedagogical --kim "..."`
+  → dört adımı **atomik** yapar: `durum`u yayına çevirir, post-flip hash'i
+  hesaplar, makbuzu yazar, borçtan çıkarır, `kaynaklar` hâlâ düz metinse
+  reddeder ve nedenini söyler.
+
+Bu tek başına 39 × ~10 dk plumbing'i (~6,5 saat) sıfıra indirir ve
+governance dosyası düzenleme zorunluluğunu kaldırır (baseline kuralı
+Aşama 0'da beraber değişir).
+
+**Aşama 1 — hash'i kapsama göre böl (yarım gün)**
+
+Tek `artifactHash` yerine aynı kanonikleştiriciyle üç kök:
+
+| Kök | İçerdiği | Eskittiği kapsam |
+|---|---|---|
+| `sourceHash` | yalnız `kaynaklar` | `source` (+ riskliyse `safety`) |
+| `teachingHash` | `body`, `kazanimlar`, `baslik`, `onkosul` | `technical` + `pedagogical` |
+| `presentationHash` | `durum`, `sira`, `sure`, legacy alanlar | hiçbiri |
+
+Kazanç üçü birden: (1) yayına alma paradoksu biter — `durum` artık hiçbir
+kapsamı eskitmez; (2) bir kaynağın `accessedAt`'ini tazelemek pedagojik
+incelemeyi çöpe atmaz; (3) öğrenci ilerlemesi `teachingHash`'e bağlanır,
+metadata düzeltmeleri ilerlemeyi sıfırlamaz.
+
+Bu, Codex'in altı manifestli önerisinin ilk iki maddesi. Değerin büyük
+kısmı burada; kalanı sonra gelebilir.
+
+**Aşama 2 — etkileşim bağımlılığı (Codex haklı, ama sonra)**
+
+`interactionHash`: `etkilesimli` listesindeki bileşen dosyaları + onların
+`lib/robotics/` transitive import'ları. Yalnız `technical` kapsamını
+eskitir. Bunun somut kanıtı bugün elimizde: b240f45 `JointSliders` ve
+`RobotArm`'ı değiştirdi, **6 yayındaki dersin öğrenci deneyimi değişti,
+hiçbir dersin artifact hash'i değişmedi.** Sistem bunu görmedi. Yani bu
+teorik bir boşluk değil, dün gerçekleşmiş bir olay.
+
+**Otomasyonun sınırı — Codex'le aynı fikirdeyim, farklı çerçeveyle:**
+otomasyon makbuz üretmez, **okunacak metni küçültür.** `kalite-denetci`
+subagent'ı kuyruktaki her derse bir ön rapor iliştirsin (kaynak-iddia
+uyumu, ölü link, fixture'a karşı sayısal örnek kontrolü). Mert dersin
+tamamını değil, raporu + işaretlenen paragrafları okur. Raporu temiz
+çıkan bir ders için hedef ~5-7 dk. Örnekleme ise corpus'un yazım
+kalitesi hakkında sinyal üretir; okunmamış tek bir dersi "onaylı"
+yapmaz — burada Codex'e tamamen katılıyorum.
+
+**Gerçekçi bütçe:** 39 ders × ~6 dk ≈ 4 saat insan okuma. Günde 3 ders =
+13 gün. Aşama 0 + 1 (1,5 gün geliştirme) bu 4 saati mümkün kılan şey.
+Aşama 0 yapılmazsa aynı iş ~11 saate çıkar ve 39 kez governance onayı
+ister — pratikte bitmez.
+
+**Arayüz:** tek turuncu/yeşil kutu yerine kapsam başına durum
+(`LessonTrustPanel.tsx:59-68` zaten kapsam listesi çiziyor, altyapı
+hazır). Ve `Artifact: sha256:...` satırı (`:69`) öğrenciye hiçbir şey
+anlatmıyor — yerine "Ders metni 3 Ağustos'ta incelendi; deney motoru o
+tarihten sonra değişti" gibi bir cümle. Hash geliştirici aracıdır,
+öğrenci arayüzü değil.
+
+---
+
+## 3. Codex'in bulmadığı, benim gördüğüm noktalar
+
+1. **Baseline değil bugünkü küme donduruluyor** (§2). Borcun azalmasını
+   zorlaştıran bu; Codex "tek JSON append-only değil" dedi ama kilidin
+   yönünü işaretlemedi.
+2. **Yayına alma paradoksu** — `durum` hash'in içinde olduğu için
+   "incele → yayınla" sırası teknik olarak imkânsız. 50 taslağın tamamını
+   ilgilendiriyor ve bugüne kadar 0 makbuz yazıldığı için hiç
+   tetiklenmemiş.
+3. **Hash'in çift görevi** — review invalidation ile öğrenci ilerleme
+   sürümü aynı anahtarı paylaşıyor; metadata düzeltmesi öğrenci
+   ilerlemesini siliyor.
+4. **b240f45 canlı bir kanıt** — bileşen değişikliği 6 yayındaki dersin
+   deneyimini değiştirdi, hiçbir hash kıpırdamadı. Codex bunu teorik risk
+   olarak yazmıştı; artık gerçekleşmiş bir örnek var.
+5. **`sitemap.ts:17` `lastModified` olarak `incelendi_tarih` kullanıyor** —
+   projenin kendi dokümanlarının "tek başına kanıt değildir" dediği legacy
+   alan, dış dünyaya tazelik sinyali olarak veriliyor. Git mtime veya
+   makbuz tarihi doğru kaynak.
+6. **`/laboratuvar/robot-hucresi` zaten var** ve sitemap'te 0.9
+   önceliğinde. `docs/12` "oyun alanı henüz yapılmadı" diyor; doğrusu
+   "görev tabanlı capstone var, serbest kum havuzu yok". Öneri: yeni bir
+   sandbox motoru yazmak yerine **bu sayfayı ölçmek** — zaten
+   `LessonEvidenceProvider` ile sarılı, `contentVersion: "beta-2026-08-07"`
+   elle sabitlenmiş. En ucuz "oyun alanı" adımı, bu sayfaya serbest mod
+   sekmesi eklemek.
+7. **JSON-LD hiç yok.** Eğitim içeriği için `LearningResource`/`Course`
+   şeması, arama sonuçlarında zengin sonuç üretebilen en ucuz kalem —
+   veri (süre, seviye, kazanımlar, ön koşullar) frontmatter'da hazır
+   duruyor.
+8. **Ders başına OG kartı yok.** `app/layout.tsx:13-18` tek bir
+   `openGraph` bloğu tanımlıyor ve `generateMetadata`
+   (`app/ders/[slug]/page.tsx:46-50`) yalnız `title`/`description`
+   veriyor — `openGraph.title` override edilmiyor ve hiçbir yerde görsel
+   yok. Sonuç: WhatsApp veya Instagram'da paylaşılan **her ders linki aynı
+   jenerik, görselsiz kartı** gösterir. Hedef kitle (12-18 yaş, Türkiye)
+   için ana yayılma kanalı tam olarak burası.
+
+---
+
+## 4. Büyüme için kendi somut önerilerim
+
+`docs/12`'deki listeye ek. Hepsi ders içeriğinden bağımsız, review turuyla
+paralel yürüyebilir.
+
+### 4.1 Sözlüğü 1 sayfadan 72 sayfaya çıkar (en yüksek getiri/efor)
+
+`content/sozluk.json` 72 terim taşıyor ve hepsi tek bir `/sozluk`
+sayfasında. Bu, **72 uzun kuyruk arama sorgusunu tek bir URL'e
+sıkıştırmak** demek. `/sozluk/tekillik`, `/sozluk/ters-kinematik`,
+`/sozluk/el-goz-kalibrasyonu` gibi statik sayfalar üretmek:
+
+- Yeni içerik yazmayı gerektirmez (tanımlar zaten yazılı).
+- "tekillik nedir robotik", "TCP ne demek robot" gibi tam da hedef
+  kitlenin yazdığı sorguları karşılar.
+- Her terim sayfası ilgili derse ve seviyesine link verir → arama
+  trafiğini derse aktaran huni.
+- Bakım yükü sıfır: JSON'a satır eklemek yeni sayfa üretir.
+- `hat` alanı zaten var, yani terim → hat → ders bağı kurulabilir.
+
+Sitenin bugün ~50 indekslenebilir sayfası var; bu tek adım sayfa sayısını
+üçe katlar ve bunu içerik borcu yaratmadan yapar.
+
+### 4.2 Ders başına OG görseli (yarım gün)
+
+Next'in `opengraph-image` route'uyla, ders başlığı + seviye + hat +
+imza iz çizgisi taşıyan kart. Statik export'ta build zamanında üretilir.
+Paylaşılan linkin tıklanma oranını değiştiren tek görsel öğe.
+
+### 4.3 "Bu dersi kanıtladım" yerel özeti (paylaşım, hesapsız)
+
+Codex'in paylaşılabilir deney durumu fikrinin **daha ucuz ilk adımı**:
+`lib/evidence.ts` zaten JSON dışa aktarma taşıyor. Bir ders bitiminde
+"özetini kopyala" düğmesi — kişisel veri değil, "ders + kazanım + kaç
+denemede" metni. Öğrenci bunu arkadaşına/öğretmenine kendi yapıştırır.
+Şema sürümleme, URL kısaltma veya migration gerekmez; Codex'in tam
+sürümüne (seed'li durum aktarımı) giden yolu kapatmaz, sadece bugünkü
+maliyeti sıfıra yakın tutar.
+
+### 4.4 Kalıcılık: repo'nun kendisini ürün yap
+
+Platformun en savunmasız yanı tek kişiye bağımlı olması. `CONTRIBUTING.md`
+var ama depo dışarıdan **ilk katkı yapılabilir** görünmüyor: "iyi ilk
+görev" etiketli issue yok. Somut adım: 5-10 tanımlı issue ("şu terimin
+sözlük tanımını yaz", "şu dersin kancasını çeşitlendir", "şu bileşene
+klavye testi ekle"). Türkiye'de robotik öğrencisi için "gerçek bir açık
+kaynak projeye ilk PR" başlı başına bir çekim sebebi — ve bu, `docs/06`'nın
+"topluluk kaynağına dönüşme" hedefinin tek somut mekanizması.
+
+### 4.5 Ölçüm — gizlilik sınırını bozmadan
+
+Codex'in ölçüm sözleşmesine katılıyorum, ama daha da sadeleştirilebilir:
+`docs/05` zaten Plausible'ı ("ya da hiç") onaylamış. Sayfa görüntüleme ve
+yönlendiren (referrer) bilgisi, çerezsiz ve kişisel veri toplamadan,
+"hangi ders aranıyor, insanlar nereden geliyor" sorusunu cevaplar. Şu an
+bu bilgi **hiç yok**, yani bütün büyüme kararları tahminle veriliyor.
+Öğrenme davranışı ölçümü (nerede bırakıldı vb.) `localStorage`'daki
+evidence kaydından, kullanıcı isterse elle paylaşarak gelmeli — sunucuya
+gitmemeli.
+
+---
+
+## Özet: ilk üç somut adım
+
+1. `scripts/review.ts` + baseline kuralının veri tarafına taşınması
+   (1 gün) — 39 dersin önündeki plumbing duvarını kaldırır.
+2. Artifact hash'ini `sourceHash` / `teachingHash` / `presentationHash`
+   olarak bölmek (yarım gün) — yayına alma paradoksunu, gereksiz review
+   iptalini ve öğrenci ilerlemesinin sıfırlanmasını birlikte çözer.
+3. Paralel ve bağımsız: sözlük terim sayfaları + ders başına OG kartı
+   (1 gün) — review turu sürerken sitenin arama ve paylaşım yüzeyini
+   üçe katlar.
+
+---
+
+## Uygulama notu — Aşama 0 + Aşama 1 (2026-08-09)
+
+Dal: `feat/review-v2-hash-split`. `main`'e merge EDİLMEDİ — governance/altyapı
+değişikliği, insan onayı bekliyor.
+
+**Yapılanlar**
+
+1. **Sürüm kökleri bölündü** (`lib/lessonArtifact.ts`). Tek `artifactHash`
+   yerine `sourceHash` / `teachingHash` / `presentationHash` + `revisionRoot`.
+   `findUnpartitionedFrontmatterKeys` ile hiçbir frontmatter alanı kapsam dışı
+   kalamaz; `check-content` ve birim testi bunu zorluyor.
+2. **Yayına alma paradoksu kapandı.** `durum` artık yalnız
+   `presentationHash`'te; hiçbir inceleme kapsamını eskitmiyor. Regresyon
+   testi: `lib/lessonArtifact.test.ts` → "yayına almak hiçbir inceleme kökünü
+   değiştirmez".
+3. **İlerleme anahtarı ayrıldı.** Öğrenci evidence `contentVersion`'ı artık
+   `computeTeachingHash`. Kaynak tazelemesi veya süre düzeltmesi öğrencinin
+   kaydını silmiyor.
+4. **Makbuz v2**: kapsam başına, append-only, `decision` alanlı, `subject`
+   yalnız ilgili kökleri taşıyor. `sourceCommit` artık biçim kontrolü değil —
+   CI dersi o commit'ten okuyup kökleri yeniden hesaplıyor.
+5. **Borç çıpası düzeltildi.** `check-review-debt.ts` içindeki tek sabit artık
+   GÜNCEL kümeyi değil, dondurulmuş `baselineIds`'i çıpalıyor; kural
+   `current ⊆ baseline`. Bir dersi onaylamak artık script düzenlemesi
+   (dolayısıyla governance onayı) gerektirmiyor.
+6. **`npm run review`** (`scripts/review.ts`): `kuyruk` / `goster` / `onayla`.
+7. **Legacy alan dayatması daraltıldı.** `incelendi_tarafindan`/`incelendi_tarih`
+   yalnız baseline'daki 39 ders için zorunlu; yeni yayının kanıtı makbuz.
+
+**Uçtan uca doğrulandı (deneme verisi sonra geri alındı)**
+
+- `b-lise-ileri-kinematik` onaylandı → borç 39'dan 38'e düştü, **hiçbir script
+  düzenlenmeden**, `check-review-debt` ve `check-review-integrity` temiz.
+- `d-ortaokul-blok-komutlar` taslağı tek komutta incelenip yayına alındı ve
+  makbuzu geçerli kaldı — paradoksun kapandığının kanıtı.
+- Makbuzdaki `teachingHash` elle bozulunca CI reddetti: "subject.teachingHash,
+  sourceCommit'teki ders sürümüyle eşleşmiyor".
+- Deneme makbuzları ve borç kaydı temizlendi; `content/` altında değişiklik yok
+  (0 makbuz, 39 açık borç — başlangıç durumu).
+
+**Kapılar:** tsc, lint, 216 test, check-content, validate-content-graph,
+check-quiz-dagilimi, check-mdx-guvenlik, check-review-debt,
+check-review-integrity, production build — hepsi temiz.
+
+**Bu dalda kırmızı olan tek kapı:** `check-sensitive-terms`, 7 bulgunun
+tamamı `docs/guncel-fikirler.md` içinde. Bu dosya bu dal açılmadan önce de
+değişmişti ve aynı bulgu bu belgede zaten kayıtlı; bu çalışmanın ürünü değil.
+
+**Onay bekleyen tutarsızlık:** `.claude/hooks/check-lesson-frontmatter.mjs`
+hâlâ `durum: yayinda` için legacy alanları şart koşuyor. `check-content` artık
+bunu yalnız baseline dersleri için istiyor. Hook bir governance dosyası
+olduğundan (docs/09 §7) bilinçli olarak değiştirilmedi; hizalanması ayrı bir
+karar.
+
+**Sonraki adım (Aşama 2):** `interactionHash` — `etkilesimli` bileşenleri ve
+onların `lib/robotics/` bağımlılıkları. Bugün bir bileşen değişikliği hiçbir
+kapsamı eskitmiyor; b240f45 bunun gerçekleşmiş örneği.

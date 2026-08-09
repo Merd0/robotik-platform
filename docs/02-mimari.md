@@ -178,20 +178,52 @@ Yeni yayınlarda kaynaklar yapılandırılmış `SourceRef` nesneleridir. Eski m
 kaynaklar yalnızca mevcut legacy yayınları okuyabilmek için desteklenir. URL
 kaynaklarında erişim tarihi; yazılım dokümantasyonunda ayrıca sürüm zorunludur.
 
-### 4. Sürüme bağlı insan incelemesi
+### 4. Sürüme bağlı insan incelemesi (Review Receipt v2)
 
 `incelendi_tarafindan` ve `incelendi_tarih` alanları legacy kayıttır; tek başına
 güncel sürümün incelendiğini kanıtlamaz. Yeni model `content/review-receipts.json`
-içindeki Review Receipt v1 kayıtlarıdır. Makbuz, `lesson-artifact-v1` kanonik
-SHA-256 hash'ine, tam kaynak commit'ine, inceleyen kişiye, tarihe ve ayrı
-`source`, `technical`, `pedagogical`, gerektiğinde `safety` kapsamlarına bağlanır.
-Öğrencinin gördüğü içerik değişirse hash değişir ve eski makbuz otomatik olarak
-geçersiz görünür.
+içindeki Review Receipt v2 kayıtlarıdır.
+
+**Ders sürümü tek hash değil, üç bağımsız köktür** (`lib/lessonArtifact.ts`,
+kanonikleştirme adı `lesson-artifact-v2`):
+
+| Kök | Kapsadığı frontmatter + gövde | Eskittiği inceleme kapsamı |
+|---|---|---|
+| `sourceHash` | `kaynaklar` | `source`, `technical`, `safety` |
+| `teachingHash` | `baslik`, `hat`, `seviye`, `onkosul`, `kazanimlar`, `etkilesimli` + ders gövdesi | `technical`, `pedagogical`, `safety` |
+| `presentationHash` | `id`, `sure`, `sira`, `durum`, legacy inceleme alanları | **hiçbiri** |
+
+Bu ayrım bir kolaylık değil, bir doğruluk düzeltmesi. v1'de tek `artifactHash`
+frontmatter'ın tamamını kapsıyordu; `durum` da içindeydi. Sonuç: incelenip
+makbuza bağlanan bir taslak, yayına alındığı anda hash'i değiştiği için
+makbuzunu geçersiz kılıyordu — yani "önce incele, sonra yayınla" sırası
+teknik olarak imkânsızdı. `presentationHash` hiçbir kapsamı eskitmediği için
+bu kapı artık çalışıyor. Aynı ayrım, bir kaynağın erişim tarihini tazelemenin
+pedagojik incelemeyi çöpe atmasını da engeller.
+
+Makbuz **kapsam başınadır ve append-only'dir**: her kayıt tek ders, tek kapsam
+(`source` / `technical` / `pedagogical` / gerektiğinde `safety`), tek karar
+(`approved` / `changes-requested`) ve tek inceleyen taşır; `subject` alanına
+yalnız o kapsamın bağlı olduğu kökler yazılır. Var olan bir kayıt düzenlenmez
+veya silinmez — düzeltme yeni makbuz yazılarak yapılır.
+
+`sourceCommit` biçimsel bir alan değil: CI, commit nesnesi elde varsa dersi o
+commit'ten okuyup kökleri yeniden hesaplar ve makbuzla karşılaştırır. Uydurma
+ama 40 hex karakterli bir değer reddedilir.
+
+Makbuzlar elle yazılmaz; `npm run review onayla` üretir. Aynı komut borç
+kaydını da düşürür — bu yüzden bir dersi onaylamak hiçbir script düzenlemesi
+gerektirmez.
 
 ### 5. Evidence v2
 
-Yerel öğrenme kaydı `robotik-platform:evidence:v2` anahtarında, ders artifact
-hash'iyle birlikte tutulur. `read`, `predicted`, `tried`, `observed` ve
+Yerel öğrenme kaydı `robotik-platform:evidence:v2` anahtarında, dersin
+`teachingHash` sürümüyle birlikte tutulur. Öğrenci ilerlemesinin sürüm
+anahtarı bilinçli olarak `teachingHash`'tir, tüm ders artifact'ı değil:
+öğretilen metin değişirse eski kanıt geçersiz olmalı, ama bir kaynağın erişim
+tarihini güncellemek veya dersi yayına almak öğrencinin kaydını silmemeli.
+İnceleme geçerliliği ile öğrenci ilerlemesi ayrı sorulardır ve aynı anahtara
+bağlanmazlar. `read`, `predicted`, `tried`, `observed` ve
 `assessed` kullanıcı/bileşen olaylarıdır; bunların hiçbiri doğrudan başarı
 değildir. `passed` yalnız `lib/evidence.ts` içindeki kayıtlı predicate'in aynı
 ders ve aynı artifact sürümündeki ölçülebilir olay dizisini doğrulamasıyla

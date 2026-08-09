@@ -16,7 +16,7 @@ import { SEVIYE_THEME } from "@/lib/seviyeTheme";
 import { LessonEvidenceProvider } from "@/components/lesson/LessonEvidenceProvider";
 import { LessonCompletionPanel } from "@/components/lesson/LessonCompletionPanel";
 import { LessonTrustPanel } from "@/components/lesson/LessonTrustPanel";
-import { computeLessonArtifactHash } from "@/lib/lessonArtifact";
+import { computeTeachingHash } from "@/lib/lessonArtifact";
 import Link from "next/link";
 
 /**
@@ -79,7 +79,7 @@ export default async function DersPage({ params }: DersPageProps) {
   return (
     <main id="ana-icerik" data-seviye={seviye} className={`min-h-screen ${theme.page}`}>
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
-        <LessonEvidenceProvider lessonId={lesson.slug} contentVersion={computeLessonArtifactHash(lesson)}>
+        <LessonEvidenceProvider lessonId={lesson.slug} contentVersion={computeTeachingHash(lesson)}>
           <nav aria-label="İçerik yolu" className={`flex flex-wrap items-center gap-2 text-sm ${theme.muted}`}><Link href="/" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvar</Link><span>/</span><Link href={`/seviye/${seviye}`} className="inline-flex min-h-11 items-center underline underline-offset-4">{SEVIYE_ETIKET[seviye]}</Link><span>/</span><Link href={`/seviye/${seviye}/hat/${lesson.frontmatter.hat}`} className="inline-flex min-h-11 items-center underline underline-offset-4">{hatEtiket(lesson.frontmatter.hat)}</Link></nav>
           <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
             <div className="min-w-0">

@@ -21,6 +21,7 @@
     "check-release-output": "tsx scripts/check-release-output.ts",
     "check-quiz-dagilimi": "tsx scripts/check-quiz-dagilimi.ts",
     "check-mdx-guvenlik": "tsx scripts/check-mdx-guvenlik.ts",
+    "review": "tsx scripts/review.ts",
     "check-review-debt": "tsx scripts/check-review-debt.ts",
     "check-review-integrity": "tsx scripts/check-review-integrity.ts",
     "check-sensitive-terms": "tsx scripts/check-sensitive-terms.ts",

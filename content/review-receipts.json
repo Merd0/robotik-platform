@@ -1,6 +1,7 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "hashAlgorithm": "sha256",
-  "canonicalization": "lesson-artifact-v1",
+  "canonicalization": "lesson-artifact-v2",
+  "aciklama": "Append-only kapsam makbuzları. Her kayıt tek ders, tek kapsam ve tek insan kararıdır; subject alanı yalnız o kapsamın bağlı olduğu kökleri taşır. Var olan bir kayıt düzenlenmez veya silinmez — düzeltme yeni makbuz yazılarak yapılır. Kayıtlar `npm run review onayla` ile üretilir; elle yazılmaz.",
   "receipts": []
 }

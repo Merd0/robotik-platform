@@ -1,36 +1,76 @@
-import { getAllLessons } from "../lib/content";
-import { reviewDebt } from "../lib/reviewDebt";
 import { createHash } from "node:crypto";
+import { getAllLessons } from "../lib/content";
+import { getOpenReviewDebtIds, reviewDebt } from "../lib/reviewDebt";
+import { getLessonReviewStatus } from "../lib/reviewReceipts";
 
-const FROZEN_LEGACY_DEBT_FINGERPRINT = "dbd7dcbba1edadc97b10b578879f8eee129bf3d976914278b399e8e7ac73a717";
+/**
+ * DEĞİŞMEZ ÇIPA — asla yeniden hesaplanmaz.
+ *
+ * Bu sabit, 2026-08-09'da dondurulmuş legacy borç BASELINE'ının parmak izidir
+ * (`content/review-debt.json` → `baselineIds`, 39 ders). v1'de aynı sabit
+ * GÜNCEL borç kümesini donduruyordu; o yüzden bir dersi onaylayıp borçtan
+ * çıkarmak bu script'i düzenlemeyi gerektiriyordu (docs/09 §7'ye göre elle
+ * onay isteyen bir governance değişikliği — 39 kez).
+ *
+ * Artık kural iki parçalı:
+ *   1. baseline değişmez (bu sabit onu kanıtlar),
+ *   2. güncel borç baseline'ın alt kümesidir ve yalnız küçülebilir.
+ *
+ * Böylece "yeni ders sessizce borç listesine eklenemez" güvencesi aynen
+ * korunur, ama borç eritmek hiçbir kod değişikliği istemez.
+ */
+const BASELINE_FINGERPRINT = "dbd7dcbba1edadc97b10b578879f8eee129bf3d976914278b399e8e7ac73a717";
 
-const publishedIds = getAllLessons()
-  .filter((lesson) => lesson.frontmatter.durum === "yayinda")
-  .map((lesson) => lesson.slug)
-  .sort();
-const recordedIds = [
-  ...reviewDebt.staleAfterContentChange,
-  ...reviewDebt.legacyUnverified,
-].sort();
-const debtFingerprint = createHash("sha256").update(recordedIds.join("\n"), "utf8").digest("hex");
+const errors: string[] = [];
+const lessons = getAllLessons();
+const publishedLessons = lessons.filter((lesson) => lesson.frontmatter.durum === "yayinda");
+const baselineIds = [...reviewDebt.baselineIds].sort();
+const baselineFingerprint = createHash("sha256").update(baselineIds.join("\n"), "utf8").digest("hex");
+const openDebtIds = getOpenReviewDebtIds();
+const baseline = new Set(baselineIds);
 
-const duplicates = recordedIds.filter((id, index) => recordedIds.indexOf(id) !== index);
-const missing = publishedIds.filter((id) => !recordedIds.includes(id));
-const extra = recordedIds.filter((id) => !publishedIds.includes(id));
-if (debtFingerprint !== FROZEN_LEGACY_DEBT_FINGERPRINT) {
-  console.error("Review borcu baseline kümesi değişti. Yeni ders legacy borca eklenemez; güncel Review Receipt gerekir.");
+if (reviewDebt.schemaVersion !== 2) {
+  errors.push("review-debt.json şema sürümü 2 olmalı.");
+}
+if (baselineFingerprint !== BASELINE_FINGERPRINT) {
+  errors.push(
+    "Dondurulmuş legacy borç baseline'ı değişti. baselineIds değiştirilemez; yeni ders legacy borca eklenemez, güncel Review Receipt gerekir.",
+  );
+}
+if (reviewDebt.baselineFingerprint !== BASELINE_FINGERPRINT) {
+  errors.push("review-debt.json içindeki baselineFingerprint, dondurulmuş baseline ile uyuşmuyor.");
+}
+
+const duplicates = [...new Set(openDebtIds.filter((id, index) => openDebtIds.indexOf(id) !== index))];
+if (duplicates.length) errors.push(`Güncel borçta yinelenen kayıt: ${duplicates.join(", ")}`);
+
+const outsideBaseline = openDebtIds.filter((id) => !baseline.has(id));
+if (outsideBaseline.length) {
+  errors.push(`Baseline dışında borç kaydı (borç yalnız küçülebilir): ${outsideBaseline.join(", ")}`);
+}
+
+// Bir yayın ya güncel borç kaydında olacak ya da gerekli her kapsamı güncel
+// makbuzla doğrulanmış olacak. İkisi de yoksa yayın sessizce doğrulanmamış
+// durumda demektir.
+const openDebt = new Set(openDebtIds);
+for (const lesson of publishedLessons) {
+  const verified = getLessonReviewStatus(lesson).state === "verified";
+  if (!openDebt.has(lesson.slug) && !verified) {
+    errors.push(`${lesson.slug}: yayında ama ne borç kaydında ne de güncel makbuzu var.`);
+  }
+  if (openDebt.has(lesson.slug) && verified) {
+    errors.push(`${lesson.slug}: güncel makbuz var; borç kaydı kaldırılmalı (npm run review onayla bunu kendisi yapar).`);
+  }
+}
+
+if (errors.length > 0) {
+  console.error(`Review borcu kaydı ${errors.length} hata üretti:\n${errors.map((error) => `  - ${error}`).join("\n")}`);
   process.exit(1);
 }
 
-if (duplicates.length || missing.length || extra.length) {
-  console.error("Review borcu kaydı yayın kümesiyle uyuşmuyor.");
-  if (duplicates.length) console.error(`  Yinelenen: ${[...new Set(duplicates)].join(", ")}`);
-  if (missing.length) console.error(`  Kaydı eksik yayınlar: ${missing.join(", ")}`);
-  if (extra.length) console.error(`  Yayında olmadığı hâlde kayıtlı: ${extra.join(", ")}`);
-  process.exit(1);
-}
-
+const cleared = baselineIds.length - openDebtIds.length;
 console.log(
   `Review borcu kaydı temiz: ${reviewDebt.staleAfterContentChange.length} değişiklik sonrası eski, ` +
-    `${reviewDebt.legacyUnverified.length} sürüme bağlanmamış legacy kayıt.`,
+    `${reviewDebt.legacyUnverified.length} sürüme bağlanmamış legacy kayıt; ` +
+    `${cleared}/${baselineIds.length} baseline borcu kapandı.`,
 );

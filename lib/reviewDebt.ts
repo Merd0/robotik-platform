@@ -8,10 +8,29 @@ export interface ReviewDebtStatus {
   explanation: string;
 }
 
+/**
+ * Legacy review borcu.
+ *
+ * `baselineIds` 2026-08-09'da dondurulmuş 39 derslik kümedir ve değişmez;
+ * `scripts/check-review-debt.ts` içindeki tek sabit onu çıpalar. Güncel borç
+ * (`staleAfterContentChange` + `legacyUnverified`) bu kümenin alt kümesi
+ * olmak zorundadır ve yalnız küçülebilir.
+ *
+ * Bu ayrım bilinçli: v1'de sabit, GÜNCEL kümenin parmak izini donduruyordu.
+ * Doğru güvenlik özelliğini (yeni ders sessizce borca eklenemez) sağlıyordu
+ * ama borcun azalmasını da engelliyordu — bir dersi onaylamak governance
+ * script'ini düzenlemeyi gerektiriyordu, yani 39 kez elle onay. Baseline'ı
+ * veriye taşımak aynı güvenceyi korur, ritüeli kaldırır.
+ */
 export const reviewDebt = reviewDebtData;
 
 const staleLessons = new Set<string>(reviewDebt.staleAfterContentChange);
 const legacyLessons = new Set<string>(reviewDebt.legacyUnverified);
+export const reviewDebtBaseline = new Set<string>(reviewDebt.baselineIds);
+
+export function getOpenReviewDebtIds(): string[] {
+  return [...staleLessons, ...legacyLessons];
+}
 
 export function getReviewDebtStatus(lessonId: string): ReviewDebtStatus {
   if (staleLessons.has(lessonId)) {

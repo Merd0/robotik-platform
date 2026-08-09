@@ -52,11 +52,37 @@ incelendi_tarih: ""
 ```
 
 Ancak bu iki alan güncel içeriğe bağlı değildir. Yeni yayınlarda doğrulama,
-`content/review-receipts.json` içindeki Review Receipt v1 kaydıyla yapılır.
-Makbuz; kanonik ders artifact SHA-256 hash'ini, tam kaynak commit'ini, inceleyen
-kişiyi, tarihi ve kapsamları (`source`, `technical`, `pedagogical`, gerektiğinde
-`safety`) taşır. Ders içeriği değiştiğinde hash değişir; eski makbuz güncel
+`content/review-receipts.json` içindeki Review Receipt v2 kaydıyla yapılır.
+Her makbuz tek kapsam (`source`, `technical`, `pedagogical`, gerektiğinde
+`safety`), tek karar ve tek inceleyen taşır; dersin ilgili sürüm köküne
+(`sourceHash` / `teachingHash`, bkz. `02-mimari.md`) ve gerçek bir kaynak
+commit'ine bağlanır. İlgili kök değiştiğinde o kapsam eskir; eski makbuz güncel
 inceleme olarak gösterilmez. İnsan doğrulaması yapılmadıysa makbuz yazılmaz.
+
+Legacy alanların zorunluluğu artık yalnız dondurulmuş 39 derslik borç
+baseline'ı için geçerlidir. Yeni bir yayının kanıtı frontmatter alanı değil,
+makbuzdur.
+
+### İnceleme akışı: `npm run review`
+
+İnceleme sırası ve kaydı elle tutulmaz:
+
+```bash
+npm run review kuyruk                 # risk sırasıyla ne incelenmeli
+npm run review goster <ders-id>       # tek ekranda inceleme malzemesi
+npm run review onayla <ders-id> --kapsam hepsi --kim "Ad Soyad" [--yayinla]
+```
+
+`kuyruk`, açık kayıtları yayında olma, içerik değişimi, güvenlik hattı, ön
+koşul merkeziliği, düz metin kaynak ve kaynak tazeliği sinyallerinden bir risk
+puanıyla sıralar. `goster`, kaynakları, kazanımları, kapsam durumunu ve sürüm
+köklerini tek çıktıda toplar — Katman 3 okuması bunun üstünde yapılır.
+`onayla`, insanın verdiği kararı kapsam makbuzlarına yazar, gerekiyorsa dersi
+yayına alır ve borç kaydını düşürür.
+
+Bu araç **inceleme yapmaz**. Otomasyon neyin okunacağını küçültür ve kararı
+doğrulanabilir biçimde kaydeder; okumayı ve kararı insan verir. Örnekleme veya
+otomatik denetim, okunmamış bir dersi "insan onaylı" yapmaz.
 
 ### Yapay zekayla çalışırken dikkat noktaları
 
@@ -146,8 +172,12 @@ durum: taslak
 ---
 ```
 
-Yeni yayın için ayrıca güncel artifact hash'iyle eşleşen Review Receipt v1
-zorunludur. Mevcut 39 yayının borç kaydı dondurulmuştur; yeni bir ders bu
-legacy listeye eklenemez. GitHub branch protection ise repo içinden
+Yeni yayın için ayrıca dersin güncel sürüm kökleriyle eşleşen, gerekli her
+kapsamı karşılayan Review Receipt v2 zorunludur. Mevcut 39 yayının borç kaydı
+`content/review-debt.json` içindeki `baselineIds` olarak dondurulmuştur ve
+`scripts/check-review-debt.ts` içindeki tek sabit onu çıpalar; yeni bir ders bu
+legacy listeye eklenemez. Güncel borç bu baseline'ın alt kümesidir ve yalnız
+küçülebilir — bir dersi onaylayıp borçtan düşürmek hiçbir kod veya governance
+dosyası değişikliği gerektirmez. GitHub branch protection ise repo içinden
 doğrulanamaz; CI zorunluluğu ve koruma kuralı barındırma ayarlarında ayrıca
 insan tarafından etkinleştirilmelidir.
