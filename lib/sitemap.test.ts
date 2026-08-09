@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import sitemap from "../app/sitemap";
-import { getAllLessons } from "./content";
+import { getAllLessons, getPublishedLessons } from "./content";
+import { getFileLastModified } from "./fileModified";
+import { getSozluk, terimSlug } from "./sozluk";
 
 const ORIJINAL_ONIZLEME = process.env.ICERIK_TASLAK_ONIZLEME;
 
@@ -26,5 +28,25 @@ describe("sitemap", () => {
     expect(sitemapLessonSlugs).toEqual(publishedSlugs);
     expect(publishedSlugs.length).toBeGreaterThan(0);
     expect(publishedSlugs.length).toBeLessThan(getAllLessons().length);
+  });
+
+  it("72 tekil sözlük URL'sini listeler", () => {
+    const termPaths = sitemap()
+      .map((entry) => new URL(entry.url).pathname)
+      .filter((pathname) => pathname.startsWith("/sozluk/"))
+      .sort();
+    const expected = getSozluk().map((terim) => `/sozluk/${terimSlug(terim.tr)}`).sort();
+
+    expect(termPaths).toEqual(expected);
+    expect(termPaths).toHaveLength(72);
+  });
+
+  it("ders tazeliğini legacy inceleme tarihinden değil dosyanın Git değişiklik tarihinden alır", () => {
+    const lesson = getPublishedLessons()[0];
+    const entry = sitemap().find((item) => item.url.endsWith(`/ders/${lesson.slug}`));
+
+    expect(entry?.lastModified).toEqual(getFileLastModified(lesson.filePath));
+    expect(entry?.lastModified).toBeInstanceOf(Date);
+    expect(entry?.lastModified).not.toBe(lesson.frontmatter.incelendi_tarih);
   });
 });
