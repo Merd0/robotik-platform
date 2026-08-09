@@ -1819,3 +1819,135 @@ adım yakalar.
 açmıştı ve değişiklik `main`'e girince ikisini birden kapattı. Yükseltme
 `main`'de mevcut (`ci.yml`'de v7.0.1 hash'i) ve CI 14 adımın tamamında
 yeşil; PR'ın rozeti bu durumu tam yansıtmıyor.
+
+## Gün sonu — master-plan entegrasyonu ve gizlilik düzeltmesi (2026-08-09)
+
+Bu bölüm günün sonunda `main`'in nerede durduğunu, hangi işlerin
+kapandığını ve hangi kararların insan onayı beklediğini tek yerde toplar.
+
+### `main`'in son hali
+
+| | |
+|---|---|
+| Remote `main` | `c45ebef29f436dd54e72c60407a52939e3372089` |
+| Yerel `main` | aynı (yalnız fast-forward) |
+| GitHub Actions | [run 31304612387](https://github.com/Merd0/robotik-platform/actions/runs/31304612387) — **success**, 20 adımın tamamı yeşil |
+| Ders sayısı | **89** — 39 `yayinda`, 50 `taslak` |
+| `incelendi_tarih` | 89/89 dosyada alan mevcut; 39 dolu (hepsi yayında), 50 boş (hepsi taslak) |
+
+Güne `deddffc` ile başlandı, üç hat birleştirildi:
+
+```
+c45ebef  docs+content: kurum baglamini docs'tan kaldir, review tarihini guncelle
+5c1db6c  Merge (--no-ff): feb6404 + 822e7dd
+├─ feb6404  fix(gizlilik): ders metinlerinden is yeri/staj baglamini kaldir
+└─ 822e7dd  codex/master-plan-8-stage — 8 checkpoint (stage-1 … stage-8)
+```
+
+Master-plan dalı **rebase edilmedi ve force push kullanılmadı**; sekiz
+checkpoint'in SHA'ları korundu, `origin/codex/master-plan-8-stage` hâlâ
+`822e7dd` olarak remote'ta duruyor. Denetim geçmişi bozulmadı.
+
+### Tamamlanan işler
+
+**1. Kaynak gizliliği ihlali kapatıldı.** `ca7335a` ile iki üniversite
+dersinin "Gerçek dünyada" bölümüne iş yeri/staj kaynaklı bir saha bağlamı
+girmişti; bunlardan `b-universite-jacobian` `durum: yayinda` olduğu için
+canlı sitedeydi. `docs/00-vizyon.md`'deki mutlak kural bunu yasaklıyor.
+Her iki ders nötr, kamuya açık kaynağa dayanan anlatıma çevrildi
+(`feb6404`). Aynı ifade `docs/durum-codex.md`'nin 16 derslik örneklem
+tablosunda da duruyordu — repo açık kaynak olduğu için bu da aynı ifşaydı;
+satırlar silinmeyip nötrleştirildi ve düzeltmenin nerede yapıldığı not
+düşüldü (`c45ebef`).
+
+Repo genelinde tarama artık yalnız `scripts/check-sensitive-terms.ts`
+içindeki iki desende eşleşiyor — yani taramanın kendisi dışında kurum adı
+kalmadı.
+
+**2. `scripts/check-sensitive-terms.ts` kuruldu.**
+`docs/08-guvenlik-sertlestirme.md` bölüm 6'da öngörülen tarama artık var ve
+CI'da koşuyor. Beş kural: kurum adı, iç birim/sistem adı, staj bağlamı,
+kişi adı, birinci-ağız iş yeri anlatımı. `incelendi_tarafindan` alanı
+istisna (orada kişi adı `docs/06` gereği zorunlu, sızıntı değil).
+
+Kurarken çıkan ve saklanmaya değer bulgu: sözcük sınırı için `\b`
+kullanmak Türkçede sessizce yanlış sonuç veriyor. `\b` yalnızca ASCII `\w`
+sınıfına göre sınır arar, bu yüzden "ç/ş/ı/ğ" ile **başlayan** desenlerde
+(ör. "Çalıştığım şirket") hiçbir zaman eşleşmez — tarama temiz görünür.
+Desenler `(?<!\p{L})` / `(?!\p{L})` lookaround'larına ve `u` bayrağına
+çevrildi. Regresyon fixture'ında 7/7 beklenen bulgu yakalandı, iki negatif
+kontrol ("mertebesinde" ve `incelendi_tarafindan`) elendi.
+
+**3. Master-plan 8 aşaması main'e alındı.** Beş dosyada çakışma çıktı
+(`check-sensitive-terms.ts`, `package.json`, `ci.yml` ve iki ders); ikisi
+de aynı sızıntıyı bağımsız olarak düzeltmişti. Hiçbir taraf düşürülmedi:
+tarayıcının geniş sürümü (5 kural) korundu, master-plan'in CI adımları ve
+"gizli kod adları repoya yazılmaz" notu içine alındı, Jacobian paragrafında
+iki taraf birleştirildi. Governance yollarında kaynak dallarda bulunmayan
+yeni bir değişiklik oluşmadı.
+
+**4. `b-universite-jacobian` yeniden incelendi.** Mert dersi düzeltme
+sonrası tekrar okuyup onayladı; `incelendi_tarih` `2026-08-09` yapıldı
+(`docs/08` bölüm 5).
+
+### Doğrulama kapısı (Node v24.19.0)
+
+Temiz `npm ci` sonrası, entegrasyon worktree'sinde:
+
+`tsc --noEmit` · `lint` · `test` (28 dosya / **202 test**) · `check-content`
+(89) · `validate-content-graph` (89) · `check-quiz-dagilimi` (134 soru, en
+yüksek şık %36,6) · `check-mdx-guvenlik` · `check-review-debt` ·
+`check-review-integrity` · `check-sensitive-terms` · `build` (taslak
+sızıntısı + release-output kontrolleri koştu; 50 taslağın hiçbiri çıktıda
+değil) · `check-performance-budget` · `test:e2e` (**42/42**, üç viewport) ·
+`npm audit --audit-level=high` (0 zafiyet) — **hepsi geçti**.
+
+`reference-python` testleri **çalıştırılamadı**: Python 3.14.5 var ama
+`pytest`/`pybullet`/`numpy` kurulu değil ve venv yok. Geçti sayılmıyor.
+TypeScript matematiği yine de commit'li `reference-python/fixtures/`
+verisine karşı vitest içinde doğrulanıyor.
+
+### Dal envanteri
+
+20 ref (15 yerel + 5 remote) tarandı: **hepsi `main`'in atası**, hiçbiri
+`main`'de olmayan commit taşımıyor. Unutulmuş iş yok. Worktree'ler ve
+dallar geri dönüş için silinmeden bırakıldı.
+
+### Karar bekleyen maddeler
+
+**1. Dirty kalan dosyalar — commit edilmedi, karar bekliyor.** Dördü de
+governance kapsamında; hiçbiri "rastgele yarım kalmış" değil ama hiçbiri de
+olduğu gibi commit edilebilir durumda değil:
+
+| Dosya | Durum | Neden commit edilmedi |
+|---|---|---|
+| `AGENTS.md` | +10 satır | İçerik yazılmış değil, `next dev` tarafından otomatik üretiliyor (`node_modules/next/dist/server/lib/generate-agent-files.js` doğrulandı). Blok kendi içinde "bunu commit'le" diyor; bu bir talimat değil, üçüncü taraf metni. Commit edilip edilmeyeceği bakımcı kararı |
+| `docs/guncel-fikirler.md` | 708 → 2594 satır | Belge tamamlanmış ve tutarlı görünüyor, **ama 4 satırında yasaklı kurum bağlamı geçiyor** (209, 233, 2071, 2510 — `npm run check-sensitive-terms` desenleriyle bulunur). Bugün kapatılan sızıntıyı olduğu gibi geri getirirdi. Önce aynı nötrleştirmeden geçmeli |
+| `.codex/` | 4 dosya (izlenmiyor) | `.claude/` kurulumunun Codex karşılığı; içerik tamam görünüyor ama `hooks.json` makineye özel mutlak yol içeriyor (`C:\Users\hp\...`). Açık kaynak repoda başka katkıcıda çalışmaz |
+| `.agents/` | 1 dosya (izlenmiyor) | `.claude/skills/yeni-ders/SKILL.md` ile birebir aynı tek dosya; port eksik görünüyor |
+
+**2. `b-universite-jacobian` hâlâ review borcunda.** `incelendi_tarih`
+güncellendi, ama `content/review-debt.json` içindeki
+`staleAfterContentChange` listesinde olduğu için sitede "Yeniden insan
+incelemesi gerekli" rozeti görünmeye devam ediyor. Bu bir tutarsızlık
+değil, tasarım: `lib/lessonArtifact.ts` `incelendi_tarih`'i artifact
+hash'ine bilinçli olarak **dahil etmiyor**, yani yeni sistem eski
+frontmatter alanını tek başına kanıt saymıyor. Dersi borçtan çıkarmak dört
+adım ister ve ayrı bir iştir:
+
+1. `content/review-receipts.json`'a sürüme bağlı bir Review Receipt
+   (artifactHash + 40 karakter sourceCommit + reviewer + scopes)
+2. `content/review-debt.json`'dan kaydın kaldırılması
+3. `scripts/check-review-debt.ts` içindeki `FROZEN_LEGACY_DEBT_FINGERPRINT`
+   sabitinin yeniden hesaplanması
+4. Dersin `kaynaklar` alanının düz metinden yapılandırılmış `SourceRef`
+   biçimine çevrilmesi (`check-review-integrity` borçtan çıkan yayınlarda
+   bunu şart koşuyor)
+
+**3. Kalan 39 açık legacy review borcu** ve 13 "değişiklik sonrası eski"
+kayıt duruyor. Yeni yayınlar makbuzsuz geçemiyor, ama mevcut borç
+kapanmadı.
+
+**4. `scripts/check-sensitive-terms.ts` yalnızca `content/` tarıyor.**
+Bugünkü `docs/` sızıntısı tam da bu yüzden otomatik yakalanmadı, elle
+bulundu. Taramanın `docs/` ve `README`'yi de kapsaması değerlendirilmeli.
