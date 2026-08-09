@@ -11,45 +11,44 @@ kazanimlar:
   - İş uzayı (workspace) ile konfigürasyon uzayı (C-space) arasındaki farkı açıklayabilme
   - Bu platformdaki planlayıcıların neden doğrudan "nokta" üzerinde çalıştığını C-space kavramıyla ilişkilendirebilme
 kaynaklar:
-  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 2 (Configuration Space)"
-  - "Steven M. LaValle, Planning Algorithms, Cambridge University Press, 2006, Bölüm 4 (The Configuration Space)"
+  - kind: book
+    title: "Modern Robotics: Mechanics, Planning, and Control, Bölüm 2"
+    publisher: Cambridge University Press
+  - kind: book
+    title: "Planning Algorithms, Bölüm 4: The Configuration Space"
+    publisher: Cambridge University Press
 incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
-  - PlannerRace
+  - CspaceLab
+  - TransferChallenge
 durum: yayinda
 ---
 
 ## Kanca
 
-Bu platform boyunca "planlanan" şey hiç robot değildi — sadece bir
-nokta. Bu bilinçli bir basitleştirme, ve C-space denen kavramın ta
-kendisi.
+Robot kolu solda iki çubuk gibi görünür. Aynı anda sağdaki haritada yalnız bir
+noktadır. Bu nokta turuncu bölgeye girince soldaki kollardan biri engele değer.
+İki görünümün aynı durumu anlattığını eklem açılarıyla sınayacaksın.
 
-<PlannerRace algorithms={["astar"]} allowObstacleEdit={true} theme="universite" extent={3} />
+<CspaceLab />
 
 ## Ne oldu
 
-Burada bir kavram kaykırması var ve bilerek yapıldı: planlayıcılar
-**iş uzayında (workspace)** değil, **konfigürasyon uzayında (C-space)**
-çalışır. C-space'in her noktası, robotun TÜM eklemlerinin bir anlık
-durumunu (konfigürasyonunu) temsil eder — robotun kendisi bu uzayda tek
-bir noktadır, ne kadar karmaşık şekle sahip olursa olsun.
+Planlayıcı bir robot kolunun geometrisini keyfi bir `(x, y)` noktasıymış gibi
+yorumlamaz. Önce her konfigürasyonu bütün eklem değişkenleriyle tanımlar;
+çarpışma denetimi bu konfigürasyondaki fiziksel bağlantıları sınar. C-space'in
+her noktası robotun tüm eklemlerinin bir anlık durumunu temsil eder.
 
 - Bir düzlemsel 2 eklemli kol için C-space 2 boyutludur: (θ1, θ2).
 - Bir 6 eksenli endüstriyel kol için C-space 6 boyutludur.
-- Bu platformdaki `Vec3` tipi (x, y, z), C-space'i **3 boyuta kadar**
-  temsil edebilen genel bir gösterimdir — Hat C derslerinde x, y
-  doğrudan bir mobil robotun düzlemsel konumunu (veya basitleştirilmiş
-  bir 2-eklem konfigürasyonunu) temsil ediyor.
+- Mobil robotun düzlemsel planında `(x, y)` gerçekten konum olabilir.
+- Robot kolunda aynı iki boyut `(θ1, θ2)` açı uzayıdır; metre değil derecedir.
 
-Bu dönüşümün faydası şu: robotun gerçek geometrisi ne kadar karmaşık
-olursa olsun (kol, gövde, tekerlek fark etmez), PLANLAMA ALGORİTMASI
-her zaman aynı basit soruyu sorar: "bu nokta (konfigürasyon) serbest mi?"
-Geometrinin karmaşıklığı çarpışma kontrolüne (`isPointFree`) devredilir,
-planlayıcının kendisi hep aynı kalır — `lib/robotics/planners/base.ts`
-içindeki `Planner` arayüzünün `isFree: CollisionChecker` parametresi tam
-bunu sağlıyor.
+Laboratuvar, `generic-2dof` kolunun iki fiziksel segmentini dairesel engelle
+kesişim testine sokar. Sağdaki yasak hücreler bu testin açı ızgarasında
+örneklenmiş sonucudur. Turuncu desen dekoratif değildir: her hücre yeniden
+hesaplanabilir bir çarpışma sınıfıdır.
 
 ## Gerçek dünyada
 
@@ -62,26 +61,25 @@ derslerinde A*'ı hep düşük boyutlu sahnelerde gördün, bu tesadüf değil.
 
 ## Dene
 
-Sahnede "nokta"nın aslında neyi temsil ettiğini düşünerek bir engel
-düzeni kur: engelleri, gerçek bir odadaki mobilyalar gibi değil, bir
-robot kolunun İKİ EKLEMİNİN birlikte alamayacağı açı kombinasyonları
-gibi hayal etmeye çalış. Bu zihinsel sıçrama ilk seferde garip gelir —
-normaldir.
+Kaydırıcılarla önce serbest bir konfigürasyon, sonra çarpışan bir konfigürasyon
+bul ve ikisini de “kaydet”. Her seferinde soldaki fiziksel temas ile sağdaki
+noktanın sınıfını karşılaştır. Ardından şu yeni probleme aktar:
 
-<Quiz
-  sorular={[
-    {
-      soru: "C-space'in her noktası neyi temsil eder?",
-      secenekler: [
-        "Robotun uç noktasının 3B konumunu",
-        "Robotun TÜM eklemlerinin o andaki açı/konum kombinasyonunu",
-        "Sahnedeki bir engelin merkezini",
-      ],
-      dogru: 1,
-      aciklama: "C-space'te robot, ne kadar karmaşık olursa olsun, tek bir noktayla temsil edilir — o nokta tüm eklemlerin birlikte aldığı değerdir.",
-    },
+<TransferChallenge
+  skillId="configuration-space"
+  prompt="Altı dönel eklemli bir robot kolunun konfigürasyon uzayındaki tek nokta kaç açı bileşeni taşır?"
+  options={[
+    "İki; çünkü ekran iki boyutlu",
+    "Üç; çünkü iş uzayı üç boyutlu",
+    "Altı; her dönel eklem bir açı bileşeni ekler",
   ]}
+  correct={2}
+  hint="C-space boyutu, sahnenin çizim boyutundan değil bağımsız eklem değişkenlerinden gelir."
+  explanation="Altı bağımsız dönel eklem, konfigürasyonu altı açıyla tanımlar; iki boyutlu harita yalnız bu dersteki 2-DOF örneğine aittir."
 />
+
+Başarı kanıtı bir serbest ve bir yasak konfigürasyonun fiziksel karşılığını
+görmeyi ve transfer sorusunu çözmeyi birlikte ister.
 
 **Kaynak kodu:** [`Planner` arayüzü](https://github.com/Merd0/robotik-platform/blob/main/lib/robotics/planners/base.ts#L17)
 

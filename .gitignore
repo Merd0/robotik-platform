@@ -16,6 +16,8 @@ public/arama-index.json
 # Test/araç önbellekleri
 .turbo/
 coverage/
+playwright-report/
+test-results/
 
 # Ortam değişkenleri
 .env

@@ -250,6 +250,14 @@ export interface NumericalIkResult {
   angles: number[] | null;
   converged: boolean;
   iterations: number;
+  finalError: number;
+  trace: NumericalIkIteration[];
+}
+
+export interface NumericalIkIteration {
+  iteration: number;
+  errorNorm: number;
+  angles: number[];
 }
 
 /**
@@ -268,16 +276,18 @@ export function inverseKinematicsNumerical(
   const damping = options.damping ?? 0.05;
 
   let angles = options.initialGuess ? [...options.initialGuess] : robot.joints.map(() => 0.1);
+  const trace: NumericalIkIteration[] = [];
 
   for (let iteration = 0; iteration < maxIterations; iteration++) {
     const { jointPositions } = forwardKinematics(robot, angles);
     const current = jointPositions[jointPositions.length - 1];
     const error = subtractVec(target, current);
     const errorNorm = Math.hypot(error.x, error.y, error.z);
+    trace.push({ iteration, errorNorm, angles: [...angles] });
 
     if (errorNorm < tolerance) {
-      if (!withinLimits(robot, angles)) return { angles: null, converged: false, iterations: iteration };
-      return { angles, converged: true, iterations: iteration };
+      if (!withinLimits(robot, angles)) return { angles: null, converged: false, iterations: iteration, finalError: errorNorm, trace };
+      return { angles, converged: true, iterations: iteration, finalError: errorNorm, trace };
     }
 
     const { columns } = computeJacobian(robot, angles);
@@ -297,7 +307,9 @@ export function inverseKinematicsNumerical(
     });
   }
 
-  return { angles: null, converged: false, iterations: maxIterations };
+  const finalPosition = forwardKinematics(robot, angles).endEffector;
+  const finalError = Math.hypot(target.x - finalPosition.x, target.y - finalPosition.y, target.z - finalPosition.z);
+  return { angles: null, converged: false, iterations: maxIterations, finalError, trace };
 }
 
 /** Açıyı (-π, π] aralığına indirger; dönel eklemler için limit kontrolü bu aralığa göre tanımlı. */

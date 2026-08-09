@@ -11,45 +11,44 @@ kazanimlar:
   - Bir katı cismin pozunu (konum + yönelim) tek bir 4x4 matriste birleştirmenin nedenini açıklayabilme
   - İki dönüşümü art arda uygulamanın matris çarpımına karşılık geldiğini gösterebilme
 kaynaklar:
-  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 3.2-3.3 (Rotations and Angular Velocities, Rigid-Body Motions)"
+  - kind: book
+    title: "Modern Robotics: Mechanics, Planning, and Control, Bölüm 3.2-3.3"
+    publisher: Cambridge University Press
 incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
-  - JointSliders
+  - TransformOrderLab
+  - CodeRunner
 durum: yayinda
 ---
 
 ## Kanca
 
-`rotationZ(90°)` ile `translation(1, 0, 0)`'ı çarptığında sonuç
-(1, 0, 0) DEĞİL, (0, 1, 0) çıkar — çarpma sırası konumu değiştirir.
-Bu tuhaf görünen sonucun arkasında homojen dönüşüm matrislerinin nasıl
-birleştiği yatıyor.
+Bir çerçeveyi önce 1 metre ilerletip sonra 90° döndürmek ile önce döndürüp
+sonra ilerletmek aynı iki işlemi kullanır. Yine de çerçeve iki farklı noktada
+biter. Önce sonucu tahmin et, sonra matrisin son sütunuyla ölç.
 
-<JointSliders robot="generic-6dof" />
+<TransformOrderLab />
 
 ## Ne oldu
 
-`lib/robotics/transform.ts` içindeki `Mat4` tipi, 4×4'lük bir matris —
-ama sadece sayı dizisi değil, iki parçadan oluşan anlamlı bir yapı:
+`lib/robotics/transform.ts` içindeki `Mat4` tipi yalnız sayı dizisi değil,
+iki parçadan oluşan bir poz gösterimidir:
 
 ```
 T = [ R   p ]      R: 3x3 dönme matrisi (yönelim)
     [ 0   1 ]      p: 3x1 öteleme vektörü (konum)
 ```
 
-`rotationZ(theta)` fonksiyonu SADECE `R` kısmını dolduran bir matris
-üretir (öteleme sıfır); `translation(x, y, z)` SADECE `p` kısmını
-dolduran bir matris üretir (dönme kimlik matrisi). İkisini `multiply()`
-ile çarptığında, ÖNCE dönmüş SONRA ötelenmiş bir çerçeve elde edersin —
-sırayla uygulanan iki hareketin toplam etkisi tek bir matriste birleşir.
+Sütun vektör gösteriminde `A × B × p`, `p` noktasına önce `B`, sonra `A`
+uygular. Bu yüzden yazılı matris sırası ile fiziksel eylem sırasını birbirine
+karıştırmamak gerekir:
 
-**Somut örnek:** `rotationZ(90°)` ile `translation(1, 0, 0)`'ı çarpsan
-(bu sırayla), sonuç matrisin son sütunu (1, 0, 0) DEĞİL, (0, 1, 0)
-olur — çünkü öteleme, ÖNCE uygulanan dönmenin döndürdüğü eksene göre
-yorumlanır. Sıra önemlidir: `multiply(A, B) ≠ multiply(B, A)` (matris
-çarpımı değişmeli değildir), tıpkı önce dönüp sonra ilerlemenin, önce
-ilerleyip sonra dönmekle aynı sonucu vermemesi gibi.
+- `R × T`: önce ötele, sonra döndür; 90° örneğinde orijin `(0, 1, 0)` m olur.
+- `T × R`: önce döndür, sonra ötele; aynı örnekte orijin `(1, 0, 0)` m olur.
+
+Laboratuvarın çizimi, koordinatı ve 4×4 tablosu aynı `multiply()` ve
+`transformPoint()` hesaplarından gelir; ekranda görünmeyen bir matris varsayılmaz.
 
 ## Gerçek dünyada
 
@@ -62,26 +61,39 @@ birleştirmeyi yapıyor.
 
 ## Dene
 
-Kaydırıcılardan birini oynat ve `jointTransforms` dizisindeki (kod
-içinde, ekranda göremesen de) matrislerden birinin son sütununun
-`jointPositions`'taki karşılık gelen noktayla AYNI olduğunu düşün —
-`translationOf()` fonksiyonu tam bunu okuyor: matrisin öteleme kısmını
-çıkarıyor.
+Laboratuvarda iki sırayı da çalıştır. Sonra aşağıdaki saf Python kodunda
+başlangıçtaki yanlış çarpım sırasını düzelt. NumPy kullanmadan, 4×4 listeleri
+çarparak orijinin `0.0 1.0` metreye taşındığını otomatik teste göster.
 
-<Quiz
-  sorular={[
-    {
-      soru: "multiply(A, B) ile multiply(B, A) neden genelde farklı sonuç verir?",
-      secenekler: [
-        "Matris çarpımında bir hesaplama hatası olduğu için",
-        "Matris çarpımı değişmeli değildir — önce dönüp sonra ötelenmek, önce ötelenip sonra dönmekten farklıdır",
-        "Sadece 4x4 matrisler için bu geçerlidir, küçük matrislerde geçerli değildir",
-      ],
-      dogru: 1,
-      aciklama: "Matris çarpımının değişmeli olmaması matematiksel bir kuraldır (sadece 4x4'e özel değil) ve fiziksel olarak da mantıklıdır: iki hareketi uygulama SIRASI sonucu değiştirir.",
-    },
-  ]}
+<CodeRunner
+  theme="universite"
+  skillId="transform-order"
+  taskTitle="compose satırındaki sırayı düzelt; çıktı tam olarak 0.0 1.0 olsun."
+  expectedOutput={`0.0 1.0`}
+  initialCode={`from math import cos, sin, pi
+
+def matmul(a, b):
+    return [[sum(a[r][k] * b[k][c] for k in range(4))
+             for c in range(4)] for r in range(4)]
+
+R = [[cos(pi/2), -sin(pi/2), 0, 0],
+     [sin(pi/2),  cos(pi/2), 0, 0],
+     [0, 0, 1, 0],
+     [0, 0, 0, 1]]
+T = [[1, 0, 0, 1],
+     [0, 1, 0, 0],
+     [0, 0, 1, 0],
+     [0, 0, 0, 1]]
+
+# HATA: Bu sıra önce döndürüp sonra öteliyor. R ve T'yi yer değiştir.
+compose = matmul(T, R)
+origin = [0, 0, 0, 1]
+out = [sum(compose[r][k] * origin[k] for k in range(4)) for r in range(4)]
+print(f"{out[0]:.1f} {out[1]:.1f}")`}
 />
+
+Başarı kanıtı, yalnız doğru metin çıktısı değildir: aynı içerik sürümünde
+iki fiziksel sırayı da gözlemlemiş ve Python testini geçmiş olman gerekir.
 
 **Kaynak kodu:** [`multiply`](https://github.com/Merd0/robotik-platform/blob/main/lib/robotics/transform.ts#L24)
 

@@ -59,12 +59,18 @@ jobs:
       - name: MDX güvenlik denetimi
         run: npx tsx scripts/check-mdx-guvenlik.ts
 
+      - name: Yayın review borcu bütünlüğü
+        run: npm run check-review-debt
+
+      - name: Sürüme bağlı review makbuzu bütünlüğü
+        run: npm run check-review-integrity
+
       # Kaynak gizliliği (docs/00-vizyon.md mutlak kuralı) için kalıp taraması:
       # iş yeri/kurum/staj bağlamı ve kişisel ton sızmaları. İki üniversite
       # dersine bu tür bir cümle girip biri canlı siteye çıktığı için eklendi
       # (bkz. docs/08-guvenlik-sertlestirme.md bölüm 6).
-      - name: Hassas terim denetimi
-        run: npx tsx scripts/check-sensitive-terms.ts
+      - name: İşyeri ve gizlilik terimleri denetimi
+        run: npm run check-sensitive-terms
 
       # Taslak derslerin üretim çıktısına sızmadığını derleyerek doğrular.
       # docs/06-kalite-ve-topluluk.md Katman 3: insan gözden geçirmesinden
@@ -73,6 +79,15 @@ jobs:
       # derlemenin kendisi CI'ya bu amaçla eklendi.
       - name: Derleme + taslak sayfa sızıntısı kontrolü
         run: npm run build
+
+      - name: Başlangıç performans bütçesi
+        run: npm run check-performance-budget
+
+      - name: Chromium kur
+        run: npx playwright install --with-deps chromium
+
+      - name: Üç viewport erişilebilirlik ve kullanıcı akışı
+        run: npm run test:e2e
 
       # docs/08-guvenlik-sertlestirme.md "Otomatik zafiyet taraması"
       # kuralı: yüksek/kritik zafiyet varsa build kırılır.

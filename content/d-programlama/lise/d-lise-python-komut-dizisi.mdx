@@ -11,7 +11,12 @@ kazanimlar:
   - Bir robotu sıralı Python komutlarıyla hareket ettirebilme
   - Kod satırlarının robot üzerinde hangi sırayla etkili olduğunu açıklayabilme
 kaynaklar:
-  - "ABB, RAPID Instructions, Functions and Data Types Reference Manual (3HAC16581-1) — robot programının sıralı talimat metni olarak yapısı: https://library.e.abb.com"
+  - kind: software-doc
+    title: "Python Tutorial: More Control Flow Tools"
+    url: https://docs.python.org/3.14/tutorial/controlflow.html
+    publisher: Python Software Foundation
+    version: "Python 3.14"
+    accessedAt: "2026-08-09"
 incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
@@ -28,10 +33,14 @@ söyleyeceksin. Bu, gerçek bir robot programcısının işidir.
 <CodeRunner
   robot="generic-2dof"
   theme="lise"
-  initialCode={`# robot.eklem_ac(eklem_no, derece) ile eklemleri sırayla döndür
+  skillId="python-command-trace"
+  taskTitle="Robotu Eklem 1 = 60° ve Eklem 2 = -20° son duruşuna getir."
+  expectedFinalDegrees={[60, -20]}
+  toleranceDegrees={0.5}
+  initialCode={`# Tahmin et: Bu iki satırdan sonra robot hangi açılarda biter?
 robot.eklem_ac(0, 45)
 robot.eklem_ac(1, 30)
-print("Robot hazır konuma geldi.")`}
+print("Son duruş hazır.")`}
 />
 
 ## Ne oldu
@@ -39,33 +48,29 @@ print("Robot hazır konuma geldi.")`}
 Yukarıdaki kod gerçek bir Python yorumlayıcısında (Pyodide — tarayıcıda
 çalışan WebAssembly CPython) çalıştı, tarayıcı sekmenden hiç çıkmadan.
 `robot.eklem_ac(eklem_no, derece)` çağrısı iki şey yapıyor: eklemi o açıya
-ayarlıyor ve her çağrıdan sonraki durumu kaydediyor. Sahnede gördüğün
-duruş, kodun tamamı bittikten sonraki SON durum — ara adımlar kaydediliyor
-ama tek tek çizilmiyor, yani robotu bir animasyon gibi hareket ederken
-izlemiyorsun.
+ayarlıyor ve her çağrıdan sonraki durumu çalışma izine ekliyor. Kod bittikten
+sonra “Geri/İleri” düğmeleriyle komut 1 ve komut 2 sonrasındaki açıları ayrı
+ayrı görebilirsin. Sahne ile iz tablosu aynı `jointTrace` verisini kullanır.
 
-Yine de sıra önemli, çünkü son durumu belirleyen şey satırların
-yürütülme sırası. Python'da kod yukarıdan aşağıya, yazdığın sırayla
-çalışır — bu robotik programlamanın en temel kuralıdır: **robot, ona
-söylediğin sırayla hareket eder, aklından geçeni değil.** (Aynı eklemi
-iki kez ayarlarsan son satır kazanır; farklı eklemleri ayarlıyorsan
-sıranın son duruşa etkisi olmaz.)
+Python kodu yukarıdan aşağıya çalışır. Aynı eklemi iki kez ayarlarsan son satır
+son duruşu belirler; farklı eklemleri ayarlayan iki satırı değiştirirsen son
+duruş aynı kalabilir ama izlenen ara duruş değişir. Bu nedenle yalnız son pozu
+değil, çalışma izini de doğrulamak gerekir.
 
 ## Gerçek dünyada
 
-Gerçek bir robot kontrolöründe de mantık aynıdır: bir hareket programı,
-komutların yazıldığı sırayla çalışan bir metin dosyasıdır (ABB'de
-RAPID, KUKA'da KRL — bunları üniversite seviyesinde göreceksin). Python,
-bu platformda öğrenmesi en kolay dil olduğu için başlangıç noktası, ama
-altındaki mantık (sıralı komut yürütme) endüstride kullanılan her dilde
-aynı.
+Birçok robot programında talimat sırası önemlidir; fakat gerçek kontrolörün
+hareket kuyruğu, hız profili ve hata davranışı vendor'a göre değişebilir. Bu
+laboratuvardaki `robot` nesnesi eğitim için yazılmış bir simülasyon API'sidir:
+Python sözdizimini ve çalışma izini öğretir, gerçek donanım davranışını veya
+güvenli devreye almayı garanti etmez.
 
 ## Dene
 
-Yukarıdaki kodu değiştir: iki `eklem_ac` satırının SIRASINI değiştir
-(önce eklem 1'i, sonra eklem 0'ı döndür). Robotun son konumu değişiyor
-mu, yoksa aynı yere mi varıyor? Şimdi ikinci satırı tamamen sil,
-çalıştır — ne değişti?
+Kodu çalıştırmadan önce iki ara duruşu tahmin et. İlk çalıştırmada otomatik test
+geçmeyecek. Sayıları değiştirerek Eklem 1'i 60°, Eklem 2'yi -20° yap; tekrar
+çalıştır ve testin geçtiğini gör. Sonra satırların sırasını değiştir: son test
+aynı kalırken çalışma izinin ilk adımı neden değişti?
 
 <Quiz
   sorular={[

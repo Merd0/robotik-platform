@@ -75,7 +75,7 @@ robotik-platform/
 │   │   ├── planners/         astar.ts, rrt.ts, rrtStar.ts
 │   │   └── robots/           robot tanımları (DH parametreleri)
 │   ├── content.ts            MDX okuma, frontmatter ayrıştırma
-│   └── progress.ts           ilerleme takibi (tarayıcı belleğinde)
+│   └── evidence.ts           sürümlü deney olayları (tarayıcı belleğinde)
 ├── components/
 │   ├── scene/                3D sahne bileşenleri
 │   │   ├── RobotArm.tsx
@@ -157,8 +157,14 @@ kazanimlar:
   - Eklem açılarından uç nokta konumunu trigonometri ile hesaplayabilme
   - Açı değişiminin uç noktayı nasıl etkilediğini açıklayabilme
 kaynaklar:
-  - "Lynch & Park, Modern Robotics, Bölüm 4"
-  - "https://mecademic.com/... (Meca500 teknik veri sayfası)"
+  - kind: book
+    title: "Modern Robotics, Bölüm 4"
+    publisher: "Cambridge University Press"
+  - kind: official-doc
+    title: "Meca500 teknik veri sayfası"
+    publisher: "Mecademic"
+    url: "https://www.mecademic.com/..."
+    accessedAt: "2026-08-09"
 etkilesimli:
   - JointSliders
 durum: taslak           # taslak | inceleme | yayinda
@@ -167,6 +173,35 @@ durum: taslak           # taslak | inceleme | yayinda
 
 `kaynaklar` alanı boş bırakılamaz — gizlilik kuralının teknik zorlayıcısı budur.
 Bir CI kontrolü, `durum: yayinda` olan ve `kaynaklar` boş olan dersi reddeder.
+
+Yeni yayınlarda kaynaklar yapılandırılmış `SourceRef` nesneleridir. Eski metin
+kaynaklar yalnızca mevcut legacy yayınları okuyabilmek için desteklenir. URL
+kaynaklarında erişim tarihi; yazılım dokümantasyonunda ayrıca sürüm zorunludur.
+
+### 4. Sürüme bağlı insan incelemesi
+
+`incelendi_tarafindan` ve `incelendi_tarih` alanları legacy kayıttır; tek başına
+güncel sürümün incelendiğini kanıtlamaz. Yeni model `content/review-receipts.json`
+içindeki Review Receipt v1 kayıtlarıdır. Makbuz, `lesson-artifact-v1` kanonik
+SHA-256 hash'ine, tam kaynak commit'ine, inceleyen kişiye, tarihe ve ayrı
+`source`, `technical`, `pedagogical`, gerektiğinde `safety` kapsamlarına bağlanır.
+Öğrencinin gördüğü içerik değişirse hash değişir ve eski makbuz otomatik olarak
+geçersiz görünür.
+
+### 5. Evidence v2
+
+Yerel öğrenme kaydı `robotik-platform:evidence:v2` anahtarında, ders artifact
+hash'iyle birlikte tutulur. `read`, `predicted`, `tried`, `observed` ve
+`assessed` kullanıcı/bileşen olaylarıdır; bunların hiçbiri doğrudan başarı
+değildir. `passed` yalnız `lib/evidence.ts` içindeki kayıtlı predicate'in aynı
+ders ve aynı artifact sürümündeki ölçülebilir olay dizisini doğrulamasıyla
+üretilen `registry-predicate` olayıdır.
+
+V1 olayları ve eski manuel "tamamlandı" kimlikleri önce v2'ye
+`legacy-unverified` olarak yazılır; yalnız başarılı yazımdan sonra eski
+anahtarlar silinir. Eski `passed` olayı doğrulanmış başarıya yükseltilmez.
+Depolama engellenirse oturum içi bellek kullanılır ve UI bunu açıkça söyler.
+Kullanıcı tüm kaydı JSON olarak dışa aktarabilir veya iki adımlı onayla silebilir.
 
 ---
 
@@ -199,6 +234,14 @@ TypeScript matematiği doğru mu? Üç katman:
   tek bir klasik (non-module) script'e derlenip `public/workers/` altına
   yazılıyor; bileşen ona sabit bir yoldan (`new Worker("/workers/planner-worker.js")`)
   bağlanıyor. `public/workers/` gitignore'da — kaynak değil, üretilen dosya.
+- Planlayıcı deneyi her algoritma koşusu için yeni worker açar ve en geç 5
+  saniyede sonlandırır. İstek bir `seed` taşır; RRT/RRT* bu seed'den üretilen
+  RNG'yi kullanır. Worker'ın döndürdüğü başarılı yol başlangıç/hedef, sonlu
+  koordinat, düzlemsellik ve **bütün segmentlerde** çarpışmasızlık açısından
+  doğrulanmadan UI'a aktarılmaz.
+- `CodeRunner` istekleri temiz bir Python globals sözlüğünde çalışır. UI worker'ı
+  8 saniyede sonlandırır; worker 64 KiB/100 çıktı olayı ve 500 eklem izi örneği
+  sınırını uygular. Kesilen çıktı başarı gibi gizlenmez, kullanıcıya işaretlenir.
 - İlk yükleme 200 KB JS altında kalsın; 3D ve Pyodide tembel yüklensin.
 - Mobilde çalışmalı — Türkiye'de öğrencilerin çoğu telefondan girecek.
   Dokunmatik kontroller ilk sınıf vatandaş.

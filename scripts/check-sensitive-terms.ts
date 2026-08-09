@@ -11,11 +11,12 @@ import path from "node:path";
  * `docs/08-guvenlik-sertlestirme.md` bölüm 6 bu kural için "insan hatasını
  * yakalayan ikinci bir güvenlik ağı" olarak bu betiği öngörüyordu.
  *
- * Betiği yazdıran somut olay: `ca7335a` commit'iyle iki üniversite dersine
- * "Mert'in ASELSAN MEOS stajında karşılaştığı ..." cümlesi girdi ve bunlardan
- * biri (`b-universite-jacobian`) `durum: yayinda` olduğu için canlı siteye
- * çıktı. Kural insan tarafından biliniyordu ama hiçbir otomatik kontrol
- * yakalamadı.
+ * Betiği yazdıran somut olay: `ca7335a` commit'iyle iki üniversite dersinin
+ * "Gerçek dünyada" bölümüne, bir iş yeri/staj deneyimine dayanan cümle girdi
+ * ve bunlardan biri (`b-universite-jacobian`) `durum: yayinda` olduğu için
+ * canlı siteye çıktı. Kural insan tarafından biliniyordu ama hiçbir otomatik
+ * kontrol yakalamadı. (Sızan cümle burada tekrar edilmiyor; ayrıntı için
+ * `git log ca7335a` ve düzeltme commit'i `feb6404`.)
  *
  * İkinci iş: kişiye özel/samimi ton sızmaları. Dersi okuyan kişi platformun
  * sahibi değil, tanımadığımız bir öğrenci — `docs/04-icerik-rehberi.md`'deki
@@ -46,6 +47,12 @@ interface Kural {
 /**
  * Bakımcı tarafından tanımlanan liste (`docs/08` bölüm 6). Yeni bir kurum,
  * iç sistem veya proje kod adı buraya eklenir.
+ *
+ * Buradaki desenler yalnızca HERKESE AÇIK adları içerir. Gerçekten gizli
+ * olan iç proje kod adları bu listeye YAZILMAZ — repo açık kaynak olduğu
+ * için listenin kendisi de yayınlanıyor; gizli bir adı buraya eklemek onu
+ * ifşa etmek olurdu. Böyle bir tarama gerekirse CI secret'ı veya kurum içi
+ * bir kontrol olarak tutulur.
  *
  * Sözcük sınırı için `\b` DEĞİL, `(?<!\p{L})` / `(?!\p{L})` lookaround'ları
  * ve `u` bayrağı kullanılıyor. Sebebi Türkçeye özgü ve sessizce yanlış

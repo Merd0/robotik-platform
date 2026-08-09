@@ -42,17 +42,21 @@ sensin. Bir dersi "yayinda" yapmadan önce:
 Bu üç saatlik bir angarya değil, 15-20 dakikalık bir kontrol — ama
 atlanmaması gereken 15-20 dakika.
 
-### Frontmatter'a inceleme kaydı
+### Sürüme bağlı inceleme kaydı
 
-`04-icerik-rehberi.md`'deki şemaya bir alan daha eklenir:
+Frontmatter'daki eski alanlar geçmiş kayıt olarak okunur:
 
 ```yaml
 incelendi_tarafindan: ""   # kim gözden geçirdi, ne zaman
 incelendi_tarih: ""
 ```
 
-Bu alan boşken `durum: yayinda` olamaz — `kaynaklar` kontrolüyle aynı CI
-kuralına tabi.
+Ancak bu iki alan güncel içeriğe bağlı değildir. Yeni yayınlarda doğrulama,
+`content/review-receipts.json` içindeki Review Receipt v1 kaydıyla yapılır.
+Makbuz; kanonik ders artifact SHA-256 hash'ini, tam kaynak commit'ini, inceleyen
+kişiyi, tarihi ve kapsamları (`source`, `technical`, `pedagogical`, gerektiğinde
+`safety`) taşır. Ders içeriği değiştiğinde hash değişir; eski makbuz güncel
+inceleme olarak gösterilmez. İnsan doğrulaması yapılmadıysa makbuz yazılmaz.
 
 ### Yapay zekayla çalışırken dikkat noktaları
 
@@ -108,8 +112,8 @@ Katma değer somut olarak şunlardan gelir:
   kalibrasyonu" gibi terimlerin doğru, tutarlı, öğretici Türkçesi şu an
   dağınık; bunu bir araya getirmek başlı başına değerli.
 - **Endüstriyel gerçeklik bağlantısı** — ABB, Mecademic, Keyence gibi gerçek
-  markaların gerçek protokolleriyle bağ kurmak (senin stajından gelen
-  perspektif), akademik derslerin çoğunda yok.
+  markaların kamuya açık üretici dokümanlarıyla bağ kurmak, akademik derslerin
+  çoğunda yok. Kişisel işyeri veya staj bilgisi kaynak değildir.
 - **Seviye kademelemesi** — ortaokuldan mühendise aynı platformda, aynı
   motor üstünde ilerleme; İngilizce kaynaklarda bile nadir.
 - **Açıklık** — MIT/Stanford'ın kapalı ders materyalleri değil, herkesin
@@ -135,9 +139,15 @@ sure: ...
 onkosul: [...]
 kazanimlar: [...]
 kaynaklar: [...]           # zorunlu, boş olamaz
-incelendi_tarafindan: ""   # zorunlu (yayinda için), boş olamaz
-incelendi_tarih: ""        # zorunlu (yayinda için)
+incelendi_tarafindan: ""   # legacy kayıt; yeni onayın kanıtı değildir
+incelendi_tarih: ""        # legacy kayıt
 etkilesimli: [...]
 durum: taslak
 ---
 ```
+
+Yeni yayın için ayrıca güncel artifact hash'iyle eşleşen Review Receipt v1
+zorunludur. Mevcut 39 yayının borç kaydı dondurulmuştur; yeni bir ders bu
+legacy listeye eklenemez. GitHub branch protection ise repo içinden
+doğrulanamaz; CI zorunluluğu ve koruma kuralı barındırma ayarlarında ayrıca
+insan tarafından etkinleştirilmelidir.

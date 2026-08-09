@@ -12,23 +12,24 @@ kazanimlar:
   - Genel bir robotun neden çoğunlukla kapalı form ters kinematik çözümü olmadığını açıklayabilme
   - Sönümlü en küçük kareler (damped least squares) yönteminin çalışma mantığını kavrayabilme
 kaynaklar:
-  - "Kevin M. Lynch & Frank C. Park, Modern Robotics, Bölüm 6"
+  - kind: book
+    title: "Modern Robotics: Mechanics, Planning, and Control, Bölüm 6"
+    publisher: Cambridge University Press
 incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-01"
 etkilesimli:
-  - IkTarget
+  - DlsTraceLab
+  - TransferChallenge
 durum: yayinda
 ---
 
 ## Kanca
 
-Genel bir robot için ters kinematiğin hazır bir kapalı formülü olduğunu
-düşünme. Lise dersindeki kosinüs teoremi çözümü sadece iki eklemli
-düzlemsel bir kol için işe yarıyordu; altı eklemli bir endüstriyel kolda
-böyle bir formül genelde yok — kontrolör hedefe adım adım yaklaşarak
-ulaşır.
+Sayısal çözücü bir hedefe “ışınlanmaz”. Başlangıç tahmininden bir dizi küçük
+eklem güncellemesi üretir. Sönümleme katsayısı çok küçük ya da büyük olduğunda
+bu izin biçimi değişir. Aşağıda her iterasyonu geri sararak gör.
 
-<IkTarget robot="generic-2dof" />
+<DlsTraceLab />
 
 ## Ne oldu
 
@@ -50,38 +51,40 @@ kareler (damped least squares) kullanır:
 ```
 
 Burada `J` Jacobian matrisi (sıradaki derste), `hata` mevcut uç nokta ile
-hedef arasındaki fark, `λ` sönümleme katsayısı. Bu adım hata yeterince
-küçülene kadar (veya iterasyon sınırına ulaşana kadar) tekrarlanır.
-Sönümleme (λ) olmadan yöntem tekilliklere yakın kararsızlaşır — bu yüzden
-"sönümlü".
+hedef arasındaki fark, `λ` sönümleme katsayısıdır. Bu adım hata 0.001 m
+toleransının altına inene ya da 80 iterasyon sınırına ulaşana kadar tekrarlanır.
+Küçük `λ` daha cesur adımlar üretebilir; büyük `λ` adımları bastırır. Bu bir
+“büyük her zaman daha iyi” ayarı değildir: yakınsama, hedef ve başlangıç
+konfigürasyonuyla birlikte ölçülür.
 
 ## Gerçek dünyada
 
-Çoğu ticari robot kontrolörü hem analitik hem sayısal çözücü barındırır:
-mümkünse hızlı analitik formül kullanılır, karmaşık veya artık serbestlik
-dereceli (redundant) kollarda sayısal yönteme düşülür.
+Gerçek bir sistemde çözücü; eklem limitleri, çarpışma, yönelim, başlangıç
+tahmini ve zaman bütçesiyle birlikte değerlendirilir. Bu laboratuvar yalnız
+iki eklemli düzlemsel, vendor-neutral bir simülasyondur; gerçek robot kontrolü
+veya güvenli hareket onayı değildir.
 
 ## Dene
 
-Yukarıdaki sahnede yeşil noktayı hızlıca farklı yerlere sürükle. Kolun her
-karede yeni bir hedefe "yakınsadığını", sıçramadan yumuşak geçiş
-yaptığını gözlemle — bu, sayısal çözücünün her karede birkaç iterasyonla
-hedefe ulaşmasının sonucu.
+Hedefi sabit bırak. Önce `λ ≤ 0.020`, sonra `λ ≥ 0.080` ile çöz. İki koşulda
+iterasyon sayısını, hata eğrisini ve ilk beş eklem adımını karşılaştır. Bir
+koşul yakınsamazsa bunu hata olarak gizleme; son hatayı ve sınırı kaydet.
 
-<Quiz
-  sorular={[
-    {
-      soru: "Sönümlü en küçük kareler yönteminde λ (lambda) neden var?",
-      secenekler: [
-        "Hesabı yavaşlatmak için",
-        "Tekillik yakınında matrisin tersinin alınabilir kalmasını sağlamak için",
-        "Eklem limitlerini uygulamak için",
-      ],
-      dogru: 1,
-      aciklama: "λ olmadan J·J^T tekillik yakınında tersinemez hale gelebilir; λ bu matrisi her zaman tersinebilir tutar.",
-    },
+<TransferChallenge
+  skillId="dls-convergence"
+  prompt="Aynı hedefte λ büyütülünce hangi sonuç her zaman doğrudur?"
+  options={[
+    "İterasyon sayısı mutlaka azalır",
+    "Eklem güncellemeleri daha fazla bastırılır; yakınsama hızı ayrıca ölçülmelidir",
+    "Eklem limitleri artık otomatik olarak garanti edilir",
   ]}
+  correct={1}
+  hint="λ, J·Jᵀ matrisinin köşegenine eklenen terimi değiştirir; başarıyı tek başına garanti etmez."
+  explanation="Daha büyük sönümleme güncellemeleri küçültür; hedefe ulaşma ve iterasyon sayısı deneysel sonuçtur."
 />
+
+Başarı kanıtı için iki sönümleme bandının ikisi de çalıştırılmalı ve transfer
+görevi çözülmelidir. Çoktan seçmeli yanıt tek başına “geçti” üretmez.
 
 **Kaynak kodu:** [`inverseKinematicsNumerical`](https://github.com/Merd0/robotik-platform/blob/main/lib/robotics/kinematics.ts#L261)
 

@@ -47,7 +47,12 @@ seviye: ...
 sure: ...
 onkosul: [...]
 kazanimlar: [...]
-kaynaklar: [...]
+kaynaklar:
+  - kind: official-doc
+    title: "Belge başlığı"
+    publisher: "Yayıncı veya üretici"
+    url: "https://..."
+    accessedAt: "YYYY-MM-DD"
 etkilesimli: [...]
 durum: taslak
 ---
@@ -113,6 +118,12 @@ belirsiz bloglar, forum gönderileri.
 
 Bu kural hem akademik dürüstlük hem de gizlilik koruması. Kaynağı
 gösterilemeyen bilgi yayınlanmaz.
+
+Yeni bir dersi yayına alırken kaynaklar düz metin değil yapılandırılmış
+`SourceRef` olarak yazılır: `kind`, `title`; varsa `publisher`, `url`, `version`
+ve `accessedAt`. URL verilmişse erişim tarihi zorunludur. Python, ROS 2 veya
+başka yazılım dokümantasyonunda `kind: software-doc` ve kullanılan `version`
+zorunludur. Eski düz metin kayıtlar yalnız legacy içerik için okunur.
 
 ## Kanca çeşitliliği (tekrar eden retorik kalıptan kaçınma)
 
@@ -185,7 +196,10 @@ raporlar: hangi iskelet kaç derste, ardışık tekrar nerede.
 7. `durum: inceleme` yap
 8. Yüksek sesle oku — takıldığın her cümle yeniden yazılmalı
 9. Mümkünse hedef seviyeden birine okut
-10. `durum: yayinda`
+10. Ders artifact hash'ini üret; kaynak, teknik ve pedagojik insan incelemesini
+    bu hash'e bağlı Review Receipt olarak kaydet. Güvenlik dersinde ayrıca
+    safety uzman kapsamı gerekir.
+11. `durum: yayinda`
 
 ## Üniversite seviyesinde gerçek koda bağlantı
 

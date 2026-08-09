@@ -1,7 +1,14 @@
-import type { Lesson } from "@/lib/content";
+import type { Lesson, SourceRef } from "@/lib/content";
 import { hatEtiket, SEVIYE_ETIKET } from "@/lib/content";
+import { getLessonReviewStatus, REVIEW_SCOPE_LABELS } from "@/lib/reviewReceipts";
 
-function kaynakGoster(kaynak: string) {
+function kaynakGoster(kaynak: string | SourceRef) {
+  if (typeof kaynak !== "string") {
+    const label = [kaynak.publisher, kaynak.title, kaynak.version].filter(Boolean).join(" · ");
+    const detail = kaynak.accessedAt ? ` (erişim: ${kaynak.accessedAt})` : "";
+    if (!kaynak.url) return `${label}${detail}`;
+    return <a href={kaynak.url} rel="noreferrer" target="_blank" className="underline decoration-site-border underline-offset-4 hover:text-site-accent-text">{label}{detail}</a>;
+  }
   const url = kaynak.match(/https?:\/\/[^\s)]+/)?.[0];
   if (!url) return kaynak;
   return <a href={url} rel="noreferrer" target="_blank" className="underline decoration-site-border underline-offset-4 hover:text-site-accent-text">{kaynak}</a>;
@@ -9,6 +16,8 @@ function kaynakGoster(kaynak: string) {
 
 export function LessonTrustPanel({ lesson }: { lesson: Lesson }) {
   const { frontmatter } = lesson;
+  const reviewStatus = getLessonReviewStatus(lesson);
+  const verified = reviewStatus.state === "verified";
   return (
     <aside className="lab-panel p-5 lg:sticky lg:top-24" aria-labelledby="guven-paneli-baslik">
       <p className="text-xs font-semibold uppercase tracking-[.16em] text-site-accent-text">Ders kimliği</p>
@@ -29,12 +38,35 @@ export function LessonTrustPanel({ lesson }: { lesson: Lesson }) {
       <div className="mt-5 border-t border-site-border pt-5">
         <h3 className="text-sm font-semibold">Kaynak ve inceleme</h3>
         <ul className="mt-2 space-y-2 text-xs leading-5 text-site-muted">
-          {frontmatter.kaynaklar.map((kaynak) => <li key={kaynak}>{kaynakGoster(kaynak)}</li>)}
+          {frontmatter.kaynaklar.map((kaynak) => (
+            <li key={typeof kaynak === "string" ? kaynak : `${kaynak.kind}:${kaynak.url ?? kaynak.title}`}>
+              {kaynakGoster(kaynak)}
+            </li>
+          ))}
         </ul>
-        <p className="mt-3 rounded-xl bg-success-surface p-3 text-xs leading-5 text-success-ink">
-          <strong className="block">İnsan incelemesi: {frontmatter.incelendi_tarafindan ?? "belirtilmemiş"}</strong>
-          {frontmatter.incelendi_tarih ? `${frontmatter.incelendi_tarih} · ` : ""}Yayınlanan sürüm
+        <p className={`mt-3 rounded-xl border p-3 text-xs leading-5 ${verified ? "border-success-border bg-success-surface text-success-ink" : "border-warning-border bg-warning-surface text-warning-ink"}`} data-review-state={reviewStatus.state}>
+          <strong className="block">{reviewStatus.label}</strong>
+          <span className="mt-1 block">{reviewStatus.explanation}</span>
+          {reviewStatus.receipt ? (
+            <span className="mt-2 block">Makbuz: {reviewStatus.receipt.reviewer.displayName} · {reviewStatus.receipt.reviewedAt}</span>
+          ) : (frontmatter.incelendi_tarafindan || frontmatter.incelendi_tarih) && (
+            <span className="mt-2 block">
+              Eski kayıt: {frontmatter.incelendi_tarafindan ?? "kişi belirtilmemiş"}
+              {frontmatter.incelendi_tarih ? ` · ${frontmatter.incelendi_tarih}` : ""}
+            </span>
+          )}
         </p>
+        <ul className="mt-3 grid gap-1 text-[11px] text-site-subtle" aria-label="İnceleme kapsamları">
+          {reviewStatus.requiredScopes.map((scope) => (
+            <li key={scope} className="flex items-center justify-between gap-3">
+              <span>{REVIEW_SCOPE_LABELS[scope]}</span>
+              <span className={reviewStatus.verifiedScopes.includes(scope) ? "text-success-ink" : "text-warning-ink"}>
+                {reviewStatus.verifiedScopes.includes(scope) ? "doğrulandı" : "bekliyor"}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 break-all font-mono text-[10px] leading-4 text-site-subtle">Artifact: {reviewStatus.artifactHash}</p>
       </div>
       <p className="mt-4 text-[11px] leading-4 text-site-subtle">Hesaplar tarayıcında çalışır. Ders ilerlemesi sunucuya gönderilmez; bu cihazda tutulur.</p>
     </aside>

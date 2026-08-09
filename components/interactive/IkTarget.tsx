@@ -5,11 +5,9 @@ import type { ThreeEvent } from "@react-three/fiber";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import {
   forwardKinematics,
-  inverseKinematicsAnalytical2Dof,
-  inverseKinematicsNumerical,
   type Elbow,
-  type RobotSpec,
 } from "@/lib/robotics/kinematics";
+import { resolveIkSolver, solveIkTarget, type IkSolverMode, type IkTargetSolution } from "@/lib/robotics/ikSolver";
 import { getRobotById } from "@/lib/robotics/robots";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import { useTheme } from "@/components/ui/ThemeProvider";
@@ -17,27 +15,13 @@ import { SCENE_PALETTES } from "@/lib/theme";
 
 interface IkTargetProps {
   robot: string;
+  solver?: IkSolverMode;
 }
 
 const round = (value: number) => Math.round(value * 1000) / 1000;
 
-function solveIk(
-  robot: RobotSpec,
-  target: { x: number; y: number },
-  elbow: Elbow,
-  previousAngles: number[],
-): number[] | null {
-  if (robot.joints.length === 2) {
-    return inverseKinematicsAnalytical2Dof(robot, target, elbow);
-  }
-  const result = inverseKinematicsNumerical(robot, { x: target.x, y: target.y, z: 0 }, {
-    initialGuess: previousAngles,
-  });
-  return result.angles;
-}
-
 /** Ders içine gömülen etkileşimli sahne: hedefi sürükle, robot ters kinematikle uzansın. */
-export function IkTarget({ robot: robotId }: IkTargetProps) {
+export function IkTarget({ robot: robotId, solver = "auto" }: IkTargetProps) {
   const record = useEvidenceRecorder();
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
@@ -47,22 +31,27 @@ export function IkTarget({ robot: robotId }: IkTargetProps) {
     [robot],
   );
   const initialTarget = useMemo(() => ({ x: maxReach * 0.6, y: maxReach * 0.35 }), [maxReach]);
+  const resolvedSolver = resolveIkSolver(robot, solver);
+  const initialSolution = useMemo(
+    () => solveIkTarget(robot, initialTarget, solver, "up", robot.joints.map(() => 0.1)),
+    [initialTarget, robot, solver],
+  );
 
   const [target, setTarget] = useState(initialTarget);
   const [elbow, setElbow] = useState<Elbow>("up");
-  const [angles, setAngles] = useState<number[]>(
-    () => solveIk(robot, initialTarget, "up", robot.joints.map(() => 0)) ?? robot.joints.map(() => 0),
-  );
+  const [angles, setAngles] = useState<number[]>(() => initialSolution.angles ?? robot.joints.map(() => 0));
+  const [solution, setSolution] = useState<IkTargetSolution>(initialSolution);
   const [reachable, setReachable] = useState(true);
   const [dragging, setDragging] = useState(false);
 
   function applyTarget(point: { x: number; y: number }, elbowChoice: Elbow) {
     setTarget(point);
-    const solved = solveIk(robot, point, elbowChoice, angles);
-    if (solved) {
-      setAngles(solved);
+    const nextSolution = solveIkTarget(robot, point, solver, elbowChoice, angles);
+    setSolution(nextSolution);
+    if (nextSolution.angles) {
+      setAngles(nextSolution.angles);
       setReachable(true);
-      record({ skillId: "inverse-kinematics", stage: "tried", result: "success", metrics: { x: round(point.x), y: round(point.y), elbow: elbowChoice } });
+      record({ skillId: "inverse-kinematics", stage: "tried", result: "success", metrics: { x: round(point.x), y: round(point.y), elbow: elbowChoice, solver: nextSolution.solver, iterations: nextSolution.iterations, residual: round(nextSolution.residual) } });
     } else {
       setReachable(false);
       record({ skillId: "inverse-kinematics", stage: "observed", result: "retry", metrics: { unreachable: true } });
@@ -146,7 +135,7 @@ export function IkTarget({ robot: robotId }: IkTargetProps) {
             : "Bu noktaya ulaşılamıyor — hedef, erişim alanının dışında"}
         </span>
         <div className="flex gap-2">
-          {robot.joints.length === 2 && (
+          {resolvedSolver === "analytical" && robot.joints.length === 2 && (
             <button
               type="button"
               onClick={handleElbowToggle}
@@ -165,7 +154,7 @@ export function IkTarget({ robot: robotId }: IkTargetProps) {
         </div>
       </div>
       <p className="text-xs text-lise-ink/70">
-        Uç nokta: ({round(endEffector.x)}, {round(endEffector.y)})
+        Uç nokta: ({round(endEffector.x)}, {round(endEffector.y)}) · Çözücü: {solution.solver === "dls" ? "DLS sayısal" : "analitik"} · {solution.iterations} iterasyon · hata {Number.isFinite(solution.residual) ? round(solution.residual) : "—"} m
       </p>
     </div>
   );

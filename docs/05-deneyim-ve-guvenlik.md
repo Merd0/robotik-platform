@@ -139,6 +139,10 @@ veli rızası, özel kategoriler gibi ciddi yükümlülükler doğurur.
 - Hesap yok, giriş yok, e-posta yok, isim yok.
 - İlerleme takibi tarayıcının kendi belleğinde (`localStorage`), sunucuya
   hiçbir şey gitmiyor.
+- Yerel kayıt; ad, hesap veya sertifika değildir. Kullanıcı JSON kopyasını
+  indirebilir ve arayüzden tüm kaydı silebilir. `localStorage` engellenirse
+  uygulama olayları yalnız açık sekmenin belleğinde tutar ve kalıcıymış gibi
+  göstermez.
 - Çerez yok (dolayısıyla çerez banner'ı da yok).
 - Üçüncü taraf izleyici yok. Analitik istenirse Plausible gibi kişisel veri
   toplamayan bir araç, ya da hiç.

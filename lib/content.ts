@@ -7,6 +7,17 @@ const CONTENT_DIR = path.join(process.cwd(), "content");
 export type Seviye = "ortaokul" | "lise" | "universite";
 export type DersDurum = "taslak" | "inceleme" | "yayinda";
 
+export type SourceKind = "official-doc" | "software-doc" | "book" | "paper" | "standard" | "dataset" | "other";
+
+export interface SourceRef {
+  kind: SourceKind;
+  title: string;
+  url?: string;
+  publisher?: string;
+  version?: string;
+  accessedAt?: string;
+}
+
 const SEVIYE_ORDER: Seviye[] = ["ortaokul", "lise", "universite"];
 export const SEVIYE_ETIKET: Record<Seviye, string> = {
   ortaokul: "Ortaokul",
@@ -41,7 +52,8 @@ export interface DersFrontmatter {
   sira?: number;
   onkosul: string[];
   kazanimlar: string[];
-  kaynaklar: string[];
+  /** Legacy metin kaynaklar okunabilir kalır; yeni yayınlar yapılandırılmış SourceRef kullanır. */
+  kaynaklar: Array<string | SourceRef>;
   etkilesimli: string[];
   durum: DersDurum;
   incelendi_tarafindan?: string;

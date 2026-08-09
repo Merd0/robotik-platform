@@ -111,3 +111,23 @@ export function allowedSpeed(
   if (budget <= 0) return 0;
   return budget / totalTime;
 }
+
+export type SafetySpeedAssessment = "fastest-safe-step" | "safe-but-not-maximal" | "too-fast" | "stopped" | "no-positive-speed";
+
+/** Capstone'da başarı, sıfırı seçmek değil verilen çözünürlükte en hızlı güvenli pozitif hızdır. */
+export function assessSafetySpeed(
+  commandedSpeed: number,
+  maximumSpeed: number,
+  step = 50,
+  tolerance = 0.5,
+): SafetySpeedAssessment {
+  assertFinite(commandedSpeed, "commandedSpeed");
+  assertFinite(maximumSpeed, "maximumSpeed");
+  if (step <= 0 || !Number.isFinite(step)) throw new Error("step pozitif ve sonlu olmalı");
+  const fastestSafeStep = Math.floor((Math.max(0, maximumSpeed) + tolerance) / step) * step;
+  if (fastestSafeStep < step) return "no-positive-speed";
+  if (commandedSpeed <= 0) return "stopped";
+  if (commandedSpeed > maximumSpeed + tolerance) return "too-fast";
+  if (Math.abs(commandedSpeed - fastestSafeStep) <= tolerance) return "fastest-safe-step";
+  return "safe-but-not-maximal";
+}

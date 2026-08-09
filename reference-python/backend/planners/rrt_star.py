@@ -28,8 +28,9 @@ class RRTStarPlanner(RRTPlanner):
         nodes = [start]
         parent = {start: None}
         cost = {start: 0.0}
+        children = {start: set()}
         nodes_expanded = 0
-        best_goal_node = None
+        goal_candidates = []
 
         # Hedefe ulasan ilk dugumden sonra da aramaya devam ediyoruz; RRT'nin
         # aksine amac sadece bir yol degil, rewire ile giderek kisalan bir yol.
@@ -57,18 +58,33 @@ class RRTStarPlanner(RRTPlanner):
             nodes.append(new_point)
             parent[new_point] = best_parent
             cost[new_point] = best_cost
+            children[new_point] = set()
+            children[best_parent].add(new_point)
 
             for neighbor in neighbors:
                 if neighbor == best_parent:
                     continue
                 candidate_cost = best_cost + _distance(new_point, neighbor)
                 if candidate_cost < cost[neighbor] and self._segment_free(new_point, neighbor):
+                    previous_cost = cost[neighbor]
+                    previous_parent = parent[neighbor]
+                    if previous_parent is not None:
+                        children[previous_parent].discard(neighbor)
                     parent[neighbor] = new_point
-                    cost[neighbor] = candidate_cost
+                    children[new_point].add(neighbor)
+                    _propagate_descendant_costs(
+                        neighbor, candidate_cost - previous_cost, children, cost
+                    )
 
             if _distance(new_point, goal) <= self.goal_tolerance:
-                if best_goal_node is None or cost[new_point] < cost[best_goal_node]:
-                    best_goal_node = new_point
+                if new_point == goal or self._segment_free(new_point, goal):
+                    goal_candidates.append(new_point)
+
+        best_goal_node = min(
+            goal_candidates,
+            key=lambda node: cost[node] + _distance(node, goal),
+            default=None,
+        )
 
         if best_goal_node is None:
             return PlanResult(
@@ -87,3 +103,12 @@ class RRTStarPlanner(RRTPlanner):
             nodes_expanded=nodes_expanded,
             algorithm=self.name,
         )
+
+
+def _propagate_descendant_costs(root, delta, children, cost) -> None:
+    """Rewire maliyet farkini kok ve tum torunlarina uygular."""
+    pending = [root]
+    while pending:
+        node = pending.pop()
+        cost[node] += delta
+        pending.extend(children[node])
