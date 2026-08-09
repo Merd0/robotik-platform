@@ -7,19 +7,38 @@ import {
   getLessonReviewStatus,
   getRequiredReviewScopes,
   requiresStructuredSources,
+  REVIEW_SCOPES,
   reviewReceipts,
   SCOPE_SUBJECT_KEYS,
 } from "./reviewReceipts";
 
 describe("Review Receipt v2", () => {
-  it("insan doğrulaması yokken makbuz uydurmaz", () => {
-    expect(reviewReceipts.receipts).toEqual([]);
+  it("makbuzu olmayan ders hiçbir zaman doğrulanmış görünmez", () => {
+    // Bu test önce "makbuz listesi boş" diye yazılmıştı; sistem gerçekten
+    // kullanılmaya başlandığı anda kırılırdı. Korunması gereken şey liste
+    // uzunluğu değil, kuralın kendisi: kaydı olmayan ders doğrulanmış sayılmaz.
     const lesson = getAllLessons().find((candidate) => candidate.slug === "b-universite-jacobian");
     expect(lesson).toBeDefined();
+    expect(reviewReceipts.receipts.some((receipt) => receipt.lessonId === lesson!.slug)).toBe(false);
+
     const status = getLessonReviewStatus(lesson!);
     expect(status.state).toBe("stale-after-content-change");
     expect(status.verifiedScopes).toEqual([]);
     expect(status.scopeStatuses.every((scope) => scope.state === "missing")).toBe(true);
+  });
+
+  it("her makbuz gerçek bir derse, gerçek bir insana ve tek bir kapsama bağlıdır", () => {
+    const lessonIds = new Set(getAllLessons().map((lesson) => lesson.slug));
+    const ids = new Set<string>();
+    for (const receipt of reviewReceipts.receipts) {
+      expect(lessonIds.has(receipt.lessonId), `${receipt.id}: bilinmeyen ders`).toBe(true);
+      expect(receipt.reviewer.displayName.trim().length, `${receipt.id}: inceleyen adı boş`).toBeGreaterThan(0);
+      expect(REVIEW_SCOPES).toContain(receipt.scope);
+      expect(ids.has(receipt.id), `${receipt.id}: yinelenen makbuz id'si`).toBe(false);
+      ids.add(receipt.id);
+      // subject yalnız o kapsamın bağlı olduğu kökleri taşımalı.
+      expect(Object.keys(receipt.subject).sort()).toEqual([...SCOPE_SUBJECT_KEYS[receipt.scope]].sort());
+    }
   });
 
   it("güvenlik hattına ayrı safety review kapsamı zorunlu tutar", () => {

@@ -1,20 +1,28 @@
 import { describe, expect, it } from "vitest";
 import { getAllLessons } from "./content";
-import { getReviewDebtStatus, reviewDebt } from "./reviewDebt";
+import { getOpenReviewDebtIds, getReviewDebtStatus, reviewDebt } from "./reviewDebt";
+import { getLessonReviewStatus } from "./reviewReceipts";
 
 describe("review borcu kaydı", () => {
-  it("mevcut bütün yayınları tam bir kez kapsar", () => {
-    const publishedIds = getAllLessons()
-      .filter((lesson) => lesson.frontmatter.durum === "yayinda")
-      .map((lesson) => lesson.slug)
-      .sort();
-    const recordedIds = [
-      ...reviewDebt.staleAfterContentChange,
-      ...reviewDebt.legacyUnverified,
-    ].sort();
+  it("her yayın ya açık borçtadır ya güncel makbuzludur — ikisi birden değil", () => {
+    // v1'de bu test "borç kaydı = yayın kümesi" diyordu. O kural borcun
+    // azalmasını imkânsız kılıyordu: ilk ders onaylanıp borçtan düştüğü anda
+    // test kırılıyordu. v2'nin gerçek değişmezi bir bölünme (partition):
+    // yayın kümesi, açık borç ile doğrulanmış kümenin ayrık birleşimidir.
+    const published = getAllLessons().filter((lesson) => lesson.frontmatter.durum === "yayinda");
+    const openDebt = new Set(getOpenReviewDebtIds());
 
-    expect(new Set(recordedIds).size).toBe(recordedIds.length);
-    expect(recordedIds).toEqual(publishedIds);
+    expect(openDebt.size).toBe(reviewDebt.staleAfterContentChange.length + reviewDebt.legacyUnverified.length);
+
+    for (const lesson of published) {
+      const verified = getLessonReviewStatus(lesson).state === "verified";
+      expect(verified || openDebt.has(lesson.slug), `${lesson.slug} ne borçta ne doğrulanmış`).toBe(true);
+      expect(verified && openDebt.has(lesson.slug), `${lesson.slug} hem borçta hem doğrulanmış`).toBe(false);
+    }
+
+    // Borç kaydı yalnız yayınları izler; taslak borç listesine giremez.
+    const publishedIds = new Set(published.map((lesson) => lesson.slug));
+    for (const id of openDebt) expect(publishedIds.has(id), `${id} yayında değil ama borçta`).toBe(true);
   });
 
   it("değişiklik sonrası eskiyen kayıtları ayrı gösterir", () => {
