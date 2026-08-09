@@ -59,6 +59,13 @@ jobs:
       - name: MDX güvenlik denetimi
         run: npx tsx scripts/check-mdx-guvenlik.ts
 
+      # Kaynak gizliliği (docs/00-vizyon.md mutlak kuralı) için kalıp taraması:
+      # iş yeri/kurum/staj bağlamı ve kişisel ton sızmaları. İki üniversite
+      # dersine bu tür bir cümle girip biri canlı siteye çıktığı için eklendi
+      # (bkz. docs/08-guvenlik-sertlestirme.md bölüm 6).
+      - name: Hassas terim denetimi
+        run: npx tsx scripts/check-sensitive-terms.ts
+
       # Taslak derslerin üretim çıktısına sızmadığını derleyerek doğrular.
       # docs/06-kalite-ve-topluluk.md Katman 3: insan gözden geçirmesinden
       # geçmemiş içerik herkese açık adreste bulunamaz. `npm run build`
