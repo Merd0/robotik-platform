@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 /**
  * `content/` altındaki ders metinlerinde kaynak gizliliği kuralını ihlal eden
@@ -28,13 +29,48 @@ import path from "node:path";
  * (`docs/06-kalite-ve-topluluk.md` Katman 3) yerine geçmez, onu tamamlar.
  */
 
-const CONTENT_DIR = path.join(process.cwd(), "content");
+/**
+ * Taranan kökler. `docs/` sonradan eklendi: kurum bağlamı yalnız ders
+ * metninden değil, planlama/durum belgelerinden de sızabiliyor — repo açık
+ * kaynak olduğu için `docs/` altındaki bir kurum adı da herkese açıktır.
+ * Bu betiğin ilk sürümü sadece `content/` tarıyordu ve tam bu yüzden
+ * `docs/durum-codex.md` ile `docs/guncel-fikirler.md`'deki sızıntılar
+ * otomatik yakalanmayıp elle bulundu.
+ */
+const TARAMA_KOKLERI = ["content", "docs"];
+const TARANAN_UZANTILAR = [".mdx", ".md"];
+
+/**
+ * Bu betiğin kendisi taranmaz. Desen tanımları kaçınılmaz olarak yasaklı
+ * adları içerir; tarasaydı her koşuda kendi kendini yanlış pozitif olarak
+ * işaretlerdi. Şu an `scripts/` zaten kök listesinde değil, ama kökler
+ * ileride genişletilirse bu koruma yerinde dursun.
+ */
+const BU_DOSYA = fileURLToPath(import.meta.url);
+const HARIC_DOSYALAR = new Set([path.relative(process.cwd(), BU_DOSYA).replace(/\\/g, "/")]);
+
+/**
+ * Bir kuralın nerede geçerli olduğu.
+ *
+ * `her-yer`: kurum, iç birim ve sistem adları. Bunlar hiçbir bağlamda
+ * meşru değil — ne derste, ne planlama belgesinde.
+ *
+ * `yalniz-icerik`: ton kuralları. Bunların gerekçesi "dersi okuyan kişi
+ * platformun sahibi değil, tanımadığımız bir öğrenci" — bu gerekçe ders
+ * metni için geçerli, kendi aramızdaki planlama/durum belgeleri için
+ * değil. `docs/` altında bakımcının adının geçmesi (durum kaydı, review
+ * kaydı) ya da staj takviminin anılması (`docs/03-yol-haritasi.md`'deki
+ * sabit tarih) meşrudur; bu kuralları `docs/`e açmak 26 yanlış pozitif
+ * üretip taramayı kullanılamaz hale getirirdi.
+ */
+type KuralKapsami = "her-yer" | "yalniz-icerik";
 
 interface Kural {
   /** Bulgu mesajında görünen kısa ad. */
   ad: string;
   desen: RegExp;
   aciklama: string;
+  kapsam: KuralKapsami;
   /**
    * Bu frontmatter alanlarında eşleşme yok sayılır. Gerekçe: bazı alanlar
    * kuralın istisnasıdır — ör. `incelendi_tarafindan` dersin gözden
@@ -73,24 +109,28 @@ const KURALLAR: Kural[] = [
   {
     ad: "kurum adı",
     desen: /(?<!\p{L})ASELSAN(?!\p{L})/giu,
-    aciklama: "İş yeri/kurum adı ders metnine giremez (docs/00-vizyon.md).",
+    aciklama: "İş yeri/kurum adı hiçbir dosyaya giremez (docs/00-vizyon.md).",
+    kapsam: "her-yer",
   },
   {
     ad: "iç birim/sistem adı",
     desen: /(?<!\p{L})MEOS(?!\p{L})/gu,
-    aciklama: "İş yerine ait birim veya sistem adı ders metnine giremez (docs/00-vizyon.md).",
+    aciklama: "İş yerine ait birim veya sistem adı hiçbir dosyaya giremez (docs/00-vizyon.md).",
+    kapsam: "her-yer",
   },
   {
     ad: "staj bağlamı",
     desen: /(?<!\p{L})[sS]taj/gu,
     aciklama:
       "Staj/iş yeri deneyimi bir kaynak değildir; iddia herkese açık bir kaynağa dayanmalı (docs/04-icerik-rehberi.md).",
+    kapsam: "yalniz-icerik",
   },
   {
     ad: "kişisel ton",
     desen: /(?<!\p{L})Mert(?!\p{L})/gu,
     aciklama:
       "Ders metni platform sahibine değil, tanımadığımız bir öğrenciye seslenir; kişisel anekdot kullanma (docs/04-icerik-rehberi.md).",
+    kapsam: "yalniz-icerik",
     istisnaAlanlar: ["incelendi_tarafindan"],
   },
   {
@@ -99,6 +139,7 @@ const KURALLAR: Kural[] = [
       /(?<!\p{L})(?:[iİ]ş ?yerim|[çÇ]alıştığım (?:şirket|firma|hat)|kendi deneyimimde|bizzat gördüğüm)/giu,
     aciklama:
       "Birinci ağızdan iş yeri deneyimi hem kaynaksız hem kişisel; nötr üçüncü kişi anlatıma çevir (docs/04-icerik-rehberi.md).",
+    kapsam: "yalniz-icerik",
   },
 ];
 
@@ -109,13 +150,24 @@ interface Bulgu {
   eslesme: string;
 }
 
-function mdxDosyalari(dir: string): string[] {
+function taranacakDosyalar(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const tam = path.join(dir, entry.name);
-    if (entry.isDirectory()) return mdxDosyalari(tam);
-    return entry.name.endsWith(".mdx") ? [tam] : [];
+    if (entry.isDirectory()) return taranacakDosyalar(tam);
+    if (!TARANAN_UZANTILAR.some((uzanti) => entry.name.endsWith(uzanti))) return [];
+    return HARIC_DOSYALAR.has(gorecekYol(tam)) ? [] : [tam];
   });
+}
+
+/** Bulgu mesajlarında ve hariç tutma karşılaştırmasında kullanılan tek biçim. */
+function gorecekYol(dosya: string): string {
+  return path.relative(process.cwd(), dosya).replace(/\\/g, "/");
+}
+
+/** Ders içeriği mi, yoksa kendi aramızdaki planlama/durum belgesi mi. */
+function icerikDosyasiMi(dosya: string): boolean {
+  return gorecekYol(dosya).startsWith("content/");
 }
 
 /**
@@ -141,17 +193,21 @@ function frontmatterAlanlari(satirlar: string[]): (string | null)[] {
 function dosyayiDenetle(dosya: string): Bulgu[] {
   const satirlar = fs.readFileSync(dosya, "utf8").split(/\r?\n/);
   const alanlar = frontmatterAlanlari(satirlar);
+  const icerik = icerikDosyasiMi(dosya);
+  const gecerliKurallar = KURALLAR.filter(
+    (kural) => kural.kapsam === "her-yer" || icerik,
+  );
   const bulgular: Bulgu[] = [];
 
   satirlar.forEach((satir, i) => {
-    for (const kural of KURALLAR) {
+    for (const kural of gecerliKurallar) {
       const alan = alanlar[i];
       if (alan && kural.istisnaAlanlar?.includes(alan)) continue;
 
       kural.desen.lastIndex = 0;
       for (const eslesme of satir.matchAll(kural.desen)) {
         bulgular.push({
-          dosya: path.relative(process.cwd(), dosya),
+          dosya: gorecekYol(dosya),
           satir: i + 1,
           kural,
           eslesme: eslesme[0],
@@ -164,7 +220,9 @@ function dosyayiDenetle(dosya: string): Bulgu[] {
 }
 
 function main(): void {
-  const dosyalar = mdxDosyalari(CONTENT_DIR);
+  const dosyalar = TARAMA_KOKLERI.flatMap((kok) =>
+    taranacakDosyalar(path.join(process.cwd(), kok)),
+  );
   const bulgular = dosyalar.flatMap(dosyayiDenetle);
 
   if (bulgular.length > 0) {
@@ -180,7 +238,11 @@ function main(): void {
     process.exit(1);
   }
 
-  console.log(`Hassas terim denetimi temiz: ${dosyalar.length} ders dosyası.`);
+  const dersSayisi = dosyalar.filter((dosya) => dosya.endsWith(".mdx")).length;
+  console.log(
+    `Hassas terim denetimi temiz: ${dersSayisi} ders, ` +
+      `${dosyalar.length - dersSayisi} doküman (content/ + docs/).`,
+  );
 }
 
 main();
