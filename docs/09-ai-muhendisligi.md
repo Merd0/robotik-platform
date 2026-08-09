@@ -75,6 +75,28 @@ Sen yazmıyorsun, Claude yazıyor — "bu komutu hep böyle çalıştır" gibi
 kalıcı öğrenmeleri kendi biriktiriyor. Bunu biz kurmuyoruz, kendiliğinden
 işliyor; bilmen yeterli.
 
+### 1.4 `.agents/` — aynalanan ajan yapılandırması, otomatik senkron YOK
+
+Depoda `.claude/` dışında iki ajan yapılandırma dizini daha var: `.codex/`
+(Codex karşılığı, TOML biçiminde) ve `.agents/`. `.agents/`, `.claude/`'un
+birebir aynası olarak tutuluyor — aynı skill, aynı iki ajan tanımı, aynı
+`rules/content.md`, aynı frontmatter hook'u.
+
+İki uyarı:
+
+- **`.agents/` dizinini hangi aracın okuduğu bilinmiyor ve belgeli değil.**
+  Depoda hiçbir yerde (bu dosya dahil `docs/`, `CLAUDE.md`, `AGENTS.md`,
+  `.gitignore`) tüketicisi tanımlı değil. Tam aynalama bilinçli bir karardı,
+  ama bir çalışma zamanının onu gerçekten okuduğu doğrulanmış değil.
+- **Otomatik senkron yok.** `.claude/` altında bir kural, hook, skill veya
+  ajan tanımı değiştiğinde `.agents/` **elle** güncellenmeli. Şu an aynı
+  içerik iki yerde birden duruyor; bunu koruyan bir CI kontrolü veya script
+  yok, sapma sessizce oluşur.
+
+Pratik sonuç: `.claude/` altında bir şey değiştirdiğinde `.agents/`
+karşılığını da güncelle, yoksa iki dizin zamanla birbirinden ayrışır ve
+hangisinin geçerli olduğu belirsizleşir.
+
 ---
 
 ## 2. Subagent'lar — işi ayrı bir bağlamda yapıp özet döndürme
