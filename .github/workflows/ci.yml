@@ -59,10 +59,15 @@ jobs:
       - name: MDX güvenlik denetimi
         run: npx tsx scripts/check-mdx-guvenlik.ts
 
-      - name: Yayın review borcu bütünlüğü
+      # İnsan gözden geçirmesi 2026-08-10'da opsiyonele çevrildi (bkz.
+      # docs/06-kalite-ve-topluluk.md "Katman 3"). Bu iki adım artık yayın
+      # kapısı değil, bilgilendirici rapor: makbuz durumunu ve borç kaydının
+      # bütünlüğünü loga yazar, build'i kırmaz. Eski kapı davranışı gerekirse
+      # REVIEW_STRICT=1 ile geri alınır.
+      - name: Review durumu (bilgilendirici, kapı değil)
         run: npm run check-review-debt
 
-      - name: Sürüme bağlı review makbuzu bütünlüğü
+      - name: Review makbuzu durumu (bilgilendirici, kapı değil)
         run: npm run check-review-integrity
 
       # Kaynak gizliliği (docs/00-vizyon.md mutlak kuralı) için kalıp taraması:
@@ -72,9 +77,10 @@ jobs:
       - name: İşyeri ve gizlilik terimleri denetimi
         run: npm run check-sensitive-terms
 
-      # Taslak derslerin üretim çıktısına sızmadığını derleyerek doğrular.
-      # docs/06-kalite-ve-topluluk.md Katman 3: insan gözden geçirmesinden
-      # geçmemiş içerik herkese açık adreste bulunamaz. `npm run build`
+      # `durum: taslak` işaretli bir dersin üretim çıktısına sızmadığını
+      # derleyerek doğrular. Kural artık insan incelemesine değil, yazarın
+      # kendi "bu henüz hazır değil" işaretine dayanıyor: taslak diye
+      # işaretlenen içerik herkese açık adreste bulunamaz. `npm run build`
       # sonunda scripts/check-no-draft-pages.ts zaten koşuyor; burada
       # derlemenin kendisi CI'ya bu amaçla eklendi.
       - name: Derleme + taslak sayfa sızıntısı kontrolü

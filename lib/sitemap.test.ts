@@ -27,7 +27,15 @@ describe("sitemap", () => {
 
     expect(sitemapLessonSlugs).toEqual(publishedSlugs);
     expect(publishedSlugs.length).toBeGreaterThan(0);
-    expect(publishedSlugs.length).toBeLessThan(getAllLessons().length);
+
+    // Korpus şu an taslak içermeyebilir (2026-08-10'da hepsi yayına alındı),
+    // bu yüzden "yayın sayısı < toplam" artık bir değişmez değil. Korunması
+    // gereken kural taslak sayısından bağımsız: önizleme açıkken bile taslak
+    // bir ders sitemap'e giremez.
+    const taslakSluglar = getAllLessons()
+      .filter((lesson) => lesson.frontmatter.durum !== "yayinda")
+      .map((lesson) => lesson.slug);
+    expect(sitemapLessonSlugs.filter((slug) => taslakSluglar.includes(slug))).toEqual([]);
   });
 
   it("72 tekil sözlük URL'sini listeler", () => {

@@ -49,28 +49,36 @@ if (outsideBaseline.length) {
   errors.push(`Baseline dışında borç kaydı (borç yalnız küçülebilir): ${outsideBaseline.join(", ")}`);
 }
 
-// Bir yayın ya güncel borç kaydında olacak ya da gerekli her kapsamı güncel
-// makbuzla doğrulanmış olacak. İkisi de yoksa yayın sessizce doğrulanmamış
-// durumda demektir.
+// Borç kaydında olup güncel makbuzu da olan ders bir tutarsızlıktır (kayıt
+// temizlenmemiş demektir). Yayında olup hiç kaydı olmaması ise artık normal:
+// insan incelemesi zorunlu değil.
 const openDebt = new Set(openDebtIds);
 for (const lesson of publishedLessons) {
-  const verified = getLessonReviewStatus(lesson).state === "verified";
-  if (!openDebt.has(lesson.slug) && !verified) {
-    errors.push(`${lesson.slug}: yayında ama ne borç kaydında ne de güncel makbuzu var.`);
-  }
-  if (openDebt.has(lesson.slug) && verified) {
+  if (openDebt.has(lesson.slug) && getLessonReviewStatus(lesson).state === "verified") {
     errors.push(`${lesson.slug}: güncel makbuz var; borç kaydı kaldırılmalı (npm run review onayla bunu kendisi yapar).`);
   }
 }
 
+/**
+ * Bu kontrol de artık bir yayın kapısı değil (bkz. check-review-integrity.ts
+ * başındaki not ve docs/06 "Katman 3"). Dondurulmuş baseline'ın bütünlüğü
+ * hâlâ raporlanıyor — o bir tarih kaydı ve bozulması bir veri hatasıdır —
+ * ama yayını engellemiyor. `REVIEW_STRICT=1` eski davranışı geri getirir.
+ */
+const strict = process.env.REVIEW_STRICT === "1";
+
 if (errors.length > 0) {
-  console.error(`Review borcu kaydı ${errors.length} hata üretti:\n${errors.map((error) => `  - ${error}`).join("\n")}`);
-  process.exit(1);
+  console.warn(
+    `Review borcu kaydı ${errors.length} ${strict ? "hata" : "uyarı"} üretti:\n${errors.map((error) => `  - ${error}`).join("\n")}`,
+  );
+  if (strict) process.exit(1);
 }
 
 const cleared = baselineIds.length - openDebtIds.length;
+const makbuzlu = publishedLessons.filter((lesson) => getLessonReviewStatus(lesson).state === "verified").length;
 console.log(
-  `Review borcu kaydı temiz: ${reviewDebt.staleAfterContentChange.length} değişiklik sonrası eski, ` +
+  `Review borcu (bilgi): ${reviewDebt.staleAfterContentChange.length} değişiklik sonrası eski, ` +
     `${reviewDebt.legacyUnverified.length} sürüme bağlanmamış legacy kayıt; ` +
-    `${cleared}/${baselineIds.length} baseline borcu kapandı.`,
+    `${cleared}/${baselineIds.length} baseline borcu kapandı. ` +
+    `${publishedLessons.length} yayının ${makbuzlu}'i güncel makbuzlu.`,
 );

@@ -23,10 +23,11 @@ Planlama dokümanları — çalışmaya başlamadan önce oku:
   altında. Sunucuya istek atma.
 - **Her ders `kaynaklar` alanı dolu olmadan `durum: yayinda` olamaz.**
   Bu bir gizlilik koruması, atlanamaz.
-- **Yapay zeka üretimi bir ders, insan gözden geçirmesi olmadan yayınlanamaz.**
-  `incelendi_tarafindan` ve `incelendi_tarih` alanları dolu olmalı. Bu proje
-  "yapay zeka her şeyi yazdı, güvenip yayınladık" olmayacak — bkz.
-  `docs/06-kalite-ve-topluluk.md`.
+- **İnsan gözden geçirmesi opsiyoneldir** (2026-08-10 kalıcı bakımcı kararı,
+  Hat H dahil istisnasız). Yayın için `kaynaklar` yeterli. İnceleme aracı
+  (`npm run review`) duruyor ve kaydı sürüme bağlı kalıyor, ama zorunlu
+  değil. Bunun sonucu: metnin doğruluğunu denetleyen otomatik katman yok —
+  kapsam tablosu `docs/06-kalite-ve-topluluk.md`'de.
 - **Proje en baştan açık kaynak.** Sonradan açılan bir repo değil.
 - `lib/robotics/` içine asla `window`, `document`, veya React'e özel import
   girmez — ileride mobil (React Native) portu için bu katman saf kalmalı.

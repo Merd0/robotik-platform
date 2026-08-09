@@ -4,25 +4,35 @@ import { getOpenReviewDebtIds, getReviewDebtStatus, reviewDebt } from "./reviewD
 import { getLessonReviewStatus } from "./reviewReceipts";
 
 describe("review borcu kaydı", () => {
-  it("her yayın ya açık borçtadır ya güncel makbuzludur — ikisi birden değil", () => {
-    // v1'de bu test "borç kaydı = yayın kümesi" diyordu. O kural borcun
-    // azalmasını imkânsız kılıyordu: ilk ders onaylanıp borçtan düştüğü anda
-    // test kırılıyordu. v2'nin gerçek değişmezi bir bölünme (partition):
-    // yayın kümesi, açık borç ile doğrulanmış kümenin ayrık birleşimidir.
+  it("borç kaydı tutarlı: yayınları izler, makbuzla çakışmaz, baseline'ı aşmaz", () => {
+    // Bu testin iddiası politika değiştikçe iki kez daraldı ve bu bilinçli:
+    //
+    //  v1: "borç kaydı = yayın kümesi" — ilk ders onaylanıp borçtan düştüğü
+    //      anda kırılıyordu.
+    //  v2: "yayın = açık borç ⊎ doğrulanmış" (ayrık bölünme).
+    //  2026-08-10: insan incelemesi opsiyonel oldu; bir yayının ne borçta ne
+    //      makbuzlu olması ARTIK NORMAL. Bölünme iddiası düştü.
+    //
+    // Geriye kalan ve hâlâ anlamlı olan üç değişmez aşağıda.
     const published = getAllLessons().filter((lesson) => lesson.frontmatter.durum === "yayinda");
+    const publishedIds = new Set(published.map((lesson) => lesson.slug));
     const openDebt = new Set(getOpenReviewDebtIds());
 
     expect(openDebt.size).toBe(reviewDebt.staleAfterContentChange.length + reviewDebt.legacyUnverified.length);
 
+    // 1. Borç kaydı yalnız yayınları izler.
+    for (const id of openDebt) expect(publishedIds.has(id), `${id} yayında değil ama borçta`).toBe(true);
+
+    // 2. Bir ders hem borçta hem güncel makbuzlu olamaz — makbuz yazıldığında
+    //    borç kaydı düşer (npm run review onayla bunu kendisi yapar).
     for (const lesson of published) {
       const verified = getLessonReviewStatus(lesson).state === "verified";
-      expect(verified || openDebt.has(lesson.slug), `${lesson.slug} ne borçta ne doğrulanmış`).toBe(true);
       expect(verified && openDebt.has(lesson.slug), `${lesson.slug} hem borçta hem doğrulanmış`).toBe(false);
     }
 
-    // Borç kaydı yalnız yayınları izler; taslak borç listesine giremez.
-    const publishedIds = new Set(published.map((lesson) => lesson.slug));
-    for (const id of openDebt) expect(publishedIds.has(id), `${id} yayında değil ama borçta`).toBe(true);
+    // 3. Borç yalnız küçülebilir: dondurulmuş baseline'ın alt kümesidir.
+    const baseline = new Set(reviewDebt.baselineIds);
+    for (const id of openDebt) expect(baseline.has(id), `${id} baseline dışında`).toBe(true);
   });
 
   it("değişiklik sonrası eskiyen kayıtları ayrı gösterir", () => {

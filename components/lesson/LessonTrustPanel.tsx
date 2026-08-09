@@ -44,29 +44,24 @@ export function LessonTrustPanel({ lesson }: { lesson: Lesson }) {
             </li>
           ))}
         </ul>
-        <p className={`mt-3 rounded-xl border p-3 text-xs leading-5 ${verified ? "border-success-border bg-success-surface text-success-ink" : "border-warning-border bg-warning-surface text-warning-ink"}`} data-review-state={reviewStatus.state}>
-          <strong className="block">{reviewStatus.label}</strong>
-          <span className="mt-1 block">{reviewStatus.explanation}</span>
-          {reviewStatus.latestReceipt ? (
-            <span className="mt-2 block">Son inceleme: {reviewStatus.latestReceipt.reviewer.displayName} · {reviewStatus.latestReceipt.reviewedAt}</span>
-          ) : (frontmatter.incelendi_tarafindan || frontmatter.incelendi_tarih) && (
-            <span className="mt-2 block">
-              Eski kayıt: {frontmatter.incelendi_tarafindan ?? "kişi belirtilmemiş"}
-              {frontmatter.incelendi_tarih ? ` · ${frontmatter.incelendi_tarih}` : ""}
+        {/*
+          İnsan gözden geçirmesi 2026-08-10'dan beri opsiyonel (docs/06 "Katman 3").
+          Bu yüzden makbuzu olmayan ders için uyarı rozeti gösterilmiyor — "inceleme
+          bekliyor" demek yanlış bir beklenti üretirdi. Makbuz VARSA gösteriliyor,
+          çünkü o zaman söylenecek doğru ve olumlu bir şey var.
+        */}
+        {verified && reviewStatus.latestReceipt && (
+          <p className="mt-3 rounded-xl border border-success-border bg-success-surface p-3 text-xs leading-5 text-success-ink" data-review-state={reviewStatus.state}>
+            <strong className="block">Bu sürüm elle incelendi</strong>
+            <span className="mt-1 block">
+              {reviewStatus.verifiedScopes.map((scope) => REVIEW_SCOPE_LABELS[scope].toLocaleLowerCase("tr")).join(", ")} kapsamlarında
+              {" "}{reviewStatus.latestReceipt.reviewer.displayName} · {reviewStatus.latestReceipt.reviewedAt}
             </span>
-          )}
-        </p>
-        <ul className="mt-3 grid gap-1 text-[11px] text-site-subtle" aria-label="İnceleme kapsamları">
-          {reviewStatus.scopeStatuses.map((scope) => (
-            <li key={scope.scope} className="flex items-center justify-between gap-3" data-scope={scope.scope} data-scope-state={scope.state}>
-              <span>{REVIEW_SCOPE_LABELS[scope.scope]}</span>
-              <span className={scope.state === "verified" ? "text-success-ink" : "text-warning-ink"}>{scope.label}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-2 text-[11px] leading-4 text-site-subtle">
-          Ders metni sürümü <span className="font-mono">{reviewStatus.hashes.teachingHash.replace("sha256:", "").slice(0, 12)}</span>.
-          İnceleme bu sürüme bağlanır; dersi yayına almak veya süresini düzeltmek incelemeyi geçersiz kılmaz.
+          </p>
+        )}
+        <p className="mt-3 text-[11px] leading-4 text-site-subtle">
+          Bu dersteki her teknik iddia yukarıdaki kaynaklara dayanır; kaynağı olmayan bilgi yayımlanmaz.
+          Bir hata fark edersen <a href="https://github.com/Merd0/robotik-platform/issues" rel="noreferrer" target="_blank" className="underline underline-offset-2">bildirebilirsin</a> — düzeltmeler açık kaynak akışıyla yapılır.
         </p>
       </div>
       <p className="mt-4 text-[11px] leading-4 text-site-subtle">Hesaplar tarayıcında çalışır. Ders ilerlemesi sunucuya gönderilmez; bu cihazda tutulur.</p>

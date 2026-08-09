@@ -28,19 +28,46 @@ Bir iddia, ders kitabı/standart/üretici dokümantasyonu gibi doğrulanabilir b
 kaynağa dayanmıyorsa yazılmaz. Bu, "iddia havada mı, yerde mi" sorusunu
 cevaplar.
 
-**Katman 3 — İnsan gözden geçirmesi (zorunlu, elle).**
-Bu en kritik katman ve atlanamaz: **her ders, yayınlanmadan önce en az bir
-kişi tarafından, kaynaklarıyla karşılaştırılarak okunur.** Başlangıçta bu kişi
-sensin. Bir dersi "yayinda" yapmadan önce:
+**Katman 3 — İnsan gözden geçirmesi (opsiyonel).**
+
+**Karar (2026-08-10, bakımcı — kalıcı):** insan gözden geçirmesi artık yayın
+için zorunlu değil. Hat H (güvenlik) dahil, istisna yok. Bir ders,
+`kaynaklar` alanı dolu olduğu sürece insan okuması olmadan `durum: yayinda`
+yapılabilir. Hook, CI ve arayüz bu karara göre hizalandı.
+
+İnceleme aracı (`npm run review`, aşağıda) kaldırılmadı; isteyen kullanır,
+kayıt sürüme bağlı ve doğrulanabilir kalır. Zorunlu olan tek şey artık
+otomatik kontrollerdir.
+
+Bir dersi elle okumayı seçtiğinde izlenecek adımlar aynı kalıyor:
 
 1. Ders kaynaklarındaki orijinal metni/formülü aç
 2. Derste yazılanla karşılaştır — sadece "kulağa doğru geliyor mu" değil,
    satır satır
 3. Etkileşimli sahneyi kendin oyna, sayıların mantıklı çıktığını gör
-4. Şüpheli bir nokta varsa yayınlama, önce netleştir
+4. Şüpheli bir nokta varsa düzelt
 
-Bu üç saatlik bir angarya değil, 15-20 dakikalık bir kontrol — ama
-atlanmaması gereken 15-20 dakika.
+### Bu kararın kapsamı — dürüst kayıt
+
+Bu belge yukarıda üç katmanlı bir doğrulama tarif ediyor. Katman 3 opsiyonele
+döndüğünde geriye kalan iki katmanın **ne kontrol ettiği ile ne kontrol
+etmediği** karıştırılmamalı:
+
+| Katman | Gerçekte doğruladığı | Doğrulamadığı |
+|---|---|---|
+| 1 — sayısal | `lib/robotics/` matematiği, fixture'lara karşı | Ders metnindeki iddiaları; fixture'a bağlı olmayan hatları (D, E, F, G, H) |
+| 2 — kaynak | `kaynaklar` alanının **dolu ve biçimsel olarak geçerli** olduğunu | Derste yazılanın o kaynakta yazanla uyuşup uyuşmadığını |
+| 3 — insan | (opsiyonel) İddia ile kaynağın karşılaştırılmasını | — |
+
+Yani Katman 3 zorunlu olmaktan çıkınca, **metnin doğru olup olmadığını
+denetleyen otomatik bir katman yoktur.** Katman 1 ve 2 bu boşluğu kapatmaz;
+kapsamları farklıdır. Bu bir eleştiri değil, kararın ne anlama geldiğinin
+kaydıdır — ileride "bunu bilmiyorduk" denmemesi için burada duruyor.
+
+Pratik sonucu: sitedeki içeriğin doğruluğu, üreten modelin doğruluğu kadardır.
+Bir hata bildirimi geldiğinde savunma "inceledik" değil, "düzeltiriz" olur;
+bu yüzden düzeltme yolunun (issue → PR → yayın) açık ve hızlı kalması, eskiden
+inceleme kapısının taşıdığı yükü artık tek başına taşıyor.
 
 ### Sürüme bağlı inceleme kaydı
 
@@ -60,8 +87,10 @@ commit'ine bağlanır. İlgili kök değiştiğinde o kapsam eskir; eski makbuz 
 inceleme olarak gösterilmez. İnsan doğrulaması yapılmadıysa makbuz yazılmaz.
 
 Legacy alanların zorunluluğu artık yalnız dondurulmuş 39 derslik borç
-baseline'ı için geçerlidir. Yeni bir yayının kanıtı frontmatter alanı değil,
-makbuzdur.
+baseline'ı için geçerlidir. Bir yayının insan incelemesinden geçtiğini
+gösterebilen tek kayıt makbuzdur — ama **makbuz artık yayın şartı değildir**
+(yukarıdaki 2026-08-10 kararı). Makbuzun yokluğu "inceleme bekliyor" değil,
+"bu ders elle okunmadı" demektir.
 
 ### İnceleme akışı: `npm run review`
 
@@ -172,12 +201,13 @@ durum: taslak
 ---
 ```
 
-Yeni yayın için ayrıca dersin güncel sürüm kökleriyle eşleşen, gerekli her
-kapsamı karşılayan Review Receipt v2 zorunludur. Mevcut 39 yayının borç kaydı
+Yayın için zorunlu olan tek içerik şartı `kaynaklar` alanının dolu ve
+yapılandırılmış olmasıdır. Review Receipt v2 opsiyoneldir; yazıldığında dersin
+güncel sürüm kökleriyle eşleşmek zorundadır. Mevcut 39 yayının borç kaydı
 `content/review-debt.json` içindeki `baselineIds` olarak dondurulmuştur ve
-`scripts/check-review-debt.ts` içindeki tek sabit onu çıpalar; yeni bir ders bu
-legacy listeye eklenemez. Güncel borç bu baseline'ın alt kümesidir ve yalnız
-küçülebilir — bir dersi onaylayıp borçtan düşürmek hiçbir kod veya governance
-dosyası değişikliği gerektirmez. GitHub branch protection ise repo içinden
+`scripts/check-review-debt.ts` içindeki tek sabit onu çıpalar; bu kayıt artık
+bir kapı değil, tarihsel bir izdir. `check-review-debt` ve
+`check-review-integrity` bilgilendiricidir (`REVIEW_STRICT=1` ile eski kapı
+davranışına dönerler). GitHub branch protection ise repo içinden
 doğrulanamaz; CI zorunluluğu ve koruma kuralı barındırma ayarlarında ayrıca
 insan tarafından etkinleştirilmelidir.

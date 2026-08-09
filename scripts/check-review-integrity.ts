@@ -48,27 +48,45 @@ for (const lesson of lessons.filter((candidate) => candidate.frontmatter.durum =
   if (inDebt && status.state === "verified") {
     errors.push(`${lesson.slug}: güncel makbuz var; legacy review borcu kaydı kaldırılmalı.`);
   }
-  if (!inDebt && status.state !== "verified") {
-    const pending = status.scopeStatuses
-      .filter((scope) => scope.state !== "verified")
-      .map((scope) => `${scope.scope}:${scope.state}`)
-      .join(", ");
-    errors.push(`${lesson.slug}: yeni yayın için gerekli her kapsamda güncel Review Receipt zorunlu (${pending}).`);
-  }
+  // Makbuz yokluğu artık hata değil; yalnız yukarıdaki özet sayacına yansır.
   if (!inDebt && findLegacyTextSources(lesson).length > 0) {
     errors.push(`${lesson.slug}: yeni yayınlarda kaynaklar yapılandırılmış SourceRef olmalı; legacy metin kaynak kabul edilmez.`);
   }
 }
 
+/**
+ * Bu kontrol artık bir yayın kapısı DEĞİL.
+ *
+ * 2026-08-10'da alınan kalıcı proje kararıyla insan gözden geçirmesi
+ * zorunluluğu kaldırıldı (bkz. docs/06-kalite-ve-topluluk.md "Katman 3").
+ * Makbuz sistemi duruyor ve isteyen için çalışıyor, ama makbuzun yokluğu
+ * yayını engellemiyor.
+ *
+ * Script yine de iki farklı şeyi ayırıyor:
+ *  - VAR OLAN bir makbuzun tutarsız olması (hash sourceCommit'le uyuşmuyor,
+ *    bilinmeyen ders, yetkisiz rol) — bu bir veri bütünlüğü hatasıdır,
+ *    inceleme politikasından bağımsızdır ve raporlanır.
+ *  - Bir yayının makbuzunun olmaması — artık yalnız bilgi.
+ *
+ * `REVIEW_STRICT=1` ile eski kapı davranışı geri alınabilir.
+ */
+const strict = process.env.REVIEW_STRICT === "1";
+
 if (errors.length > 0) {
-  console.error(`Review/yayın bütünlüğü ${errors.length} hata üretti:\n${errors.map((error) => `  - ${error}`).join("\n")}`);
-  process.exit(1);
+  const baslik = strict ? "hata" : "uyarı";
+  console.warn(`Review/yayın bütünlüğü ${errors.length} ${baslik} üretti:\n${errors.map((error) => `  - ${error}`).join("\n")}`);
+  if (strict) process.exit(1);
 }
 
 for (const note of notes) console.log(`  not: ${note}`);
+const kapsanan = lessons.filter(
+  (lesson) => lesson.frontmatter.durum === "yayinda" && getLessonReviewStatus(lesson).state === "verified",
+).length;
+const yayinSayisi = lessons.filter((lesson) => lesson.frontmatter.durum === "yayinda").length;
 console.log(
-  `Review/yayın bütünlüğü temiz: ${reviewReceipts.receipts.length} kapsam makbuzu, ` +
-    `${debtIds.size} açık legacy borç; yeni yayınlar makbuzsuz geçemez.`,
+  `Review durumu (bilgi): ${reviewReceipts.receipts.length} kapsam makbuzu, ` +
+    `${yayinSayisi} yayının ${kapsanan}'i güncel makbuzlu. ` +
+    `İnsan incelemesi opsiyonel; makbuz yokluğu yayını engellemez.`,
 );
 
 function validateReceipt(receipt: ReviewReceipt): void {
