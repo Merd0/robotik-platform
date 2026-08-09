@@ -19,6 +19,19 @@ interface SozlukDosya {
 
 const SOZLUK_PATH = path.join(process.cwd(), "content", "sozluk.json");
 
+export const SOZLUK_FILE_PATH = SOZLUK_PATH;
+
+/** Türkçe terimi okunabilir ve kalıcı bir URL parçasına dönüştürür. */
+export function terimSlug(value: string): string {
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ı/g, "i")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 /**
  * Sözlük içeriği `content/sozluk.json` içinde veri olarak durur — kod değil.
  * Yeni terim eklemek dosyaya satır eklemektir (CLAUDE.md "içerik koddan ayrı").
@@ -27,6 +40,10 @@ export function getSozluk(): Terim[] {
   const raw = fs.readFileSync(SOZLUK_PATH, "utf8");
   const parsed = JSON.parse(raw) as SozlukDosya;
   return [...parsed.terimler].sort((a, b) => a.tr.localeCompare(b.tr, "tr"));
+}
+
+export function getTerimBySlug(slug: string): Terim | undefined {
+  return getSozluk().find((terim) => terimSlug(terim.tr) === slug);
 }
 
 /** Sözlüğü hatlara göre gruplar; hat sırası alfabetiktir (a-temeller … h-guvenlik). */

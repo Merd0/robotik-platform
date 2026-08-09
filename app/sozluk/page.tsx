@@ -1,20 +1,44 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { hatEtiket } from "@/lib/content";
-import { getSozluk, getSozlukByHat } from "@/lib/sozluk";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { SITE_URL } from "@/lib/seo";
+import { getSozluk, getSozlukByHat, terimSlug } from "@/lib/sozluk";
 
 export const metadata: Metadata = {
-  title: "Sözlük — Robotik Öğrenme Platformu",
+  title: "Robotik sözlüğü",
   description:
     "Robotik terimlerinin Türkçe-İngilizce karşılıkları, anlaşılır tanımları ve kısa örnekleri, konu hatlarına göre.",
+  alternates: { canonical: "/sozluk" },
+  openGraph: {
+    type: "website",
+    url: `${SITE_URL}/sozluk`,
+    title: "Robotik sözlüğü",
+    description: "Robotik terimlerinin Türkçe-İngilizce karşılıkları ve anlaşılır tanımları.",
+  },
 };
 
 export default function SozlukPage() {
   const gruplar = getSozlukByHat();
-  const toplam = getSozluk().length;
+  const terimler = getSozluk();
+  const toplam = terimler.length;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "DefinedTermSet",
+    "@id": `${SITE_URL}/sozluk`,
+    url: `${SITE_URL}/sozluk`,
+    name: "Robotik sözlüğü",
+    inLanguage: "tr",
+    hasDefinedTerm: terimler.map((terim) => ({
+      "@type": "DefinedTerm",
+      "@id": `${SITE_URL}/sozluk/${terimSlug(terim.tr)}`,
+      name: terim.tr,
+    })),
+  };
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-16">
+    <main id="ana-icerik" className="mx-auto max-w-2xl px-6 py-16">
+      <JsonLd data={jsonLd} />
       <p className="text-sm uppercase tracking-wide text-ortaokul-accent-text">Sözlük</p>
       <h1 className="mt-2 text-3xl font-semibold text-ortaokul-ink">
         Terimlerin Türkçe-İngilizce karşılıkları
@@ -46,7 +70,12 @@ export default function SozlukPage() {
               {terimler.map((terim) => (
                 <div key={`${hat}-${terim.tr}`} className="border-t border-ortaokul-ink/10 pt-4">
                   <dt className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="font-medium text-ortaokul-ink">{terim.tr}</span>
+                    <Link
+                      href={`/sozluk/${terimSlug(terim.tr)}`}
+                      className="font-medium text-ortaokul-accent-text underline decoration-ortaokul-accent/40 underline-offset-4 hover:decoration-ortaokul-accent"
+                    >
+                      {terim.tr}
+                    </Link>
                     <span lang="en" className="font-mono text-sm text-ortaokul-ink/70">
                       {terim.en}
                     </span>
