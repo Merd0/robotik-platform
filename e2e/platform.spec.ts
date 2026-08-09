@@ -1,6 +1,15 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+const publishedSixAxisLessons = [
+  "/ders/a-lise-koordinat-sistemleri",
+  "/ders/a-lise-serbestlik-derecesi",
+  "/ders/a-lise-tcp-kavrami",
+  "/ders/a-universite-dh-parametreleri",
+  "/ders/a-universite-kinematik-zincir",
+  "/ders/a-universite-poz-gosterimleri",
+];
+
 test("ana sayfa taşmadan güvenilir bir başlangıç sunar", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -150,4 +159,36 @@ test("İz Laboratuvarı sahne, matris, grafik ve kodu aynı son örneğe taşır
   expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
   const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
   expect(evidence.some((event: { predicateId?: string; stage?: string }) => event.stage === "passed" && event.predicateId === "four-lens-fk-trace-v1")).toBe(true);
+});
+
+test("altı yayınlı 6-DOF deneyi sahne ve gruplanmış kontrollerle kompakt kalır", async ({ page }) => {
+  for (const url of publishedSixAxisLessons) {
+    await page.goto(url);
+    const experiment = page.locator('[data-joint-sliders][data-robot-id="generic-6dof"]');
+    await expect(experiment).toBeVisible();
+    await expect(experiment.getByRole("slider")).toHaveCount(6);
+    await expect(experiment.getByRole("group", { name: "Kol · J1–J3" })).toBeVisible();
+    await expect(experiment.getByRole("group", { name: "Bilek · J4–J6" })).toBeVisible();
+
+    const box = await experiment.boundingBox();
+    expect(box, `${url}: deney kutusu ölçülemedi`).not.toBeNull();
+    expect(box!.height, `${url}: 6-DOF deney kutusu yeniden dikey yığıldı`).toBeLessThan(800);
+    expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+  }
+});
+
+test("J6 TCP konumunu sabit tutarken görünür alet yönelimini değiştirir", async ({ page }) => {
+  await page.goto("/ders/a-lise-serbestlik-derecesi");
+  const experiment = page.locator('[data-joint-sliders][data-robot-id="generic-6dof"]');
+  await experiment.scrollIntoViewIfNeeded();
+
+  const position = experiment.getByTestId("tcp-position");
+  const orientation = experiment.getByTestId("tool-orientation");
+  const beforePosition = await position.textContent();
+  const beforeOrientation = await orientation.textContent();
+  await experiment.getByRole("slider").nth(5).press("End");
+
+  await expect(experiment.getByTestId("active-joint-axis")).toContainText("etkin J6");
+  await expect(position).toHaveText(beforePosition!);
+  await expect(orientation).not.toHaveText(beforeOrientation!);
 });

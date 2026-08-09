@@ -25,6 +25,10 @@ export const SCENE_PALETTES = {
     jointSecondary: "#c2410c",
     reachable: "#0f766e",
     unreachable: "#dc2626",
+    axisX: "#dc2626",
+    axisY: "#16a34a",
+    axisZ: "#2563eb",
+    activeAxis: "#d97706",
   },
   dark: {
     background: "#071418",
@@ -43,5 +47,9 @@ export const SCENE_PALETTES = {
     jointSecondary: "#fdba74",
     reachable: "#5eead4",
     unreachable: "#f87171",
+    axisX: "#f87171",
+    axisY: "#4ade80",
+    axisZ: "#60a5fa",
+    activeAxis: "#fbbf24",
   },
 } as const satisfies Record<Theme, Record<string, string>>;

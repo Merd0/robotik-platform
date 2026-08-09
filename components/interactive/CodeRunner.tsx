@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { getRobotById } from "@/lib/robotics/robots";
+import { forwardKinematics } from "@/lib/robotics/kinematics";
 import type { PyodideWorkerRequest, PyodideWorkerResponse } from "@/lib/workers/pyodideWorker";
 import { MAX_CODE_RUNTIME_MS } from "@/lib/workers/executionLimits";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import { evaluateCodeLab } from "@/lib/codeLab";
+import { toolOrientationOf } from "@/components/scene/robotFrames";
 
 interface CodeRunnerProps {
   /** Editörde başlangıçta görünen kod. */
@@ -54,6 +56,25 @@ const THEME = {
 
 type RunState = "hazir" | "yukleniyor" | "calisiyor" | "bitti";
 
+const roundPose = (value: number) => {
+  const rounded = Math.round(value * 1000) / 1000;
+  return Object.is(rounded, -0) ? 0 : rounded;
+};
+
+function changedJointIndex(trace: number[][], traceIndex: number, jointCount: number): number {
+  const current = trace[traceIndex];
+  if (!current) return Math.max(0, jointCount - 1);
+  const previous = traceIndex > 0 ? trace[traceIndex - 1] : Array.from({ length: jointCount }, () => 0);
+
+  return current.reduce(
+    (largest, angle, index) =>
+      Math.abs(angle - (previous[index] ?? 0)) > Math.abs(current[largest] - (previous[largest] ?? 0))
+        ? index
+        : largest,
+    0,
+  );
+}
+
 /**
  * Ders içine gömülen etkileşimli sahne: gerçek Python kodu, Pyodide
  * (WebAssembly CPython) ile Web Worker içinde çalışır — ana thread'i
@@ -81,11 +102,23 @@ export function CodeRunner({
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<RunState>("hazir");
   const [jointAngles, setJointAngles] = useState<number[]>(() => robot?.joints.map(() => 0) ?? []);
+  const [activeJointIndex, setActiveJointIndex] = useState(() =>
+    robot?.joints.length === 6 ? 5 : 0,
+  );
   const [jointTrace, setJointTrace] = useState<number[][]>([]);
   const [traceIndex, setTraceIndex] = useState(0);
   const [testPassed, setTestPassed] = useState<boolean | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toolPose = useMemo(() => {
+    if (!robot) return null;
+    const result = forwardKinematics(robot, jointAngles);
+    const transform = result.jointTransforms[result.jointTransforms.length - 1];
+    return {
+      position: result.endEffector,
+      orientation: robot.joints.length === 6 ? toolOrientationOf(transform) : null,
+    };
+  }, [jointAngles, robot]);
 
   useEffect(() => {
     return () => {
@@ -137,6 +170,9 @@ export function CodeRunner({
       setTraceIndex(Math.max(0, event.data.jointTrace.length - 1));
       if (robot && event.data.jointTrace.length > 0) {
         setJointAngles(event.data.jointTrace[event.data.jointTrace.length - 1]);
+        setActiveJointIndex(
+          changedJointIndex(event.data.jointTrace, event.data.jointTrace.length - 1, robot.joints.length),
+        );
       }
       const { outputMatches, poseMatches, hasAutomaticTest, passed } = evaluateCodeLab(
         { expectedOutput, expectedFinalDegrees, toleranceDegrees },
@@ -187,7 +223,10 @@ export function CodeRunner({
     setJointTrace([]);
     setTraceIndex(0);
     setTestPassed(null);
-    if (robot) setJointAngles(robot.joints.map(() => 0));
+    if (robot) {
+      setJointAngles(robot.joints.map(() => 0));
+      setActiveJointIndex(robot.joints.length === 6 ? 5 : 0);
+    }
   }
 
   function showTraceStep(index: number) {
@@ -195,6 +234,7 @@ export function CodeRunner({
     const bounded = Math.max(0, Math.min(jointTrace.length - 1, index));
     setTraceIndex(bounded);
     setJointAngles(jointTrace[bounded]);
+    setActiveJointIndex(changedJointIndex(jointTrace, bounded, robot.joints.length));
   }
 
   const running = state === "yukleniyor" || state === "calisiyor";
@@ -204,8 +244,14 @@ export function CodeRunner({
       {taskTitle && <div className={`rounded-lg border ${t.outline} ${t.bg} p-3 text-sm ${t.ink}`}><span className="font-bold">Otomatik görev:</span> {taskTitle}</div>}
       {robot && (
         <SahneAlani className={`aspect-video w-full overflow-hidden rounded-lg ${t.bg}`}>
-          <RobotArm robot={robot} jointAngles={jointAngles} />
+          <RobotArm robot={robot} jointAngles={jointAngles} activeJointIndex={activeJointIndex} />
         </SahneAlani>
+      )}
+      {toolPose?.orientation && (
+        <p className={`font-mono text-xs ${t.inkMuted}`} data-testid="code-tool-pose">
+          TCP: x {roundPose(toolPose.position.x)} · y {roundPose(toolPose.position.y)} · z {roundPose(toolPose.position.z)} m
+          {" · "}Alet RPY: R {roundPose(toolPose.orientation.roll)}° · P {roundPose(toolPose.orientation.pitch)}° · Y {roundPose(toolPose.orientation.yaw)}°
+        </p>
       )}
 
       <label htmlFor={editorId} className={`text-sm font-medium ${t.ink}`}>
