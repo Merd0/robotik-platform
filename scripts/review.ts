@@ -19,6 +19,7 @@ import {
   type ReviewReceipt,
   type ReviewScope,
 } from "../lib/reviewReceipts";
+import { bugunIstanbul } from "../lib/tarih";
 import { isGitAvailable, readLessonAtCommit, resolveCommit } from "./git-lesson";
 
 /**
@@ -47,8 +48,9 @@ function git(args: string[]): string | undefined {
   }
 }
 
+/** Makbuz tarihi bakımcının yaşadığı günü göstermeli, UTC gününü değil. */
 function bugun(): string {
-  return new Date().toISOString().slice(0, 10);
+  return bugunIstanbul();
 }
 
 function gunFarki(isoDate: string): number | undefined {
