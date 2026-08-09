@@ -3,5 +3,52 @@
   "hashAlgorithm": "sha256",
   "canonicalization": "lesson-artifact-v2",
   "aciklama": "Append-only kapsam makbuzları. Her kayıt tek ders, tek kapsam ve tek insan kararıdır; subject alanı yalnız o kapsamın bağlı olduğu kökleri taşır. Var olan bir kayıt düzenlenmez veya silinmez — düzeltme yeni makbuz yazılarak yapılır. Kayıtlar `npm run review onayla` ile üretilir; elle yazılmaz.",
-  "receipts": []
+  "receipts": [
+    {
+      "id": "b-lise-ileri-kinematik.source.20260810",
+      "lessonId": "b-lise-ileri-kinematik",
+      "scope": "source",
+      "decision": "approved",
+      "subject": {
+        "sourceHash": "sha256:385be5008dda9d688fac749ad8f7d65ca885db5be42ee72248e90bdddbde36a0"
+      },
+      "sourceCommit": "04f0a8406f85243f5181664d70bca2d39dae42f2",
+      "reviewedAt": "2026-08-10",
+      "reviewer": {
+        "displayName": "Mert",
+        "role": "maintainer"
+      }
+    },
+    {
+      "id": "b-lise-ileri-kinematik.technical.20260810",
+      "lessonId": "b-lise-ileri-kinematik",
+      "scope": "technical",
+      "decision": "approved",
+      "subject": {
+        "sourceHash": "sha256:385be5008dda9d688fac749ad8f7d65ca885db5be42ee72248e90bdddbde36a0",
+        "teachingHash": "sha256:e9eb07f311234905532542ec17d372a401371ad1c2b8f41eb22c45e31d9b3276"
+      },
+      "sourceCommit": "04f0a8406f85243f5181664d70bca2d39dae42f2",
+      "reviewedAt": "2026-08-10",
+      "reviewer": {
+        "displayName": "Mert",
+        "role": "maintainer"
+      }
+    },
+    {
+      "id": "b-lise-ileri-kinematik.pedagogical.20260810",
+      "lessonId": "b-lise-ileri-kinematik",
+      "scope": "pedagogical",
+      "decision": "approved",
+      "subject": {
+        "teachingHash": "sha256:e9eb07f311234905532542ec17d372a401371ad1c2b8f41eb22c45e31d9b3276"
+      },
+      "sourceCommit": "04f0a8406f85243f5181664d70bca2d39dae42f2",
+      "reviewedAt": "2026-08-10",
+      "reviewer": {
+        "displayName": "Mert",
+        "role": "maintainer"
+      }
+    }
+  ]
 }
