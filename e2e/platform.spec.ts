@@ -23,7 +23,7 @@ test("ana sayfa taşmadan güvenilir bir başlangıç sunar", async ({ page }) =
 
 test("hero ilk anlamlı kontrolü ilk viewport içinde gösterir", async ({ page }) => {
   await page.goto("/");
-  const prediction = page.getByRole("button", { name: "Aşağı iner" });
+  const prediction = page.getByRole("button", { name: "Sınırda durur" });
   await expect(prediction).toBeVisible();
   const box = await prediction.boundingBox();
   const viewport = page.viewportSize();

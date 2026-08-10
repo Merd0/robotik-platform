@@ -2,39 +2,44 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { classifyVerticalMovement, HERO_ARM, heroArmPoints } from "@/lib/robotics/heroKinematics";
+import { HERO_ARM, HERO_JOINTS, HERO_TARGET, heroPose } from "@/lib/robotics/heroKinematics";
 
-type Prediction = "yukari" | "asagi";
+type Prediction = "durur" | "devam";
+
+const yuvarla = (deger: number) => Math.round(deger);
 
 export function HeroExperiment() {
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [played, setPlayed] = useState(false);
-  const [q1, setQ1] = useState(24);
-  const initialQ2 = 8;
-  const targetQ2 = 64;
-  const points = useMemo(() => heroArmPoints(q1, played ? targetQ2 : initialQ2), [q1, played]);
-  const before = useMemo(() => heroArmPoints(q1, initialQ2), [q1]);
-  const actualMovement = classifyVerticalMovement(before.end.y, heroArmPoints(q1, targetQ2).end.y);
-  const correct = (prediction === "yukari" && actualMovement === "up") || (prediction === "asagi" && actualMovement === "down");
-  const reach = Math.round(Math.hypot(points.end.x - HERO_ARM.shoulder.x, points.end.y - HERO_ARM.shoulder.y));
+  /* Tek girdi: "uzanma komutu". Hangi eklemin döneceğine kullanıcı değil,
+     omuzun limiti karar veriyor (lib/robotics/heroKinematics.ts). */
+  const [command, setCommand] = useState(20);
+  const pose = useMemo(() => heroPose(command), [command]);
+  const devirNoktasi = useMemo(() => heroPose(HERO_JOINTS.handoffAt), []);
+  const hedefeVardi = pose.distanceToTarget < 1;
+
   /* Poster zeminindeki dev kol dekoratif değil: deneyin kendi açılarını
-     büyük ölçekte çiziyor, kaydırıcıyla birlikte dönüyor (docs/07:
-     dekorasyon ile işlev aynı görsel dili paylaşır). Ayrı bir taban ve
-     uzuv boyu kullanır çünkü poster kadrajı deney kadrajından farklı. */
+     büyük ölçekte çiziyor (docs/07: dekorasyon ile işlev aynı görsel dili
+     paylaşır). Ondalık kırpma şart — yuvarlanmamış float sunucuda ve
+     tarayıcıda farklı basamakla dizgeleşip hydration uyuşmazlığı üretiyor. */
   const ghost = useMemo(() => {
     const rad = (derece: number) => (derece * Math.PI) / 180;
-    /* Ondalık kırpma şart: yuvarlanmamış float sunucuda ve tarayıcıda farklı
-       basamakla dizgeleşip hydration uyuşmazlığı üretiyor. */
-    const yuvarla = (deger: number) => Math.round(deger * 100) / 100;
+    const kirp = (deger: number) => Math.round(deger * 100) / 100;
     const taban = { x: 110, y: 560 };
-    const a1 = -rad(q1 + 16);
-    const a2 = -rad(q1 + 16 + (played ? targetQ2 : initialQ2));
-    const dirsek = { x: yuvarla(taban.x + 265 * Math.cos(a1)), y: yuvarla(taban.y + 265 * Math.sin(a1)) };
-    const uc = { x: yuvarla(dirsek.x + 215 * Math.cos(a2)), y: yuvarla(dirsek.y + 215 * Math.sin(a2)) };
+    const a1 = -rad(pose.q1 - 40);
+    const a2 = -rad(pose.q1 - 40 + pose.q2 - 90);
+    const dirsek = { x: kirp(taban.x + 265 * Math.cos(a1)), y: kirp(taban.y + 265 * Math.sin(a1)) };
+    const uc = { x: kirp(dirsek.x + 215 * Math.cos(a2)), y: kirp(dirsek.y + 215 * Math.sin(a2)) };
     return { taban, dirsek, uc };
-  }, [q1, played]);
+  }, [pose.q1, pose.q2]);
+
+  const omuzAktif = pose.activeJoint === "omuz";
+  const eklemVurgusu = "var(--color-poster-blue)";
+  const eklemSakin = "var(--color-poster-teal)";
+  const sinirRengi = "#b45309";
 
   function reset() {
+    setCommand(20);
     setPlayed(false);
     setPrediction(null);
   }
@@ -90,37 +95,83 @@ export function HeroExperiment() {
 
         <div className="poster-card bg-poster-surface p-4 lg:p-5">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-poster-purple-text">Deney 00 · İleri kinematik</span>
+            <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-poster-purple-text">Deney 00 · Eklem limiti</span>
             <span className="rounded-full border-2 border-poster-ink px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase text-poster-ink">canlı</span>
           </div>
 
           <div className="mt-3 rounded-xl border border-poster-line bg-poster-soft p-2">
-            <svg viewBox="0 0 240 160" className="mx-auto aspect-[3/2] max-h-40 w-full" role="img" aria-label={`İki eklemli robot kolu. Uç nokta x ${Math.round(points.end.x)}, y ${Math.round(points.end.y)} konumunda.`}>
+            <svg
+              viewBox="0 0 240 160"
+              /* Dar ekranda sahne kısalıyor: tahmin düğmeleri ilk ekranın
+                 içinde kalmalı (e2e bunu ölçüyor). */
+              className="mx-auto aspect-[3/2] max-h-28 w-full sm:max-h-40"
+              role="img"
+              aria-label={`İki eklemli robot kolu. Omuz ${yuvarla(pose.q1)} derece, dirsek ${yuvarla(pose.q2)} derece. Şu an ${pose.activeJoint} eklemi hareket ediyor. Hedefe uzaklık ${yuvarla(pose.distanceToTarget)} birim.`}
+            >
               <path d="M18 136 H222 M32 25 V143" stroke="var(--color-poster-line)" strokeWidth="1" strokeDasharray="3 5" />
-              {played && <path d={`M${before.end.x} ${before.end.y} Q${before.end.x + 18} ${before.end.y - 24} ${points.end.x} ${points.end.y}`} fill="none" stroke="var(--color-poster-purple)" strokeWidth="2.5" strokeDasharray="4 4" className="trace-path" />}
-              <circle cx={before.end.x} cy={before.end.y} r="5" fill="none" stroke="var(--color-poster-subtle)" strokeWidth="1.5" />
-              <line x1={HERO_ARM.shoulder.x} y1={HERO_ARM.shoulder.y} x2={points.elbow.x} y2={points.elbow.y} stroke="var(--color-poster-ink)" strokeWidth="12" strokeLinecap="round" className="arm-motion" />
-              <line x1={points.elbow.x} y1={points.elbow.y} x2={points.end.x} y2={points.end.y} stroke="var(--color-poster-blue)" strokeWidth="10" strokeLinecap="round" className="arm-motion" />
-              <circle cx={HERO_ARM.shoulder.x} cy={HERO_ARM.shoulder.y} r="8" fill="var(--color-poster-teal)" stroke="var(--color-poster-ink)" strokeWidth="2.5" />
-              <circle cx={points.elbow.x} cy={points.elbow.y} r="6.5" fill="var(--color-poster-teal)" stroke="var(--color-poster-ink)" strokeWidth="2.5" className="arm-motion" />
-              <circle cx={points.end.x} cy={points.end.y} r="7" fill="var(--color-poster-purple)" stroke="var(--color-poster-ink)" strokeWidth="2.5" className="arm-motion" />
+
+              {/* Hedef: komut sonuna kadar çekildiğinde ucun varacağı nokta. */}
+              <circle cx={HERO_TARGET.x} cy={HERO_TARGET.y} r="11" fill="none" stroke="var(--color-poster-purple)" strokeWidth="2" strokeDasharray="4 4" />
+              <circle cx={HERO_TARGET.x} cy={HERO_TARGET.y} r="3" fill="var(--color-poster-purple)" />
+
+              {/* Omuz tek başına ucu bu daire üzerinde gezdirir; daire yarıçapı
+                  dirseğe bağlı, o yüzden omuz evresinde hiç değişmiyor. */}
+              <circle cx={HERO_ARM.shoulder.x} cy={HERO_ARM.shoulder.y} r={pose.reach} fill="none" stroke="var(--color-poster-line)" strokeWidth="1" strokeDasharray="2 4" />
+
+              {pose.shoulderAtLimit && (
+                <circle cx={devirNoktasi.end.x} cy={devirNoktasi.end.y} r="5" fill="none" stroke={sinirRengi} strokeWidth="1.5" strokeDasharray="3 3" />
+              )}
+
+              <line x1={HERO_ARM.shoulder.x} y1={HERO_ARM.shoulder.y} x2={pose.elbow.x} y2={pose.elbow.y} stroke={omuzAktif ? "var(--color-poster-ink)" : "var(--color-poster-line)"} strokeWidth="12" strokeLinecap="round" className="arm-motion" />
+              <line x1={pose.elbow.x} y1={pose.elbow.y} x2={pose.end.x} y2={pose.end.y} stroke={omuzAktif ? "var(--color-poster-line)" : "var(--color-poster-blue)"} strokeWidth="10" strokeLinecap="round" className="arm-motion" />
+
+              <circle cx={HERO_ARM.shoulder.x} cy={HERO_ARM.shoulder.y} r={pose.shoulderAtLimit ? 9 : 8} fill={pose.shoulderAtLimit ? sinirRengi : omuzAktif ? eklemVurgusu : eklemSakin} stroke="var(--color-poster-ink)" strokeWidth="2.5" />
+              <circle cx={pose.elbow.x} cy={pose.elbow.y} r="6.5" fill={omuzAktif ? eklemSakin : eklemVurgusu} stroke="var(--color-poster-ink)" strokeWidth="2.5" className="arm-motion" />
+              <circle cx={pose.end.x} cy={pose.end.y} r="7" fill={hedefeVardi ? "var(--color-poster-purple)" : "var(--color-poster-ink)"} stroke="var(--color-poster-ink)" strokeWidth="2.5" className="arm-motion" />
             </svg>
           </div>
 
           <label className="mt-3 block">
             <span className="flex items-baseline justify-between gap-2">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-poster-subtle">Omuz açısını çek</span>
+              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-poster-subtle">Uzanma komutu</span>
               <output className="font-heading text-3xl font-black leading-none text-poster-blue-text">
-                {q1}°<span className="ml-1 font-sans text-xs font-bold text-poster-subtle">· {reach} br ulaşım</span>
+                {yuvarla(pose.reach)}<span className="ml-1 font-sans text-xs font-bold text-poster-subtle">br uzanım</span>
               </output>
             </span>
-            <input type="range" min="-10" max="58" value={q1} onChange={(event) => { setQ1(Number(event.target.value)); setPlayed(false); }} className="mt-1 h-11 w-full touch-pan-y accent-[var(--color-poster-purple)]" />
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={command}
+              onChange={(event) => { setCommand(Number(event.target.value)); setPlayed(false); }}
+              className="mt-1 h-11 w-full touch-pan-y accent-[var(--color-poster-purple)]"
+            />
           </label>
 
-          <fieldset className="mt-1">
-            <legend className="text-sm font-semibold text-poster-ink">Dirsek 56° daha kapanırsa mor uç ne yapar?</legend>
+          {/* Devrin sessizce olmaması için: hangi eklemin döndüğü ve omuzun
+              sınıra dayandığı hem renkle hem yazıyla söyleniyor. */}
+          <p aria-live="polite" className="flex flex-wrap items-center gap-2 text-xs">
+            {pose.shoulderAtLimit ? (
+              <>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-warning-border bg-warning-surface px-2.5 py-1 font-bold text-warning-ink">
+                  <span aria-hidden="true">■</span> Omuz sınırda ({yuvarla(HERO_JOINTS.shoulder.limit)}°)
+                </span>
+                <span className="font-bold text-poster-blue-text">→ şimdi dirsek hareket ediyor ({yuvarla(pose.q2)}°)</span>
+              </>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-poster-line bg-poster-soft px-2.5 py-1 font-bold text-poster-blue-text">
+                  <span aria-hidden="true">●</span> Omuz hareket ediyor ({yuvarla(pose.q1)}°)
+                </span>
+                <span className="text-poster-subtle">dirsek {yuvarla(pose.q2)}° bekliyor</span>
+              </>
+            )}
+          </p>
+
+          <fieldset className="mt-3">
+            <legend className="text-sm font-semibold text-poster-ink">Komutu sonuna kadar çekersen ne olur?</legend>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              {([["yukari", "Yukarı çıkar"], ["asagi", "Aşağı iner"]] as const).map(([value, label]) => (
+              {([["durur", "Sınırda durur"], ["devam", "Dirsek devralır"]] as const).map(([value, label]) => (
                 <button
                   key={value}
                   type="button"
@@ -135,20 +186,18 @@ export function HeroExperiment() {
           </fieldset>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button type="button" disabled={!prediction} onClick={() => setPlayed(true)} className="min-h-11 flex-1 rounded-full border-2 border-poster-ink bg-poster-ink px-4 py-2 text-sm font-bold text-poster-bg transition disabled:cursor-not-allowed disabled:opacity-40">
+            <button type="button" disabled={!prediction} onClick={() => { setCommand(100); setPlayed(true); }} className="min-h-11 flex-1 rounded-full border-2 border-poster-ink bg-poster-ink px-4 py-2 text-sm font-bold text-poster-bg transition disabled:cursor-not-allowed disabled:opacity-40">
               Tahminimi çalıştır
             </button>
             <button type="button" onClick={reset} className="min-h-11 rounded-full border-2 border-poster-line px-4 py-2 text-sm font-bold text-poster-muted hover:border-poster-ink">Sıfırla</button>
           </div>
 
           <p aria-live="polite" className="mt-2 min-h-10 text-sm leading-5 text-poster-muted">
-            {played ? (
-              actualMovement === "steady"
-                ? "Uç noktanın dikey konumu neredeyse değişmedi; bu omuz açısı iki etkinin sınırında. Açıyı bir derece değiştirip yeniden dene."
-                : correct
-                  ? `İsabet. İz ${actualMovement === "up" ? "yukarı" : "aşağı"} kıvrıldı; iki eklemin açısı uç konumu birlikte belirledi.`
-                  : `Tahminin şaştı — iyi. Dirseğin dönüşü bu omuz açısında ucu ${actualMovement === "up" ? "yukarı" : "aşağı"} taşıdı; omuz açısını değiştirip yeniden dene.`
-            ) : "Önce seçimini kilitle; hareket ancak sonra gösterilecek."}
+            {played
+              ? prediction === "devam"
+                ? "İsabet. Omuz 8°'de sınıra dayandı ve komut kendiliğinden dirseğe geçti; uzanım büyüyerek uç hedefe vardı."
+                : "Tahminin şaştı — iyi. Omuz sınıra dayandı ama komut orada bitmedi: kontrol dirseğe geçti ve kol uzanmaya devam etti."
+              : "Kaydırıcıyı çek. Omuz evresinde mor halka sabit kalır: tek dönme eklemi ucu daire üzerinde gezdirir, uzanımı büyütmez."}
           </p>
         </div>
 
