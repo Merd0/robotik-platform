@@ -121,7 +121,16 @@ test("C-space pilotu fiziksel çarpışmayı açı uzayındaki yasak bölgeye ba
 });
 
 test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
-  for (const url of ["/", "/ders/a-ortaokul-robot-nedir", "/ders/a-universite-robot-mimarileri", "/ders/b-lise-ileri-kinematik"]) {
+  const denetlenen = [
+    "/",
+    "/seviye/ortaokul",
+    "/seviye/lise",
+    "/seviye/universite",
+    "/ders/a-ortaokul-robot-nedir",
+    "/ders/a-universite-robot-mimarileri",
+    "/ders/b-lise-ileri-kinematik",
+  ];
+  for (const url of denetlenen) {
     await page.goto(url);
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
     const blocking = results.violations.filter((violation) => ["critical", "serious"].includes(violation.impact ?? ""));

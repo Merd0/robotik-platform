@@ -1,9 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getPublicTracksByLevel, hatEtiket, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
 import { LessonProgressBadge } from "@/components/ui/LessonProgressBadge";
 import { SEVIYE_THEME } from "@/lib/seviyeTheme";
 import { computeTeachingHash } from "@/lib/lessonArtifact";
+import { seviyeVerisi } from "@/components/seviye/seviyeVerisi";
+import { UniversiteSeviyesi } from "@/components/seviye/UniversiteSeviyesi";
 
 const VALID_SEVIYELER: Seviye[] = ["ortaokul", "lise", "universite"];
 const LEVEL_COPY: Record<Seviye, { eyebrow: string; body: string }> = {
@@ -12,12 +15,35 @@ const LEVEL_COPY: Record<Seviye, { eyebrow: string; body: string }> = {
   universite: { eyebrow: "Türet · Sına · Sınırını bul", body: "Matematiksel modeli karşı örnek, tekillik ve gerçek uygulama kısıtlarıyla zorla." },
 };
 
-export function generateStaticParams() { return VALID_SEVIYELER.map((seviye) => ({ seviye })); }
+export function generateStaticParams() {
+  return VALID_SEVIYELER.map((seviye) => ({ seviye }));
+}
 
+export async function generateMetadata({ params }: { params: Promise<{ seviye: string }> }): Promise<Metadata> {
+  const { seviye } = await params;
+  if (!VALID_SEVIYELER.includes(seviye as Seviye)) return {};
+  return { title: `${SEVIYE_ETIKET[seviye as Seviye]} laboratuvarı` };
+}
+
+/*
+ * Üç seviye tek düzenle değil, üç ayrı düzenle sunuluyor. Gerekçe docs/05
+ * Bölüm 1: alttaki etkileşim aynı kalır ama çerçeveleme seviyeyle
+ * ciddileşir — ortaokul oyun, lise keşif, üniversite referans gibi durur.
+ * Veri hazırlığı ortak (seviyeVerisi), farklı olan yalnız sunum.
+ *
+ * Ortaokul ve lise henüz eski ortak düzende; kendi tasarımlarına sırayla
+ * geçirilecekler (aşağıdaki OrtakSeviyeDuzeni o zaman kalkar).
+ */
 export default async function SeviyePage({ params }: { params: Promise<{ seviye: string }> }) {
   const { seviye } = await params;
   if (!VALID_SEVIYELER.includes(seviye as Seviye)) notFound();
   const level = seviye as Seviye;
+
+  if (level === "universite") return <UniversiteSeviyesi veri={seviyeVerisi(level)} />;
+  return <OrtakSeviyeDuzeni level={level} />;
+}
+
+function OrtakSeviyeDuzeni({ level }: { level: Seviye }) {
   const tracks = getPublicTracksByLevel(level).map((track) => ({ ...track, lessons: track.lessons.filter((lesson) => lesson.frontmatter.durum === "yayinda") })).filter((track) => track.lessons.length > 0);
   const theme = SEVIYE_THEME[level];
   const lessonCount = tracks.reduce((sum, track) => sum + track.lessons.length, 0);

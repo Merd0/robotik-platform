@@ -1,22 +1,13 @@
 import Link from "next/link";
 import { HeroExperiment } from "@/components/home/HeroExperiment";
 import { getAllLessons, getPublicLessons, HAT_ETIKET, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
+import { ETKILESIM_ETIKETI } from "@/lib/etkilesimEtiket";
 
 const SEVIYELER: { seviye: Seviye; aciklama: string }[] = [
   { seviye: "ortaokul", aciklama: "Robot kavramı, eklem hareketi ve labirent planlamayı görerek dene." },
   { seviye: "lise", aciklama: "Koordinatlar, iki eklemli kinematik ve rota kararlarını ölçerek açıkla." },
   { seviye: "universite", aciklama: "DH, Jacobian, nümerik IK ve planlayıcıları matematiksel sınırlarıyla sına." },
 ];
-
-const ETKILESIM_ETIKETI: Record<string, string> = {
-  JointSliders: "eklem kontrolü",
-  IkTarget: "hedef ve IK",
-  JacobianViz: "Jacobian görselleştirme",
-  PlannerRace: "planlayıcı karşılaştırma",
-  MazePlanner: "labirent planlama",
-  PredictionPrompt: "tahmin",
-  TransferChallenge: "kavram kontrolü",
-};
 
 /*
  * Hat harfinin rengi üç renk ailesini müfredata bağlar: ilk iki hat teal,

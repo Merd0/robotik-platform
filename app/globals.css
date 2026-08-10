@@ -113,9 +113,10 @@
    * tokenlarındaki accent/accent-text ayrımının aynısı, aynı gerekçeyle:
    * canlı tonu kaybetmeden WCAG AA tutturmak.
    *
-   * Ölçüldü (poster zemini #FBF8F0 üzerine): teal-text 3.8:1 — yalnız
-   * büyük başlıkta kullanılır (AA büyük metin eşiği 3:1). blue-text 4.8:1,
-   * purple-text 5.3:1 — normal metinde de geçerli.
+   * Ölçüldü — eşik BEYAZ panel zemini, krem sayfa zemini değil: kart
+   * içindeki 9-10 px etiketler beyaz üstünde duruyor ve orası her zaman
+   * daha zorlu. teal-text 5.0:1, blue-text 5.1:1, purple-text 5.6:1;
+   * üçü de AA küçük metin eşiğini (4.5:1) geçiyor.
    */
   --color-poster-bg: #fbf8f0;
   --color-poster-soft: #f3f0e6;
@@ -126,7 +127,7 @@
   --color-poster-line: #d9d3c2;
 
   --color-poster-teal: #00c9a7;
-  --color-poster-teal-text: #0e8f7a;
+  --color-poster-teal-text: #097f6e;
   --color-poster-blue: #1e4fe0;
   --color-poster-blue-text: #2f5fff;
   --color-poster-purple: #7a2ce0;
@@ -273,6 +274,13 @@ body {
     border: 1px solid transparent;
   }
 
+  /*
+   * "● KAYIT" işareti. Kırmızı tonu temayla değişmek zorunda: aydınlıkta
+   * #e4574d beyaz üstünde 3.5:1 (AA küçük metin 4.5 ister), karanlıkta ise
+   * koyulaştırılmış ton 3.3:1'e düşüyor. İki ayrı değer, iki ayrı ölçüm.
+   */
+  .rec-isaret { color: #c2352b; }
+
   /* Ölçüm penceresi: ders kartlarının üstündeki "kanal" görüntüsü. */
   .lab-window {
     border: 1px solid var(--color-poster-line);
@@ -342,7 +350,13 @@ select {
 @keyframes arc-sweep { to { stroke-dashoffset: -90 } }
 @keyframes arm-toggle { 0%, 40% { transform: rotate(0deg) } 45%, 55% { transform: rotate(-34deg) } 90%, 100% { transform: rotate(0deg) } }
 @keyframes node-current { 0%, 100% { opacity: .3 } 50% { opacity: 1 } }
-@keyframes type-line { 0% { opacity: 0; width: 0 } 20% { opacity: 1 } 100% { opacity: 1; width: var(--satir-genislik, 12ch) } }
+/*
+ * Yazılma efekti yalnız genişlikle yapılır, opaklıkla değil. Opaklık rampası
+ * (tasarım dosyasındaki hali) metni yarı saydam bir ara renge düşürüyor ve
+ * otomatik kontrast denetimi o anlık rengi ölçüp haklı olarak AA altı
+ * raporluyor. Genişlik kırpması aynı etkiyi rengi bozmadan veriyor.
+ */
+@keyframes type-line { from { width: 0 } to { width: var(--satir-genislik, 12ch) } }
 @keyframes caret-blink { 0%, 50% { opacity: 1 } 51%, 100% { opacity: 0 } }
 @keyframes sweep-band { 0%, 100% { transform: translateY(-6px) } 50% { transform: translateY(10px) } }
 @keyframes signal-step { 0%, 45% { transform: translateY(0) } 50%, 95% { transform: translateY(-12px) } 100% { transform: translateY(0) } }
@@ -395,6 +409,7 @@ select {
   --kart-cizgi: #b685ff;
 }
 
+:root[data-theme="dark"] .rec-isaret { color: #f87171; }
 :root[data-theme="dark"] .hat-rozet-2 { color: #06121f; }
 :root[data-theme="dark"] .hat-rozet-3 { color: #150626; }
 
