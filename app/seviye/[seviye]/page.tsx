@@ -6,6 +6,7 @@ import { LessonProgressBadge } from "@/components/ui/LessonProgressBadge";
 import { SEVIYE_THEME } from "@/lib/seviyeTheme";
 import { computeTeachingHash } from "@/lib/lessonArtifact";
 import { seviyeVerisi } from "@/components/seviye/seviyeVerisi";
+import { LiseSeviyesi } from "@/components/seviye/LiseSeviyesi";
 import { UniversiteSeviyesi } from "@/components/seviye/UniversiteSeviyesi";
 
 const VALID_SEVIYELER: Seviye[] = ["ortaokul", "lise", "universite"];
@@ -31,8 +32,8 @@ export async function generateMetadata({ params }: { params: Promise<{ seviye: s
  * ciddileşir — ortaokul oyun, lise keşif, üniversite referans gibi durur.
  * Veri hazırlığı ortak (seviyeVerisi), farklı olan yalnız sunum.
  *
- * Ortaokul ve lise henüz eski ortak düzende; kendi tasarımlarına sırayla
- * geçirilecekler (aşağıdaki OrtakSeviyeDuzeni o zaman kalkar).
+ * Ortaokul henüz eski ortak düzende; kendi tasarımına geçirilince
+ * aşağıdaki OrtakSeviyeDuzeni tamamen kalkacak.
  */
 export default async function SeviyePage({ params }: { params: Promise<{ seviye: string }> }) {
   const { seviye } = await params;
@@ -40,6 +41,7 @@ export default async function SeviyePage({ params }: { params: Promise<{ seviye:
   const level = seviye as Seviye;
 
   if (level === "universite") return <UniversiteSeviyesi veri={seviyeVerisi(level)} />;
+  if (level === "lise") return <LiseSeviyesi veri={seviyeVerisi(level)} />;
   return <OrtakSeviyeDuzeni level={level} />;
 }
 
