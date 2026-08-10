@@ -48,22 +48,42 @@ birlikte olgunlaşan bir renk ailesi var.**
 
 ### Tipografi
 
-- **Başlık yazı tipi:** teknik/mühendislik hissi veren, orta-geometrik bir
-  sans-serif (örnek yönelim: Söhne, General Sans, Inter Tight gibi ailelerden
-  biri — kod yazarken netleştirilecek). Jenerik "her sitede gördüğün" serif
-  başlık kullanılmayacak.
-- **Gövde metni:** okunabilirliği yüksek, nötr bir sans-serif (Inter veya
-  benzeri).
-- **Sayısal/teknik veri:** monospace bir yazı tipi (JetBrains Mono veya
-  benzeri) — eklem açıları, koordinatlar, kod blokları hep bu ailede. Bu,
-  "burada gerçek bir sayı var" sinyalini verir, süs değildir.
+- **Başlık yazı tipi:** teknik/mühendislik hissi veren, sıkışık bir
+  sans-serif. Jenerik "her sitede gördüğün" serif başlık kullanılmayacak.
+- **Gövde metni:** okunabilirliği yüksek, nötr bir sans-serif.
+- **Sayısal/teknik veri:** monospace bir yazı tipi — eklem açıları,
+  koordinatlar, kod blokları hep bu ailede. Bu, "burada gerçek bir sayı var"
+  sinyalini verir, süs değildir.
 
-İlk production çekirdeğinde harici veya depoya gömülü font dosyası yoktur.
-Bu nedenle uygulanmış tokenlar yüklüymüş gibi `Inter`/`JetBrains Mono` adı
-vermez: gövde ve başlık için platformun sistem sans ailesi; teknik veri için
-`Cascadia Code`/`SFMono-Regular`/`Consolas` sıralı sistem monospace stack'i
-kullanılır. Özel font ancak dosyası, lisansı, preload davranışı ve ölçülmüş
-performans etkisi birlikte eklendiğinde tokena yazılabilir.
+#### Uygulanan durum (2026-08-10'da güncellendi)
+
+Bu bölüm önceden "ilk production çekirdeğinde harici veya depoya gömülü font
+dosyası yoktur" diyordu. Artık var: poster yönü uygulanırken iki aile depoya
+eklendi. Bunu mümkün kılan şart aynı paragrafta zaten yazılıydı — dosya,
+lisans, preload davranışı ve ölçülmüş performans etkisi birlikte gelirse
+tokena yazılabilir — ve dördü de karşılandı.
+
+| Katman | Uygulanan | Nereden |
+|---|---|---|
+| Başlık | Big Shoulders Display (değişken, 600–900) | `public/fonts/`, SIL OFL 1.1 |
+| Sayısal/teknik veri | JetBrains Mono (değişken, 500–700) | `public/fonts/`, SIL OFL 1.1 |
+| Gövde metni | Sistem sans ailesi (font dosyası yok) | — |
+
+- **Harici CDN yok, derleme sırasında ağ yok.** `.woff2` dosyaları depoda
+  duruyor, `app/globals.css` içinde `@font-face` ile tanımlı. CSP'deki
+  `font-src 'self'` olduğu gibi kaldı (`docs/08` "fontlar ve kütüphaneler
+  kendi build'imize gömülür").
+- **Toplam 108 KB**, dördü de `font-display: swap` — ilk boyamayı
+  bloklamaz. Yalnız ilk ekranda görünen dosya (`big-shoulders-display-latin`)
+  preload edilir. Başlangıç JS/CSS bütçesi fontlardan etkilenmez.
+- **Alt küme:** her aile için yalnız `latin` ve `latin-ext`. Türkçe ikisini
+  birden gerektiriyor: `ı` latin'de, ama `İ ğ Ğ ş Ş` latin-ext'te.
+- **Gövde metni bilinçli olarak sistem sans'ta kaldı.** Inter'in latin-ext
+  alt kümesi tek başına 85 KB ve Türkçe metinde her sayfada yüklenirdi; gövde
+  boyutlarında sistem sans'tan görsel farkı bu bedeli karşılamıyor. Kimliği
+  taşıyan iki uç (sıkışık başlık + teknik veri) yeterli.
+
+Dosya listesi, lisans metni ve ölçüm ayrıntısı: `public/fonts/LISANS.md`.
 
 ### İmza öğesi (signature element)
 
