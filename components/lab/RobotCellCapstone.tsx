@@ -122,7 +122,7 @@ export function RobotCellCapstone() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <section className="lab-panel overflow-hidden bg-slate-950 text-white">
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 text-xs uppercase tracking-[.14em] text-slate-400"><span>Hücre RC-01 · seed {SEED}</span><span>{progress}/4 görev</span></div>
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 text-xs uppercase tracking-[.14em] text-slate-400"><span>Robot hücresi · devreye alma senaryosu</span><span>{progress}/4 görev</span></div>
         {/* Senaryo cümlesi sahnenin yanında duruyor: dört görevin ayrı alıştırmalar
             değil, tek bir işin birbirine binen kararları olduğu buradan anlaşılıyor. */}
         <p className="border-b border-white/10 px-5 py-3 text-sm leading-6 text-slate-300">
@@ -167,7 +167,7 @@ export function RobotCellCapstone() {
           {step === 3 && <div className="space-y-4"><p className="text-sm leading-6 text-site-muted">İnsan yaklaşırken 50 mm/s çözünürlükte en hızlı güvenli pozitif hız adımını seç.</p><label className="block text-sm">Ayrım: {distance} mm<input type="range" min="300" max="2000" step="50" value={distance} onChange={(event) => setDistance(Number(event.target.value))} className="h-11 w-full touch-pan-y accent-teal-700" /></label><label className="block text-sm">Komut hızı: {speed} mm/s<input type="range" min="0" max="1600" step="50" value={speed} onChange={(event) => setSpeed(Number(event.target.value))} className="h-11 w-full touch-pan-y accent-teal-700" /></label><p className="rounded-xl bg-site-soft p-3 text-sm">Basitleştirilmiş eğitim modeli üst sınırı: <strong>{Math.round(allowed)} mm/s</strong><span className="mt-1 block text-xs text-site-subtle">Standart hesabı veya gerçek hücre güvenlik onayı değildir.</span></p><button type="button" onClick={checkSafety} className="min-h-11 w-full rounded-xl bg-site-strong px-4 font-semibold text-site-on-strong">Güvenliği doğrula</button></div>}
         </div>
 
-        {progress === 4 && <div className="mt-4 rounded-2xl border border-success-border bg-success-surface p-4"><strong className="text-success-ink">Beta senaryo tamamlandı.</strong><p className="mt-1 text-sm text-success-ink">Dört mini görevdeki seçimlerin bu cihazdaki deney kaydına eklendi.</p><button type="button" onClick={exportEvidence} className="mt-3 min-h-11 rounded-xl bg-success-ink px-4 text-sm font-semibold text-success-surface">Deney kaydı JSON’unu indir</button></div>}
+        {progress === 4 && <div className="mt-4 rounded-2xl border border-success-border bg-success-surface p-4"><strong className="text-success-ink">Senaryo tamamlandı.</strong><p className="mt-1 text-sm text-success-ink">Dört mini görevdeki seçimlerin bu cihazdaki deney kaydına eklendi.</p><button type="button" onClick={exportEvidence} className="mt-3 min-h-11 rounded-xl bg-success-ink px-4 text-sm font-semibold text-success-surface">Deney kaydı JSON’unu indir</button></div>}
       </section>
     </div>
   );

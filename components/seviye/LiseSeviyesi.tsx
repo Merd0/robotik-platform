@@ -63,11 +63,11 @@ export function LiseSeviyesi({ veri }: { veri: SeviyeVerisi }) {
                 canlı
               </span>
             </div>
-            <p className="mt-2 font-mono text-[11px] text-poster-subtle">otonom al-taşı-bırak döngüsü · kesintisiz çalışır</p>
+            <p className="mt-2 font-mono text-[11px] text-poster-subtle">al-taşı-bırak döngüsü · parçayı bir konumdan diğerine taşır</p>
             <div className="mt-2">
               <PickAndPlaceCell eklemRengi="var(--color-poster-teal)" eklemKenari="var(--color-poster-teal-text)" />
             </div>
-            <p className="mt-2 font-mono text-[10.5px] text-poster-subtle">kol otomatik alır, taşır, bırakır · fareye gerek yok</p>
+            <p className="mt-2 font-mono text-[10.5px] text-poster-subtle">kol iki eklemini birlikte çevirerek her hedefe varıyor</p>
           </div>
         </section>
 

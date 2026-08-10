@@ -118,7 +118,7 @@ export function PickAndPlaceCell({ eklemRengi, eklemKenari }: { eklemRengi: stri
       viewBox="0 0 240 160"
       className="h-[150px] w-full"
       role="img"
-      aria-label="Otomatik çalışan robot hücresi: kol bir kutuyu alır, taşır ve bırakır. Bu sahne kendiliğinden döner, etkileşim gerektirmez."
+      aria-label="Robot hücresi: iki eklemli kol bir kutuyu alır, taşır ve karşı taraftaki hedefe bırakır; eklem açıları her hedef için ters kinematikle hesaplanır."
     >
       <line x1="10" y1="150" x2="230" y2="150" stroke="currentColor" strokeWidth="1.5" opacity="0.25" />
       <ellipse cx={NOKTALAR.birakNoktasi.x + 9} cy="150" rx="16" ry="5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 4" opacity="0.4" />
