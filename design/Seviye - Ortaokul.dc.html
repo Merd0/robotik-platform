@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FFFBF2;font-family:Inter,system-ui,sans-serif}
+a{color:inherit;text-decoration:none}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}
+@keyframes pulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
+@keyframes wiggle{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+</style>
+</helmet>
+
+<div style="max-width:1280px;margin:0 auto;padding:36px 40px 80px;">
+
+  <nav style="display:flex;align-items:center;justify-content:space-between;margin-bottom:44px;flex-wrap:wrap;gap:16px;">
+    <a href="Ana%20Sayfa%20Yeniden%20Tasar%C4%B1m.dc.html" style="font:700 14px Inter,sans-serif;color:#0A0A0A;display:inline-flex;align-items:center;gap:8px;">← Ana sayfa</a>
+    <div style="display:flex;gap:10px;">
+      <span style="padding:12px 26px;border-radius:100px;background:#00C9A7;color:#0A0A0A;font-weight:800;font-size:15px;box-shadow:4px 4px 0 #0A0A0A;">Ortaokul</span>
+      <a href="Seviye%20-%20Lise.dc.html" style="padding:12px 26px;border-radius:100px;background:#F2EFE4;color:#5b5b5b;font-weight:700;font-size:15px;">Lise</a>
+      <a href="Seviye%20-%20Universite.dc.html" style="padding:12px 26px;border-radius:100px;background:#F2EFE4;color:#5b5b5b;font-weight:700;font-size:15px;">Üniversite</a>
+    </div>
+  </nav>
+
+  <section style="display:grid;grid-template-columns:1.2fr .8fr;gap:40px;align-items:center;margin-bottom:64px;">
+    <div>
+      <p style="margin:0 0 10px;font:800 13px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#0A9A81;">Seviye 1 · Görerek dene</p>
+      <h1 style="margin:0;font-family:'Big Shoulders Display',sans-serif;font-weight:900;font-size:112px;line-height:.88;color:#00C9A7;text-shadow:5px 5px 0 #0A0A0A;">Ortaokul</h1>
+      <p style="margin:26px 0 0;max-width:520px;font-size:18px;line-height:1.6;color:#332b1f;font-weight:500;">Robot kavramı, eklem hareketi ve labirent planlamayı görerek dene. Her ders kısa bir oyun gibi başlar: önce tahmin et, sonra robotu çalıştır.</p>
+      <div style="display:flex;gap:22px;margin-top:28px;flex-wrap:wrap;">
+        <span style="display:inline-flex;align-items:center;gap:8px;font:700 14px 'JetBrains Mono',monospace;color:#0A0A0A;">22 <span style="font-weight:500;color:#5b5b5b;">ders</span></span>
+        <span style="display:inline-flex;align-items:center;gap:8px;font:700 14px 'JetBrains Mono',monospace;color:#0A0A0A;">4 <span style="font-weight:500;color:#5b5b5b;">hat başladı</span></span>
+        <span style="display:inline-flex;align-items:center;gap:8px;font:700 14px 'JetBrains Mono',monospace;color:#0A0A0A;">0 <span style="font-weight:500;color:#5b5b5b;">kurulum</span></span>
+      </div>
+    </div>
+    <div style="position:relative;height:260px;display:flex;align-items:center;justify-content:center;">
+      <div style="width:150px;height:150px;border-radius:50%;background:#FF8A5B;border:5px solid #0A0A0A;animation:bob 3.2s ease-in-out infinite;display:flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 100 100" width="80" height="80"><line x1="30" y1="80" x2="30" y2="35" stroke="#0A0A0A" stroke-width="9" stroke-linecap="round"/><line x1="30" y1="35" x2="70" y2="50" stroke="#0A0A0A" stroke-width="9" stroke-linecap="round"/><circle cx="70" cy="50" r="7" fill="#0A0A0A"/></svg>
+      </div>
+      <div style="position:absolute;top:10px;right:30px;width:36px;height:36px;border-radius:50%;background:#FFD43B;border:4px solid #0A0A0A;animation:wiggle 2.4s ease-in-out infinite;"></div>
+      <div style="position:absolute;bottom:20px;left:10px;width:26px;height:26px;border-radius:50%;background:#1E4FE0;border:4px solid #0A0A0A;animation:pulse 1.8s ease-in-out infinite;"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 style="margin:0 0 26px;font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:36px;color:#0A0A0A;">Bugün hangi deneyi yapalım?</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+
+      <div style="background:#00C9A7;border:4px solid #0A0A0A;border-radius:28px;padding:28px;transform:rotate(-1deg);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+          <span style="display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#fff;border:3px solid #0A0A0A;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:15px;color:#0A0A0A;">A</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font:700 11.5px 'JetBrains Mono',monospace;color:#0A0A0A;background:rgba(255,255,255,.5);padding:4px 10px;border-radius:100px;"><span style="width:7px;height:7px;border-radius:50%;background:#0A0A0A;animation:pulse 1.6s ease-in-out infinite;"></span>tahmin</span>
+        </div>
+        <h3 style="margin:0 0 10px;font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:26px;color:#0A0A0A;line-height:1.1;">Robot türleri: kol, mobil, insansı, kartezyen</h3>
+        <p style="margin:0 0 18px;font-size:14.5px;line-height:1.5;color:#0A0A0A;">Dört farklı robot ailesini yan yana gör, hangisinin nerede kullanıldığını keşfet.</p>
+        <span style="display:inline-flex;height:46px;padding:0 22px;border-radius:100px;background:#0A0A0A;color:#fff;font-weight:800;font-size:14px;align-items:center;">Derse başla →</span>
+      </div>
+
+      <div style="background:#FF8A5B;border:4px solid #0A0A0A;border-radius:28px;padding:28px;transform:rotate(1deg);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+          <span style="display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#fff;border:3px solid #0A0A0A;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:15px;color:#0A0A0A;">B</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font:700 11.5px 'JetBrains Mono',monospace;color:#0A0A0A;background:rgba(255,255,255,.5);padding:4px 10px;border-radius:100px;"><span style="width:7px;height:7px;border-radius:50%;background:#0A0A0A;animation:pulse 1.6s ease-in-out infinite;"></span>eklem kontrolü</span>
+        </div>
+        <h3 style="margin:0 0 10px;font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:26px;color:#0A0A0A;line-height:1.1;">Eklemleri oynat, ucun nereye gittiğini gör</h3>
+        <p style="margin:0 0 18px;font-size:14.5px;line-height:1.5;color:#0A0A0A;">Kaydırıcıyı hareket ettir, robot kolunun ucunun izini canlı takip et.</p>
+        <span style="display:inline-flex;height:46px;padding:0 22px;border-radius:100px;background:#0A0A0A;color:#fff;font-weight:800;font-size:14px;align-items:center;">Derse başla →</span>
+      </div>
+
+      <div style="background:#FFD43B;border:4px solid #0A0A0A;border-radius:28px;padding:28px;transform:rotate(0.8deg);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+          <span style="display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#fff;border:3px solid #0A0A0A;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:15px;color:#0A0A0A;">C</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font:700 11.5px 'JetBrains Mono',monospace;color:#0A0A0A;background:rgba(255,255,255,.5);padding:4px 10px;border-radius:100px;"><span style="width:7px;height:7px;border-radius:50%;background:#0A0A0A;animation:pulse 1.6s ease-in-out infinite;"></span>labirent planlama</span>
+        </div>
+        <h3 style="margin:0 0 10px;font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:26px;color:#0A0A0A;line-height:1.1;">Labirentte yol bulma — robot nasıl karar verir</h3>
+        <p style="margin:0 0 18px;font-size:14.5px;line-height:1.5;color:#0A0A0A;">Robota bir labirent ver, en kısa yolu nasıl bulduğunu izle.</p>
+        <span style="display:inline-flex;height:46px;padding:0 22px;border-radius:100px;background:#0A0A0A;color:#fff;font-weight:800;font-size:14px;align-items:center;">Derse başla →</span>
+      </div>
+
+      <div style="background:#7CE0C9;border:4px solid #0A0A0A;border-radius:28px;padding:28px;transform:rotate(-0.6deg);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+          <span style="display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#fff;border:3px solid #0A0A0A;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:15px;color:#0A0A0A;">D</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font:700 11.5px 'JetBrains Mono',monospace;color:#0A0A0A;background:rgba(255,255,255,.5);padding:4px 10px;border-radius:100px;"><span style="width:7px;height:7px;border-radius:50%;background:#0A0A0A;animation:pulse 1.6s ease-in-out infinite;"></span>blok komut</span>
+        </div>
+        <h3 style="margin:0 0 10px;font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:26px;color:#0A0A0A;line-height:1.1;">Blok tabanlı komutlarla robotu hareket ettirme</h3>
+        <p style="margin:0 0 18px;font-size:14.5px;line-height:1.5;color:#0A0A0A;">Komut bloklarını sürükle, robotun ne yapacağını önce sen kur.</p>
+        <span style="display:inline-flex;height:46px;padding:0 22px;border-radius:100px;background:#0A0A0A;color:#fff;font-weight:800;font-size:14px;align-items:center;">Derse başla →</span>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+</x-dc>
+</body>
+</html>
