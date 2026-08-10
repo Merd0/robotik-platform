@@ -14,6 +14,42 @@ const PROGRAM = [
   ["birak", "Kutuda bırak"],
 ] as const;
 
+/*
+ * Dört aşamanın her biri kendi başına anlaşılır bir talimat taşıyordu ama
+ * senaryonun bütünü hiçbir yerde yazmıyordu: kullanıcı neden ölçek
+ * hesapladığını, o ölçeğin bir sonraki aşamada ne işe yaradığını
+ * göremiyordu. Aşama metni artık üç soruyu ayrı ayrı cevaplıyor —
+ * ne yapacaksın, neden, gerçek hücrede nerede karşına çıkar — ve
+ * `kazanim` alanı bir sonraki aşamanın girişinde "az önce şunu yaptın"
+ * cümlesini besliyor.
+ */
+const ASAMA_BILGISI = [
+  {
+    amac: "Kameranın gördüğü pikseli gerçek milimetreye çeviren ölçeği bul.",
+    neden: "Robot piksel bilmez, milimetre ister. Ölçek yanlışsa kamera parçayı doğru görse bile robot yanlış noktaya gider — hata, sonraki her aşamaya taşınır.",
+    gercek: "Gerçek hücrede bu, kamera devreye alınırken bilinen ölçüde bir plaka veya parça üzerinden yapılan ilk ölçeklendirmedir; el-göz kalibrasyonu bunun üstüne kurulur.",
+    kazanim: "kameranın ölçeğini buldun, artık parçanın hücredeki gerçek konumu biliniyor",
+  },
+  {
+    amac: "Uç noktayı kutuya çarpışmadan götürecek rotayı seç.",
+    neden: "İki nokta arasındaki en kısa yol her zaman geçilebilir yol değildir. Arada fikstür var; düz gitmek onu keser.",
+    gercek: "Gerçek programda karşılığı, hedefe doğrudan doğrusal hareketle gitmek yerine araya bir geçiş noktası (via point) koymaktır.",
+    kazanim: "fikstürü kesmeyen rotayı seçtin, robot nereden geçeceğini biliyor",
+  },
+  {
+    amac: "Dört komutu güvenli çalışma sırasına diz.",
+    neden: "Sıra keyfi değil, fiziksel: parçayı görmeden konumuna yaklaşamazsın, tutmadan bırakamazsın. Yanlış sıra çalışan ama boşa hareket eden bir program üretir.",
+    gercek: "Endüstriyel programlarda bu sıra, hareket komutlarıyla giriş-çıkış sinyallerinin birbirini beklemesiyle kurulur; sensör onayı gelmeden bir sonraki komut başlamaz.",
+    kazanim: "komut sırasını kurdun, program artık çalıştırılabilir",
+  },
+  {
+    amac: "İnsan yaklaşırken programın koşabileceği en yüksek güvenli hızı bul.",
+    neden: "Ayrım mesafesi küçüldükçe güvenli hız düşer, çünkü robotun durma kararı verip fiilen durması zaman alır ve bu sürede iki taraf da yol alır.",
+    gercek: "Hız ve mesafe izlemenin (speed and separation monitoring) öğretici bir yaklaşımıdır. Buradaki model standardın koruyucu ayrım mesafesi formülünün tamamı değildir; ek belirsizlik terimleri içermez.",
+    kazanim: "programın hızını insan mesafesine bağladın",
+  },
+] as const;
+
 export function RobotCellCapstone() {
   const [step, setStep] = useState(0);
   const [scale, setScale] = useState(1);
@@ -87,6 +123,12 @@ export function RobotCellCapstone() {
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <section className="lab-panel overflow-hidden bg-slate-950 text-white">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 text-xs uppercase tracking-[.14em] text-slate-400"><span>Hücre RC-01 · seed {SEED}</span><span>{progress}/4 görev</span></div>
+        {/* Senaryo cümlesi sahnenin yanında duruyor: dört görevin ayrı alıştırmalar
+            değil, tek bir işin birbirine binen kararları olduğu buradan anlaşılıyor. */}
+        <p className="border-b border-white/10 px-5 py-3 text-sm leading-6 text-slate-300">
+          <span className="font-semibold text-white">Senaryo:</span> Kamera fikstürün yanındaki parçayı görüyor, robot onu mavi kutuya bırakacak ve hücrenin kenarında bir insan çalışıyor.
+          Hücreyi devreye almak için dört kararı sırayla vermen gerekiyor; her karar bir öncekinin sonucunu kullanır.
+        </p>
         <div className="relative p-4 sm:p-6"><div className="pointer-events-none absolute inset-0 lab-grid opacity-20" />
           <svg viewBox="0 0 640 390" className="relative aspect-[1.64/1] w-full rounded-2xl bg-slate-900" role="img" aria-label="Robot kolu, kamera, fikstür, parça ve insan içeren iki boyutlu robot hücresi">
             <rect x="42" y="40" width="556" height="305" rx="18" fill="none" stroke="#334155" strokeWidth="2" />
@@ -104,9 +146,21 @@ export function RobotCellCapstone() {
 
       <section className="lab-panel p-5 sm:p-6" aria-labelledby="gorev-paneli">
         <div className="flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-[.14em] text-site-accent-text">Çapraz-hat capstone</p><h2 id="gorev-paneli" className="mt-1 font-heading text-2xl font-semibold">{step + 1}. {STEPS[step]}</h2></div><span className="font-mono text-sm text-site-subtle">{progress * 25}%</span></div>
-        <ol className="mt-5 grid grid-cols-4 gap-1" aria-label="Görev ilerlemesi">{STEPS.map((label, index) => <li key={label}><button type="button" onClick={() => setStep(index)} className={`min-h-11 w-full rounded-lg text-xs ${step === index ? "bg-site-strong text-site-on-strong" : done[index] ? "bg-success-surface text-success-ink" : "bg-site-soft text-site-subtle"}`} aria-label={`${index + 1}. ${label}${done[index] ? ", tamamlandı" : ""}`}>{done[index] ? "✓" : index + 1}</button></li>)}</ol>
+        <ol className="mt-5 grid grid-cols-4 gap-1" aria-label="Görev ilerlemesi">{STEPS.map((label, index) => <li key={label}><button type="button" onClick={() => setStep(index)} className={`flex min-h-14 w-full flex-col items-center justify-center gap-0.5 rounded-lg px-1 ${step === index ? "bg-site-strong text-site-on-strong" : done[index] ? "bg-success-surface text-success-ink" : "bg-site-soft text-site-subtle"}`} aria-label={`${index + 1}. ${label}${done[index] ? ", tamamlandı" : ""}`} aria-current={step === index ? "step" : undefined}><span aria-hidden="true" className="text-xs font-bold">{done[index] ? "✓" : index + 1}</span><span aria-hidden="true" className="text-[10px] leading-tight">{label}</span></button></li>)}</ol>
 
-        <div className="mt-6 min-h-72">
+        {/* Aşama girişi: ne / neden / gerçekte nerede — ve bir önceki aşamayla bağ. */}
+        <div className="mt-5 rounded-xl border border-site-border bg-site-soft p-4">
+          {step > 0 && done[step - 1] && (
+            <p className="mb-3 border-b border-site-border pb-3 text-xs leading-5 text-site-muted">
+              <span className="font-semibold text-site-ink">Az önce</span> {ASAMA_BILGISI[step - 1].kazanim}. <span className="font-semibold text-site-ink">Şimdi sıra</span> bunun üstüne kurulacak bir sonraki karara geldi.
+            </p>
+          )}
+          <p className="text-sm font-semibold leading-6 text-site-ink">{ASAMA_BILGISI[step].amac}</p>
+          <p className="mt-2 text-xs leading-5 text-site-muted"><span className="font-semibold text-site-ink">Neden:</span> {ASAMA_BILGISI[step].neden}</p>
+          <p className="mt-2 text-xs leading-5 text-site-muted"><span className="font-semibold text-site-ink">Gerçek hücrede:</span> {ASAMA_BILGISI[step].gercek}</p>
+        </div>
+
+        <div className="mt-4 min-h-56">
           {step === 0 && <div className="space-y-4"><p className="text-sm leading-6 text-site-muted">Kamerada fikstürün 120 px genişliği, gerçek hücrede 300 mm. Ölçeği bul.</p><label className="block text-sm font-medium">mm / piksel<input type="number" step="0.1" value={scale} onChange={(event) => setScale(Number(event.target.value))} className="mt-2 min-h-11 w-full rounded-xl border border-site-border bg-site-surface px-3" /></label><button type="button" onClick={checkCalibration} className="min-h-11 w-full rounded-xl bg-site-strong px-4 font-semibold text-site-on-strong">Kalibrasyonu doğrula</button></div>}
           {step === 1 && <div className="space-y-4"><p className="text-sm leading-6 text-site-muted">Turuncu uçtan mavi kutuya giden iki aday yol var. Fikstürle çarpışmayanı seç.</p><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => checkRoute("duz")} className="min-h-11 rounded-xl border border-site-border px-3">Düz rota</button><button type="button" onClick={() => checkRoute("ust")} className="min-h-11 rounded-xl border border-site-border px-3">Üst rota</button></div></div>}
           {step === 2 && <div className="space-y-4"><p className="text-sm leading-6 text-site-muted">Komutları güvenli çalışma sırasıyla seç.</p><div className="grid gap-2">{PROGRAM.map(([id, label]) => <button key={id} type="button" disabled={program.includes(id)} onClick={() => addInstruction(id)} className="min-h-11 rounded-xl border border-site-border px-3 text-left text-sm disabled:opacity-40">{label}</button>)}</div><p className="min-h-8 rounded-lg bg-site-soft p-2 font-mono text-xs">{program.length ? program.join(" → ") : "sıra boş"}</p><button type="button" onClick={resetProgram} className="min-h-11 text-sm underline underline-offset-4">Sırayı temizle</button></div>}

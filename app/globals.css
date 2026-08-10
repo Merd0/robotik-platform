@@ -1,5 +1,47 @@
 @import "tailwindcss";
 
+/*
+ * Gömülü yazı tipleri — dosyaları, lisansları ve ölçülen etkileri
+ * public/fonts/LISANS.md içinde. Harici CDN yok (docs/08), CSP font-src 'self'.
+ * İkisi de değişken font: tek dosya tüm ağırlık aralığını taşıyor.
+ * Türkçe iki alt küme birden ister: `ı` latin'de, ama `İ ğ Ğ ş Ş` latin-ext'te.
+ */
+@font-face {
+  font-family: "Big Shoulders Display";
+  font-style: normal;
+  font-weight: 600 900;
+  font-display: swap;
+  src: url("/fonts/big-shoulders-display-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Big Shoulders Display";
+  font-style: normal;
+  font-weight: 600 900;
+  font-display: swap;
+  src: url("/fonts/big-shoulders-display-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 @theme {
   --color-site-bg: #f8fafc;
   --color-site-surface: #ffffff;
@@ -64,9 +106,38 @@
   --color-durum-uyari: #b45309;
   --color-durum-serbest: #15803d;
 
+  /*
+   * Poster paleti — ana sayfa ve seviye giriş sayfalarının kimliği.
+   * İki tonlu okuma: `-fill` dolgu/kenarlık için (metin taşımaz, kontrast
+   * eşiğine tabi değil), `-text` açık zemin üzerine yazı için. Site
+   * tokenlarındaki accent/accent-text ayrımının aynısı, aynı gerekçeyle:
+   * canlı tonu kaybetmeden WCAG AA tutturmak.
+   *
+   * Ölçüldü — eşik BEYAZ panel zemini, krem sayfa zemini değil: kart
+   * içindeki 9-10 px etiketler beyaz üstünde duruyor ve orası her zaman
+   * daha zorlu. teal-text 5.0:1, blue-text 5.8:1, purple-text 5.6:1;
+   * üçü de AA küçük metin eşiğini (4.5:1) geçiyor. blue-text ayrıca krem
+   * `-soft` zemininde de ölçüldü: #2f5fff orada 4.38:1'de kalıyordu (rozet
+   * etiketleri o zeminde duruyor), bu yüzden #2a56e8'e koyulaştırıldı.
+   */
+  --color-poster-bg: #fbf8f0;
+  --color-poster-soft: #f3f0e6;
+  --color-poster-surface: #ffffff;
+  --color-poster-ink: #0a0a0a;
+  --color-poster-muted: #4a4a4a;
+  --color-poster-subtle: #5b5b5b;
+  --color-poster-line: #d9d3c2;
+
+  --color-poster-teal: #00c9a7;
+  --color-poster-teal-text: #097f6e;
+  --color-poster-blue: #1e4fe0;
+  --color-poster-blue-text: #2a56e8;
+  --color-poster-purple: #7a2ce0;
+  --color-poster-purple-text: #8b2cf5;
+
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-heading: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --font-heading: "Big Shoulders Display", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 }
 
 :root {
@@ -119,6 +190,27 @@
   --color-durum-dur: #f87171;
   --color-durum-uyari: #fbbf24;
   --color-durum-serbest: #4ade80;
+
+  /*
+   * Poster paletinin gece karşılığı: aynı üç renk ailesi (teal → mavi →
+   * mor), koyu zeminde okunacak kadar açılmış. Gündüzdeki `-fill`/`-text`
+   * ayrımı burada tersine döner — koyu zeminde canlı ton zaten yeterli
+   * kontrast verdiği için ikisi aynı değere yaklaşır.
+   */
+  --color-poster-bg: #060810;
+  --color-poster-soft: #10141f;
+  --color-poster-surface: #0d111b;
+  --color-poster-ink: #eef2f6;
+  --color-poster-muted: #b6c2cc;
+  --color-poster-subtle: #94a3b8;
+  --color-poster-line: #232a3a;
+
+  --color-poster-teal: #2ff3d2;
+  --color-poster-teal-text: #2ff3d2;
+  --color-poster-blue: #4c8cff;
+  --color-poster-blue-text: #7fabff;
+  --color-poster-purple: #b685ff;
+  --color-poster-purple-text: #c9a6ff;
 }
 
 body {
@@ -136,6 +228,79 @@ body {
  * alınınca bg-* utility'si panelin varsayılan zeminini ezebiliyor.
  */
 @layer components {
+  /*
+   * Poster kimliğinin iki yapı taşı. Zemin rengi bilinçli olarak burada
+   * TANIMLI DEĞİL: kartın rengi her kullanımda `bg-*` utility'siyle
+   * veriliyor, dolayısıyla panelin kendisi zemini ezmemeli
+   * (aşağıdaki .lab-panel yorumundaki katman sorunu birebir aynısı).
+   */
+  .poster-card {
+    border: 3px solid var(--color-poster-ink);
+    border-radius: 1.25rem;
+    box-shadow: 7px 7px 0 var(--color-poster-ink);
+  }
+
+  /*
+   * Seviye kartı iki farklı görsel çözüm taşır, çünkü aynı çözüm iki temada
+   * birden çalışmıyor: aydınlıkta dolu renk + siyah kontur + sticker gölge
+   * okunur; karanlıkta aynı dolgu üstüne yazılan metin kontrastı düşürüyor.
+   * O yüzden gece sürümü dolguyu bırakıp çizgi + ışıma ile aynı üç renk
+   * ailesini taşır. Renk değerleri kart içinde değil, seviye başına
+   * değişkende — kartın kendisi seviyeyi bilmez.
+   */
+  .seviye-card {
+    border: 3px solid var(--color-poster-ink);
+    border-radius: 1.25rem;
+    background: var(--kart-dolgu);
+    color: var(--kart-metin);
+    box-shadow: 7px 7px 0 var(--color-poster-ink);
+  }
+
+  /*
+   * Hat rozeti ve capstone paneli: zemin rengi temayla değiştiği için ön
+   * plan rengi de değişmek zorunda. Ölçülen oranlar (AA küçük metin 4.5:1):
+   * teal 13.9/8.7, mavi 6.5/5.8, mor 6.5/6.4 — gündüz/gece.
+   */
+  .hat-rozet-1 { background: var(--color-poster-teal); color: #0a0a0a; }
+  .hat-rozet-2 { background: var(--color-poster-blue); color: #ffffff; }
+  .hat-rozet-3 { background: var(--color-poster-purple); color: #ffffff; }
+
+  /*
+   * Capstone paneli her iki temada da KOYU kalır — temayla birlikte
+   * açık zemine dönseydi üstündeki teal vurgu metni okunmaz olurdu.
+   * Gece sürümü sayfa zemininden ayrışsın diye bir ton açılıp çizgi alır.
+   */
+  .capstone-panel {
+    background: #0a0a0a;
+    color: #fbf8f0;
+    border: 1px solid transparent;
+  }
+
+  /*
+   * "● KAYIT" işareti. Kırmızı tonu temayla değişmek zorunda: aydınlıkta
+   * #e4574d beyaz üstünde 3.5:1 (AA küçük metin 4.5 ister), karanlıkta ise
+   * koyulaştırılmış ton 3.3:1'e düşüyor. İki ayrı değer, iki ayrı ölçüm.
+   */
+  .rec-isaret { color: #c2352b; }
+
+  /*
+   * Ortaokul kartlarının giriş hareketi. Kaydırmaya bağlı zaman çizelgesi
+   * destekleniyorsa kart görüş alanına girerken oynar; desteklenmiyorsa
+   * yüklenirken bir kez oynayıp yerinde kalır — iki durumda da kart doğru
+   * yerde ve doğru açıda bitiyor.
+   */
+  .kart-giris {
+    animation: bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* Ölçüm penceresi: ders kartlarının üstündeki "kanal" görüntüsü. */
+  .lab-window {
+    border: 1px solid var(--color-poster-line);
+    border-radius: 0.75rem;
+    background: var(--color-poster-surface);
+    overflow: hidden;
+  }
+
   .lab-panel {
     border: 1px solid var(--color-site-border);
     border-radius: 1.5rem;
@@ -175,6 +340,44 @@ select {
   to { stroke-dashoffset: -16; }
 }
 
+/*
+ * Poster ve seviye sayfalarının hareket sözlüğü. Hepsi süsleme değil,
+ * docs/07'deki "sakinlik ile hareketin karşıtlığı" ilkesinin uygulaması:
+ * sayfa duruyor, ölçüm penceresi çalışıyor. prefers-reduced-motion altında
+ * aşağıdaki global kural hepsini durdurur.
+ */
+@keyframes glow-pulse { 0%, 100% { opacity: .55 } 50% { opacity: 1 } }
+@keyframes pulse-dot { 0%, 100% { opacity: .5; transform: scale(1) } 50% { opacity: 1; transform: scale(1.3) } }
+@keyframes rec-blink { 0%, 100% { opacity: 1 } 50% { opacity: .15 } }
+@keyframes marquee-scroll { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+@keyframes pop-in { from { opacity: 0; transform: scale(.85) } to { opacity: 1; transform: scale(1) } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes bob { 0%, 100% { transform: translateY(0) rotate(-4deg) } 50% { transform: translateY(-8px) rotate(4deg) } }
+@keyframes wiggle { 0%, 100% { transform: rotate(-2deg) } 50% { transform: rotate(2deg) } }
+/*
+ * Giriş hareketi yalnız konum/ölçekle yapılır, opaklıkla değil — aynı
+ * gerekçe type-line'daki gibi: yarı saydam bir kart, üstündeki metnin
+ * ölçülen kontrastını AA altına düşürüyor.
+ */
+@keyframes bounce-in { 0% { transform: translateY(40px) scale(.9) rotate(var(--kart-egim, 0deg)) } 60% { transform: translateY(-6px) scale(1.02) rotate(var(--kart-egim, 0deg)) } 100% { transform: translateY(0) scale(1) rotate(var(--kart-egim, 0deg)) } }
+@keyframes spin-slow { to { transform: rotate(360deg) } }
+@keyframes ellipse-morph { 0% { transform: rotate(0deg) scale(1, .55) } 50% { transform: rotate(180deg) scale(.55, 1) } 100% { transform: rotate(360deg) scale(1, .55) } }
+@keyframes dash-grow { to { stroke-dashoffset: -70 } }
+@keyframes node-grow { 0% { opacity: 0; transform: scale(0) } 60% { opacity: 1; transform: scale(1.15) } 100% { opacity: 1; transform: scale(1) } }
+@keyframes arc-sweep { to { stroke-dashoffset: -90 } }
+@keyframes arm-toggle { 0%, 40% { transform: rotate(0deg) } 45%, 55% { transform: rotate(-34deg) } 90%, 100% { transform: rotate(0deg) } }
+@keyframes node-current { 0%, 100% { opacity: .3 } 50% { opacity: 1 } }
+/*
+ * Yazılma efekti yalnız genişlikle yapılır, opaklıkla değil. Opaklık rampası
+ * (tasarım dosyasındaki hali) metni yarı saydam bir ara renge düşürüyor ve
+ * otomatik kontrast denetimi o anlık rengi ölçüp haklı olarak AA altı
+ * raporluyor. Genişlik kırpması aynı etkiyi rengi bozmadan veriyor.
+ */
+@keyframes type-line { from { width: 0 } to { width: var(--satir-genislik, 12ch) } }
+@keyframes caret-blink { 0%, 50% { opacity: 1 } 51%, 100% { opacity: 0 } }
+@keyframes sweep-band { 0%, 100% { transform: translateY(-6px) } 50% { transform: translateY(10px) } }
+@keyframes signal-step { 0%, 45% { transform: translateY(0) } 50%, 95% { transform: translateY(-12px) } 100% { transform: translateY(0) } }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -201,14 +404,59 @@ select {
 
 [data-seviye="ortaokul"] {
   --seviye-focus: var(--color-ortaokul-accent-text);
+  --kart-dolgu: #00c9a7;
+  --kart-metin: #0a0a0a;
+  --kart-metin-soft: #0d2b25;
+  --kart-cizgi: #2ff3d2;
 }
 
 [data-seviye="lise"] {
   --seviye-focus: var(--color-lise-accent-text);
+  --kart-dolgu: #1e4fe0;
+  --kart-metin: #ffffff;
+  --kart-metin-soft: #e6edff;
+  --kart-cizgi: #4c8cff;
 }
 
 [data-seviye="universite"] {
   --seviye-focus: var(--color-universite-accent-text);
+  --kart-dolgu: linear-gradient(150deg, #7a2ce0, #4c1d95);
+  --kart-metin: #ffffff;
+  --kart-metin-soft: #efe4ff;
+  --kart-cizgi: #b685ff;
+}
+
+@supports (animation-timeline: view()) {
+  .kart-giris {
+    animation-timeline: view();
+    animation-range: entry 0% cover 35%;
+  }
+}
+
+:root[data-theme="dark"] .rec-isaret { color: #f87171; }
+:root[data-theme="dark"] .hat-rozet-2 { color: #06121f; }
+:root[data-theme="dark"] .hat-rozet-3 { color: #150626; }
+
+:root[data-theme="dark"] .capstone-panel {
+  background: #111726;
+  border-color: var(--color-poster-line);
+}
+
+:root[data-theme="dark"] .seviye-card {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: color-mix(in srgb, var(--kart-cizgi) 45%, transparent);
+  color: var(--color-poster-ink);
+  box-shadow: 0 0 40px -18px var(--kart-cizgi);
+}
+
+:root[data-theme="dark"] [data-seviye] {
+  --kart-metin: var(--color-poster-ink);
+  --kart-metin-soft: var(--color-poster-muted);
+  --kart-baslik: var(--kart-cizgi);
+}
+
+[data-seviye] {
+  --kart-baslik: var(--kart-metin);
 }
 
 .ders-icerik h2 {

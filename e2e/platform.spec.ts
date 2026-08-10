@@ -14,7 +14,8 @@ test("ana sayfa taşmadan güvenilir bir başlangıç sunar", async ({ page }) =
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   const platformNumbers = page.getByRole("region", { name: "Platform sayıları" });
-  await expect(platformNumbers.getByText("39", { exact: true })).toBeVisible();
+  // 2026-08-10 politika değişikliğinde 50 taslak yayına alındığı için 39 → 89.
+  await expect(platformNumbers.getByText("89", { exact: true })).toBeVisible();
   await expect(platformNumbers.getByText("yayında ders", { exact: true })).toBeVisible();
   const overflows = await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1);
   expect(overflows).toBe(false);
@@ -22,7 +23,7 @@ test("ana sayfa taşmadan güvenilir bir başlangıç sunar", async ({ page }) =
 
 test("hero ilk anlamlı kontrolü ilk viewport içinde gösterir", async ({ page }) => {
   await page.goto("/");
-  const prediction = page.getByRole("button", { name: "Aşağı iner" });
+  const prediction = page.getByRole("button", { name: "Sınırda durur" });
   await expect(prediction).toBeVisible();
   const box = await prediction.boundingBox();
   const viewport = page.viewportSize();
@@ -43,19 +44,32 @@ test("seviye, hat ve yayınlı ders rotası erişilebilir", async ({ page }) => 
   await expect(page.locator("main h1")).toBeVisible();
 });
 
-test("review borcu yeşil insan incelemesi gibi sunulmaz", async ({ page }) => {
+/*
+ * Bu testin eski hâli "review borcu yeşil insan incelemesi gibi sunulmaz"
+ * adıyla, makbuzu olmayan derste bir UYARI rozeti arıyordu. O rozet
+ * 2026-08-10 kararından sonra bilinçli olarak kaldırıldı: insan incelemesi
+ * opsiyonel olduğu için "inceleme bekliyor" demek yanlış bir beklenti
+ * üretiyordu (bkz. components/lesson/LessonTrustPanel.tsx yorumu).
+ *
+ * Korunması gereken asıl güvence tersinden hâlâ geçerli ve burada ölçülüyor:
+ * incelenmemiş bir ders, incelenmiş gibi YEŞİL gösterilemez. Bu, makbuz
+ * sisteminin tek kullanıcıya dönük vaadi.
+ */
+test("insan incelemesi rozeti yalnız gerçek makbuzu olan derste görünür", async ({ page }) => {
+  await page.goto("/ders/b-lise-ileri-kinematik");
+  const incelenmis = page.locator("[data-review-state]");
+  await expect(incelenmis).toHaveAttribute("data-review-state", "verified");
+  await expect(incelenmis).toContainText("Bu sürüm elle incelendi");
+
   await page.goto("/ders/a-ortaokul-robot-nedir");
-  await expect(page.getByText("Yeniden insan incelemesi gerekli", { exact: false })).toBeVisible();
-  await expect(page.getByText(/Artifact: sha256:/)).toBeVisible();
+  await expect(page.getByText("Bu sürüm elle incelendi")).toHaveCount(0);
+  await expect(page.locator("[data-review-state]")).toHaveCount(0);
+  // Makbuz olmasa da kaynak zorunluluğu duruyor: yayının tek içerik şartı bu.
+  await expect(page.getByText("kaynağı olmayan bilgi yayımlanmaz", { exact: false })).toBeVisible();
 });
 
-test("taslak ders statik üretim çıktısında bulunmaz", async ({ request }) => {
-  const response = await request.get("/ders/d-lise-python-komut-dizisi");
-  expect(response.status()).toBe(404);
-});
-
-test("404 durumu taslak yayın sınırını açıklar", async ({ page }) => {
-  const response = await page.goto("/ders/d-lise-python-komut-dizisi");
+test("bilinmeyen ders adresi güvenli 404 sınırında karşılanır", async ({ page }) => {
+  const response = await page.goto("/ders/boyle-bir-ders-yok");
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "Bu deney production haritasında yok." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Yayınlı derslerde ara" })).toBeVisible();
@@ -92,12 +106,16 @@ test("homojen dönüşüm pilotu iki işlem sırasını ölçülebilir biçimde 
   await page.goto("/ders/a-universite-homojen-donusum");
   await page.getByRole("button", { name: "Y ekseni" }).click();
   await page.getByRole("button", { name: "Dönüşümü uygula" }).click();
-  await expect(page.getByText("(0.000, 1.000, 0) m")).toBeVisible();
+  // İki sıranın sonucu artık aynı sahnede yan yana duruyor: koordinatlar
+  // matris tablosunda değil, her zaman görünen karşılaştırma listesinde.
+  await expect(page.getByText("orijin (0.000, 1.000) m", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("orijin (1.000, 0.000) m", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText(/sıra farklı, sonuç 1\.414 m uzakta/)).toBeVisible();
 
   await page.getByRole("button", { name: /Önce döndür, sonra ötele/ }).click();
   await page.getByRole("button", { name: "X ekseni" }).click();
   await page.getByRole("button", { name: "Dönüşümü uygula" }).click();
-  await expect(page.getByText("(1.000, 0.000, 0) m")).toBeVisible();
+  await expect(page.getByText("orijin (1.000, 0.000) m · seçtiğin sıra", { exact: false }).first()).toBeVisible();
 });
 
 test("DLS pilotu gerçek yineleme izini ve hata eğrisini gösterir", async ({ page }) => {
@@ -120,7 +138,18 @@ test("C-space pilotu fiziksel çarpışmayı açı uzayındaki yasak bölgeye ba
 });
 
 test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
-  for (const url of ["/", "/ders/a-ortaokul-robot-nedir", "/ders/a-universite-robot-mimarileri", "/ders/b-lise-ileri-kinematik"]) {
+  const denetlenen = [
+    "/",
+    "/seviye/ortaokul",
+    "/seviye/lise",
+    "/seviye/universite",
+    "/ders/a-ortaokul-robot-nedir",
+    "/ders/a-universite-robot-mimarileri",
+    "/ders/a-universite-homojen-donusum",
+    "/ders/b-lise-ileri-kinematik",
+    "/laboratuvar/robot-hucresi",
+  ];
+  for (const url of denetlenen) {
     await page.goto(url);
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
     const blocking = results.violations.filter((violation) => ["critical", "serious"].includes(violation.impact ?? ""));

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { HeroExperiment } from "@/components/home/HeroExperiment";
 import { getAllLessons, getPublicLessons, HAT_ETIKET, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
+import { ETKILESIM_ETIKETI } from "@/lib/etkilesimEtiket";
 
 const SEVIYELER: { seviye: Seviye; aciklama: string }[] = [
   { seviye: "ortaokul", aciklama: "Robot kavramı, eklem hareketi ve labirent planlamayı görerek dene." },
@@ -8,15 +9,17 @@ const SEVIYELER: { seviye: Seviye; aciklama: string }[] = [
   { seviye: "universite", aciklama: "DH, Jacobian, nümerik IK ve planlayıcıları matematiksel sınırlarıyla sına." },
 ];
 
-const ETKILESIM_ETIKETI: Record<string, string> = {
-  JointSliders: "eklem kontrolü",
-  IkTarget: "hedef ve IK",
-  JacobianViz: "Jacobian görselleştirme",
-  PlannerRace: "planlayıcı karşılaştırma",
-  MazePlanner: "labirent planlama",
-  PredictionPrompt: "tahmin",
-  TransferChallenge: "kavram kontrolü",
-};
+/*
+ * Hat harfinin rengi üç renk ailesini müfredata bağlar: ilk iki hat teal,
+ * ortadaki üç hat mavi, son üçü mor. Sıra hat listesinden gelir, elle
+ * yazılmaz — yeni bir hat eklendiğinde renk kendiliğinden dağılır.
+ */
+function hatRengi(index: number, toplam: number) {
+  const ucteBir = Math.max(1, Math.floor(toplam / 3));
+  if (index < ucteBir) return "hat-rozet-1";
+  if (index < ucteBir * 2) return "hat-rozet-2";
+  return "hat-rozet-3";
+}
 
 export default function HomePage() {
   const allLessons = getAllLessons();
@@ -34,68 +37,72 @@ export default function HomePage() {
   });
 
   return (
-    <main id="ana-icerik" className="min-h-screen overflow-hidden">
-      <div className="mx-auto flex max-w-7xl flex-col gap-14 px-4 py-8 sm:px-6 sm:py-12">
+    <main id="ana-icerik" className="min-h-screen overflow-hidden bg-poster-bg text-poster-ink">
+      <div className="mx-auto flex max-w-7xl flex-col gap-16 px-4 py-8 sm:px-6 sm:py-12 lg:gap-24">
         <HeroExperiment />
 
-        <section aria-labelledby="seviye-baslik" className="space-y-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <section aria-labelledby="seviye-baslik" className="space-y-7">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[.16em] text-site-accent-text">Aynı laboratuvar, üç derinlik</p>
-              <h2 id="seviye-baslik" className="mt-2 font-heading text-3xl font-semibold tracking-tight">Nereden başlamak istiyorsun?</h2>
+              <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-poster-purple-text">Aynı laboratuvar, üç derinlik</p>
+              <h2 id="seviye-baslik" className="mt-1 font-heading text-4xl font-extrabold tracking-tight sm:text-5xl">Nereden başlamak istiyorsun?</h2>
             </div>
-            <p className="max-w-xl text-sm leading-6 text-site-muted">Seviye yalnızca renk değil; açıklama, matematik, sınır durumları ve kanıt beklentisi birlikte değişir.</p>
+            <p className="max-w-md text-sm leading-6 text-poster-muted">Seviye yalnızca renk değil; açıklama, matematik, sınır durumları ve kanıt beklentisi birlikte değişir.</p>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {levelCards.map(({ seviye, aciklama, lessons, interactions }) => (
-          <Link
-            key={seviye}
-            href={`/seviye/${seviye}`}
-            data-seviye={seviye}
-            className="group lab-panel flex min-h-48 flex-col justify-between gap-6 p-5 transition hover:-translate-y-1 hover:border-teal-500"
-          >
-            <span className="font-heading text-2xl font-semibold text-site-ink">{SEVIYE_ETIKET[seviye]}</span>
-            <span className="text-sm leading-6 text-site-muted">{aciklama}</span>
-            <span className="text-xs leading-5 text-site-subtle">{lessons.length} ders · {interactions.join(" · ")}</span>
-            <span className="rounded-lg border border-site-border bg-site-soft px-2.5 py-2 text-xs text-site-muted">
-              Her ders kaynaklarıyla birlikte yayımlanır
-            </span>
-            <span className="text-sm font-semibold text-site-accent-text">Bu seviyenin yolunu gör <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span></span>
-          </Link>
-        ))}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-5">
+            {levelCards.map(({ seviye, aciklama, lessons, interactions }) => (
+              <Link
+                key={seviye}
+                href={`/seviye/${seviye}`}
+                data-seviye={seviye}
+                className="seviye-card group flex min-h-64 flex-col justify-between gap-4 p-7 transition hover:translate-x-1 hover:translate-y-1 hover:shadow-[3px_3px_0_var(--color-poster-ink)]"
+              >
+                <span className="font-heading text-4xl font-black text-[var(--kart-baslik)]">{SEVIYE_ETIKET[seviye]}</span>
+                <span className="text-[15px] leading-6 text-[var(--kart-metin)]">{aciklama}</span>
+                <span className="font-mono text-xs font-bold leading-5 text-[var(--kart-metin-soft)]">{lessons.length} ders · {interactions.join(" · ")}</span>
+                <span className="text-[15px] font-extrabold text-[var(--kart-metin)]">
+                  Bu seviyenin yolunu gör <span aria-hidden="true" className="inline-block transition group-hover:translate-x-1">→</span>
+                </span>
+              </Link>
+            ))}
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[1fr_.72fr]">
-          <div className="lab-panel p-6 sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[.16em] text-site-accent-text">Müfredat haritası</p>
-            <h2 className="mt-2 font-heading text-2xl font-semibold">Tek tek içerikler değil, birbirine bağlanan robotik hatları</h2>
-            <div className="mt-6 grid gap-2 sm:grid-cols-2">
+        <section className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
+          <div className="rounded-[1.25rem] border-[3px] border-poster-ink p-7">
+            <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-poster-purple-text">Müfredat haritası</p>
+            <h2 className="mt-1 font-heading text-3xl font-extrabold">{tracks.length} hat, birbirine bağlanan robotik</h2>
+            <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
               {tracks.map((track, index) => (
-                <div key={track} className="flex min-h-14 items-center gap-3 rounded-xl border border-site-border bg-site-soft px-4 py-2 text-sm">
-                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-site-strong font-mono text-xs text-site-on-strong">{String.fromCharCode(65 + index)}</span>
-                  <span className="font-medium text-site-ink">{HAT_ETIKET[track]}</span>
+                <div key={track} className="flex min-h-14 items-center gap-3 rounded-xl bg-poster-soft px-4 py-2 text-sm font-semibold">
+                  <span aria-hidden="true" className={`grid size-7 shrink-0 place-items-center rounded-full font-mono text-xs font-bold ${hatRengi(index, tracks.length)}`}>{String.fromCharCode(65 + index)}</span>
+                  <span>{HAT_ETIKET[track]}</span>
                 </div>
               ))}
             </div>
           </div>
-          <aside className="lab-panel flex flex-col justify-between gap-6 bg-slate-950 p-6 text-white sm:p-8">
+          <aside className="capstone-panel flex flex-col justify-between gap-6 rounded-[1.25rem] p-7">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[.16em] text-teal-300">Beta bütünleştirme deneyi</p>
-              <h2 className="mt-2 font-heading text-3xl font-semibold">Tek robot hücresi, dört mini görev.</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-300">Kalibrasyon, rota seçimi, program sırası ve güvenli hız kararını aynı eğitim sahnesinde dene. İndirdiğin dosya bir deney kaydıdır; doğrulanmış beceri belgesi değildir.</p>
+              <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-poster-teal">Capstone deneyi</p>
+              <h2 className="mt-1 font-heading text-3xl font-extrabold">Tek robot hücresi, dört mini görev.</h2>
+              <p className="mt-3 text-sm leading-6 opacity-80">Kalibrasyon, rota seçimi, program sırası ve güvenli hız kararını aynı eğitim sahnesinde dene. İndirdiğin dosya bir deney kaydıdır; doğrulanmış beceri belgesi değildir.</p>
             </div>
-            <Link href="/laboratuvar/robot-hucresi" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-300 px-4 py-2 text-sm font-bold text-slate-950">Capstone’u başlat</Link>
+            <Link href="/laboratuvar/robot-hucresi" className="inline-flex min-h-13 items-center justify-center rounded-full bg-poster-teal px-5 py-3 text-[15px] font-extrabold text-[#0a0a0a]">
+              Capstone’u başlat <span aria-hidden="true" className="ml-2">→</span>
+            </Link>
           </aside>
         </section>
 
-        <section aria-label="Platform sayıları" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <section aria-label="Platform sayıları" className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[[publishedLessons.length, "yayında ders"], [interactiveCount, "etkileşim bileşenli ders"], [tracks.length, "öğrenme hattı"], [sourceCount, "listelenen kaynak"]].map(([value, label]) => (
-            <div key={String(label)} className="rounded-2xl border border-site-border bg-site-surface p-4"><strong className="block font-heading text-3xl">{value}</strong><span className="text-xs text-site-muted">{label}</span></div>
+            <div key={String(label)} className="rounded-2xl bg-poster-soft py-5 text-center">
+              <strong className="block font-heading text-5xl font-black leading-none">{value}</strong>
+              <span className="mt-1.5 block text-xs text-poster-subtle">{label}</span>
+            </div>
           ))}
         </section>
         {allLessons.length > publishedLessons.length && (
-          <p className="-mt-10 text-center text-xs text-site-subtle">{allLessons.length - publishedLessons.length} taslak içerik production sayfalarına dahil değildir.</p>
+          <p className="-mt-12 text-center text-xs text-poster-subtle">{allLessons.length - publishedLessons.length} taslak içerik production sayfalarına dahil değildir.</p>
         )}
       </div>
     </main>
