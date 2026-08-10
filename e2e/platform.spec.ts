@@ -93,12 +93,16 @@ test("homojen dönüşüm pilotu iki işlem sırasını ölçülebilir biçimde 
   await page.goto("/ders/a-universite-homojen-donusum");
   await page.getByRole("button", { name: "Y ekseni" }).click();
   await page.getByRole("button", { name: "Dönüşümü uygula" }).click();
-  await expect(page.getByText("(0.000, 1.000, 0) m")).toBeVisible();
+  // İki sıranın sonucu artık aynı sahnede yan yana duruyor: koordinatlar
+  // matris tablosunda değil, her zaman görünen karşılaştırma listesinde.
+  await expect(page.getByText("orijin (0.000, 1.000) m", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("orijin (1.000, 0.000) m", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText(/sıra farklı, sonuç 1\.414 m uzakta/)).toBeVisible();
 
   await page.getByRole("button", { name: /Önce döndür, sonra ötele/ }).click();
   await page.getByRole("button", { name: "X ekseni" }).click();
   await page.getByRole("button", { name: "Dönüşümü uygula" }).click();
-  await expect(page.getByText("(1.000, 0.000, 0) m")).toBeVisible();
+  await expect(page.getByText("orijin (1.000, 0.000) m · seçtiğin sıra", { exact: false }).first()).toBeVisible();
 });
 
 test("DLS pilotu gerçek yineleme izini ve hata eğrisini gösterir", async ({ page }) => {
@@ -128,7 +132,9 @@ test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
     "/seviye/universite",
     "/ders/a-ortaokul-robot-nedir",
     "/ders/a-universite-robot-mimarileri",
+    "/ders/a-universite-homojen-donusum",
     "/ders/b-lise-ileri-kinematik",
+    "/laboratuvar/robot-hucresi",
   ];
   for (const url of denetlenen) {
     await page.goto(url);
