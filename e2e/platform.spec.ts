@@ -44,19 +44,32 @@ test("seviye, hat ve yayınlı ders rotası erişilebilir", async ({ page }) => 
   await expect(page.locator("main h1")).toBeVisible();
 });
 
-test("review borcu yeşil insan incelemesi gibi sunulmaz", async ({ page }) => {
+/*
+ * Bu testin eski hâli "review borcu yeşil insan incelemesi gibi sunulmaz"
+ * adıyla, makbuzu olmayan derste bir UYARI rozeti arıyordu. O rozet
+ * 2026-08-10 kararından sonra bilinçli olarak kaldırıldı: insan incelemesi
+ * opsiyonel olduğu için "inceleme bekliyor" demek yanlış bir beklenti
+ * üretiyordu (bkz. components/lesson/LessonTrustPanel.tsx yorumu).
+ *
+ * Korunması gereken asıl güvence tersinden hâlâ geçerli ve burada ölçülüyor:
+ * incelenmemiş bir ders, incelenmiş gibi YEŞİL gösterilemez. Bu, makbuz
+ * sisteminin tek kullanıcıya dönük vaadi.
+ */
+test("insan incelemesi rozeti yalnız gerçek makbuzu olan derste görünür", async ({ page }) => {
+  await page.goto("/ders/b-lise-ileri-kinematik");
+  const incelenmis = page.locator("[data-review-state]");
+  await expect(incelenmis).toHaveAttribute("data-review-state", "verified");
+  await expect(incelenmis).toContainText("Bu sürüm elle incelendi");
+
   await page.goto("/ders/a-ortaokul-robot-nedir");
-  await expect(page.getByText("Yeniden insan incelemesi gerekli", { exact: false })).toBeVisible();
-  await expect(page.getByText(/Artifact: sha256:/)).toBeVisible();
+  await expect(page.getByText("Bu sürüm elle incelendi")).toHaveCount(0);
+  await expect(page.locator("[data-review-state]")).toHaveCount(0);
+  // Makbuz olmasa da kaynak zorunluluğu duruyor: yayının tek içerik şartı bu.
+  await expect(page.getByText("kaynağı olmayan bilgi yayımlanmaz", { exact: false })).toBeVisible();
 });
 
-test("taslak ders statik üretim çıktısında bulunmaz", async ({ request }) => {
-  const response = await request.get("/ders/d-lise-python-komut-dizisi");
-  expect(response.status()).toBe(404);
-});
-
-test("404 durumu taslak yayın sınırını açıklar", async ({ page }) => {
-  const response = await page.goto("/ders/d-lise-python-komut-dizisi");
+test("bilinmeyen ders adresi güvenli 404 sınırında karşılanır", async ({ page }) => {
+  const response = await page.goto("/ders/boyle-bir-ders-yok");
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "Bu deney production haritasında yok." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Yayınlı derslerde ara" })).toBeVisible();
