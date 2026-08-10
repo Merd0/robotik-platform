@@ -281,6 +281,16 @@ body {
    */
   .rec-isaret { color: #c2352b; }
 
+  /*
+   * Ortaokul kartlarının giriş hareketi. Kaydırmaya bağlı zaman çizelgesi
+   * destekleniyorsa kart görüş alanına girerken oynar; desteklenmiyorsa
+   * yüklenirken bir kez oynayıp yerinde kalır — iki durumda da kart doğru
+   * yerde ve doğru açıda bitiyor.
+   */
+  .kart-giris {
+    animation: bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
   /* Ölçüm penceresi: ders kartlarının üstündeki "kanal" görüntüsü. */
   .lab-window {
     border: 1px solid var(--color-poster-line);
@@ -342,7 +352,12 @@ select {
 @keyframes fade-up { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: translateY(0) } }
 @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-4deg) } 50% { transform: translateY(-8px) rotate(4deg) } }
 @keyframes wiggle { 0%, 100% { transform: rotate(-2deg) } 50% { transform: rotate(2deg) } }
-@keyframes bounce-in { 0% { opacity: 0; transform: translateY(40px) scale(.9) rotate(var(--kart-egim, 0deg)) } 60% { opacity: 1; transform: translateY(-6px) scale(1.02) rotate(var(--kart-egim, 0deg)) } 100% { opacity: 1; transform: translateY(0) scale(1) rotate(var(--kart-egim, 0deg)) } }
+/*
+ * Giriş hareketi yalnız konum/ölçekle yapılır, opaklıkla değil — aynı
+ * gerekçe type-line'daki gibi: yarı saydam bir kart, üstündeki metnin
+ * ölçülen kontrastını AA altına düşürüyor.
+ */
+@keyframes bounce-in { 0% { transform: translateY(40px) scale(.9) rotate(var(--kart-egim, 0deg)) } 60% { transform: translateY(-6px) scale(1.02) rotate(var(--kart-egim, 0deg)) } 100% { transform: translateY(0) scale(1) rotate(var(--kart-egim, 0deg)) } }
 @keyframes spin-slow { to { transform: rotate(360deg) } }
 @keyframes ellipse-morph { 0% { transform: rotate(0deg) scale(1, .55) } 50% { transform: rotate(180deg) scale(.55, 1) } 100% { transform: rotate(360deg) scale(1, .55) } }
 @keyframes dash-grow { to { stroke-dashoffset: -70 } }
@@ -407,6 +422,13 @@ select {
   --kart-metin: #ffffff;
   --kart-metin-soft: #efe4ff;
   --kart-cizgi: #b685ff;
+}
+
+@supports (animation-timeline: view()) {
+  .kart-giris {
+    animation-timeline: view();
+    animation-range: entry 0% cover 35%;
+  }
 }
 
 :root[data-theme="dark"] .rec-isaret { color: #f87171; }
