@@ -430,3 +430,406 @@ ders veya kaynak eklenmedi; kaynağı olmayan tolerans, sınır değeri ya da
 ürün özelliği yazılmadı. Bu değişiklikten sonra TypeScript,
 lint, 152 test, içerik/graph/quiz/MDX kapıları, `npm audit` ve 61 sayfalık
 production build yeniden temiz geçti.
+
+---
+
+# Büyüme planı — bağımsız değerlendirme
+
+Tarih: 2026-08-09
+
+İncelenen taban: main, 7e0f213. Bu bölüm docs/12-buyume-plani.md içindeki
+taslağı aynen uygulama planı olarak kabul etmez; mevcut kod, yayın durumu ve
+canlı kullanıcı davranışıyla karşılaştırılmış bağımsız görüştür. Uygulama
+kodu değiştirilmedi.
+
+## Kısa hüküm
+
+Planın genel yönü doğru: yeni ders yığmak yerine kalite borcunu azaltmak,
+hesapsız etkileşimi büyütmek, öğretmen paneli ve topluluk gibi pahalı
+alanları talep kanıtlanana kadar bekletmek mantıklı. Ancak iki “hemen”
+maddesinin tanımı düzeltilmeli:
+
+1. 6-DOF problemi öncelikle kamera veya zoom problemi değildir. Asıl acil
+   sorun, altı kontrolün tek dikey kolonda birikmesi ve daha önemlisi J6
+   yöneliminin sahnede hiç görünmemesidir.
+2. Review sistemini akıllandırmak düşük eforlu tek iş değildir. Otomasyon
+   insan incelemesini hızlandırabilir ve sıraya koyabilir; insanın yapmadığı
+   bir inceleme için insan makbuzu üretemez.
+
+Plan ayrıca özellikleri sıralıyor fakat büyümeyi ölçen ve kendi kendini
+besleyen bir döngü tanımlamıyor. En önemli eksik, gizlilik sınırını bozmadan
+ölçülebilir ve paylaşılabilir deney durumlarıdır.
+
+## 1. Önceliklendirme değerlendirmesi
+
+| Taslaktaki madde | Bağımsız karar | Önerilen yer | Gerekçe |
+|---|---|---|---|
+| 6-DOF sahnesini sığdırma | Önceliğe katılıyorum, teşhise katılmıyorum | Hemen / P0 | Canlı altı derste doğrudan kullanım sorunu var. Kamera auto-fit tek başına çözmez; J6 yönelimi görünmediği için ders görevi kanıtlanamıyor. Semantik renderer düzeltmesi, yerleşimden bile önce gelmeli. |
+| Review makbuzunu akıllandırma | Hemen başlanmalı, fakat aşamalı ve orta eforlu | Hemen: tasarım ve report-only; yakın/orta: zorunlu v2 ve borç eritme | Mevcut v1 dürüst bir kapı fakat makbuz listesi boş. Dependency manifesti, reviewer policy ve gerçek insan iş akışı küçük bir kamera düzeltmesiyle aynı efor sınıfında değil. |
+| İçerik kalitesi turu | Yakından hemen/sürekliye çekilmeli | Hemen, risk tabanlı | Önce 39 yayın içindeki değişmiş, merkezi önkoşul ve yüksek riskli dersler ele alınmalı. 89 dersi eşit sırada okumak verimsizdir. |
+| Oyun alanı | Koşullu olarak katılıyorum | Yakın vade, önce üç bileşenli pilot | “En çok paylaşılan sayfa olur” bir hipotezdir, kanıt değildir. Mevcut motorları kullanan ince bir kabukla pilotlanmalı; yeni ve büyük bir sandbox motoruna dönüşmemeli. |
+| Küçük araçlar | Liste hâliyle fazla yüksek | Yakın/orta, yalnız ders ve paylaşım döngüsüne bağlanırsa | Açı çevirici kolay fakat ayırt edici değildir. Robot karşılaştırmanın önemli bir sürümü zaten RobotSelectionTable içinde var. DH aracı ancak bir görevi çözüyor, sonucu sahnede doğruluyor ve derse geri bağlıyorsa değerli olur. |
+| 50 taslağı yayına açma | Toplu hedefe katılmıyorum | Yakın ve orta vadeye yayılan dikey dilimler | “50 yayın” kalite ölçütü değildir. Önkoşulu, etkileşimi, kaynağı ve gerçek receipt'i tamamlanan küçük hat dilimleri sırayla açılmalı. Hat H uzman safety onayı olmadan ayrı tutulmalı. |
+| 89 bitmeden yeni ders eklememe | Genel ilkeye katılıyorum, mutlak yasa olmamalı | Orta vade | Kritik bir önkoşul boşluğu veya mevcut dersi çalışamaz yapan içerik açığı varsa tek ve ölçülebilir yeni ders istisna olabilir. Toplu içerik üretimi ise beklemeli. |
+| SEO derinleştirme | İki parçaya ayrılmalı | Arama niyeti testi yakın; büyük ölçek uzak | Teknik temel var. Fakat hangi Türkçe robotik sorgularının araç veya ders talebi taşıdığını ölçmek ucuzdur ve uzak vadeye atılmamalı. Blog fabrikası ve geniş içerik operasyonu uzak kalabilir. |
+| Öğretmen kullanımı | Panel uzak, keşif hemen/yakın | Hemen 5–8 görüşme; ürün yatırımı uzak | Planın kendi önerdiği manuel talep testi düşük eforludur. Bunu uzak vadeye koymak, en güçlü dağıtım kanalını gereksiz yere geciktirir. |
+| Blog/haber | Katılıyorum | Uzak / şimdilik yapma | Sürekli editoryal yük üretir ve etkileşimli laboratuvar farkını güçlendirmez. |
+| Forum/topluluk | Katılıyorum | Yapmama kararı korunmalı | Çocuk güvenliği, moderasyon ve kişisel veri yükü mevcut ürün sınırına ters düşer. Topluluk ihtiyacı önce hesap gerektirmeyen paylaşılabilir deneylerle test edilebilir. |
+
+### Önerdiğim sıra
+
+**Hemen**
+
+1. 6-DOF için yönelim/eksen doğruluğu ve ardından responsive kontrol
+   yerleşimi.
+2. Review v2 subject manifesti ve review kuyruğunu report-only üretmek;
+   otomatik sonuç ile insan onayını kesin ayırmak.
+3. Yayındaki 39 ders için risk tabanlı kalite kuyruğu: değişmiş 13 ders,
+   merkezi önkoşullar ve güvenlikle ilişkili iddialar önce.
+4. Büyüme ölçüm sözleşmesi ve küçük kullanıcı testi: ilk anlamlı etkileşim,
+   ilk kanıt, görevi terk etme nedeni ve geri dönme sinyali.
+
+**Yakın vade**
+
+1. Üç gerçek ders üzerinde uçtan uca v2 receipt pilotu.
+2. Üç mevcut laboratuvarda paylaşılabilir, deterministik deney durumu.
+3. Mevcut bileşenlerden kurulan küçük Oyun Alanı pilotu.
+4. Beş ila sekiz öğretmenle görev-linki ve sınıf akışı testi.
+5. Hazır olan taslakları “hat tamamı” yerine küçük, tutarlı dikey dilimler
+   olarak yayınlama.
+
+**Orta vade**
+
+1. Review v2'yi yeni/değişen yayınlarda zorunlu kılmak ve 39 derslik borcu
+   risk sırasıyla azaltmak.
+2. Öğrenme ve paylaşım verisi değer gösterirse Oyun Alanı ile araçları
+   genişletmek.
+3. D–G hatlarını kaynak, görev ve kanıt ölçütleri tamamlandıkça açmak.
+   Hat H için bağımsız safety uzmanı kapısı korunmalı.
+
+**Uzak vade**
+
+Talep kanıtlanırsa öğretmen ürünü, geniş SEO/içerik operasyonu ve offline
+okul paketi. Blog ancak sürdürülebilir editoryal sahibi oluşursa; forum ise
+mevcut güvenlik sınırı altında önerilmez.
+
+## 2. Planın kaçırdığı somut fırsat
+
+### Ölçülebilir, paylaşılabilir deney döngüsü
+
+Plan Oyun Alanı ve küçük araçları ayrı özellikler olarak görüyor; bunların
+nasıl kullanıcı getireceğini veya geri dönüş üreteceğini tanımlamıyor.
+Platformun gerçek büyüme fırsatı, her laboratuvarın aynı deneyi başka bir
+kişiye hesap açmadan aktarabilmesidir:
+
+- Durum şeması; lab kimliği, şema sürümü, robot, parametreler, seed ve aktif
+  adımı taşır. Öğrenci adı veya cihaz kimliği taşımaz.
+- “Deneyi paylaş” eylemi kısa URL/QR ya da yerel JSON üretir. Alıcı aynı
+  başlangıç durumunu görür, sonucu yeniden çalıştırır ve kendi dalını
+  oluşturabilir.
+- Öğretmen paneli kurulmadan öğretmen bir görev durumunu paylaşabilir;
+  öğrenci kanıt JSON'unu geri verebilir.
+- Seed'li planlama ve hata enjeksiyonu deneyleri tekrar üretilebilir olur.
+  Bu hem bilimsel kalite hem dağıtım avantajıdır.
+- Küçük araç, ders ve Oyun Alanı birbirinden kopuk sayfalar olmaktan çıkar;
+  paylaşılan durum ilgili kavrama ve derse geri bağlanır.
+
+Bu döngünün önünde gizlilik ölçüm sözleşmesi kurulmalı. Hesap, reklam kimliği
+ve kişisel profil olmadan yalnız toplu ürün sinyalleri izlenmeli:
+
+- ilk 30 saniyede anlamlı kontrol kullanıldı mı;
+- bir ders içinde ilk “observed/passed” kanıtına ulaşıldı mı;
+- deney durumu paylaşıldı mı ve paylaşılan durum açıldı mı;
+- kullanıcı testi sırasında nerede ve neden bırakıldı.
+
+İlk pilotun kabul ölçütleri:
+
+1. Üç farklı laboratuvarda aynı durum URL'den deterministik geri yüklenir.
+2. Mobilde paylaş/kopyala geri bildirimi ve klavye akışı çalışır.
+3. URL/JSON kişisel veri, serbest kullanıcı metni veya gizli kaynak taşımaz.
+4. Şema sürümü eski bağlantıları kontrollü biçimde migrate eder ya da açıkça
+   uyumsuz der.
+5. Beş öğrenci ve üç öğretmen testinde alıcı, açıklama almadan aynı deneyi
+   yeniden çalıştırabilir.
+
+Bu fırsat, genel bir açı çeviriciden daha değerlidir: hem öğrenme kanıtını
+güçlendirir hem platformun doğal paylaşım kanalını oluşturur.
+
+## 3. Review makbuzu sistemini akıllandırma — bağımsız tasarım
+
+### Mevcut v1'in doğru yaptığı şey
+
+- lib/lessonArtifact.ts:22-43 ders gövdesi ile frontmatter'ı kanonikleştirip
+  SHA-256 artifact'ına bağlıyor.
+- lib/reviewReceipts.ts:55-91 içerik değiştiğinde eski makbuzu güncel insan
+  onayı gibi göstermiyor.
+- scripts/check-review-integrity.ts:28-43 yeni bir yayını güncel makbuz
+  olmadan engelliyor.
+- scripts/check-review-debt.ts:5-30 legacy borç kümesini donduruyor; yeni
+  ders sessizce borç listesine eklenemiyor.
+
+Bu dürüst bir v1 tabanıdır. Ancak content/review-receipts.json şu anda
+0 makbuz içeriyor; content/review-debt.json ise 13 değişiklik-sonrası eski
+ve 26 legacy olmak üzere 39 açık kayıt taşıyor. Sistem bugün tamamlanmış bir
+review operasyonu değil, sahte güveni engelleyen bir iskeledir.
+
+### Kritik boşluk
+
+Artifact yalnız MDX gövdesi ve frontmatter'ı kapsar. Öğrencinin kullandığı
+JointSliders, RobotArm, robot tanımı, worker, matematik motoru veya fixture
+değiştiğinde ders hash'i aynı kalabilir. Dolayısıyla v1 “metin aynı”yı
+kanıtlar; “öğrencinin deneyimi aynı ve doğru”yu kanıtlamaz.
+
+Diğer eksikler:
+
+- sourceCommit yalnız 40 hex karakter biçiminde kontrol ediliyor; commit'in
+  varlığı, main'in atası olması ve artifact'ı gerçekten üretmesi
+  doğrulanmıyor.
+- Reviewer adı ve rolü dolu mu diye bakılıyor; kimlik, yetki ve scope-role
+  eşleşmesi doğrulanmıyor.
+- Tek kişi tek receipt içindeki bütün scope'ları üstleniyor; farklı uzmanlar
+  bağımsız karar veremiyor.
+- Approved, changes-requested, conditional ve supersedes kararları yok.
+- Safety kapsamı yalnız h-guvenlik hattından çıkıyor; başka hatlardaki
+  çarpışma, kuvvet, gerçek robot hareketi ve vendor limitleri kaçabilir.
+- Tek JSON dosyası append-only değil; eski kayıt sessizce değiştirilebilir
+  ve paralel review işlerinde çakışma üretir.
+
+### Önerilen v2: subject + attestation + policy
+
+**Review subject**
+
+Her ders sürümü aşağıdaki bağımsız köklerden oluşmalı:
+
+- contentHash: öğrenciye görünen metin, kazanım, soru ve öğretim metadatası;
+- sourceManifestHash: yapılandırılmış kaynaklar ve ileride claim-source
+  bağları;
+- interactionManifestHash: MDX AST'den gerçekten kullanılan bileşenler,
+  canonical prop'lar ve bunların transitive kaynak bağımlılıkları;
+- fixtureManifestHash: oracle, tolerans, robot spec'i, worker ve kullanılan
+  doğrulama fixture'ları;
+- policyHash: uygulanan review checklist/risk politikasının sürümü;
+- sourceCommit ve bütün bunlardan türetilen revisionRoot.
+
+Yayın durumu ve eski reviewer alanları contentHash'e karıştırılmamalı.
+“İncelemeden yayına” geçişi, öğrenciye görünen içerik değişmediyse gereksiz
+review invalidation üretmemeli.
+
+**Scope başına immutable attestation**
+
+Her kayıt tek subject, tek scope ve tek reviewer kararı olmalı:
+
+- scope: source, technical, pedagogical veya safety;
+- decision: approved, changes-requested ya da conditional;
+- reviewerId, public rol, reviewedAt ve checklistVersion;
+- evidence referansları ve kısa gerekçe;
+- gerekiyorsa supersedes ile önceki kaydı geçersiz kılan yeni kayıt.
+
+Eski dosya düzenlenmemeli veya silinmemeli; düzeltme yeni attestation ile
+yapılmalı. Genel “güncel” durumu, gerekli scope'ların policy'ye göre güncel
+attestation'larından hesaplanmalı.
+
+**Reviewer policy**
+
+Reviewer registry, hangi kişinin hangi scope için yetkili olduğunu açıkça
+tanımlamalı. Safety ve yüksek riskli içerikte yazarın tek başına onayı
+yeterli sayılmamalı; gerçek uzman yoksa arayüz dürüstçe “uzman incelemesi
+bekliyor” demeli.
+
+### Akıllı invalidation, otomatik onay değil
+
+| Değişiklik | Varsayılan olarak eskiyecek kapsam |
+|---|---|
+| Kazanım, soru veya MDX gövdesi | source + technical + pedagogical; riskliyse safety |
+| Kaynak/claim bağı | source + technical; riskliyse safety |
+| Bileşen, robot spec'i veya worker | technical + pedagogical; riskliyse safety |
+| Fixture, oracle veya tolerans | technical; riskliyse safety |
+| CSS, klavye veya ekran okuyucu davranışı | pedagogical + otomatik erişilebilirlik sonucu |
+| Checklist/policy | Yalnız policy'nin etkilediği scope |
+
+AI veya diff sınıflandırıcısı “yalnız yazım düzeltmesi olabilir” diyebilir;
+önceki insan onayını kendi başına taşıyamaz. Reviewer değişikliği görüp açık
+bir carry-forward kararı verirse yeni subject için yeni attestation oluşur.
+
+Örnekleme de aynı sınıra tabidir. Örnekleme, corpus genelindeki yazım
+kalıpları ve hata oranı için güven sinyali üretir; okunmayan tekil bir dersi
+“insan onaylı” yapmaz. Otomatik testler machine evidence üretir, human
+receipt üretmez.
+
+### Deterministik review kuyruğu
+
+Elle tutulan genel liste yerine CI şu alanlarla review kuyruğu üretmeli:
+
+- hangi ders ve revisionRoot;
+- hangi dependency'nin değiştiği;
+- hangi scope'ların eski olduğu;
+- gereken reviewer rolü/quorum;
+- önceki karar ve tarih;
+- kaynak tazeliği/link uyarısı;
+- yayın engeli ve risk önceliği.
+
+Kuyruk sırası:
+
+1. changes-requested veya safety/yüksek riskli yayın;
+2. değişmiş ve hâlen production'da olan ders;
+3. yeni yayın adayı;
+4. önkoşul grafiğinde merkezi ders;
+5. 13 stale legacy ders;
+6. kalan 26 legacy ders.
+
+Kaynak linkinin ölmesi veya yeni sürüm çıkması, içerik değişikliğinden ayrı
+refresh-due durumu olmalı.
+
+### CI ve arayüz
+
+CI:
+
+- TypeScript type cast yerine strict JSON Schema doğrulaması;
+- gerçek tarih, enum, duplicate ve supersession zinciri kontrolü;
+- sourceCommit'in Git nesnesi ve main atası olduğunu doğrulama, manifesti o
+  commit'ten yeniden hesaplama;
+- reviewer-scope yetki matrisi;
+- mevcut attestation'ın değiştirilmesini/silinmesini base branch'e karşı
+  engelleme;
+- insan ve makine kanıtını ayrı tutma;
+- PR'a okunabilir review queue artifact'ı ekleme.
+
+Arayüz tek bir yeşil “doğrulandı” yerine scope başına şunları gösterebilmeli:
+
+- güncel insan onayı;
+- otomatik kontrol geçti;
+- koşullu/kısmi onay;
+- ders metni değişti;
+- etkileşim motoru değişti;
+- kaynak yenilemesi gerekiyor;
+- değişiklik istendi;
+- uygulanmaz.
+
+Örnek açıklama: “Ders metni değişmedi; JointSliders deney motoru değiştiği
+için teknik ve pedagojik inceleme yenilenmeli.” Bu, hash'i kullanıcıya
+göstermekten daha anlaşılırdır.
+
+### Geçiş planı
+
+1. V1 kapısını koru; v2 manifest ve kuyruğu önce report-only çalıştır.
+2. Strict şema, reviewer policy ve scope başına immutable dosyaları ekle.
+3. Bir yayın, bir merkezi önkoşul ve uzman bulunabiliyorsa bir yüksek riskli
+   ders üzerinde gerçek insan pilotu yap. Boş receipt listesine sahte
+   migration verisi yazma.
+4. Interaction/fixture dependency hash'lerini ve stale nedenlerini arayüze
+   aç.
+5. Yeni/değişen yayınlarda v2'yi zorunlu kıl.
+6. Önce 13 stale, sonra risk sırasına göre 26 legacy borcu erit.
+
+Temel ilke: sistem insanın neyi incelemesi gerektiğini küçültsün ve kanıtı
+bağlasın; insanın yapmadığı incelemeyi yapılmış gibi göstermesin.
+
+## 4. 6-DOF ekrana sığmama — kapsam ve kök neden
+
+### Kesin sayım
+
+Kod tabanında generic-6dof kullanan toplam **8 ders embed'i** var ve hepsi
+ortak RobotArm renderer'ına gider:
+
+| Kullanım | Yayında | Taslak | Toplam |
+|---|---:|---:|---:|
+| JointSliders | 6 | 1 | 7 |
+| CodeRunner | 0 | 1 | 1 |
+| Toplam 6-DOF embed | 6 | 2 | 8 |
+
+Yayındaki altı JointSliders dersi:
+
+- a-lise-koordinat-sistemleri.mdx:29
+- a-lise-serbestlik-derecesi.mdx:28
+- a-lise-tcp-kavrami.mdx:29
+- a-universite-dh-parametreleri.mdx:30
+- a-universite-kinematik-zincir.mdx:29
+- a-universite-poz-gosterimleri.mdx:30
+
+Taslaklar:
+
+- g-universite-urdf-modelleme.mdx:34 — JointSliders;
+- d-universite-mecademic-python.mdx:54-55 — CodeRunner.
+
+Bu nedenle:
+
+- “altı kaydırıcı tek ekrana sığmıyor” kusurunun kapsamı **7 JointSliders
+  sahnesi**, production etkisi **6 sahne**;
+- ortak 6-DOF görselleştirme kusurunun kapsamı **8 embed / tek renderer**;
+- CodeRunner altı kaydırıcıyı taşımadığı için aynı yerleşim kusuruna dahil
+  değildir, fakat aynı yönelim renderer'ını kullandığı için pedagojik
+  görselleştirme kusuruna dahildir.
+
+### Ölçülen davranış
+
+Canlı production'da 390 × 844 viewport ile altı yayın rotasının her birinde:
+
+- 6 range input bulundu;
+- JointSliders kutusu **902 px** yüksekliğinde;
+- 3B sahne **324 px** yüksekliğinde;
+- yatay taşma yok.
+
+1440 × 900'de kutu yaklaşık **1049 px** oluyor; genişleyen 16:9 sahne
+yüksekliği artırdığı için sorun masaüstünde de “tek viewport” açısından
+çözülmüyor. Mevcut E2E kontrolü ana sayfa yatay taşmasını ölçüyor; 6-DOF
+widget yüksekliğini veya J6'nın gözlemlenebilir sonucunu ölçmüyor.
+
+### Kök neden 1: kamera değil, dikey yerleşim
+
+- components/interactive/JointSliders.tsx:38 dış kabı flex-column kuruyor.
+- :45 sahneyi mobilde tam genişlik kare, daha genişte 16:9 gösteriyor.
+- :49-82 robotun bütün eklemlerini tek dikey listede map ediyor.
+- :56 ve :74 her range kontrolünü erişilebilir biçimde 44 px yüksek tutuyor.
+
+44 px hedef doğru karardır; problem bu hedefleri küçültmek değil, altı
+kontrolü sahnenin altına tek kolonda yığmaktır. Kamera uzaklığını artırmak
+widget yüksekliğini hiç azaltmaz.
+
+RobotArm.tsx:84-85 kamerayı [0, 0.4, 4.6] ve 50° FOV ile sabitliyor. Mevcut
+robot boyutlarıyla yasal açı örneklerinde geometri canvas dışına taşmadı.
+Bounds tabanlı deterministik auto-fit dayanıklılık için eklenebilir, ancak
+ölçülen “ekrana sığmama” sorununu tek başına çözmez.
+
+### Kök neden 2: J6 ve yönelim görünmüyor — daha önemli pedagojik eksik
+
+components/scene/RobotArm.tsx:59-73 yalnız forwardKinematics sonucundaki
+jointPositions noktalarını silindir ve kürelerle çiziyor. Joint transform,
+eksen oku, taban/tool frame'i veya TCP yönelimi render edilmiyor.
+
+genericSixDof.ts:28-30 ve :40-42 içindeki wrist dönüşümlerinde ardışık
+eklemlerin konumları çakışabiliyor. J6 kendi ekseni etrafında yönelimi
+değiştirir; eklem noktalarının konumunu değiştirmez. Renderer yalnız konum
+çizdiği için J6 kaydırıcısı hareket ettirildiğinde sahnede hiçbir görünür
+sonuç oluşmaz. JointSliders.tsx:85-88 de yalnız uç x/y değerini gösterir;
+z ve yönelim metin özetinde yoktur.
+
+Bu doğrudan ders hedefini bozar:
+
+- a-lise-serbestlik-derecesi.mdx:56-58 öğrenciden altıncı eklemden
+  başlayarak “konum mu, yönelim mi?” tahmini yapmasını ve kaydırıcıyla
+  kontrol etmesini istiyor. J6 sonucu görünmediği için görev doğrulanamaz.
+- a-universite-poz-gosterimleri.mdx:30 sonrasında Euler açıları, dönme
+  matrisi ve kuaterniyon anlatılıyor; fakat etkileşim yönelimi hiç
+  göstermiyor.
+- a-lise-tcp-kavrami.mdx:33-46 TCP'nin konum kadar alet yönüne bağlı
+  olduğunu anlatırken sahnede tool frame veya gerçek alet yönü yok.
+
+Bu yüzden doğru öncelik “kamerayı sığdır” değil:
+
+1. **Semantik doğruluk:** aktif eklem ekseni, base/tool-frame triadı ve TCP
+   yönelimi; x/y/z ile uygun orientation özeti. J6 döndüğünde TCP konumu
+   sabit kalabilir ama tool triadı açıkça dönmelidir.
+2. **Yerleşim:** mobilde J1–J3 “kol” ve J4–J6 “bilek” grupları; geniş
+   ekranda sticky sahne + iki kolon kontrol. 44 px hedefler korunmalı,
+   iç içe dikey scroll yapılmamalı.
+3. **Görsel okunabilirlik:** aktif joint'i renkle vurgulamak, üst üste binen
+   wrist eklemlerini eksen halkalarıyla ayırmak ve sıfır pozundan daha
+   okunur bir öğretim pozu sunmak.
+4. **Kamera dayanıklılığı:** robot bounds'undan padding'li deterministik
+   fit; rastgele sabit zoom değişikliği değil.
+
+Kabul matrisi 7 JointSliders embed'ini 390, 768 ve 1440 px'te; ortak
+renderer nedeniyle CodeRunner embed'ini de kapsamalı. Her J1–J6 kontrolü
+konum veya yönelim üzerinden gözlemlenebilir sonuç üretmeli; özellikle J6
+tool triadını döndürmeli. Klavye, touch, reset, metin özeti ve yatay taşma
+test edilmelidir.
