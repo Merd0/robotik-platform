@@ -14,7 +14,8 @@ test("ana sayfa taşmadan güvenilir bir başlangıç sunar", async ({ page }) =
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   const platformNumbers = page.getByRole("region", { name: "Platform sayıları" });
-  await expect(platformNumbers.getByText("39", { exact: true })).toBeVisible();
+  // 2026-08-10 politika değişikliğinde 50 taslak yayına alındığı için 39 → 89.
+  await expect(platformNumbers.getByText("89", { exact: true })).toBeVisible();
   await expect(platformNumbers.getByText("yayında ders", { exact: true })).toBeVisible();
   const overflows = await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1);
   expect(overflows).toBe(false);

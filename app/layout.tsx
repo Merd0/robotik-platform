@@ -26,6 +26,13 @@ export default function RootLayout({
   return (
     <html lang="tr" suppressHydrationWarning>
       <head>
+        {/*
+          Yalnız ilk ekranda görünen font dosyası preload edilir. Kalan üç
+          alt küme (latin-ext ve mono) tarayıcı ilgili glifi isteyince
+          çekilir — dördünü birden preload etmek ilk boyamayı yavaşlatırdı.
+          Ayrıntı ve ölçüm: public/fonts/LISANS.md
+        */}
+        <link rel="preload" href="/fonts/big-shoulders-display-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <Script src="/theme-init.js" strategy="beforeInteractive" />
       </head>
       <body className="min-h-screen bg-site-bg text-site-ink antialiased">
