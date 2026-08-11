@@ -167,6 +167,22 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     }),
   },
   {
+    id: "python-command-trace-v1",
+    lessonId: "d-lise-python-komut-dizisi",
+    skillId: "python-command-trace",
+    evaluate: (events) => {
+      const successfulRun = events.find((event) =>
+        event.skillId === "python-command-trace" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true &&
+        typeof event.metrics?.traceSteps === "number" &&
+        event.metrics.traceSteps >= 2,
+      );
+      return { passed: Boolean(successfulRun), metrics: { requiredTraceSteps: 2 } };
+    },
+  },
+  {
     // v1 → v2: predicate yalnız "algoritma denendi mi"yi sayıyordu (metrics.algorithm
     // hem başarılı hem başarısız/timeout koşularda yazılıyor), result alanına hiç
     // bakmıyordu — üç başarısız koşu bile passed=true üretiyordu (false positive).

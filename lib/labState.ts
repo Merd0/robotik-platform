@@ -48,7 +48,17 @@ export interface IkTargetLabState {
   solver: IkSolverMode;
 }
 
-export type LabState = JointSlidersLabState | PlannerRaceLabState | IkTargetLabState;
+export const MAX_SHAREABLE_CODE_LENGTH = 8_000;
+
+export interface CodeRunnerLabState {
+  kind: "code-runner";
+  version: 1;
+  /** Robot kullanmayan saf Python örneklerinde null. */
+  robotId: string | null;
+  code: string;
+}
+
+export type LabState = JointSlidersLabState | PlannerRaceLabState | IkTargetLabState | CodeRunnerLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -179,6 +189,18 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "code-runner") {
+    if (record.version !== 1) return { ok: false, error: `code-runner: desteklenmeyen sürüm ${String(record.version)}` };
+    if (record.robotId !== null && (typeof record.robotId !== "string" || !record.robotId)) {
+      return { ok: false, error: "code-runner: robotId null veya dolu string olmalı" };
+    }
+    if (typeof record.code !== "string") return { ok: false, error: "code-runner: code string olmalı" };
+    return {
+      ok: true,
+      state: { kind: "code-runner", version: 1, robotId: record.robotId, code: record.code },
+    };
+  }
+
   return { ok: false, error: `bilinmeyen laboratuvar türü: ${String(record.kind)}` };
 }
 
@@ -224,6 +246,20 @@ export function validateLabState(state: LabState): string[] {
       }
       if (obstacle.size.some((value) => value <= 0)) errors.push(`engel ${index}: boyut pozitif olmalı`);
     });
+    return errors;
+  }
+
+  if (state.kind === "code-runner") {
+    if (state.code.length > MAX_SHAREABLE_CODE_LENGTH) {
+      errors.push(`kod ${MAX_SHAREABLE_CODE_LENGTH} karakter sınırını aşıyor`);
+    }
+    if (state.robotId !== null) {
+      try {
+        getRobotById(state.robotId);
+      } catch {
+        errors.push(`bilinmeyen robot id: ${state.robotId}`);
+      }
+    }
     return errors;
   }
 

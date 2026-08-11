@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { decodeLabState, encodeLabState, validateLabState, type LabState } from "./labState";
+import {
+  decodeLabState,
+  encodeLabState,
+  MAX_SHAREABLE_CODE_LENGTH,
+  validateLabState,
+  type LabState,
+} from "./labState";
 
 const jointSliders: LabState = { kind: "joint-sliders", version: 1, robotId: "generic-2dof", jointAngles: [0.3, -0.5] };
 
@@ -14,11 +20,19 @@ const plannerRace: LabState = {
 
 const ikTarget: LabState = { kind: "ik-target", version: 1, robotId: "generic-2dof", target: { x: 0.9, y: 0.3 }, elbow: "up", solver: "auto" };
 
+const codeRunner: LabState = {
+  kind: "code-runner",
+  version: 1,
+  robotId: "generic-2dof",
+  code: 'robot.eklem_ac(0, 60)\nprint("hazır")',
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
     ["planner-race", plannerRace],
     ["ik-target", ikTarget],
+    ["code-runner", codeRunner],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -87,6 +101,16 @@ describe("decodeLabState — biçim doğrulaması", () => {
     const encoded = encodeLabState({ ...ikTarget, elbow: "sola" } as unknown as LabState);
     expect(decodeLabState(encoded).ok).toBe(false);
   });
+
+  it("code-runner: robotId için yalnız null veya dolu string kabul eder", () => {
+    const encoded = encodeLabState({ ...codeRunner, robotId: "" } as unknown as LabState);
+    expect(decodeLabState(encoded).ok).toBe(false);
+  });
+
+  it("code-runner: kod alanının string olmasını zorunlu kılar", () => {
+    const encoded = encodeLabState({ ...codeRunner, code: ["print", "x"] } as unknown as LabState);
+    expect(decodeLabState(encoded).ok).toBe(false);
+  });
 });
 
 describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada geçersiz)", () => {
@@ -128,6 +152,22 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("ik-target: erişilebilir hedefte hata üretmez", () => {
     expect(validateLabState(ikTarget)).toEqual([]);
+  });
+
+  it("code-runner: bilinmeyen robotu ve paylaşım sınırını aşan kodu reddeder", () => {
+    const errors = validateLabState({
+      ...codeRunner,
+      robotId: "olmayan-robot",
+      code: "x".repeat(MAX_SHAREABLE_CODE_LENGTH + 1),
+    });
+    expect(errors).toEqual(expect.arrayContaining([
+      expect.stringContaining("karakter sınırını"),
+      expect.stringContaining("bilinmeyen robot id"),
+    ]));
+  });
+
+  it("code-runner: robot kullanmayan, sınır içindeki kod state'i geçerlidir", () => {
+    expect(validateLabState({ ...codeRunner, robotId: null })).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

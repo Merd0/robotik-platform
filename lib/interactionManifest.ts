@@ -24,8 +24,8 @@ import { IZINLI_BILESEN_ADLARI } from "./izinliBilesenler";
  * taşıyoruz: elle tutulan bir sürüm numarası değil, dosya içeriğinin kendisi
  * hash'lenir.
  *
- * Pilot kapsamı: yalnız Sprint 2'nin üç pilot laboratuvarı (JointSliders,
- * PlannerRace, IkTarget) `LAB_DEPENDENCY_REGISTRY`'de tanımlı. Kayıtlı
+ * Başlangıç kapsamı Sprint 2'nin üç pilot laboratuvarıydı (JointSliders,
+ * PlannerRace, IkTarget); sonraki laboratuvarlar aynı sözleşmeyle eklenir. Kayıtlı
  * olmayan bir bileşen için `computeInteractionHash` açıkça hata fırlatır —
  * sessizce eksik/yanlış bir hash üretmez.
  */
@@ -63,6 +63,11 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
   IkTarget: {
     componentFile: "components/interactive/IkTarget.tsx",
     engineFiles: ["lib/robotics/ikSolver.ts", "lib/robotics/kinematics.ts"],
+  },
+  CodeRunner: {
+    componentFile: "components/interactive/CodeRunner.tsx",
+    engineFiles: ["lib/codeLab.ts", "lib/robotics/kinematics.ts"],
+    workerFiles: ["lib/workers/pyodideWorker.ts", "lib/workers/executionLimits.ts"],
   },
 };
 

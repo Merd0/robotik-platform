@@ -1347,3 +1347,20 @@ güven verisini yanlış temel üzerine kurmasını engeller.
   güncel tam Review Receipt yalnız bir derste var.
 - Gerçek robot, üretici koşullarının eşdeğerliği ve saha güvenliği bu eğitim
   platformundan doğrulanamaz.
+
+## Sprint 4 — laboratuvar kanıt deseni rollout günlüğü
+
+### 2026-08-12 · CodeRunner (9 ders)
+
+- Bulgu: otomatik değerlendirme `error === null`, beklenen çıktı/poz ve sonuç
+  toleransını doğru denetliyordu; olay yalnız koşu sonunda yazıldığı için her
+  karede kayıt veya başarısız koşuda false-positive yoktu. Ancak bu başarıyı
+  `passed` olayına yükseltecek registry predicate'i, dependency manifest kaydı
+  ve paylaşılabilir state sözleşmesi yoktu.
+- Düzeltme: `CodeRunner` bileşeni; `codeLab`, kinematik, Pyodide worker ve
+  çalışma limitleri interactionHash kapsamına alındı. `python-command-trace-v1`
+  yalnız başarılı otomatik poz testi + en az iki iz adımıyla geçiyor. Kod ve
+  robot kimliğini taşıyan `code-runner/v1` state'i uzunluk/robot doğrulamasıyla
+  eklendi ve paylaşım bağlantısı bileşene bağlandı.
+- Test: 12 yeni kontrol (interaction/predicate bağlantısı, state golden ve
+  negatifleri, predicate golden + üç negatif ve paylaşım E2E'si).

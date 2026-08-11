@@ -9,6 +9,11 @@ import { MAX_CODE_RUNTIME_MS } from "@/lib/workers/executionLimits";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import { evaluateCodeLab } from "@/lib/codeLab";
 import { toolOrientationOf } from "@/components/scene/robotFrames";
+import {
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
 
 interface CodeRunnerProps {
   /** Editörde başlangıçta görünen kod. */
@@ -119,6 +124,16 @@ export function CodeRunner({
       orientation: robot.joints.length === 6 ? toolOrientationOf(transform) : null,
     };
   }, [jointAngles, robot]);
+
+  useSharedLabState("code-runner", (shared) => {
+    if (shared.robotId !== (robot?.id ?? null)) return;
+    setCode(shared.code);
+    setOutput("");
+    setError(null);
+    setJointTrace([]);
+    setTraceIndex(0);
+    setTestPassed(null);
+  });
 
   useEffect(() => {
     return () => {
@@ -284,6 +299,16 @@ export function CodeRunner({
           Sıfırla
         </button>
       </div>
+
+      <ExperimentShareButton
+        seviye={theme}
+        createShareUrl={() => createLabShareUrl({
+          kind: "code-runner",
+          version: 1,
+          robotId: robot?.id ?? null,
+          code,
+        })}
+      />
 
       <div role="status" aria-live="polite" aria-atomic="true">
         {output || error ? (

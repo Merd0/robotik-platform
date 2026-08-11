@@ -99,6 +99,15 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["PlannerRace"])).not.toThrow();
   });
 
+  it("CodeRunner motor, Pyodide worker ve çalışma limitlerini interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.CodeRunner).toMatchObject({
+      componentFile: "components/interactive/CodeRunner.tsx",
+      engineFiles: expect.arrayContaining(["lib/codeLab.ts", "lib/robotics/kinematics.ts"]),
+      workerFiles: ["lib/workers/pyodideWorker.ts", "lib/workers/executionLimits.ts"],
+    });
+    expect(() => computeInteractionHash(["CodeRunner"], ["generic-2dof"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -127,5 +136,10 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
     // aksi halde "predicate mantığı değişti" sinyali sessizce kaybolurdu.
     const hash = computePredicateHash("b-ortaokul-eklemleri-oynat");
     expect(hash).toBe(computePredicateHash("b-ortaokul-eklemleri-oynat"));
+  });
+
+  it("CodeRunner ana dersini python-command-trace predicate sürümüne bağlar", () => {
+    expect(computePredicateHash("d-lise-python-komut-dizisi"))
+      .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
   });
 });

@@ -306,3 +306,33 @@ describe("Sprint 2 pilot laboratuvarları: golden + negative predicate testleri"
     });
   });
 });
+
+describe("CodeRunner rollout: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "python-command-trace-v1")!;
+  const run = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+    stage: EvidenceEvent["stage"] = "assessed",
+  ) => event(stage, result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "code-runner-v1",
+  });
+
+  it("golden: otomatik poz testi geçen ve iki komutluk izi olan koşu geçer", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 2 })]).passed).toBe(true);
+  });
+
+  it("negatif: doğru poza ulaşmayan koşu geçmez", () => {
+    expect(predicate.evaluate([run("retry", { poseMatches: false, traceSteps: 2 })]).passed).toBe(false);
+  });
+
+  it("negatif: başarılı işaretlense bile eksik komut izi geçmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 1 })]).passed).toBe(false);
+  });
+
+  it("negatif: assessed olmayan gözlem olayı başarı üretmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 2 }, "observed")]).passed).toBe(false);
+  });
+});

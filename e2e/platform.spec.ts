@@ -102,6 +102,21 @@ test("yerel kayıt silme işlemi iki adımlıdır", async ({ page }) => {
   expect(await page.evaluate(() => localStorage.getItem("robotik-platform:evidence:v2"))).toBeNull();
 });
 
+test("CodeRunner state'i doğrulanmış paylaşım bağlantısıyla geri yüklenir", async ({ page }) => {
+  await page.goto("/ders/d-lise-python-komut-dizisi");
+  const editor = page.getByLabel("Python kodu");
+  const sharedCode = 'robot.eklem_ac(0, 60)\nrobot.eklem_ac(1, -20)\nprint("paylaşıldı")';
+  await editor.fill(sharedCode);
+  await page.getByRole("button", { name: "Bu deneyi paylaş" }).click();
+  const sharedLink = page.getByRole("link", { name: "Paylaşılan görünümü aç" });
+  await expect(sharedLink).toBeVisible();
+  const href = await sharedLink.getAttribute("href");
+  expect(href).not.toBeNull();
+
+  await page.goto(href!);
+  await expect(page.getByLabel("Python kodu")).toHaveValue(sharedCode);
+});
+
 test("iki eklemli kaydırıcı deneyi klavye ve pointer commit'iyle geçilebilir", async ({ page }) => {
   await page.goto("/ders/b-ortaokul-eklemleri-oynat");
   const experiment = page.locator("[data-joint-sliders]");
