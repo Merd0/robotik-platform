@@ -1379,3 +1379,19 @@ güven verisini yanlış temel üzerine kurmasını engeller.
 - Test: 16 yeni kontrol (motor golden + üç negatif, state round-trip ve dört
   negatif/geçerlilik kontrolü, interaction/predicate bağlantısı, predicate
   golden + üç negatif ve paylaşım+kanıt E2E'si).
+
+### 2026-08-12 · SafetyZone (5 ders)
+
+- Bulgu: kanıt/predicate/state zinciri yoktu. Ayrıca ders ve görsel bantlar,
+  adaptif hız motorundaki `requiredSeparation` değerini “robotun durduğu
+  mesafe” diye yorumluyordu; bu değer gerçekte tam hızdan yavaşlamaya geçiş
+  sınırıydı. Kırmızı duruş bandı da motorun sıfır hız eşiğiyle uyuşmuyordu.
+- Düzeltme: dur/yavaşla/tam hız bantları `allowedSpeed` ile aynı eşiklere
+  bağlandı ve ders dili “tam hız sınırı” olarak düzeltildi. Yalnız açık
+  `Bu ölçümü kaydet` commit'leri yazılır; `safety-braking-distance-v1`, aynı
+  robot hızında iki farklı frenleme süresinin iki gerçek sınır ölçümünü ister.
+  Bileşen+güvenlik motoru manifesti ile doğrulanan `safety-zone/v1` paylaşım
+  state'i eklendi.
+- Test: 12 yeni kontrol (motor eşik regresyonu, state round-trip/negatifleri,
+  interaction/predicate bağlantısı, predicate golden + üç negatif ve
+  paylaşım+kanıt E2E'si).

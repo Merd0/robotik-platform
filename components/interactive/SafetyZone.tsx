@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import { allowedSpeed, requiredSeparation, type ZoneState } from "@/lib/robotics/safety";
+import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
+import {
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
 
 interface SafetyZoneProps {
   /**
@@ -14,6 +20,8 @@ interface SafetyZoneProps {
   /** Robotun başlangıç hızı (mm/s). */
   robotSpeed?: number;
   theme?: "ortaokul" | "lise" | "universite";
+  /** Ölçümü açık commit ile kaydeden sürümlü ders görevi. */
+  pilot?: "braking-distance";
 }
 
 const THEME = {
@@ -86,8 +94,14 @@ const round = (value: number) => Math.round(value);
  * şey ne kadarının gösterildiğidir — docs/05'teki "aynı etkileşim motoru,
  * seviyeyle ciddileşen çerçeveleme" ilkesi.
  */
-export function SafetyZone({ mode = "mesafe", robotSpeed: initialSpeed = 1000, theme = "lise" }: SafetyZoneProps) {
+export function SafetyZone({
+  mode = "mesafe",
+  robotSpeed: initialSpeed = 1000,
+  theme = "lise",
+  pilot,
+}: SafetyZoneProps) {
   const t = THEME[theme];
+  const record = useEvidenceRecorder();
   const [distance, setDistance] = useState(2500);
   const [robotSpeed, setRobotSpeed] = useState(initialSpeed);
   const [brakingTime, setBrakingTime] = useState(DEFAULTS.brakingTime);
@@ -114,13 +128,40 @@ export function SafetyZone({ mode = "mesafe", robotSpeed: initialSpeed = 1000, t
 
   const d = DURUM[durum];
   const humanPct = Math.min(100, Math.max(0, (distance / SCENE_MAX_MM) * 100));
-  const stopPct = Math.min(100, (separation.required / SCENE_MAX_MM) * 100);
-  const warnPct = Math.min(100, (separation.required * 2) / SCENE_MAX_MM * 100);
+  // Adaptif motor iki gerçek eşik kullanır: insan yolu + belirsizlik bütçeyi
+  // tükettiğinde hız sıfırdır; komut hızının gerekli mesafesine kadar hız
+  // kademeli sınırlanır. Görsel bantlar da aynı eşikleri göstermeli.
+  const stoppedSeparation = requiredSeparation({ ...params, robotSpeed: 0 }).required;
+  const stopPct = Math.min(100, (stoppedSeparation / SCENE_MAX_MM) * 100);
+  const warnPct = Math.min(100, (separation.required / SCENE_MAX_MM) * 100);
+
+  useSharedLabState("safety-zone", (shared) => {
+    if (shared.mode !== mode) return;
+    setDistance(shared.distance);
+    setRobotSpeed(shared.robotSpeed);
+    setBrakingTime(shared.brakingTime);
+  });
 
   function handleReset() {
     setDistance(2500);
     setRobotSpeed(initialSpeed);
     setBrakingTime(DEFAULTS.brakingTime);
+  }
+
+  function recordMeasurement() {
+    const atSpeedLimitBoundary = Math.abs(distance - separation.required) <= 50;
+    record({
+      skillId: "safety-braking-distance",
+      stage: "observed",
+      result: atSpeedLimitBoundary && robotSpeed > 0 ? "success" : "retry",
+      metrics: {
+        robotSpeed,
+        brakingTime,
+        distance,
+        requiredSeparation: separation.required,
+        atSpeedLimitBoundary,
+      },
+    });
   }
 
   const ozet =
@@ -237,6 +278,15 @@ export function SafetyZone({ mode = "mesafe", robotSpeed: initialSpeed = 1000, t
       )}
 
       <div className="flex items-center gap-3">
+        {pilot === "braking-distance" && (
+          <button
+            type="button"
+            onClick={recordMeasurement}
+            className={`h-11 rounded-md border px-3 text-sm ${t.outline}`}
+          >
+            Bu ölçümü kaydet
+          </button>
+        )}
         <button
           type="button"
           onClick={handleReset}
@@ -245,6 +295,18 @@ export function SafetyZone({ mode = "mesafe", robotSpeed: initialSpeed = 1000, t
           Sıfırla
         </button>
       </div>
+
+      <ExperimentShareButton
+        seviye={theme}
+        createShareUrl={() => createLabShareUrl({
+          kind: "safety-zone",
+          version: 1,
+          mode,
+          distance,
+          robotSpeed,
+          brakingTime,
+        })}
+      />
 
       {/* Ekran okuyucu için metin özeti (docs/02 erişilebilirlik) */}
       <p className="sr-only" role="status">

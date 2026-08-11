@@ -69,12 +69,22 @@ export interface SignalTimelineLabState {
   pattern: boolean[][];
 }
 
+export interface SafetyZoneLabState {
+  kind: "safety-zone";
+  version: 1;
+  mode: "bolge" | "mesafe" | "hesap";
+  distance: number;
+  robotSpeed: number;
+  brakingTime: number;
+}
+
 export type LabState =
   | JointSlidersLabState
   | PlannerRaceLabState
   | IkTargetLabState
   | CodeRunnerLabState
-  | SignalTimelineLabState;
+  | SignalTimelineLabState
+  | SafetyZoneLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -242,6 +252,27 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "safety-zone") {
+    if (record.version !== 1) return { ok: false, error: `safety-zone: desteklenmeyen sürüm ${String(record.version)}` };
+    if (record.mode !== "bolge" && record.mode !== "mesafe" && record.mode !== "hesap") {
+      return { ok: false, error: "safety-zone: mode bolge/mesafe/hesap olmalı" };
+    }
+    if (!isFiniteNumber(record.distance) || !isFiniteNumber(record.robotSpeed) || !isFiniteNumber(record.brakingTime)) {
+      return { ok: false, error: "safety-zone: sayısal alanlar sonlu olmalı" };
+    }
+    return {
+      ok: true,
+      state: {
+        kind: "safety-zone",
+        version: 1,
+        mode: record.mode,
+        distance: record.distance,
+        robotSpeed: record.robotSpeed,
+        brakingTime: record.brakingTime,
+      },
+    };
+  }
+
   return { ok: false, error: `bilinmeyen laboratuvar türü: ${String(record.kind)}` };
 }
 
@@ -314,6 +345,13 @@ export function validateLabState(state: LabState): string[] {
     }
     if (state.pattern.length !== state.signals.length) errors.push("pattern satır sayısı signals ile eşleşmiyor");
     if (state.pattern.some((row) => row.length !== state.steps)) errors.push("pattern satır uzunluğu steps ile eşleşmiyor");
+    return errors;
+  }
+
+  if (state.kind === "safety-zone") {
+    if (state.distance < 0 || state.distance > 4_000) errors.push("distance 0-4000 mm arasında olmalı");
+    if (state.robotSpeed < 0 || state.robotSpeed > 2_000) errors.push("robotSpeed 0-2000 mm/s arasında olmalı");
+    if (state.brakingTime < 0.05 || state.brakingTime > 1) errors.push("brakingTime 0.05-1 s arasında olmalı");
     return errors;
   }
 

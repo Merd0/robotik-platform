@@ -201,6 +201,29 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     }),
   },
   {
+    id: "safety-braking-distance-v1",
+    lessonId: "h-universite-guvenli-durus-hiz-ve-mesafe",
+    skillId: "safety-braking-distance",
+    evaluate: (events) => {
+      const measurements = events.filter((event) =>
+        event.skillId === "safety-braking-distance" &&
+        event.stage === "observed" &&
+        event.result === "success" &&
+        event.metrics?.atSpeedLimitBoundary === true &&
+        typeof event.metrics?.robotSpeed === "number" &&
+        typeof event.metrics?.brakingTime === "number" &&
+        typeof event.metrics?.requiredSeparation === "number",
+      );
+      const comparisonFound = measurements.some((first) => measurements.some((second) =>
+        first !== second &&
+        first.metrics!.robotSpeed === second.metrics!.robotSpeed &&
+        (first.metrics!.brakingTime as number) < (second.metrics!.brakingTime as number) &&
+        (first.metrics!.requiredSeparation as number) < (second.metrics!.requiredSeparation as number),
+      ));
+      return { passed: comparisonFound, metrics: { requiredBoundaryMeasurements: 2 } };
+    },
+  },
+  {
     // v1 → v2: predicate yalnız "algoritma denendi mi"yi sayıyordu (metrics.algorithm
     // hem başarılı hem başarısız/timeout koşularda yazılıyor), result alanına hiç
     // bakmıyordu — üç başarısız koşu bile passed=true üretiyordu (false positive).

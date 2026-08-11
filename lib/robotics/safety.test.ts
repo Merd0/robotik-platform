@@ -120,6 +120,18 @@ describe("allowedSpeed", () => {
   it("mesafe arttıkça izin verilen hız artar", () => {
     expect(allowedSpeed(2000, input)).toBeGreaterThan(allowedSpeed(1200, input));
   });
+
+  it("adaptif hızın dur, yavaşla ve tam hız eşikleri gerekli mesafeyle tutarlıdır", () => {
+    const commandedSpeed = 1000;
+    const stoppedBoundary = requiredSeparation({ ...input, robotSpeed: 0 }).required;
+    const fullSpeedBoundary = requiredSeparation({ ...input, robotSpeed: commandedSpeed }).required;
+    const middle = (stoppedBoundary + fullSpeedBoundary) / 2;
+
+    expect(allowedSpeed(stoppedBoundary, input)).toBe(0);
+    expect(allowedSpeed(middle, input)).toBeGreaterThan(0);
+    expect(allowedSpeed(middle, input)).toBeLessThan(commandedSpeed);
+    expect(allowedSpeed(fullSpeedBoundary, input)).toBeCloseTo(commandedSpeed, 9);
+  });
 });
 
 describe("allowedSpeed monoton", () => {

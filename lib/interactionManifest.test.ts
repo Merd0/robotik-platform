@@ -116,6 +116,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["SignalTimeline"])).not.toThrow();
   });
 
+  it("SafetyZone bileşeni ile güvenlik hesabı motorunu interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.SafetyZone).toEqual({
+      componentFile: "components/interactive/SafetyZone.tsx",
+      engineFiles: ["lib/robotics/safety.ts"],
+    });
+    expect(() => computeInteractionHash(["SafetyZone"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -153,6 +161,11 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
 
   it("SignalTimeline ana dersini handshake predicate sürümüne bağlar", () => {
     expect(computePredicateHash("e-lise-el-sikisma"))
+      .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
+  });
+
+  it("SafetyZone ana dersini frenleme-mesafe predicate sürümüne bağlar", () => {
+    expect(computePredicateHash("h-universite-guvenli-durus-hiz-ve-mesafe"))
       .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
   });
 });

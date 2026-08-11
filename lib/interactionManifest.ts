@@ -73,6 +73,10 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
     componentFile: "components/interactive/SignalTimeline.tsx",
     engineFiles: ["lib/signalTimeline.ts"],
   },
+  SafetyZone: {
+    componentFile: "components/interactive/SafetyZone.tsx",
+    engineFiles: ["lib/robotics/safety.ts"],
+  },
 };
 
 /** Robot id → spesifikasyon dosyası. Yalnız pilot laboratuvarların kullandığı robotlar. */

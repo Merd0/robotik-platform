@@ -386,3 +386,57 @@ describe("SignalTimeline rollout: golden + negatif predicate testleri", () => {
     }, "observed")]).passed).toBe(false);
   });
 });
+
+describe("SafetyZone rollout: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "safety-braking-distance-v1")!;
+  const measurement = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+  ) => event("observed", result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "safety-zone-v1",
+  });
+  const baseline = () => measurement("success", {
+    robotSpeed: 1_000,
+    brakingTime: 0.3,
+    distance: 1_150,
+    requiredSeparation: 1_140,
+    atSpeedLimitBoundary: true,
+  });
+
+  it("golden: aynı hızda daha uzun frenleme süresinin sınırı büyüttüğünü gösteren iki ölçüm geçer", () => {
+    expect(predicate.evaluate([baseline(), measurement("success", {
+      robotSpeed: 1_000,
+      brakingTime: 0.6,
+      distance: 1_900,
+      requiredSeparation: 1_920,
+      atSpeedLimitBoundary: true,
+    })]).passed).toBe(true);
+  });
+
+  it("negatif: tek sınır ölçümü karşılaştırma sayılmaz", () => {
+    expect(predicate.evaluate([baseline()]).passed).toBe(false);
+  });
+
+  it("negatif: iki ölçümde robot hızı değişmişse neden izole edilmemiştir", () => {
+    expect(predicate.evaluate([baseline(), measurement("success", {
+      robotSpeed: 1_200,
+      brakingTime: 0.6,
+      distance: 2_060,
+      requiredSeparation: 2_060,
+      atSpeedLimitBoundary: true,
+    })]).passed).toBe(false);
+  });
+
+  it("negatif: durma sınırından uzaktaki başarısız ölçüm geçmez", () => {
+    expect(predicate.evaluate([baseline(), measurement("retry", {
+      robotSpeed: 1_000,
+      brakingTime: 0.6,
+      distance: 2_500,
+      requiredSeparation: 1_920,
+      atSpeedLimitBoundary: false,
+    })]).passed).toBe(false);
+  });
+});

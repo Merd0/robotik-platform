@@ -136,6 +136,30 @@ test("SignalTimeline state'i paylaşılır ve doğru el sıkışma sırası kan�
   await expect(page.getByRole("button", { name: /Kapaklama PLC: Aldım — adım 4: AÇIK/ })).toHaveAttribute("aria-pressed", "true");
 });
 
+test("SafetyZone iki sınır ölçümünü kanıtlar ve state'i paylaşır", async ({ page }) => {
+  await page.goto("/ders/h-universite-guvenli-durus-hiz-ve-mesafe");
+  const sliders = page.getByRole("slider");
+  await expect(sliders).toHaveCount(3);
+
+  await sliders.nth(0).fill("1150");
+  await page.getByRole("button", { name: "Bu ölçümü kaydet" }).click();
+  await sliders.nth(2).fill("0.6");
+  await sliders.nth(0).fill("1900");
+  await page.getByRole("button", { name: "Bu ölçümü kaydet" }).click();
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((item: { stage?: string; predicateId?: string }) =>
+    item.stage === "passed" && item.predicateId === "safety-braking-distance-v1",
+  )).toBe(true);
+
+  await page.getByRole("button", { name: "Bu deneyi paylaş" }).click();
+  const href = await page.getByRole("link", { name: "Paylaşılan görünümü aç" }).getAttribute("href");
+  expect(href).not.toBeNull();
+  await page.goto(href!);
+  await expect(page.getByRole("slider").nth(0)).toHaveValue("1900");
+  await expect(page.getByRole("slider").nth(2)).toHaveValue("0.6");
+});
+
 test("iki eklemli kaydırıcı deneyi klavye ve pointer commit'iyle geçilebilir", async ({ page }) => {
   await page.goto("/ders/b-ortaokul-eklemleri-oynat");
   const experiment = page.locator("[data-joint-sliders]");

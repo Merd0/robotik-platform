@@ -38,6 +38,15 @@ const signalTimeline: LabState = {
   ],
 };
 
+const safetyZone: LabState = {
+  kind: "safety-zone",
+  version: 1,
+  mode: "hesap",
+  distance: 1_150,
+  robotSpeed: 1_000,
+  brakingTime: 0.3,
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
@@ -45,6 +54,7 @@ describe("encodeLabState / decodeLabState — round-trip", () => {
     ["ik-target", ikTarget],
     ["code-runner", codeRunner],
     ["signal-timeline", signalTimeline],
+    ["safety-zone", safetyZone],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -131,6 +141,11 @@ describe("decodeLabState — biçim doğrulaması", () => {
     } as unknown as LabState);
     expect(decodeLabState(encoded).ok).toBe(false);
   });
+
+  it("safety-zone: bilinmeyen modu ve sonlu olmayan sayıları reddeder", () => {
+    expect(decodeLabState(encodeLabState({ ...safetyZone, mode: "hizli" } as unknown as LabState)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState({ ...safetyZone, distance: Number.NaN } as unknown as LabState)).ok).toBe(false);
+  });
 });
 
 describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada geçersiz)", () => {
@@ -202,6 +217,14 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("signal-timeline: boyutları eşleşen state geçerlidir", () => {
     expect(validateLabState(signalTimeline)).toEqual([]);
+  });
+
+  it("safety-zone: sahne, hız ve frenleme sınırları dışındaki değerleri reddeder", () => {
+    expect(validateLabState({ ...safetyZone, distance: 4_001, robotSpeed: 2_001, brakingTime: 1.01 })).toHaveLength(3);
+  });
+
+  it("safety-zone: UI sınırlarındaki ölçüm state'i geçerlidir", () => {
+    expect(validateLabState(safetyZone)).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

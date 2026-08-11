@@ -24,12 +24,17 @@ durum: yayinda
 
 ## Kanca
 
-Aşağıdaki sahnede robot hızını yükselt, sonra insanı yaklaştır. Robotun
-durduğu mesafeyi not et. Şimdi frenleme süresini iki katına çıkar ve
-aynı şeyi tekrarla — güvenli mesafenin robotun hızıyla birlikte değil,
-robotun *durabilme yeteneğiyle* birlikte değiştiğini göreceksin.
+Aşağıdaki sahnede insanı robota yaklaştır. Robotun tam hızdan yavaşlamaya
+başladığı mesafeyi not et. Şimdi frenleme süresini iki katına çıkar ve aynı
+şeyi tekrarla — gerekli mesafenin robotun *durabilme yeteneğiyle* birlikte
+değiştiğini göreceksin.
 
-<SafetyZone mode="hesap" robotSpeed={1000} theme="universite" />
+<SafetyZone mode="hesap" robotSpeed={1000} theme="universite" pilot="braking-distance" />
+
+İlk tam hız sınırını bulduğunda **Bu ölçümü kaydet**'e bas. Frenleme süresini
+artır, yeni tam hız sınırını bul ve ikinci ölçümü kaydet. İki ölçümde robot
+hızını aynı tut; böylece değişen tek nedenin frenleme süresi olduğunu
+karşılaştırabilirsin.
 
 ## Ne oldu
 
@@ -50,8 +55,9 @@ doğruluğu da güvence altındadır.
 ### Hız ve mesafe izleme
 
 Burada robot durmak zorunda değildir; insan ile arasında yeterli bir
-**ayrım mesafesi** koruduğu sürece çalışmaya devam edebilir. Mesafe
-daraldıkça robot yavaşlar, gerekli mesafenin altına inilirse durur.
+**ayrım mesafesi** koruduğu sürece çalışmaya devam edebilir. Tam hız için
+gerekli mesafenin altına inildiğinde robot yavaşlar; insan yolu ve belirsizlik
+payından sonra harekete ayrılabilecek mesafe kalmadığında durur.
 
 Kritik soru şu: "yeterli mesafe" ne kadar?
 
