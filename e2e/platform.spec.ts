@@ -181,6 +181,28 @@ test("PixelToWorld aynı çevresel hücrede distorsiyonu kanıtlar ve state'i pa
   await expect(page.getByRole("button", { name: /Seçili hücre: sütun 7, satır 7/ })).toBeVisible();
 });
 
+test("JacobianViz gerçek tekillik commit'iyle kanıtlanır ve state'i paylaşır", async ({ page }) => {
+  await page.goto("/ders/b-universite-jacobian");
+  const sliders = page.getByRole("slider");
+  await expect(sliders).toHaveCount(2);
+  await sliders.nth(1).fill("0");
+  await sliders.nth(1).evaluate((element) => element.dispatchEvent(new PointerEvent("pointerup", { bubbles: true })));
+  await expect(page.getByText("Tekillik:", { exact: false })).toBeVisible();
+  await page.getByRole("button", { name: /O yönde hız üretilemeyebilir/ }).click();
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((item: { stage?: string; predicateId?: string }) =>
+    item.stage === "passed" && item.predicateId === "jacobian-singularity-observation-v2",
+  )).toBe(true);
+
+  await page.getByRole("button", { name: "Bu deneyi paylaş" }).click();
+  const href = await page.getByRole("link", { name: "Paylaşılan görünümü aç" }).getAttribute("href");
+  expect(href).not.toBeNull();
+  await page.goto(href!);
+  await expect(page.getByRole("slider").nth(1)).toHaveValue("0");
+  await expect(page.getByText("Tekillik:", { exact: false })).toBeVisible();
+});
+
 test("iki eklemli kaydırıcı deneyi klavye ve pointer commit'iyle geçilebilir", async ({ page }) => {
   await page.goto("/ders/b-ortaokul-eklemleri-oynat");
   const experiment = page.locator("[data-joint-sliders]");

@@ -13,9 +13,15 @@ import type { Vec3 } from "@/lib/robotics/transform";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SCENE_PALETTES } from "@/lib/theme";
+import {
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
 
 interface JacobianVizProps {
   robot: string;
+  pilot?: "jacobian-singularity";
 }
 
 const toDegrees = (radians: number) => (radians * 180) / Math.PI;
@@ -23,7 +29,7 @@ const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 const round = (value: number) => Math.round(value * 1000) / 1000;
 
 /** Ders içine gömülen etkileşimli sahne: Jacobian sütunlarını ve manipülabilite elipsini görselleştirir. */
-export function JacobianViz({ robot: robotId }: JacobianVizProps) {
+export function JacobianViz({ robot: robotId, pilot }: JacobianVizProps) {
   const record = useEvidenceRecorder();
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
@@ -38,10 +44,29 @@ export function JacobianViz({ robot: robotId }: JacobianVizProps) {
   );
   const singular = isNearSingularity(manipulability);
 
+  useSharedLabState("jacobian-viz", (shared) => {
+    if (shared.robotId !== robot.id) return;
+    setJointAngles(shared.jointAngles);
+  });
+
   function handleChange(index: number, degrees: number) {
     setJointAngles((prev) => prev.map((angle, i) => (i === index ? toRadians(degrees) : angle)));
-    const nearStraight = index === 1 && Math.abs(degrees) < 8;
-    record({ skillId: "jacobian-singularity", stage: nearStraight ? "observed" : "tried", result: "success", metrics: { joint: index + 1, degrees: round(degrees), nearStraight } });
+  }
+
+  /** Sürükleme kareleri değil, yalnız kullanıcının bıraktığı gerçek motor sonucu kanıttır. */
+  function commitJoint(index: number) {
+    if (pilot !== "jacobian-singularity") return;
+    record({
+      skillId: "jacobian-singularity",
+      stage: "observed",
+      result: singular ? "success" : "retry",
+      metrics: {
+        joint: index + 1,
+        degrees: round(toDegrees(jointAngles[index])),
+        singular,
+        manipulability,
+      },
+    });
   }
 
   function handleReset() {
@@ -84,6 +109,9 @@ export function JacobianViz({ robot: robotId }: JacobianVizProps) {
               max={toDegrees(joint.limits.max)}
               value={toDegrees(jointAngles[index])}
               onChange={(event) => handleChange(index, Number(event.target.value))}
+              onPointerUp={() => commitJoint(index)}
+              onBlur={() => commitJoint(index)}
+              onKeyUp={() => commitJoint(index)}
             />
           </label>
         ))}
@@ -111,6 +139,16 @@ export function JacobianViz({ robot: robotId }: JacobianVizProps) {
         sütunları). Gri elips: tüm birim eklem hızı kombinasyonlarının süpürdüğü uç hız alanı
         (manipülabilite elipsi) — elips daralıp çizgiye dönüştüğünde tekillik yaklaşıyor demektir.
       </p>
+
+      <ExperimentShareButton
+        seviye="universite"
+        createShareUrl={() => createLabShareUrl({
+          kind: "jacobian-viz",
+          version: 1,
+          robotId: robot.id,
+          jointAngles,
+        })}
+      />
     </div>
   );
 }

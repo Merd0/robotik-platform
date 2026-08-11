@@ -1411,3 +1411,18 @@ güven verisini yanlış temel üzerine kurmasını engeller.
 - Test: 14 yeni kontrol (motor golden/mesafe karşılaştırmaları, state
   round-trip/negatifleri, interaction/predicate bağlantısı, predicate golden +
   üç negatif ve paylaşım+kanıt E2E'si).
+
+### 2026-08-12 · JacobianViz (3 ders)
+
+- Bulgu: mevcut `jacobian-singularity-observation-v1`, slider'ın her değişim
+  karesinde yazılan olayı kabul ediyor; bileşen gerçek `isNearSingularity`
+  sonucunu kullanmak yerine `|J2| < 8°` kestirmesini koşulsuz success olarak
+  kaydediyordu. Predicate de `result` ve manipülabilite eşiğini denetlemiyordu.
+- Düzeltme: olay yazımı pointer-up/blur/klavye commit'ine taşındı ve doğrudan
+  kinematik motorunun tekillik sonucu + ham manipülabilite değeri kaydedildi.
+  `jacobian-singularity-observation-v2` yalnız gerçek başarılı tekillik commit'i
+  ile transfer değerlendirmesini birlikte ister. Bileşen+kinematik+robot spec
+  manifesti ve limit doğrulamalı `jacobian-viz/v1` paylaşım state'i eklendi.
+- Test: 11 yeni kontrol (state round-trip/negatifleri,
+  interaction/predicate bağlantısı, predicate golden + üç negatif ve
+  paylaşım+kanıt E2E'si).

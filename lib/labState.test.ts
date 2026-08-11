@@ -57,6 +57,13 @@ const pixelToWorldState: LabState = {
   showDistortion: true,
 };
 
+const jacobianViz: LabState = {
+  kind: "jacobian-viz",
+  version: 1,
+  robotId: "generic-2dof",
+  jointAngles: [Math.PI / 4, 0],
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
@@ -66,6 +73,7 @@ describe("encodeLabState / decodeLabState — round-trip", () => {
     ["signal-timeline", signalTimeline],
     ["safety-zone", safetyZone],
     ["pixel-to-world", pixelToWorldState],
+    ["jacobian-viz", jacobianViz],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -162,6 +170,11 @@ describe("decodeLabState — biçim doğrulaması", () => {
     const encoded = encodeLabState({ ...pixelToWorldState, selected: { col: "7", row: 7 } } as unknown as LabState);
     expect(decodeLabState(encoded).ok).toBe(false);
   });
+
+  it("jacobian-viz: jointAngles için yalnız sonlu sayı dizisi kabul eder", () => {
+    const encoded = encodeLabState({ ...jacobianViz, jointAngles: [0, Number.NaN] } as unknown as LabState);
+    expect(decodeLabState(encoded).ok).toBe(false);
+  });
 });
 
 describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada geçersiz)", () => {
@@ -252,6 +265,15 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("pixel-to-world: doğrulanmış çevresel seçim state'i geçerlidir", () => {
     expect(validateLabState(pixelToWorldState)).toEqual([]);
+  });
+
+  it("jacobian-viz: bilinmeyen robotu ve eklem limiti dışındaki açıyı reddeder", () => {
+    expect(validateLabState({ ...jacobianViz, robotId: "olmayan-robot" })).toContain("bilinmeyen robot id: olmayan-robot");
+    expect(validateLabState({ ...jacobianViz, jointAngles: [10, 0] }).some((error) => error.includes("limit dışında"))).toBe(true);
+  });
+
+  it("jacobian-viz: robotla eşleşen açı state'i geçerlidir", () => {
+    expect(validateLabState(jacobianViz)).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

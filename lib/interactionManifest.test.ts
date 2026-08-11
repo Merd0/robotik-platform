@@ -132,6 +132,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["PixelToWorld"])).not.toThrow();
   });
 
+  it("JacobianViz bileşeni, kinematik motoru ve robot spec'ini interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.JacobianViz).toEqual({
+      componentFile: "components/interactive/JacobianViz.tsx",
+      engineFiles: ["lib/robotics/kinematics.ts"],
+    });
+    expect(() => computeInteractionHash(["JacobianViz"], ["generic-2dof"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -179,6 +187,11 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
 
   it("PixelToWorld ana dersini distorsiyon predicate sürümüne bağlar", () => {
     expect(computePredicateHash("f-lise-olcek-perspektif-hatasi"))
+      .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
+  });
+
+  it("JacobianViz ana dersini v2 tekillik predicate'ine bağlar", () => {
+    expect(computePredicateHash("b-universite-jacobian"))
       .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
   });
 });

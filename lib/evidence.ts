@@ -156,12 +156,22 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     },
   },
   {
-    id: "jacobian-singularity-observation-v1",
+    // v1 → v2: bileşen her slider karesinde olay yazıyor ve gerçek motor
+    // sonucuna bakmadan |J2| < 8° kestirmesini observed/success sayıyordu.
+    // Artık yalnız commit anındaki isNearSingularity sonucu kabul edilir.
+    id: "jacobian-singularity-observation-v2",
     lessonId: "b-universite-jacobian",
     skillId: "jacobian-singularity",
     evaluate: (events) => ({
       passed:
-        events.some((event) => event.skillId === "jacobian-singularity" && event.stage === "observed" && event.metrics?.nearStraight === true) &&
+        events.some((event) =>
+          event.skillId === "jacobian-singularity" &&
+          event.stage === "observed" &&
+          event.result === "success" &&
+          event.metrics?.singular === true &&
+          typeof event.metrics?.manipulability === "number" &&
+          event.metrics.manipulability < 0.001,
+        ) &&
         hasSuccessfulAssessment(events, "jacobian-singularity"),
       metrics: { singularityObserved: true },
     }),

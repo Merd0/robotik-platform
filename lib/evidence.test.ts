@@ -500,3 +500,48 @@ describe("PixelToWorld rollout: golden + negatif predicate testleri", () => {
     })]).passed).toBe(false);
   });
 });
+
+describe("JacobianViz rollout: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "jacobian-singularity-observation-v2")!;
+  const observation = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+  ) => event("observed", result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "jacobian-v2",
+  });
+  const assessment = (result: EvidenceEvent["result"] = "success") => event("assessed", result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    contentVersion: "jacobian-v2",
+  });
+
+  it("golden: motorun tekil bulduğu commit ve başarılı transfer birlikte geçer", () => {
+    expect(predicate.evaluate([
+      observation("success", { singular: true, manipulability: 0, joint: 2, degrees: 0 }),
+      assessment(),
+    ]).passed).toBe(true);
+  });
+
+  it("negatif: eski 8 derece kestirmesi gerçek motor tekil değilse geçmez", () => {
+    expect(predicate.evaluate([
+      observation("retry", { singular: false, manipulability: 0.06, joint: 2, degrees: 7 }),
+      assessment(),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: başarısız işaretlenmiş tekillik olayı geçmez", () => {
+    expect(predicate.evaluate([
+      observation("retry", { singular: true, manipulability: 0, joint: 2, degrees: 0 }),
+      assessment(),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: gerçek tekillik gözlense bile transfer değerlendirmesi olmadan geçmez", () => {
+    expect(predicate.evaluate([
+      observation("success", { singular: true, manipulability: 0, joint: 2, degrees: 0 }),
+    ]).passed).toBe(false);
+  });
+});

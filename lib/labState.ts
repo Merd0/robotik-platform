@@ -88,6 +88,13 @@ export interface PixelToWorldLabState {
   showDistortion: boolean;
 }
 
+export interface JacobianVizLabState {
+  kind: "jacobian-viz";
+  version: 1;
+  robotId: string;
+  jointAngles: number[];
+}
+
 export type LabState =
   | JointSlidersLabState
   | PlannerRaceLabState
@@ -95,7 +102,8 @@ export type LabState =
   | CodeRunnerLabState
   | SignalTimelineLabState
   | SafetyZoneLabState
-  | PixelToWorldLabState;
+  | PixelToWorldLabState
+  | JacobianVizLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -313,6 +321,18 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "jacobian-viz") {
+    if (record.version !== 1) return { ok: false, error: `jacobian-viz: desteklenmeyen sürüm ${String(record.version)}` };
+    if (typeof record.robotId !== "string" || !record.robotId) return { ok: false, error: "jacobian-viz: robotId eksik" };
+    if (!Array.isArray(record.jointAngles) || !record.jointAngles.every(isFiniteNumber)) {
+      return { ok: false, error: "jacobian-viz: jointAngles sonlu sayı dizisi olmalı" };
+    }
+    return {
+      ok: true,
+      state: { kind: "jacobian-viz", version: 1, robotId: record.robotId, jointAngles: record.jointAngles },
+    };
+  }
+
   return { ok: false, error: `bilinmeyen laboratuvar türü: ${String(record.kind)}` };
 }
 
@@ -407,6 +427,27 @@ export function validateLabState(state: LabState): string[] {
         errors.push("selected col/row 0-7 arasında olmalı");
       }
     }
+    return errors;
+  }
+
+  if (state.kind === "jacobian-viz") {
+    let robot;
+    try {
+      robot = getRobotById(state.robotId);
+    } catch {
+      errors.push(`bilinmeyen robot id: ${state.robotId}`);
+      return errors;
+    }
+    if (state.jointAngles.length !== robot.joints.length) {
+      errors.push(`jointAngles uzunluğu (${state.jointAngles.length}) robotun eklem sayısıyla (${robot.joints.length}) eşleşmiyor`);
+      return errors;
+    }
+    robot.joints.forEach((joint, index) => {
+      const angle = state.jointAngles[index];
+      if (angle < joint.limits.min || angle > joint.limits.max) {
+        errors.push(`J${index + 1} değeri (${angle}) limit dışında [${joint.limits.min}, ${joint.limits.max}]`);
+      }
+    });
     return errors;
   }
 

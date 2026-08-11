@@ -81,6 +81,10 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
     componentFile: "components/interactive/PixelToWorld.tsx",
     engineFiles: ["lib/pixelToWorld.ts"],
   },
+  JacobianViz: {
+    componentFile: "components/interactive/JacobianViz.tsx",
+    engineFiles: ["lib/robotics/kinematics.ts"],
+  },
 };
 
 /** Robot id → spesifikasyon dosyası. Yalnız pilot laboratuvarların kullandığı robotlar. */
