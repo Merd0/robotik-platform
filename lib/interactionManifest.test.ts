@@ -156,6 +156,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["BlockEditor"], ["generic-2dof"])).not.toThrow();
   });
 
+  it("ThresholdViewer bileşeni ile eşikleme motorunu interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.ThresholdViewer).toEqual({
+      componentFile: "components/interactive/ThresholdViewer.tsx",
+      engineFiles: ["lib/threshold.ts"],
+    });
+    expect(() => computeInteractionHash(["ThresholdViewer"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -220,5 +228,10 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
     const empty = computePredicateHash("hic-boyle-bir-ders-yok");
     expect(computePredicateHash("d-ortaokul-blok-komutlar")).not.toBe(empty);
     expect(computePredicateHash("d-ortaokul-sirali-tekrar-kosul")).not.toBe(empty);
+  });
+
+  it("ThresholdViewer ana dersini üç rejim predicate sürümüne bağlar", () => {
+    expect(computePredicateHash("f-lise-esikleme-nesne-bulma"))
+      .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
   });
 });

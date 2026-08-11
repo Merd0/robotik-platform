@@ -115,6 +115,13 @@ export interface BlockEditorLabState {
   engelVar: boolean;
 }
 
+export interface ThresholdViewerLabState {
+  kind: "threshold-viewer";
+  version: 1;
+  theme: "lise" | "universite";
+  threshold: number;
+}
+
 export type LabState =
   | JointSlidersLabState
   | PlannerRaceLabState
@@ -125,7 +132,8 @@ export type LabState =
   | PixelToWorldLabState
   | JacobianVizLabState
   | ScanPathLabState
-  | BlockEditorLabState;
+  | BlockEditorLabState
+  | ThresholdViewerLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -439,6 +447,25 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "threshold-viewer") {
+    if (record.version !== 1) return { ok: false, error: `threshold-viewer: desteklenmeyen sürüm ${String(record.version)}` };
+    if (record.theme !== "lise" && record.theme !== "universite") {
+      return { ok: false, error: "threshold-viewer: theme lise/universite olmalı" };
+    }
+    if (typeof record.threshold !== "number" || !Number.isSafeInteger(record.threshold)) {
+      return { ok: false, error: "threshold-viewer: threshold güvenli tam sayı olmalı" };
+    }
+    return {
+      ok: true,
+      state: {
+        kind: "threshold-viewer",
+        version: 1,
+        theme: record.theme,
+        threshold: record.threshold,
+      },
+    };
+  }
+
   return { ok: false, error: `bilinmeyen laboratuvar türü: ${String(record.kind)}` };
 }
 
@@ -621,6 +648,11 @@ export function validateLabState(state: LabState): string[] {
     }
     validateBlocks(blockState.blocks, 0);
     if (blockCount > MAX_BLOCK_COUNT) errors.push(`blok sayısı ${MAX_BLOCK_COUNT} sınırını aşıyor`);
+    return errors;
+  }
+
+  if (state.kind === "threshold-viewer") {
+    if (state.threshold < 0 || state.threshold > 255) errors.push("threshold 0-255 arasında olmalı");
     return errors;
   }
 

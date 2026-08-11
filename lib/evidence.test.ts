@@ -653,3 +653,50 @@ describe("BlockEditor rollout: golden + negatif predicate testleri", () => {
     })]).passed).toBe(false);
   });
 });
+
+describe("ThresholdViewer rollout: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "threshold-three-regimes-v1")!;
+  const observation = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+  ) => event("observed", result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "threshold-viewer-v1",
+  });
+  const low = { regime: "too-low", threshold: 30, detectedCount: 96, objectCellCount: 21, falsePositiveCount: 75, falseNegativeCount: 0 };
+  const separating = { regime: "separating", threshold: 128, detectedCount: 21, objectCellCount: 21, falsePositiveCount: 0, falseNegativeCount: 0 };
+  const high = { regime: "too-high", threshold: 230, detectedCount: 0, objectCellCount: 21, falsePositiveCount: 0, falseNegativeCount: 21 };
+
+  it("golden: düşük, ayıran ve yüksek eşik rejimlerinin üçü de doğrulanınca geçer", () => {
+    expect(predicate.evaluate([
+      observation("success", low),
+      observation("success", separating),
+      observation("success", high),
+    ]).passed).toBe(true);
+  });
+
+  it("negatif: üç rejimden biri eksikse geçmez", () => {
+    expect(predicate.evaluate([
+      observation("success", low),
+      observation("success", separating),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: düşük diye etiketlenen ölçüm false positive üretmediyse geçmez", () => {
+    expect(predicate.evaluate([
+      observation("success", { ...low, falsePositiveCount: 0 }),
+      observation("success", separating),
+      observation("success", high),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: yüksek rejim başarısız denemeyse geçmez", () => {
+    expect(predicate.evaluate([
+      observation("success", low),
+      observation("success", separating),
+      observation("retry", high),
+    ]).passed).toBe(false);
+  });
+});

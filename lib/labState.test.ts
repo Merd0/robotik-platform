@@ -85,6 +85,13 @@ const blockEditor: LabState = {
   engelVar: false,
 };
 
+const thresholdViewer: LabState = {
+  kind: "threshold-viewer",
+  version: 1,
+  theme: "lise",
+  threshold: 128,
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
@@ -97,6 +104,7 @@ describe("encodeLabState / decodeLabState — round-trip", () => {
     ["jacobian-viz", jacobianViz],
     ["scan-path", scanPathState],
     ["block-editor", blockEditor],
+    ["threshold-viewer", thresholdViewer],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -212,6 +220,11 @@ describe("decodeLabState — biçim doğrulaması", () => {
     let nested: unknown[] = [{ id: "leaf", type: "move", joint: 0, degrees: 10 }];
     for (let depth = 0; depth < 10; depth++) nested = [{ id: `r-${depth}`, type: "repeat", times: 2, body: nested }];
     expect(decodeLabState(encodeLabState({ ...blockEditor, blocks: nested } as unknown as LabState)).ok).toBe(false);
+  });
+
+  it("threshold-viewer: yalnız geçerli tema ve tam sayı eşik kabul eder", () => {
+    expect(decodeLabState(encodeLabState({ ...thresholdViewer, theme: "ilkokul" } as unknown as LabState)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState({ ...thresholdViewer, threshold: 127.5 } as unknown as LabState)).ok).toBe(false);
   });
 });
 
@@ -343,6 +356,15 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("block-editor: robot ve paletle eşleşen ağaç state'i geçerlidir", () => {
     expect(validateLabState(blockEditor)).toEqual([]);
+  });
+
+  it("threshold-viewer: 0-255 dışındaki eşikleri reddeder", () => {
+    expect(validateLabState({ ...thresholdViewer, threshold: -1 })).toContain("threshold 0-255 arasında olmalı");
+    expect(validateLabState({ ...thresholdViewer, threshold: 256 })).toContain("threshold 0-255 arasında olmalı");
+  });
+
+  it("threshold-viewer: ayıran eşik state'i geçerlidir", () => {
+    expect(validateLabState(thresholdViewer)).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

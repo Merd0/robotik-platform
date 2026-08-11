@@ -321,6 +321,42 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     }),
   },
   {
+    id: "threshold-three-regimes-v1",
+    lessonId: "f-lise-esikleme-nesne-bulma",
+    skillId: "threshold-regimes",
+    evaluate: (events) => {
+      const observations = events.filter((event) =>
+        event.skillId === "threshold-regimes" &&
+        event.stage === "observed" &&
+        event.result === "success" &&
+        typeof event.metrics?.falsePositiveCount === "number" &&
+        typeof event.metrics?.falseNegativeCount === "number" &&
+        typeof event.metrics?.detectedCount === "number" &&
+        typeof event.metrics?.objectCellCount === "number",
+      );
+      const hasTooLow = observations.some((event) =>
+        event.metrics!.regime === "too-low" &&
+        (event.metrics!.falsePositiveCount as number) > 0 &&
+        event.metrics!.falseNegativeCount === 0,
+      );
+      const hasSeparating = observations.some((event) =>
+        event.metrics!.regime === "separating" &&
+        event.metrics!.falsePositiveCount === 0 &&
+        event.metrics!.falseNegativeCount === 0 &&
+        event.metrics!.detectedCount === event.metrics!.objectCellCount,
+      );
+      const hasTooHigh = observations.some((event) =>
+        event.metrics!.regime === "too-high" &&
+        (event.metrics!.falseNegativeCount as number) > 0 &&
+        event.metrics!.falsePositiveCount === 0,
+      );
+      return {
+        passed: hasTooLow && hasSeparating && hasTooHigh,
+        metrics: { requiredRegimes: 3 },
+      };
+    },
+  },
+  {
     // v1 → v2: predicate yalnız "algoritma denendi mi"yi sayıyordu (metrics.algorithm
     // hem başarılı hem başarısız/timeout koşularda yazılıyor), result alanına hiç
     // bakmıyordu — üç başarısız koşu bile passed=true üretiyordu (false positive).

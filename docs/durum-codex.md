@@ -1457,3 +1457,22 @@ güven verisini yanlış temel üzerine kurmasını engeller.
 - Test: 15 yeni kontrol (yorumlayıcı sınır/yardımcıları, state
   round-trip/negatifleri, interaction/predicate bağlantısı, iki predicate için
   golden + negatifler ve paylaşım+kanıt E2E'si).
+
+### 2026-08-12 · ThresholdViewer (2 ders)
+
+- Bulgu: bileşenin deterministik parlaklık hesabı dersin tarif ettiği ayırma
+  aralığıyla tutarlıydı; ancak kanıt/predicate/state zinciri yoktu. Slider yalnız
+  görünümü değiştiriyor, düşük eşikteki false positive ile yüksek eşikteki false
+  negative sonuçları ölçülebilir bir deneye dönüşmüyordu. 12 sütunlu sabit ızgara
+  da dar ekranda kart dışına taşıyabiliyordu.
+- Düzeltme: parlaklık, nesne maskesi ve hata sayımları saf `threshold` motoruna
+  çıkarıldı. Olay yalnız pointer-up/blur/klavye commit'inde yazılır;
+  `threshold-three-regimes-v1` düşük, hatasız ayıran ve yüksek eşik rejimlerinin
+  üçünü de gerçek false-positive/false-negative ölçüleriyle ister. Bileşen+motor
+  manifesti, tema ve 0–255 tam sayı sınırı doğrulamalı `threshold-viewer/v1`
+  paylaşım state'i ve dar ekranda yerel yatay kaydırma eklendi. Ders kabuğunun
+  mobildeki örtük `auto` grid sütunu da `minmax(0,1fr)` yapılarak geniş deney
+  içeriğinin tüm sayfayı taşırması engellendi.
+- Test: 14 yeni kontrol (motor golden/negatifleri, state round-trip/negatifleri,
+  interaction/predicate bağlantısı, predicate golden + üç negatif ve üç
+  viewportta çalışan paylaşım+kanıt E2E senaryosu).

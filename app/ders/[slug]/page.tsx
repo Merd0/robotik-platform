@@ -96,7 +96,7 @@ export default async function DersPage({ params }: DersPageProps) {
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
         <LessonEvidenceProvider lessonId={lesson.slug} contentVersion={computeTeachingHash(lesson)}>
           <nav aria-label="İçerik yolu" className={`flex flex-wrap items-center gap-2 text-sm ${theme.muted}`}><Link href="/" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvar</Link><span>/</span><Link href={`/seviye/${seviye}`} className="inline-flex min-h-11 items-center underline underline-offset-4">{SEVIYE_ETIKET[seviye]}</Link><span>/</span><Link href={`/seviye/${seviye}/hat/${lesson.frontmatter.hat}`} className="inline-flex min-h-11 items-center underline underline-offset-4">{hatEtiket(lesson.frontmatter.hat)}</Link></nav>
-          <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+          <div className="mt-8 grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
             <div className="min-w-0">
               <p className={`text-xs font-semibold uppercase tracking-[.18em] ${theme.accentText}`}>Deney dersi · {lesson.frontmatter.sure} dakika</p>
               <h1 className={`mt-3 max-w-4xl font-heading text-4xl font-semibold tracking-tight sm:text-5xl ${theme.ink}`}>{lesson.frontmatter.baslik}</h1>

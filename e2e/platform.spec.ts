@@ -256,6 +256,32 @@ test("BlockEditor limit-içi farklı duruşları kanıtlar ve programı paylaş�
   await expect(page.getByRole("spinbutton").nth(1)).toHaveValue("90");
 });
 
+test("ThresholdViewer üç eşik rejimini kanıtlar ve ayıran eşiği paylaşır", async ({ page }) => {
+  await page.goto("/ders/f-lise-esikleme-nesne-bulma");
+  const slider = page.getByRole("slider");
+  const commit = async (value: string) => {
+    await slider.fill(value);
+    await slider.evaluate((element) => element.dispatchEvent(new PointerEvent("pointerup", { bubbles: true })));
+  };
+
+  await commit("30");
+  await commit("230");
+  await commit("128");
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((item: { stage?: string; predicateId?: string }) =>
+    item.stage === "passed" && item.predicateId === "threshold-three-regimes-v1",
+  )).toBe(true);
+
+  await page.getByRole("button", { name: "Bu deneyi paylaş" }).click();
+  const href = await page.getByRole("link", { name: "Paylaşılan görünümü aç" }).getAttribute("href");
+  expect(href).not.toBeNull();
+  await page.goto(href!);
+  await expect(page.getByRole("slider")).toHaveValue("128");
+  await expect(page.getByRole("status").filter({ hasText: "Eşiğin üstünde kalan hücre sayısı" })).toHaveText(/21 \/ 96/);
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+});
+
 test("iki eklemli kaydırıcı deneyi klavye ve pointer commit'iyle geçilebilir", async ({ page }) => {
   await page.goto("/ders/b-ortaokul-eklemleri-oynat");
   const experiment = page.locator("[data-joint-sliders]");
