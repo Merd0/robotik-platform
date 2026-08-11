@@ -177,4 +177,132 @@ describe("controlled pilot predicates", () => {
     expect(predicate.evaluate([sample(0), assessment]).passed).toBe(false);
     expect(predicate.evaluate([sample(0), sample(3), assessment]).passed).toBe(true);
   });
+
+  it("planner comparison: partial success (2/3 algorithms) never passes", () => {
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "planner-three-way-comparison-v2")!;
+    const run = (algorithm: string, result: EvidenceEvent["result"]) => event("observed", result, {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      metrics: { algorithm, seed: 1 },
+      contentVersion: "pilot-v1",
+    });
+    const assessment = event("assessed", "success", { lessonId: predicate.lessonId, skillId: predicate.skillId, contentVersion: "pilot-v1" });
+    expect(predicate.evaluate([run("astar", "success"), run("rrt", "success"), run("rrt_star", "retry"), assessment]).passed).toBe(false);
+  });
+
+  it("planner comparison: three successes without the concept-check assessment never passes", () => {
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "planner-three-way-comparison-v2")!;
+    const run = (algorithm: string) => event("observed", "success", {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      metrics: { algorithm, seed: 1 },
+      contentVersion: "pilot-v1",
+    });
+    expect(predicate.evaluate([run("astar"), run("rrt"), run("rrt_star")]).passed).toBe(false);
+  });
+});
+
+describe("Sprint 2 pilot laboratuvarları: golden + negative predicate testleri", () => {
+  describe("forward-kinematics-dual-joint-v2 (JointSliders)", () => {
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "forward-kinematics-dual-joint-v2")!;
+    const observedJoint = (joint: number) => event("observed", "success", {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      metrics: { joint },
+      contentVersion: "pilot-v1",
+    });
+    const assessment = (result: EvidenceEvent["result"]) => event("assessed", result, {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      contentVersion: "pilot-v1",
+    });
+
+    it("golden: her iki eklem commit edilmiş ve kavram kontrolü geçilmişse passed olur", () => {
+      expect(predicate.evaluate([observedJoint(1), observedJoint(2), assessment("success")]).passed).toBe(true);
+    });
+
+    it("negatif: yalnız bir eklem commit edilmişse passed olmaz", () => {
+      expect(predicate.evaluate([observedJoint(1), assessment("success")]).passed).toBe(false);
+    });
+
+    it("negatif: iki eklem de commit edilmiş ama kavram kontrolü hiç yapılmamışsa passed olmaz", () => {
+      expect(predicate.evaluate([observedJoint(1), observedJoint(2)]).passed).toBe(false);
+    });
+
+    it("negatif: iki eklem commit edilmiş ama kavram kontrolü yanlış cevaplanmışsa passed olmaz", () => {
+      expect(predicate.evaluate([observedJoint(1), observedJoint(2), assessment("retry")]).passed).toBe(false);
+    });
+  });
+
+  describe("multiple-ik-solutions-v2 (IkTarget — dirsek değiştirme)", () => {
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "multiple-ik-solutions-v2")!;
+    const elbowToggle = (elbow: string, result: EvidenceEvent["result"]) => event("observed", result, {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      metrics: result === "success" ? { elbow } : { elbow, unreachable: true },
+      contentVersion: "pilot-v1",
+    });
+    const assessment = (result: EvidenceEvent["result"]) => event("assessed", result, {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      contentVersion: "pilot-v1",
+    });
+
+    it("golden: iki dirsek de gerçekten çözülebilir konumda denenmiş ve kavram kontrolü geçilmişse passed olur", () => {
+      expect(predicate.evaluate([elbowToggle("up", "success"), elbowToggle("down", "success"), assessment("success")]).passed).toBe(true);
+    });
+
+    it("negatif (component düzeltmesinin kanıtı): dirsek değişimi ÇÖZÜMSÜZ bir konuma düşerse o gözlem sayılmaz", () => {
+      // Düzeltmeden önce IkTarget bu durumda bile result: "success" yazıyordu
+      // (bkz. components/interactive/IkTarget.tsx handleElbowToggle yorumu);
+      // predicate artık result === "success" şartı arıyor.
+      const passed = predicate.evaluate([elbowToggle("up", "success"), elbowToggle("down", "retry"), assessment("success")]).passed;
+      expect(passed).toBe(false);
+    });
+
+    it("negatif: yalnız bir dirsek denenmişse passed olmaz", () => {
+      expect(predicate.evaluate([elbowToggle("up", "success"), assessment("success")]).passed).toBe(false);
+    });
+
+    it("negatif: iki dirsek de denenmiş ama kavram kontrolü yoksa passed olmaz", () => {
+      expect(predicate.evaluate([elbowToggle("up", "success"), elbowToggle("down", "success")]).passed).toBe(false);
+    });
+  });
+
+  describe("geometric-ik-boundary-v2 (IkTarget — erişilebilir/erişilemez sınır)", () => {
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "geometric-ik-boundary-v2")!;
+    const reachable = () => event("tried", "success", {
+      lessonId: predicate.lessonId,
+      skillId: "inverse-kinematics",
+      metrics: { x: 0.5, y: 0.2 },
+      contentVersion: "pilot-v1",
+    });
+    const unreachable = () => event("observed", "retry", {
+      lessonId: predicate.lessonId,
+      skillId: "inverse-kinematics",
+      metrics: { unreachable: true },
+      contentVersion: "pilot-v1",
+    });
+    const assessment = (result: EvidenceEvent["result"]) => event("assessed", result, {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      contentVersion: "pilot-v1",
+    });
+
+    it("golden: hem erişilebilir hem erişilemez bir hedef commit edilmiş ve kavram kontrolü geçilmişse passed olur", () => {
+      expect(predicate.evaluate([reachable(), unreachable(), assessment("success")]).passed).toBe(true);
+    });
+
+    it("negatif: yalnız erişilebilir hedefler denenmişse (sınır hiç gözlenmemiş) passed olmaz", () => {
+      expect(predicate.evaluate([reachable(), reachable(), assessment("success")]).passed).toBe(false);
+    });
+
+    it("negatif: yalnız erişilemez hedefler denenmişse passed olmaz", () => {
+      expect(predicate.evaluate([unreachable(), unreachable(), assessment("success")]).passed).toBe(false);
+    });
+
+    it("negatif: sınırın iki tarafı da gözlenmiş ama kavram kontrolü yoksa passed olmaz", () => {
+      expect(predicate.evaluate([reachable(), unreachable()]).passed).toBe(false);
+    });
+  });
 });

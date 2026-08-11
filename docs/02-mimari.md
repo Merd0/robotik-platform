@@ -235,6 +235,37 @@ anahtarlar silinir. Eski `passed` olayı doğrulanmış başarıya yükseltilmez
 Depolama engellenirse oturum içi bellek kullanılır ve UI bunu açıkça söyler.
 Kullanıcı tüm kaydı JSON olarak dışa aktarabilir veya iki adımlı onayla silebilir.
 
+### 6. Bağımlılık manifesti — interactionHash ve predicateHash (Sprint 2 pilotu)
+
+`teachingHash` yalnız ders METNİNİN sürümüdür. Bir laboratuvarı gerçekten
+ÇALIŞTIRAN kod (bileşen + saf motor + robot spesifikasyonu + varsa worker) ya
+da bir predicate'in mantığı değişse bile, ders metni aynı kaldığı sürece
+`teachingHash` değişmez — yani öğrencinin gördüğü deney artık farklı
+çalışıyor olsa bile eski kanıt hâlâ "güncel" görünür. `lib/interactionManifest.ts`
+bu boşluğu iki ayrı, doğrulanabilir hash ile kapatır:
+
+- **`interactionHash`** — kullanılan bileşen(ler) + dayandıkları saf motor
+  dosyaları + kullanılan robot spesifikasyonu + (varsa) worker kaynağının
+  içerik hash'lerinden üretilir. Kullanılan bileşenler `etkilesimli`
+  frontmatter alanına değil, MDX AST'sinin kendisine bakılarak çıkarılır
+  (`extractUsedComponents`) — yazarın elle girdiği alan yanlış/eski olabilir.
+- **`predicateHash`** — o derse bağlı `lib/evidence.ts` predicate id'lerinin
+  (zaten `-v1`/`-v2` gibi sürümlü) sıralı kümesinden üretilir.
+
+`lib/lessonArtifact.ts`'teki `computeEvidenceVersionRoot(teachingHash,
+interactionHash, predicateHash)` üçünü tek bir kökte birleştirir. Bilinçli
+olarak SAF (fs'e dokunmaz) — `interactionHash`in kendisi fs okuduğu için ayrı
+bir modülde yaşıyor, tıpkı `computeLessonSubjectHashes`'in saf kalıp
+`scripts/git-lesson.ts`'in fs/git tarafını üstlenmesi gibi.
+
+**Pilot kapsamı ve durumu:** yalnız üç laboratuvar (`JointSliders`,
+`PlannerRace`, `IkTarget`) `LAB_DEPENDENCY_REGISTRY`'de tanımlı; kayıtlı
+olmayan bir bileşen için `computeInteractionHash` açıkça hata fırlatır.
+`computeEvidenceVersionRoot` şu an canlı ders sayfasına (`app/ders/[slug]/page.tsx`,
+`contentVersion={computeTeachingHash(lesson)}`) BAĞLANMADI — bu bilinçli bir
+kapsam sınırı: Sprint 2 yalnız motor/state katmanını teslim etti, sayfa
+entegrasyonu ayrı bir adımdır.
+
 ---
 
 ## Doğrulama stratejisi

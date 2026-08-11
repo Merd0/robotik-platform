@@ -149,3 +149,37 @@ export function computeLessonSubjectHashes(lesson: LessonInput): LessonSubjectHa
     revisionRoot: digest(JSON.stringify({ schema: "lesson-revision/v2", sourceHash, teachingHash, presentationHash })),
   };
 }
+
+/**
+ * Sprint 2 "Kanıt Dikey Dilimi" — genişletilmiş kanıt sürüm kökü.
+ *
+ * `teachingHash` tek başına ders METNİNİN sürümüdür; laboratuvarı gerçekten
+ * ÇALIŞTIRAN kodun (bileşen + saf motor + robot spec + worker) veya predicate
+ * mantığının değişip değişmediğini bilmez. `lib/interactionManifest.ts`
+ * bunları `interactionHash` ve `predicateHash` olarak ayrı ayrı hesaplıyor
+ * (fs erişimi gerektirdiği için bu dosyanın saflığını bozmadan orada
+ * yaşıyorlar); bu fonksiyon üçünü tek bir doğrulanabilir kökte birleştirir.
+ *
+ * Bilinçli olarak SAF: fs'e dokunmaz, üç hash'i girdi olarak alır. Kim
+ * çağırdığı (script, test, ileride bir sayfa) önemli değil.
+ *
+ * Kapsam notu: bu kök şu an `lib/evidence.ts`'e verilen gerçek
+ * `contentVersion` DEĞİL — canlı ders sayfası hâlâ `teachingHash` kullanıyor.
+ * Bu fonksiyon, motor/state kodu değiştiğinde kanıtın da eskiyebilmesi için
+ * hazır, test edilmiş bir yapı taşı; sayfaya bağlanması ayrı bir entegrasyon
+ * adımıdır (bkz. docs/02-mimari.md).
+ */
+export function computeEvidenceVersionRoot(input: {
+  teachingHash: string;
+  interactionHash: string;
+  predicateHash: string;
+}): string {
+  return digest(
+    JSON.stringify({
+      schema: "evidence-version-root/v1",
+      teachingHash: input.teachingHash,
+      interactionHash: input.interactionHash,
+      predicateHash: input.predicateHash,
+    }),
+  );
+}

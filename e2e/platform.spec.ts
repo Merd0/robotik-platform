@@ -137,6 +137,30 @@ test("iki eklemli kaydırıcı deneyi klavye ve pointer commit'iyle geçilebilir
   )).toBe(true);
 });
 
+test("dirsek değiştirme deneyi iki gerçek çözülebilir duruşla geçilebilir (Sprint 2 doğruluk düzeltmesi)", async ({ page }) => {
+  await page.goto("/ders/b-ortaokul-birden-fazla-yol");
+  const toggle = page.getByRole("button", { name: /^Dirsek:/ });
+  await toggle.scrollIntoViewIfNeeded();
+
+  // Başlangıç hedefinde her iki duruş da (yukarı/aşağı) gerçekten çözülebilir —
+  // bu yüzden iki tık, iki AYRI gerçek "success" gözlemi üretir.
+  await toggle.click();
+  await toggle.click();
+
+  await page.getByRole("button", { name: "Dirsek-aşağı çözümünü" }).click();
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { skillId?: string; stage?: string; result?: string; metrics?: { elbow?: string } }) =>
+    event.skillId === "multiple-ik-solutions" && event.stage === "observed" && event.result === "success" && event.metrics?.elbow === "up",
+  )).toBe(true);
+  expect(evidence.some((event: { skillId?: string; stage?: string; result?: string; metrics?: { elbow?: string } }) =>
+    event.skillId === "multiple-ik-solutions" && event.stage === "observed" && event.result === "success" && event.metrics?.elbow === "down",
+  )).toBe(true);
+  expect(evidence.some((event: { stage?: string; predicateId?: string }) =>
+    event.stage === "passed" && event.predicateId === "multiple-ik-solutions-v2",
+  )).toBe(true);
+});
+
 test("homojen dönüşüm pilotu iki işlem sırasını ölçülebilir biçimde ayırır", async ({ page }) => {
   await page.goto("/ders/a-universite-homojen-donusum");
   await page.getByRole("button", { name: "Y ekseni" }).click();

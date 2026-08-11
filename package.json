@@ -7,9 +7,9 @@
     "node": "24.x"
   },
   "scripts": {
-    "predev": "node scripts/copy-pyodide-assets.mjs && node scripts/build-worker.mjs && tsx scripts/build-search-index.ts",
+    "predev": "node scripts/copy-pyodide-assets.mjs && node scripts/build-worker.mjs && tsx scripts/build-search-index.ts && tsx scripts/build-evidence-manifest.ts",
     "dev": "next dev",
-    "prebuild": "node scripts/copy-pyodide-assets.mjs && node scripts/build-worker.mjs && tsx scripts/build-search-index.ts",
+    "prebuild": "node scripts/copy-pyodide-assets.mjs && node scripts/build-worker.mjs && tsx scripts/build-search-index.ts && tsx scripts/build-evidence-manifest.ts",
     "build": "next build && tsx scripts/check-no-draft-pages.ts && tsx scripts/check-release-output.ts",
     "start": "next start",
     "lint": "eslint .",
@@ -17,6 +17,7 @@
     "check-content": "tsx scripts/check-content.ts",
     "validate-content-graph": "tsx scripts/validate-content-graph.ts",
     "build-search-index": "tsx scripts/build-search-index.ts",
+    "build-evidence-manifest": "tsx scripts/build-evidence-manifest.ts",
     "check-no-draft-pages": "tsx scripts/check-no-draft-pages.ts",
     "check-release-output": "tsx scripts/check-release-output.ts",
     "check-quiz-dagilimi": "tsx scripts/check-quiz-dagilimi.ts",
