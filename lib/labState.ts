@@ -3,6 +3,7 @@ import { PLANNER_IDS, type PlannerId } from "./robotics/planners";
 import type { Obstacle } from "./robotics/collision";
 import type { Elbow } from "./robotics/kinematics";
 import type { IkSolverMode } from "./robotics/ikSolver";
+import { MAX_SCAN_ROWS, MIN_SCAN_ROWS, SCAN_PATH_COLUMNS } from "./scanPath";
 
 /**
  * Sprint 2 "Kanıt Dikey Dilimi" — sürümlü, paylaşılabilir laboratuvar state'i.
@@ -95,6 +96,14 @@ export interface JacobianVizLabState {
   jointAngles: number[];
 }
 
+export interface ScanPathLabState {
+  kind: "scan-path";
+  version: 1;
+  adjustableRows: boolean;
+  rows: number;
+  visited: string[];
+}
+
 export type LabState =
   | JointSlidersLabState
   | PlannerRaceLabState
@@ -103,7 +112,8 @@ export type LabState =
   | SignalTimelineLabState
   | SafetyZoneLabState
   | PixelToWorldLabState
-  | JacobianVizLabState;
+  | JacobianVizLabState
+  | ScanPathLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -333,6 +343,27 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "scan-path") {
+    if (record.version !== 1) return { ok: false, error: `scan-path: desteklenmeyen sürüm ${String(record.version)}` };
+    if (typeof record.adjustableRows !== "boolean") return { ok: false, error: "scan-path: adjustableRows boolean olmalı" };
+    if (typeof record.rows !== "number" || !Number.isSafeInteger(record.rows)) {
+      return { ok: false, error: "scan-path: rows güvenli tam sayı olmalı" };
+    }
+    if (!Array.isArray(record.visited) || !record.visited.every((key) => typeof key === "string")) {
+      return { ok: false, error: "scan-path: visited string dizisi olmalı" };
+    }
+    return {
+      ok: true,
+      state: {
+        kind: "scan-path",
+        version: 1,
+        adjustableRows: record.adjustableRows,
+        rows: record.rows,
+        visited: record.visited,
+      },
+    };
+  }
+
   return { ok: false, error: `bilinmeyen laboratuvar türü: ${String(record.kind)}` };
 }
 
@@ -448,6 +479,26 @@ export function validateLabState(state: LabState): string[] {
         errors.push(`J${index + 1} değeri (${angle}) limit dışında [${joint.limits.min}, ${joint.limits.max}]`);
       }
     });
+    return errors;
+  }
+
+  if (state.kind === "scan-path") {
+    if (state.rows < MIN_SCAN_ROWS || state.rows > MAX_SCAN_ROWS) {
+      errors.push(`rows ${MIN_SCAN_ROWS}-${MAX_SCAN_ROWS} arasında olmalı`);
+    }
+    if (new Set(state.visited).size !== state.visited.length) errors.push("visited yinelenen hücre içeremez");
+    for (const key of state.visited) {
+      const match = /^(\d+)-(\d+)$/.exec(key);
+      if (!match) {
+        errors.push(`geçersiz visited hücresi: ${key}`);
+        continue;
+      }
+      const col = Number(match[1]);
+      const row = Number(match[2]);
+      if (col < 0 || col >= SCAN_PATH_COLUMNS || row < 0 || row >= state.rows) {
+        errors.push(`visited hücresi sınır dışında: ${key}`);
+      }
+    }
     return errors;
   }
 

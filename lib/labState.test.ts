@@ -64,6 +64,14 @@ const jacobianViz: LabState = {
   jointAngles: [Math.PI / 4, 0],
 };
 
+const scanPathState: LabState = {
+  kind: "scan-path",
+  version: 1,
+  adjustableRows: true,
+  rows: 2,
+  visited: ["0-0", "1-0", "1-1", "0-1"],
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
@@ -74,6 +82,7 @@ describe("encodeLabState / decodeLabState — round-trip", () => {
     ["safety-zone", safetyZone],
     ["pixel-to-world", pixelToWorldState],
     ["jacobian-viz", jacobianViz],
+    ["scan-path", scanPathState],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -175,6 +184,11 @@ describe("decodeLabState — biçim doğrulaması", () => {
     const encoded = encodeLabState({ ...jacobianViz, jointAngles: [0, Number.NaN] } as unknown as LabState);
     expect(decodeLabState(encoded).ok).toBe(false);
   });
+
+  it("scan-path: rows tam sayı ve visited string dizisi olmalıdır", () => {
+    expect(decodeLabState(encodeLabState({ ...scanPathState, rows: 2.5 } as unknown as LabState)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState({ ...scanPathState, visited: [1, 2] } as unknown as LabState)).ok).toBe(false);
+  });
 });
 
 describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada geçersiz)", () => {
@@ -274,6 +288,19 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("jacobian-viz: robotla eşleşen açı state'i geçerlidir", () => {
     expect(validateLabState(jacobianViz)).toEqual([]);
+  });
+
+  it("scan-path: yinelenen, bozuk ve sınır dışı hücreleri reddeder", () => {
+    const errors = validateLabState({ ...scanPathState, visited: ["0-0", "0-0", "12-0", "bozuk"] });
+    expect(errors).toEqual(expect.arrayContaining([
+      "visited yinelenen hücre içeremez",
+      "visited hücresi sınır dışında: 12-0",
+      "geçersiz visited hücresi: bozuk",
+    ]));
+  });
+
+  it("scan-path: doğrulanmış kısmi tarama state'i geçerlidir", () => {
+    expect(validateLabState(scanPathState)).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

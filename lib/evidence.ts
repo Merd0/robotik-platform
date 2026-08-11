@@ -263,6 +263,29 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     },
   },
   {
+    id: "scan-row-density-comparison-v1",
+    lessonId: "f-universite-tarama-yolu-uretimi",
+    skillId: "scan-row-density",
+    evaluate: (events) => {
+      const completed = events.filter((event) =>
+        event.skillId === "scan-row-density" &&
+        event.stage === "observed" &&
+        event.result === "success" &&
+        event.metrics?.directionAlternates === true &&
+        typeof event.metrics?.rows === "number" &&
+        Number.isSafeInteger(event.metrics.rows) &&
+        typeof event.metrics?.pointCount === "number" &&
+        event.metrics.pointCount === event.metrics.rows * 12,
+      );
+      const comparisonFound = completed.some((fewer) => completed.some((more) =>
+        fewer !== more &&
+        (fewer.metrics!.rows as number) < (more.metrics!.rows as number) &&
+        (fewer.metrics!.pointCount as number) < (more.metrics!.pointCount as number),
+      ));
+      return { passed: comparisonFound, metrics: { requiredCompletedScans: 2 } };
+    },
+  },
+  {
     // v1 → v2: predicate yalnız "algoritma denendi mi"yi sayıyordu (metrics.algorithm
     // hem başarılı hem başarısız/timeout koşularda yazılıyor), result alanına hiç
     // bakmıyordu — üç başarısız koşu bile passed=true üretiyordu (false positive).

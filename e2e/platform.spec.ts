@@ -203,6 +203,34 @@ test("JacobianViz gerçek tekillik commit'iyle kanıtlanır ve state'i paylaşı
   await expect(page.getByText("Tekillik:", { exact: false })).toBeVisible();
 });
 
+test("ScanPath iki tamamlanmış yoğunluğu kanıtlar ve state'i paylaşır", async ({ page }) => {
+  await page.goto("/ders/f-universite-tarama-yolu-uretimi");
+  const rows = page.getByRole("slider");
+  const scan = page.getByRole("button", { name: /^(Tara|Taranıyor…)$/ });
+
+  await rows.fill("2");
+  await scan.click();
+  await expect(scan).toBeEnabled({ timeout: 5_000 });
+  await expect(page.getByRole("status").filter({ hasText: "Toplanan nokta sayısı" })).toHaveText(/24 \/ 24/);
+
+  await rows.fill("3");
+  await scan.click();
+  await expect(scan).toBeEnabled({ timeout: 6_000 });
+  await expect(page.getByRole("status").filter({ hasText: "Toplanan nokta sayısı" })).toHaveText(/36 \/ 36/);
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((item: { stage?: string; predicateId?: string }) =>
+    item.stage === "passed" && item.predicateId === "scan-row-density-comparison-v1",
+  )).toBe(true);
+
+  await page.getByRole("button", { name: "Bu deneyi paylaş" }).click();
+  const href = await page.getByRole("link", { name: "Paylaşılan görünümü aç" }).getAttribute("href");
+  expect(href).not.toBeNull();
+  await page.goto(href!);
+  await expect(page.getByRole("slider")).toHaveValue("3");
+  await expect(page.getByRole("status").filter({ hasText: "Toplanan nokta sayısı" })).toHaveText(/36 \/ 36/);
+});
+
 test("iki eklemli kaydırıcı deneyi klavye ve pointer commit'iyle geçilebilir", async ({ page }) => {
   await page.goto("/ders/b-ortaokul-eklemleri-oynat");
   const experiment = page.locator("[data-joint-sliders]");

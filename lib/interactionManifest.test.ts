@@ -140,6 +140,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["JacobianViz"], ["generic-2dof"])).not.toThrow();
   });
 
+  it("ScanPath bileşeni ile boustrophedon motorunu interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.ScanPath).toEqual({
+      componentFile: "components/interactive/ScanPath.tsx",
+      engineFiles: ["lib/scanPath.ts"],
+    });
+    expect(() => computeInteractionHash(["ScanPath"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -192,6 +200,11 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
 
   it("JacobianViz ana dersini v2 tekillik predicate'ine bağlar", () => {
     expect(computePredicateHash("b-universite-jacobian"))
+      .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
+  });
+
+  it("ScanPath ana dersini satır yoğunluğu predicate sürümüne bağlar", () => {
+    expect(computePredicateHash("f-universite-tarama-yolu-uretimi"))
       .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
   });
 });

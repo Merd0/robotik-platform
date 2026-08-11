@@ -85,6 +85,10 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
     componentFile: "components/interactive/JacobianViz.tsx",
     engineFiles: ["lib/robotics/kinematics.ts"],
   },
+  ScanPath: {
+    componentFile: "components/interactive/ScanPath.tsx",
+    engineFiles: ["lib/scanPath.ts"],
+  },
 };
 
 /** Robot id → spesifikasyon dosyası. Yalnız pilot laboratuvarların kullandığı robotlar. */

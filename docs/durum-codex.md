@@ -1426,3 +1426,18 @@ güven verisini yanlış temel üzerine kurmasını engeller.
 - Test: 11 yeni kontrol (state round-trip/negatifleri,
   interaction/predicate bağlantısı, predicate golden + üç negatif ve
   paylaşım+kanıt E2E'si).
+
+### 2026-08-12 · ScanPath (3 ders)
+
+- Bulgu: kanıt/predicate/state zinciri yoktu; animasyon zamanlayıcıları
+  unmount'ta temizlenmiyor ve 12 sütunlu ızgara dar ekranda kart dışına
+  taşıyordu. Boustrophedon sıra motoru bileşenin içinde doğruydu.
+- Düzeltme: sıra üretimi ve yön doğrulaması saf motora çıkarıldı. Kanıt yalnız
+  taramanın son zamanlayıcısı tamamlandıktan sonra bir kez yazılır; resetlenen
+  veya yarım kalan tarama olay üretmez. `scan-row-density-comparison-v1`, iki
+  farklı satır sayısında eksiksiz ve yönleri dönüşümlü taramayı karşılaştırır.
+  `scan-path/v1` kısmi ziyaret kümesini doğrular/paylaşır; dar ekranda ızgara
+  kendi yatay kaydırma alanına alındı.
+- Test: 14 yeni kontrol (motor golden/negatifleri, state
+  round-trip/negatifleri, interaction/predicate bağlantısı, predicate golden +
+  üç negatif ve paylaşım+kanıt E2E'si).

@@ -545,3 +545,43 @@ describe("JacobianViz rollout: golden + negatif predicate testleri", () => {
     ]).passed).toBe(false);
   });
 });
+
+describe("ScanPath rollout: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "scan-row-density-comparison-v1")!;
+  const scan = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+  ) => event("observed", result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "scan-path-v1",
+  });
+
+  it("golden: iki tamamlanmış boustrophedon taramada daha çok satır daha çok nokta üretirse geçer", () => {
+    expect(predicate.evaluate([
+      scan("success", { rows: 2, pointCount: 24, directionAlternates: true }),
+      scan("success", { rows: 3, pointCount: 36, directionAlternates: true }),
+    ]).passed).toBe(true);
+  });
+
+  it("negatif: tek tamamlanmış tarama karşılaştırma değildir", () => {
+    expect(predicate.evaluate([
+      scan("success", { rows: 2, pointCount: 24, directionAlternates: true }),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: nokta sayısı eksik olan yarım tarama geçmez", () => {
+    expect(predicate.evaluate([
+      scan("success", { rows: 2, pointCount: 23, directionAlternates: true }),
+      scan("success", { rows: 3, pointCount: 35, directionAlternates: true }),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: satır yönleri dönüşümlü değilse tamamlanmış sayı bile geçmez", () => {
+    expect(predicate.evaluate([
+      scan("success", { rows: 2, pointCount: 24, directionAlternates: false }),
+      scan("success", { rows: 3, pointCount: 36, directionAlternates: false }),
+    ]).passed).toBe(false);
+  });
+});
