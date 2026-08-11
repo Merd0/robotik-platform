@@ -21,6 +21,29 @@ test("ana sayfa taşmadan güvenilir bir başlangıç sunar", async ({ page }) =
   expect(overflows).toBe(false);
 });
 
+test("öğretmen pilotu görev, mobil ve baskı yüzeylerini birlikte korur", async ({ page }) => {
+  await page.goto("/ogretmen");
+  await expect(page.getByRole("heading", { name: "Bir hedef, iki robot duruşu." })).toBeVisible();
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+
+  const taskLink = page.getByRole("link", { name: /robotik-platform\.vercel\.app\/ders\/b-lise-geometrik-ters-kinematik/ });
+  const taskHref = await taskLink.getAttribute("href");
+  expect(taskHref).not.toBeNull();
+  const taskHash = new URL(taskHref!).hash;
+
+  await page.goto(`/ders/b-lise-geometrik-ters-kinematik${taskHash}`);
+  await expect(page.getByText("Hedef: (0.9, 0.3)", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Dirsek: yukarı" })).toBeVisible();
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+
+  await page.goto("/ogretmen");
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByRole("heading", { name: "Tahmin et, çalıştır, farkı gör." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bir hedef, iki robot duruşu." })).toBeHidden();
+  await expect(page.locator("body > header")).toBeHidden();
+  await expect(page.locator("body > footer")).toBeHidden();
+});
+
 test("hero ilk anlamlı kontrolü ilk viewport içinde gösterir", async ({ page }) => {
   await page.goto("/");
   const prediction = page.getByRole("button", { name: "Sınırda durur" });

@@ -12,6 +12,11 @@ afterEach(() => {
 });
 
 describe("sitemap", () => {
+  it("öğretmen pilotu gibi statik kaynakları listeler", () => {
+    const paths = sitemap().map((entry) => new URL(entry.url).pathname);
+    expect(paths).toContain("/ogretmen");
+  });
+
   it("taslak önizlemesi açıkken bile yalnızca yayındaki dersleri listeler", () => {
     process.env.ICERIK_TASLAK_ONIZLEME = "1";
 
