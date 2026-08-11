@@ -122,6 +122,15 @@ export interface ThresholdViewerLabState {
   threshold: number;
 }
 
+export interface TransformOrderLabState {
+  kind: "transform-order";
+  version: 1;
+  order: "rotation-then-translation" | "translation-then-rotation";
+  angleDegrees: number;
+  prediction: "x" | "y" | null;
+  revealed: boolean;
+}
+
 export type LabState =
   | JointSlidersLabState
   | PlannerRaceLabState
@@ -133,7 +142,8 @@ export type LabState =
   | JacobianVizLabState
   | ScanPathLabState
   | BlockEditorLabState
-  | ThresholdViewerLabState;
+  | ThresholdViewerLabState
+  | TransformOrderLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -466,6 +476,31 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "transform-order") {
+    if (record.version !== 1) return { ok: false, error: `transform-order: desteklenmeyen sürüm ${String(record.version)}` };
+    if (record.order !== "rotation-then-translation" && record.order !== "translation-then-rotation") {
+      return { ok: false, error: "transform-order: order geçersiz" };
+    }
+    if (typeof record.angleDegrees !== "number" || !Number.isSafeInteger(record.angleDegrees)) {
+      return { ok: false, error: "transform-order: angleDegrees güvenli tam sayı olmalı" };
+    }
+    if (record.prediction !== null && record.prediction !== "x" && record.prediction !== "y") {
+      return { ok: false, error: "transform-order: prediction x/y/null olmalı" };
+    }
+    if (typeof record.revealed !== "boolean") return { ok: false, error: "transform-order: revealed boolean olmalı" };
+    return {
+      ok: true,
+      state: {
+        kind: "transform-order",
+        version: 1,
+        order: record.order,
+        angleDegrees: record.angleDegrees,
+        prediction: record.prediction,
+        revealed: record.revealed,
+      },
+    };
+  }
+
   return { ok: false, error: `bilinmeyen laboratuvar türü: ${String(record.kind)}` };
 }
 
@@ -653,6 +688,14 @@ export function validateLabState(state: LabState): string[] {
 
   if (state.kind === "threshold-viewer") {
     if (state.threshold < 0 || state.threshold > 255) errors.push("threshold 0-255 arasında olmalı");
+    return errors;
+  }
+
+  if (state.kind === "transform-order") {
+    if (state.angleDegrees < 0 || state.angleDegrees > 180 || state.angleDegrees % 15 !== 0) {
+      errors.push("angleDegrees 0-180 arasında ve 15'in katı olmalı");
+    }
+    if (state.revealed && state.prediction === null) errors.push("revealed state bir prediction gerektirir");
     return errors;
   }
 

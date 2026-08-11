@@ -378,17 +378,43 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     },
   },
   {
-    id: "transform-order-comparison-v1",
+    // v1 → v2: eski predicate yalnız iki order etiketinin varlığına bakıyordu;
+    // yanlış tahminlerin ürettiği retry olayları ve sayısal olarak aynı sonuçlar
+    // da karşılaştırma sayılabiliyordu. Artık aynı açıdaki iki gerçek başarılı
+    // ölçümün çıktı koordinatları ve raporlanan ayrımı birbiriyle uyuşmalı.
+    id: "transform-order-comparison-v2",
     lessonId: "a-universite-homojen-donusum",
     skillId: "transform-order",
     evaluate: (events) => {
-      const orders = new Set(events
-        .filter((event) => event.skillId === "transform-order" && event.stage === "observed")
-        .map((event) => event.metrics?.order)
-        .filter((order): order is string => typeof order === "string"));
+      const observations = events.filter((event) =>
+        event.skillId === "transform-order" &&
+        event.stage === "observed" &&
+        event.result === "success" &&
+        event.metrics?.correctPrediction === true &&
+        (event.metrics?.order === "translation-then-rotation" || event.metrics?.order === "rotation-then-translation") &&
+        typeof event.metrics?.angleDegrees === "number" &&
+        typeof event.metrics?.outputX === "number" &&
+        typeof event.metrics?.outputY === "number" &&
+        typeof event.metrics?.comparisonDistance === "number" &&
+        event.metrics.comparisonDistance > 0.01,
+      );
+      const compared = observations.some((first) => observations.some((second) => {
+        if (
+          first === second ||
+          first.metrics!.order === second.metrics!.order ||
+          first.metrics!.angleDegrees !== second.metrics!.angleDegrees
+        ) return false;
+        const measuredDistance = Math.hypot(
+          (first.metrics!.outputX as number) - (second.metrics!.outputX as number),
+          (first.metrics!.outputY as number) - (second.metrics!.outputY as number),
+        );
+        return measuredDistance > 0.01 &&
+          Math.abs((first.metrics!.comparisonDistance as number) - measuredDistance) < 0.005 &&
+          Math.abs((second.metrics!.comparisonDistance as number) - measuredDistance) < 0.005;
+      }));
       return {
-        passed: orders.has("translation-then-rotation") && orders.has("rotation-then-translation") && hasSuccessfulAssessment(events, "transform-order"),
-        metrics: { comparedOrders: orders.size },
+        passed: compared && hasSuccessfulAssessment(events, "transform-order"),
+        metrics: { comparedOrders: compared ? 2 : 0 },
       };
     },
   },

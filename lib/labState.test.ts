@@ -92,6 +92,15 @@ const thresholdViewer: LabState = {
   threshold: 128,
 };
 
+const transformOrder: LabState = {
+  kind: "transform-order",
+  version: 1,
+  order: "rotation-then-translation",
+  angleDegrees: 90,
+  prediction: "x",
+  revealed: true,
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
@@ -105,6 +114,7 @@ describe("encodeLabState / decodeLabState — round-trip", () => {
     ["scan-path", scanPathState],
     ["block-editor", blockEditor],
     ["threshold-viewer", thresholdViewer],
+    ["transform-order", transformOrder],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -225,6 +235,12 @@ describe("decodeLabState — biçim doğrulaması", () => {
   it("threshold-viewer: yalnız geçerli tema ve tam sayı eşik kabul eder", () => {
     expect(decodeLabState(encodeLabState({ ...thresholdViewer, theme: "ilkokul" } as unknown as LabState)).ok).toBe(false);
     expect(decodeLabState(encodeLabState({ ...thresholdViewer, threshold: 127.5 } as unknown as LabState)).ok).toBe(false);
+  });
+
+  it("transform-order: yalnız geçerli sıra, tahmin ve tam sayı açı kabul eder", () => {
+    expect(decodeLabState(encodeLabState({ ...transformOrder, order: "ters" } as unknown as LabState)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState({ ...transformOrder, prediction: "z" } as unknown as LabState)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState({ ...transformOrder, angleDegrees: 91.5 } as unknown as LabState)).ok).toBe(false);
   });
 });
 
@@ -365,6 +381,15 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("threshold-viewer: ayıran eşik state'i geçerlidir", () => {
     expect(validateLabState(thresholdViewer)).toEqual([]);
+  });
+
+  it("transform-order: slider adımı dışındaki açıyı ve tahminsiz sonucu reddeder", () => {
+    expect(validateLabState({ ...transformOrder, angleDegrees: 91 })).toContain("angleDegrees 0-180 arasında ve 15'in katı olmalı");
+    expect(validateLabState({ ...transformOrder, prediction: null })).toContain("revealed state bir prediction gerektirir");
+  });
+
+  it("transform-order: doğrulanmış karşılaştırma görünümü geçerlidir", () => {
+    expect(validateLabState(transformOrder)).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

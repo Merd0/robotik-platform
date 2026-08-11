@@ -97,6 +97,10 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
     componentFile: "components/interactive/ThresholdViewer.tsx",
     engineFiles: ["lib/threshold.ts"],
   },
+  TransformOrderLab: {
+    componentFile: "components/interactive/TransformOrderLab.tsx",
+    engineFiles: ["lib/robotics/learningLabs.ts", "lib/robotics/transform.ts"],
+  },
 };
 
 /** Robot id → spesifikasyon dosyası. Yalnız pilot laboratuvarların kullandığı robotlar. */

@@ -1476,3 +1476,22 @@ güven verisini yanlış temel üzerine kurmasını engeller.
 - Test: 14 yeni kontrol (motor golden/negatifleri, state round-trip/negatifleri,
   interaction/predicate bağlantısı, predicate golden + üç negatif ve üç
   viewportta çalışan paylaşım+kanıt E2E senaryosu).
+
+### 2026-08-12 · TransformOrderLab (1 ders)
+
+- Bulgu: olay yalnız `Dönüşümü uygula` commit'inde yazıldığı için her karede
+  kayıt yoktu; ancak `transform-order-comparison-v1` olay sonucunu ve sayısal
+  çıktıyı denetlemiyordu. İki yanlış tahminin ürettiği iki `retry` olayı, yalnız
+  order etiketleri farklı olduğu için CodeRunner değerlendirmesiyle birlikte
+  yanlışlıkla başarı sayılabiliyordu.
+- Düzeltme: `transform-order-comparison-v2` yalnız doğru tahminli iki `success`
+  ölçümünü kabul eder; ölçümler aynı açıda, farklı sırada olmalı ve iki çıktıdan
+  yeniden hesaplanan mesafe her iki olayın raporladığı ayrımla uyuşmalıdır.
+  Bileşen+öğrenme motoru+matris motoru manifesti ile sıra/açı/tahmin/görünür
+  sonuç alanlarını doğrulayan `transform-order/v1` paylaşım state'i eklendi.
+  Aynı dersteki geniş matris kod bloğu mobilde sayfayı taşırıyordu; ders kod
+  bloklarına sayfa yerine kendi içinde yatay kaydırma verildi.
+- Test: 10 yeni kontrol (state round-trip/negatifleri, interaction/predicate
+  bağlantısı ve predicate golden + üç negatif); mevcut üç-viewport E2E senaryosu
+  paylaşım geri yükleme, gerçek Pyodide kod değerlendirmesi ve v2 başarı kaydıyla
+  genişletildi.

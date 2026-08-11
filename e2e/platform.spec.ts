@@ -341,7 +341,7 @@ test("dirsek değiştirme deneyi iki gerçek çözülebilir duruşla geçilebili
   )).toBe(true);
 });
 
-test("homojen dönüşüm pilotu iki işlem sırasını ölçülebilir biçimde ayırır", async ({ page }) => {
+test("TransformOrderLab iki gerçek sonucu kanıtlar ve state'i paylaşır", async ({ page }) => {
   await page.goto("/ders/a-universite-homojen-donusum");
   await page.getByRole("button", { name: "Y ekseni" }).click();
   await page.getByRole("button", { name: "Dönüşümü uygula" }).click();
@@ -355,6 +355,26 @@ test("homojen dönüşüm pilotu iki işlem sırasını ölçülebilir biçimde 
   await page.getByRole("button", { name: "X ekseni" }).click();
   await page.getByRole("button", { name: "Dönüşümü uygula" }).click();
   await expect(page.getByText("orijin (1.000, 0.000) m · seçtiğin sıra", { exact: false }).first()).toBeVisible();
+
+  await page.getByRole("button", { name: "Bu deneyi paylaş" }).first().click();
+  const href = await page.getByRole("link", { name: "Paylaşılan görünümü aç" }).first().getAttribute("href");
+  expect(href).not.toBeNull();
+  await page.goto(href!);
+  await expect(page.getByRole("button", { name: /Önce döndür, sonra ötele/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("slider").first()).toHaveValue("90");
+  await expect(page.getByText("orijin (1.000, 0.000) m · seçtiğin sıra", { exact: false }).first()).toBeVisible();
+
+  const editor = page.getByLabel("Python kodu");
+  const correctedCode = (await editor.inputValue()).replace("compose = matmul(T, R)", "compose = matmul(R, T)");
+  await editor.fill(correctedCode);
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Otomatik test geçti.", { exact: false })).toBeVisible({ timeout: 30_000 });
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { predicateId?: string; stage?: string }) =>
+    event.stage === "passed" && event.predicateId === "transform-order-comparison-v2",
+  )).toBe(true);
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
 });
 
 test("DLS pilotu gerçek yineleme izini ve hata eğrisini gösterir", async ({ page }) => {

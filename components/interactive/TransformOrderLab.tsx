@@ -2,6 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
+import {
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
 import { rotationZ, translation } from "@/lib/robotics/transform";
 import {
   composePlanarTransform,
@@ -85,6 +90,13 @@ export function TransformOrderLab() {
   const [prediction, setPrediction] = useState<"x" | "y" | null>(null);
   const [revealed, setRevealed] = useState(false);
 
+  useSharedLabState("transform-order", (shared) => {
+    setOrder(shared.order);
+    setAngleDegrees(shared.angleDegrees);
+    setPrediction(shared.prediction);
+    setRevealed(shared.revealed);
+  });
+
   const angleRadians = angleDegrees * Math.PI / 180;
   const digerSira: TransformOrder = order === "translation-then-rotation" ? "rotation-then-translation" : "translation-then-rotation";
 
@@ -115,7 +127,15 @@ export function TransformOrderLab() {
       skillId: "transform-order",
       stage: "observed",
       result: success ? "success" : "retry",
-      metrics: { order, angleDegrees, outputX: Number(round(frame.origin.x)), outputY: Number(round(frame.origin.y)) },
+      metrics: {
+        order,
+        angleDegrees,
+        prediction,
+        correctPrediction: success,
+        outputX: Number(round(frame.origin.x)),
+        outputY: Number(round(frame.origin.y)),
+        comparisonDistance: Number(round(ayrim)),
+      },
     });
   }
 
@@ -231,6 +251,18 @@ export function TransformOrderLab() {
           <p className="mt-2 text-xs text-universite-ink/65">Son sütun çerçeve orijinini taşır: ({round(frame.origin.x)}, {round(frame.origin.y)}, 0) m.</p>
         </details>
       </div>}
+
+      <ExperimentShareButton
+        seviye="universite"
+        createShareUrl={() => createLabShareUrl({
+          kind: "transform-order",
+          version: 1,
+          order,
+          angleDegrees,
+          prediction,
+          revealed,
+        })}
+      />
     </section>
   );
 }

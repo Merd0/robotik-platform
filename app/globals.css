@@ -480,6 +480,12 @@ select {
   max-width: 46rem;
 }
 
+.ders-icerik pre {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
 .ders-icerik :is(ul, ol) {
   padding-left: 1.25rem;
   line-height: 1.7;

@@ -164,6 +164,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["ThresholdViewer"])).not.toThrow();
   });
 
+  it("TransformOrderLab bileşeni ile öğrenme ve matris motorlarını interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.TransformOrderLab).toEqual({
+      componentFile: "components/interactive/TransformOrderLab.tsx",
+      engineFiles: ["lib/robotics/learningLabs.ts", "lib/robotics/transform.ts"],
+    });
+    expect(() => computeInteractionHash(["TransformOrderLab"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -232,6 +240,11 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
 
   it("ThresholdViewer ana dersini üç rejim predicate sürümüne bağlar", () => {
     expect(computePredicateHash("f-lise-esikleme-nesne-bulma"))
+      .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
+  });
+
+  it("TransformOrderLab dersini v2 karşılaştırma predicate sürümüne bağlar", () => {
+    expect(computePredicateHash("a-universite-homojen-donusum"))
       .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
   });
 });

@@ -83,14 +83,20 @@ describe("controlled pilot predicates", () => {
     lessonId: string,
     skillId: string,
     stage: "observed" | "assessed",
-    metrics: Record<string, string>,
+    metrics: Record<string, number | string | boolean>,
   ) => event(stage, "success", { lessonId, skillId, metrics, contentVersion: "pilot-v1" });
 
   it("requires both transform orders plus the executable code assessment", () => {
-    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "transform-order-comparison-v1")!;
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "transform-order-comparison-v2")!;
     const observations = [
-      pilotEvent(predicate.lessonId, predicate.skillId, "observed", { order: "translation-then-rotation" }),
-      pilotEvent(predicate.lessonId, predicate.skillId, "observed", { order: "rotation-then-translation" }),
+      pilotEvent(predicate.lessonId, predicate.skillId, "observed", {
+        order: "translation-then-rotation", angleDegrees: 90, outputX: 0, outputY: 1,
+        comparisonDistance: 1.414, correctPrediction: true,
+      }),
+      pilotEvent(predicate.lessonId, predicate.skillId, "observed", {
+        order: "rotation-then-translation", angleDegrees: 90, outputX: 1, outputY: 0,
+        comparisonDistance: 1.414, correctPrediction: true,
+      }),
     ];
     expect(predicate.evaluate(observations).passed).toBe(false);
     expect(predicate.evaluate([...observations, pilotEvent(predicate.lessonId, predicate.skillId, "assessed", {})]).passed).toBe(true);
@@ -304,6 +310,68 @@ describe("Sprint 2 pilot laboratuvarları: golden + negative predicate testleri"
     it("negatif: sınırın iki tarafı da gözlenmiş ama kavram kontrolü yoksa passed olmaz", () => {
       expect(predicate.evaluate([reachable(), unreachable()]).passed).toBe(false);
     });
+  });
+});
+
+describe("TransformOrderLab rollout: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "transform-order-comparison-v2")!;
+  const observation = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+  ) => event("observed", result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "transform-order-v2",
+  });
+  const assessment = () => event("assessed", "success", {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    contentVersion: "transform-order-v2",
+  });
+  const translated = {
+    order: "translation-then-rotation", angleDegrees: 90, outputX: 0, outputY: 1,
+    comparisonDistance: 1.414, correctPrediction: true,
+  };
+  const rotated = {
+    order: "rotation-then-translation", angleDegrees: 90, outputX: 1, outputY: 0,
+    comparisonDistance: 1.414, correctPrediction: true,
+  };
+
+  it("golden: aynı açıdaki iki başarılı ve gerçekten ayrışan ölçüm + kod değerlendirmesi geçer", () => {
+    expect(predicate.evaluate([
+      observation("success", translated),
+      observation("success", rotated),
+      assessment(),
+    ]).passed).toBe(true);
+  });
+
+  it("negatif: yanlış tahminlerin retry olayları iki order etiketi taşısa da geçmez", () => {
+    expect(predicate.evaluate([
+      observation("retry", { ...translated, correctPrediction: false }),
+      observation("retry", { ...rotated, correctPrediction: false }),
+      assessment(),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: iki sıra aynı sayısal çıktıyı veriyorsa karşılaştırma sayılmaz", () => {
+    expect(predicate.evaluate([
+      observation("success", translated),
+      observation("success", { ...rotated, outputX: 0, outputY: 1, comparisonDistance: 1.414 }),
+      assessment(),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: iki ölçüm farklı açılardaysa veya kod değerlendirmesi yoksa geçmez", () => {
+    expect(predicate.evaluate([
+      observation("success", translated),
+      observation("success", { ...rotated, angleDegrees: 105 }),
+      assessment(),
+    ]).passed).toBe(false);
+    expect(predicate.evaluate([
+      observation("success", translated),
+      observation("success", rotated),
+    ]).passed).toBe(false);
   });
 });
 
