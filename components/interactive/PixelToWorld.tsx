@@ -1,6 +1,13 @@
 "use client";
 
 import { useState, type KeyboardEvent, type MouseEvent } from "react";
+import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
+import {
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
+import { PIXEL_GRID_SIZE, pixelToWorld } from "@/lib/pixelToWorld";
 
 interface PixelToWorldProps {
   /** Varsayılan kalibrasyon: 1 pikselin gerçek dünyada kaç milimetreye karşılık geldiği. */
@@ -10,6 +17,8 @@ interface PixelToWorldProps {
   /** "Perspektif hatası göster" anahtarını göster — merkezden uzaklaştıkça ölçüm kayması ekler. */
   allowPerspectiveDistortion?: boolean;
   theme?: "ortaokul" | "lise" | "universite";
+  /** Aynı çevresel hücreyi bozulma kapalı/açık karşılaştıran sürümlü görev. */
+  pilot?: "distortion-comparison";
 }
 
 const THEME = {
@@ -42,12 +51,8 @@ const THEME = {
   },
 } as const;
 
-const GRID_SIZE = 8;
 const OBJECT_COL = 5;
 const OBJECT_ROW = 2;
-const PIXELS_PER_CELL = 10;
-
-const round = (value: number) => Math.round(value * 100) / 100;
 
 /**
  * Ders içine gömülen etkileşimli sahne: bir "kamera görüntüsü" ızgarası —
@@ -62,17 +67,50 @@ export function PixelToWorld({
   adjustableCalibration = false,
   allowPerspectiveDistortion = false,
   theme = "lise",
+  pilot,
 }: PixelToWorldProps) {
   const t = THEME[theme];
+  const record = useEvidenceRecorder();
   const [selected, setSelected] = useState<{ col: number; row: number } | null>(null);
   const [calibration, setCalibration] = useState(mmPerPixel);
   const [showDistortion, setShowDistortion] = useState(false);
 
-  function selectCell(col: number, row: number) {
-    setSelected({
-      col: Math.max(0, Math.min(GRID_SIZE - 1, col)),
-      row: Math.max(0, Math.min(GRID_SIZE - 1, row)),
+  useSharedLabState("pixel-to-world", (shared) => {
+    if (
+      shared.adjustableCalibration !== adjustableCalibration ||
+      shared.allowPerspectiveDistortion !== allowPerspectiveDistortion ||
+      (!adjustableCalibration && shared.calibration !== mmPerPixel)
+    ) return;
+    setSelected(shared.selected);
+    setCalibration(shared.calibration);
+    setShowDistortion(shared.showDistortion);
+  });
+
+  function recordObservation(cell: { col: number; row: number }, distortion: boolean) {
+    if (pilot !== "distortion-comparison") return;
+    const result = pixelToWorld(cell.col, cell.row, calibration, distortion);
+    const peripheral = result.distanceFromCenter >= 3;
+    record({
+      skillId: "camera-distortion-comparison",
+      stage: "observed",
+      result: peripheral ? "success" : "retry",
+      metrics: {
+        cell: `${cell.col},${cell.row}`,
+        distortion,
+        worldX: result.worldX,
+        worldY: result.worldY,
+        distanceFromCenter: result.distanceFromCenter,
+      },
     });
+  }
+
+  function selectCell(col: number, row: number) {
+    const next = {
+      col: Math.max(0, Math.min(PIXEL_GRID_SIZE - 1, col)),
+      row: Math.max(0, Math.min(PIXEL_GRID_SIZE - 1, row)),
+    };
+    setSelected(next);
+    recordObservation(next, showDistortion);
   }
 
   function handleGridClick(event: MouseEvent<HTMLButtonElement>) {
@@ -85,8 +123,8 @@ export function PixelToWorld({
 
     const bounds = event.currentTarget.getBoundingClientRect();
     selectCell(
-      Math.floor(((event.clientX - bounds.left) / bounds.width) * GRID_SIZE),
-      Math.floor(((event.clientY - bounds.top) / bounds.height) * GRID_SIZE),
+      Math.floor(((event.clientX - bounds.left) / bounds.width) * PIXEL_GRID_SIZE),
+      Math.floor(((event.clientY - bounds.top) / bounds.height) * PIXEL_GRID_SIZE),
     );
   }
 
@@ -105,23 +143,6 @@ export function PixelToWorld({
     selectCell(current.col + direction.col, current.row + direction.row);
   }
 
-  function computeWorld(col: number, row: number) {
-    const pixelX = col * PIXELS_PER_CELL;
-    const pixelY = row * PIXELS_PER_CELL;
-    let effectiveCalibration = calibration;
-    if (allowPerspectiveDistortion && showDistortion) {
-      const center = (GRID_SIZE - 1) / 2;
-      const distanceFromCenter = Math.hypot(col - center, row - center);
-      effectiveCalibration = calibration * (1 + distanceFromCenter * 0.06);
-    }
-    return {
-      pixelX,
-      pixelY,
-      worldX: round(pixelX * effectiveCalibration),
-      worldY: round(pixelY * effectiveCalibration),
-    };
-  }
-
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
       <div className={`w-full max-w-92 rounded-lg ${t.bg} p-2`}>
@@ -136,9 +157,9 @@ export function PixelToWorld({
           }
           className="grid aspect-square w-full grid-cols-8 gap-0.5 rounded"
         >
-          {Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, index) => {
-            const col = index % GRID_SIZE;
-            const row = Math.floor(index / GRID_SIZE);
+          {Array.from({ length: PIXEL_GRID_SIZE * PIXEL_GRID_SIZE }, (_, index) => {
+            const col = index % PIXEL_GRID_SIZE;
+            const row = Math.floor(index / PIXEL_GRID_SIZE);
             const isObject = col === OBJECT_COL && row === OBJECT_ROW;
             const isSelected = selected?.col === col && selected?.row === row;
             return (
@@ -177,7 +198,11 @@ export function PixelToWorld({
             type="checkbox"
             className="h-5 w-5"
             checked={showDistortion}
-            onChange={(event) => setShowDistortion(event.target.checked)}
+            onChange={(event) => {
+              const next = event.target.checked;
+              setShowDistortion(next);
+              if (selected) recordObservation(selected, next);
+            }}
           />
           Perspektif hatasını göster
         </label>
@@ -186,7 +211,12 @@ export function PixelToWorld({
       <div role="status" aria-live="polite" className={`text-sm ${t.ink}`}>
         {selected ? (
           (() => {
-            const { pixelX, pixelY, worldX, worldY } = computeWorld(selected.col, selected.row);
+            const { pixelX, pixelY, worldX, worldY } = pixelToWorld(
+              selected.col,
+              selected.row,
+              calibration,
+              allowPerspectiveDistortion && showDistortion,
+            );
             return (
               <>
                 <div>
@@ -202,6 +232,19 @@ export function PixelToWorld({
           <span className={t.inkMuted}>Bir hücreye tıkla — özellikle nesnenin üstüne.</span>
         )}
       </div>
+
+      <ExperimentShareButton
+        seviye={theme}
+        createShareUrl={() => createLabShareUrl({
+          kind: "pixel-to-world",
+          version: 1,
+          adjustableCalibration,
+          allowPerspectiveDistortion,
+          calibration,
+          selected,
+          showDistortion,
+        })}
+      />
     </div>
   );
 }

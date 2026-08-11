@@ -47,6 +47,16 @@ const safetyZone: LabState = {
   brakingTime: 0.3,
 };
 
+const pixelToWorldState: LabState = {
+  kind: "pixel-to-world",
+  version: 1,
+  adjustableCalibration: false,
+  allowPerspectiveDistortion: true,
+  calibration: 5,
+  selected: { col: 7, row: 7 },
+  showDistortion: true,
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
@@ -55,6 +65,7 @@ describe("encodeLabState / decodeLabState — round-trip", () => {
     ["code-runner", codeRunner],
     ["signal-timeline", signalTimeline],
     ["safety-zone", safetyZone],
+    ["pixel-to-world", pixelToWorldState],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -146,6 +157,11 @@ describe("decodeLabState — biçim doğrulaması", () => {
     expect(decodeLabState(encodeLabState({ ...safetyZone, mode: "hizli" } as unknown as LabState)).ok).toBe(false);
     expect(decodeLabState(encodeLabState({ ...safetyZone, distance: Number.NaN } as unknown as LabState)).ok).toBe(false);
   });
+
+  it("pixel-to-world: selected hücresinin sayısal col/row taşımasını zorunlu kılar", () => {
+    const encoded = encodeLabState({ ...pixelToWorldState, selected: { col: "7", row: 7 } } as unknown as LabState);
+    expect(decodeLabState(encoded).ok).toBe(false);
+  });
 });
 
 describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada geçersiz)", () => {
@@ -225,6 +241,17 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("safety-zone: UI sınırlarındaki ölçüm state'i geçerlidir", () => {
     expect(validateLabState(safetyZone)).toEqual([]);
+  });
+
+  it("pixel-to-world: ızgara dışı hücreyi ve kapalı özellikte distortion'ı reddeder", () => {
+    expect(validateLabState({ ...pixelToWorldState, selected: { col: 8, row: 7 } })).toContain("selected col/row 0-7 arasında olmalı");
+    expect(validateLabState({ ...pixelToWorldState, allowPerspectiveDistortion: false })).toContain(
+      "showDistortion yalnız perspektif özelliği açıkken true olabilir",
+    );
+  });
+
+  it("pixel-to-world: doğrulanmış çevresel seçim state'i geçerlidir", () => {
+    expect(validateLabState(pixelToWorldState)).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

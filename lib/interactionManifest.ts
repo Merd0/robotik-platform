@@ -77,6 +77,10 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
     componentFile: "components/interactive/SafetyZone.tsx",
     engineFiles: ["lib/robotics/safety.ts"],
   },
+  PixelToWorld: {
+    componentFile: "components/interactive/PixelToWorld.tsx",
+    engineFiles: ["lib/pixelToWorld.ts"],
+  },
 };
 
 /** Robot id → spesifikasyon dosyası. Yalnız pilot laboratuvarların kullandığı robotlar. */

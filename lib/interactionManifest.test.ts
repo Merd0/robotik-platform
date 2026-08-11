@@ -124,6 +124,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["SafetyZone"])).not.toThrow();
   });
 
+  it("PixelToWorld bileşeni ile piksel dönüşüm motorunu interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.PixelToWorld).toEqual({
+      componentFile: "components/interactive/PixelToWorld.tsx",
+      engineFiles: ["lib/pixelToWorld.ts"],
+    });
+    expect(() => computeInteractionHash(["PixelToWorld"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -166,6 +174,11 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
 
   it("SafetyZone ana dersini frenleme-mesafe predicate sürümüne bağlar", () => {
     expect(computePredicateHash("h-universite-guvenli-durus-hiz-ve-mesafe"))
+      .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
+  });
+
+  it("PixelToWorld ana dersini distorsiyon predicate sürümüne bağlar", () => {
+    expect(computePredicateHash("f-lise-olcek-perspektif-hatasi"))
       .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
   });
 });

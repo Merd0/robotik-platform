@@ -1395,3 +1395,19 @@ güven verisini yanlış temel üzerine kurmasını engeller.
 - Test: 12 yeni kontrol (motor eşik regresyonu, state round-trip/negatifleri,
   interaction/predicate bağlantısı, predicate golden + üç negatif ve
   paylaşım+kanıt E2E'si).
+
+### 2026-08-12 · PixelToWorld (5 ders)
+
+- Bulgu: kanıt/predicate/state zinciri ve ayrı bir saf dönüşüm motoru yoktu.
+  Ayrıca perspektif dersi, sapmanın sol üst başlangıçtan uzaklaştıkça arttığını
+  ve sol üstte görünmediğini söylüyordu; bileşenin hesabı doğru biçimde görüntü
+  merkezine uzaklığı kullanıyordu, yani ders metni motorla çelişiyordu.
+- Düzeltme: piksel→mm ve merkez-uzaklığı distorsiyon hesabı saf motora
+  çıkarıldı; metin dört köşede artan sapmayı doğru anlatacak şekilde düzeltildi.
+  `camera-distortion-comparison-v1` aynı çevresel hücrenin bozulma kapalı/açık
+  iki commit'inde gerçek konum değişimi ister. Bileşen+motor manifesti ve
+  seçili hücre/kalibrasyon/özellik bayraklarını doğrulayan `pixel-to-world/v1`
+  paylaşım state'i eklendi.
+- Test: 14 yeni kontrol (motor golden/mesafe karşılaştırmaları, state
+  round-trip/negatifleri, interaction/predicate bağlantısı, predicate golden +
+  üç negatif ve paylaşım+kanıt E2E'si).

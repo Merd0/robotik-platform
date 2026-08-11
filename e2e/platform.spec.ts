@@ -160,6 +160,27 @@ test("SafetyZone iki sınır ölçümünü kanıtlar ve state'i paylaşır", asy
   await expect(page.getByRole("slider").nth(2)).toHaveValue("0.6");
 });
 
+test("PixelToWorld aynı çevresel hücrede distorsiyonu kanıtlar ve state'i paylaşır", async ({ page }) => {
+  await page.goto("/ders/f-lise-olcek-perspektif-hatasi");
+  const grid = page.getByRole("button", { name: /Piksel ızgarası/ });
+  await grid.press("ArrowRight");
+  await grid.press("ArrowRight");
+  for (let step = 0; step < 5; step++) await grid.press("ArrowDown");
+  await page.getByRole("checkbox", { name: "Perspektif hatasını göster" }).check();
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((item: { stage?: string; predicateId?: string }) =>
+    item.stage === "passed" && item.predicateId === "camera-distortion-comparison-v1",
+  )).toBe(true);
+
+  await page.getByRole("button", { name: "Bu deneyi paylaş" }).click();
+  const href = await page.getByRole("link", { name: "Paylaşılan görünümü aç" }).getAttribute("href");
+  expect(href).not.toBeNull();
+  await page.goto(href!);
+  await expect(page.getByRole("checkbox", { name: "Perspektif hatasını göster" })).toBeChecked();
+  await expect(page.getByRole("button", { name: /Seçili hücre: sütun 7, satır 7/ })).toBeVisible();
+});
+
 test("iki eklemli kaydırıcı deneyi klavye ve pointer commit'iyle geçilebilir", async ({ page }) => {
   await page.goto("/ders/b-ortaokul-eklemleri-oynat");
   const experiment = page.locator("[data-joint-sliders]");

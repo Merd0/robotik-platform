@@ -28,7 +28,7 @@ boyutta. Biri görüntünün tam ortasında duruyor, diğeri kenarına yakın. A
 piksel-milimetre kalibrasyonunu ikisine de uygularsan, ikisi de aynı doğru
 sonucu verir mi?
 
-<PixelToWorld theme="lise" allowPerspectiveDistortion={true} />
+<PixelToWorld theme="lise" allowPerspectiveDistortion={true} pilot="distortion-comparison" />
 
 ## Ne oldu
 
@@ -79,9 +79,8 @@ tek bir noktada değil, görüş alanının tamamını kaplayan bir ızgara
 sonra **sağ alt köşeye** yakın bir hücreye tıkla — ikisinin de aynı `k`
 ile hesaplandığını doğrula. Sonra anahtarı aç ve aynı iki hücreye tekrar
 tıkla: merkezdeki sonucun az değiştiğini, köşedekinin belirgin biçimde
-büyüdüğünü karşılaştır. (Sahnedeki bozulma ızgaranın sol üst köşesindeki
-başlangıç noktasından uzaklaştıkça artıyor; bu yüzden sol üst köşedeki
-hücrelerde anahtarın etkisi görünmez.)
+büyüdüğünü karşılaştır. Sahnedeki bozulma görüntünün merkezinden uzaklaştıkça
+artar; dört köşede de etkisi belirgin, merkeze yakın hücrelerde daha küçüktür.
 
 <Quiz
   sorular={[

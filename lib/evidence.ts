@@ -224,6 +224,35 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     },
   },
   {
+    id: "camera-distortion-comparison-v1",
+    lessonId: "f-lise-olcek-perspektif-hatasi",
+    skillId: "camera-distortion-comparison",
+    evaluate: (events) => {
+      const observations = events.filter((event) =>
+        event.skillId === "camera-distortion-comparison" &&
+        event.stage === "observed" &&
+        event.result === "success" &&
+        typeof event.metrics?.cell === "string" &&
+        typeof event.metrics?.distortion === "boolean" &&
+        typeof event.metrics?.worldX === "number" &&
+        typeof event.metrics?.worldY === "number" &&
+        typeof event.metrics?.distanceFromCenter === "number" &&
+        event.metrics.distanceFromCenter >= 3,
+      );
+      const comparisonFound = observations.some((plain) => observations.some((distorted) =>
+        plain !== distorted &&
+        plain.metrics!.cell === distorted.metrics!.cell &&
+        plain.metrics!.distortion === false &&
+        distorted.metrics!.distortion === true &&
+        (
+          plain.metrics!.worldX !== distorted.metrics!.worldX ||
+          plain.metrics!.worldY !== distorted.metrics!.worldY
+        ),
+      ));
+      return { passed: comparisonFound, metrics: { requiredSameCellStates: 2 } };
+    },
+  },
+  {
     // v1 → v2: predicate yalnız "algoritma denendi mi"yi sayıyordu (metrics.algorithm
     // hem başarılı hem başarısız/timeout koşularda yazılıyor), result alanına hiç
     // bakmıyordu — üç başarısız koşu bile passed=true üretiyordu (false positive).

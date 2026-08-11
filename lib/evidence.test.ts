@@ -440,3 +440,63 @@ describe("SafetyZone rollout: golden + negatif predicate testleri", () => {
     })]).passed).toBe(false);
   });
 });
+
+describe("PixelToWorld rollout: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "camera-distortion-comparison-v1")!;
+  const observation = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+  ) => event("observed", result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "pixel-to-world-v1",
+  });
+  const plain = () => observation("success", {
+    cell: "7,7",
+    distortion: false,
+    worldX: 350,
+    worldY: 350,
+    distanceFromCenter: 4.95,
+  });
+
+  it("golden: aynı çevresel hücrenin bozulmalı sonucu değişmişse geçer", () => {
+    expect(predicate.evaluate([plain(), observation("success", {
+      cell: "7,7",
+      distortion: true,
+      worldX: 453.94,
+      worldY: 453.94,
+      distanceFromCenter: 4.95,
+    })]).passed).toBe(true);
+  });
+
+  it("negatif: yalnız bozulmasız gözlem karşılaştırma değildir", () => {
+    expect(predicate.evaluate([plain()]).passed).toBe(false);
+  });
+
+  it("negatif: farklı hücrelerin sonuçları karşılaştırılamaz", () => {
+    expect(predicate.evaluate([plain(), observation("success", {
+      cell: "6,7",
+      distortion: true,
+      worldX: 380,
+      worldY: 440,
+      distanceFromCenter: 4.3,
+    })]).passed).toBe(false);
+  });
+
+  it("negatif: merkez çevresindeki başarısız gözlem çevresel kanıt sayılmaz", () => {
+    expect(predicate.evaluate([observation("retry", {
+      cell: "4,4",
+      distortion: false,
+      worldX: 200,
+      worldY: 200,
+      distanceFromCenter: 0.71,
+    }), observation("retry", {
+      cell: "4,4",
+      distortion: true,
+      worldX: 208.49,
+      worldY: 208.49,
+      distanceFromCenter: 0.71,
+    })]).passed).toBe(false);
+  });
+});

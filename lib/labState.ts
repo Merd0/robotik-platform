@@ -78,13 +78,24 @@ export interface SafetyZoneLabState {
   brakingTime: number;
 }
 
+export interface PixelToWorldLabState {
+  kind: "pixel-to-world";
+  version: 1;
+  adjustableCalibration: boolean;
+  allowPerspectiveDistortion: boolean;
+  calibration: number;
+  selected: { col: number; row: number } | null;
+  showDistortion: boolean;
+}
+
 export type LabState =
   | JointSlidersLabState
   | PlannerRaceLabState
   | IkTargetLabState
   | CodeRunnerLabState
   | SignalTimelineLabState
-  | SafetyZoneLabState;
+  | SafetyZoneLabState
+  | PixelToWorldLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -273,6 +284,35 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "pixel-to-world") {
+    if (record.version !== 1) return { ok: false, error: `pixel-to-world: desteklenmeyen sürüm ${String(record.version)}` };
+    if (typeof record.adjustableCalibration !== "boolean" || typeof record.allowPerspectiveDistortion !== "boolean") {
+      return { ok: false, error: "pixel-to-world: özellik bayrakları boolean olmalı" };
+    }
+    if (!isFiniteNumber(record.calibration) || typeof record.showDistortion !== "boolean") {
+      return { ok: false, error: "pixel-to-world: calibration sonlu sayı, showDistortion boolean olmalı" };
+    }
+    if (record.selected !== null && (
+      typeof record.selected !== "object" ||
+      !isFiniteNumber((record.selected as { col?: unknown }).col) ||
+      !isFiniteNumber((record.selected as { row?: unknown }).row)
+    )) {
+      return { ok: false, error: "pixel-to-world: selected null veya sonlu col/row olmalı" };
+    }
+    return {
+      ok: true,
+      state: {
+        kind: "pixel-to-world",
+        version: 1,
+        adjustableCalibration: record.adjustableCalibration,
+        allowPerspectiveDistortion: record.allowPerspectiveDistortion,
+        calibration: record.calibration,
+        selected: record.selected as PixelToWorldLabState["selected"],
+        showDistortion: record.showDistortion,
+      },
+    };
+  }
+
   return { ok: false, error: `bilinmeyen laboratuvar türü: ${String(record.kind)}` };
 }
 
@@ -352,6 +392,21 @@ export function validateLabState(state: LabState): string[] {
     if (state.distance < 0 || state.distance > 4_000) errors.push("distance 0-4000 mm arasında olmalı");
     if (state.robotSpeed < 0 || state.robotSpeed > 2_000) errors.push("robotSpeed 0-2000 mm/s arasında olmalı");
     if (state.brakingTime < 0.05 || state.brakingTime > 1) errors.push("brakingTime 0.05-1 s arasında olmalı");
+    return errors;
+  }
+
+  if (state.kind === "pixel-to-world") {
+    if (state.calibration < 1 || state.calibration > 15) errors.push("calibration 1-15 mm/piksel arasında olmalı");
+    if (state.showDistortion && !state.allowPerspectiveDistortion) {
+      errors.push("showDistortion yalnız perspektif özelliği açıkken true olabilir");
+    }
+    if (state.selected) {
+      if (!Number.isSafeInteger(state.selected.col) || !Number.isSafeInteger(state.selected.row)) {
+        errors.push("selected col/row güvenli tam sayı olmalı");
+      } else if (state.selected.col < 0 || state.selected.col > 7 || state.selected.row < 0 || state.selected.row > 7) {
+        errors.push("selected col/row 0-7 arasında olmalı");
+      }
+    }
     return errors;
   }
 
