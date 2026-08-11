@@ -1,6 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  ChallengeHeader,
+  ChallengeResult,
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
 import { PlanningGrid, SahneAlani } from "@/components/scene/LazyScene";
 import type { PlannerPathDisplay } from "@/components/scene/PlanningGrid";
 import { isPointFree, type Obstacle } from "@/lib/robotics/collision";
@@ -21,6 +28,7 @@ interface PlannerRaceProps {
   /** Sahnenin kenar uzunluğu (metre). */
   extent?: number;
   theme?: "ortaokul" | "lise" | "universite";
+  pilot?: "planner-comparison";
 }
 
 const ALGORITHM_LABELS: Record<PlannerId, string> = {
@@ -64,6 +72,18 @@ const THEME = {
 
 const DEFAULT_OBSTACLE_RADIUS = 0.18;
 const round = (value: number) => Math.round(value * 1000) / 1000;
+const CHALLENGE_SEED = 240807;
+const CHALLENGE_INITIAL_OBSTACLES: Obstacle[] = [
+  { kind: "sphere", center: { x: -0.3, y: 0.35, z: 0 }, size: [DEFAULT_OBSTACLE_RADIUS] },
+  { kind: "sphere", center: { x: 0.35, y: -0.25, z: 0 }, size: [DEFAULT_OBSTACLE_RADIUS] },
+];
+
+interface PlannerChallengeResult {
+  shortest: PlannerId;
+  shortestLength: number;
+  fewestNodes: PlannerId;
+  nodeCount: number;
+}
 
 /**
  * Ders içine gömülen etkileşimli sahne: A*, RRT, RRT*'yi aynı engel
@@ -77,6 +97,7 @@ export function PlannerRace({
   initialObstacles = [],
   extent = 3,
   theme = "universite",
+  pilot,
 }: PlannerRaceProps) {
   const record = useEvidenceRecorder();
   const { theme: colorMode } = useTheme();
@@ -96,13 +117,48 @@ export function PlannerRace({
   const [errors, setErrors] = useState<Partial<Record<PlannerId, string>>>({});
   const [running, setRunning] = useState(false);
   const [seed, setSeed] = useState(240807);
+  const [challengeActive, setChallengeActive] = useState(false);
+  const [challengeAttempts, setChallengeAttempts] = useState(0);
   // Klavye ile engel koymak için imleç konumu (sahneye dokunmanın alternatifi).
   const [cursor, setCursor] = useState<Vec3>({ x: 0, y: 0, z: 0 });
+  const challengeAvailable = pilot === "planner-comparison"
+    && theme === "universite"
+    && ["astar", "rrt", "rrt_star"].every((id) => algorithms.includes(id as PlannerId));
+  const challengeResult = useMemo<PlannerChallengeResult | null>(() => {
+    if (!challengeActive || obstacles.length !== 3) return null;
+    const successful = algorithms
+      .map((algorithm) => ({ algorithm, result: results[algorithm] }))
+      .filter((entry): entry is { algorithm: PlannerId; result: PlanResult } => Boolean(entry.result?.success));
+    if (successful.length !== 3) return null;
+
+    const byPath = [...successful].sort((a, b) => pathLength(a.result.path) - pathLength(b.result.path));
+    const byNodes = [...successful].sort((a, b) => a.result.nodesExpanded - b.result.nodesExpanded);
+    return {
+      shortest: byPath[0].algorithm,
+      shortestLength: pathLength(byPath[0].result.path),
+      fewestNodes: byNodes[0].algorithm,
+      nodeCount: byNodes[0].result.nodesExpanded,
+    };
+  }, [algorithms, challengeActive, obstacles.length, results]);
+  useSharedLabState("planner-race", (state) => {
+    if (state.extent !== extent) return;
+    const sameAlgorithms = state.algorithms.length === algorithms.length
+      && state.algorithms.every((algorithm, index) => algorithm === algorithms[index]);
+    if (!sameAlgorithms) return;
+    setObstacles(state.obstacles);
+    setSeed(state.seed);
+    setResults({});
+    setErrors({});
+    setChallengeActive(false);
+    setChallengeAttempts(0);
+  });
+
   function handlePlaneClick(point: Vec3) {
     if (!allowObstacleEdit) return;
     setObstacles((prev) => {
       const hitIndex = prev.findIndex((obstacle) => !isPointFree(point, [obstacle]));
       if (hitIndex >= 0) return prev.filter((_, i) => i !== hitIndex);
+      if (challengeActive && prev.length >= 3) return prev;
       return [...prev, { kind: "sphere", center: point, size: [DEFAULT_OBSTACLE_RADIUS] }];
     });
     setResults({});
@@ -110,14 +166,35 @@ export function PlannerRace({
   }
 
   function handleClear() {
-    setObstacles([]);
+    setObstacles(challengeActive ? CHALLENGE_INITIAL_OBSTACLES : []);
     setResults({});
     setErrors({});
+  }
+
+  function resetChallenge() {
+    setObstacles(CHALLENGE_INITIAL_OBSTACLES);
+    setResults({});
+    setErrors({});
+    setSeed(CHALLENGE_SEED);
+    setCursor({ x: 0, y: 0, z: 0 });
+    setChallengeAttempts(0);
+  }
+
+  function toggleChallenge() {
+    const next = !challengeActive;
+    setChallengeActive(next);
+    if (next) resetChallenge();
+    else {
+      setObstacles(initialObstacles);
+      setResults({});
+      setErrors({});
+    }
   }
 
   async function handleRace() {
     if (running) return;
     setRunning(true);
+    if (challengeActive) setChallengeAttempts((current) => current + 1);
     setResults({});
     setErrors({});
     record({ skillId: "planner-comparison", stage: "tried", result: "neutral", metrics: { obstacles: obstacles.length, algorithms: algorithms.length, seed } });
@@ -161,6 +238,21 @@ export function PlannerRace({
 
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
+      {challengeAvailable && (
+        <ChallengeHeader
+          seviye="universite"
+          active={challengeActive}
+          eyebrow="Kısıtlı optimizasyon problemi"
+          title="Üç planlayıcıyı aynı deney koşulunda karşılaştır"
+          description="Seed sabitlenir ve düzenek iki engelle başlar. Üçüncü engeli sen yerleştir; üç algoritmanın da yol bulduğu koşulda maliyetleri karşılaştır."
+          constraints={[
+            "Düzeneği tam üç engelle sınırla.",
+            "A*, RRT ve RRT* aynı seed ile başarılı olsun; en kısa yolu ve en az düğümü raporla.",
+          ]}
+          onToggle={toggleChallenge}
+        />
+      )}
+
       <SahneAlani className={`aspect-square w-full overflow-hidden rounded-lg ${t.bg} sm:aspect-video`}>
         <PlanningGrid
           extent={extent}
@@ -216,13 +308,14 @@ export function PlannerRace({
           type="number"
           inputMode="numeric"
           value={seed}
+          disabled={challengeActive}
           onChange={(event) => {
             const nextSeed = Number(event.target.value);
             if (Number.isSafeInteger(nextSeed)) setSeed(nextSeed);
             setResults({});
             setErrors({});
           }}
-          className={`h-11 rounded-md border ${t.outline} ${t.bg} px-3 font-mono ${t.ink}`}
+          className={`h-11 rounded-md border ${t.outline} ${t.bg} px-3 font-mono ${t.ink} disabled:opacity-50`}
         />
         <span className={t.inkMuted}>Aynı sahne ve seed aynı rastlantısal deneyi üretir.</span>
       </label>
@@ -236,7 +329,7 @@ export function PlannerRace({
         <div className="flex gap-2">
           {allowObstacleEdit && (
             <button type="button" onClick={handleClear} className={`h-11 rounded-md border ${t.outline} px-4`}>
-              Engelleri temizle
+              {challengeActive ? "Düzeneği başa al" : "Engelleri temizle"}
             </button>
           )}
           <button
@@ -299,6 +392,37 @@ export function PlannerRace({
             <p key={id}>{ALGORITHM_LABELS[id]}: {errors[id]}</p>
           ))}
         </div>
+      )}
+      {challengeActive && !challengeResult && (
+        <p className={`rounded-lg border ${t.outline} ${t.bg} p-3 text-sm ${t.ink}`} role="status">
+          Deney koşulu · engel {obstacles.length} / 3 · başarılı planlayıcı {algorithms.filter((id) => results[id]?.success).length} / 3 · koşu {challengeAttempts}
+        </p>
+      )}
+      {challengeActive && challengeResult && (
+        <ChallengeResult
+          seviye="universite"
+          title="Karşılaştırma veriyle tamamlandı"
+          summary="Üç planlayıcı aynı engel düzeni ve seed altında yol buldu; seçim artık yol ve arama maliyeti üzerinden savunulabilir."
+          metrics={[
+            { label: "En kısa yol", value: `${ALGORITHM_LABELS[challengeResult.shortest]} · ${round(challengeResult.shortestLength)} m` },
+            { label: "En az düğüm", value: `${ALGORITHM_LABELS[challengeResult.fewestNodes]} · ${challengeResult.nodeCount}` },
+            { label: "Koşu", value: `${challengeAttempts}` },
+          ]}
+          onRetry={resetChallenge}
+        />
+      )}
+      {challengeAvailable && (
+        <ExperimentShareButton
+          seviye="universite"
+          createShareUrl={() => createLabShareUrl({
+            kind: "planner-race",
+            version: 1,
+            extent,
+            obstacles,
+            seed,
+            algorithms,
+          })}
+        />
       )}
     </div>
   );

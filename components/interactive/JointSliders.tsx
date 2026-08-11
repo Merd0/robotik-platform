@@ -1,6 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import {
+  ChallengeHeader,
+  ChallengeResult,
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { forwardKinematics } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
@@ -9,6 +16,7 @@ import { toolOrientationOf } from "@/components/scene/robotFrames";
 
 interface JointSlidersProps {
   robot: string;
+  pilot?: "forward-kinematics";
 }
 
 const toDegrees = (radians: number) => (radians * 180) / Math.PI;
@@ -17,13 +25,18 @@ const round = (value: number) => {
   const rounded = Math.round(value * 1000) / 1000;
   return Object.is(rounded, -0) ? 0 : rounded;
 };
+const CHALLENGE_TARGET = { x: 0.65, y: 1.5, z: 0 } as const;
+const CHALLENGE_TOLERANCE = 0.14;
 
 /** Ders içine gömülen etkileşimli sahne: eklem kaydırıcıları + robot kolu çizimi. */
-export function JointSliders({ robot: robotId }: JointSlidersProps) {
+export function JointSliders({ robot: robotId, pilot }: JointSlidersProps) {
   const record = useEvidenceRecorder();
   const robot = useMemo(() => getRobotById(robotId), [robotId]);
   const [jointAngles, setJointAngles] = useState<number[]>(() => robot.joints.map(() => 0));
   const [activeJointIndex, setActiveJointIndex] = useState(() => (robot.joints.length === 6 ? 5 : 0));
+  const [challengeActive, setChallengeActive] = useState(false);
+  const [challengeProgress, setChallengeProgress] = useState({ moves: 0, touched: [false, false], complete: false });
+  const challengeCommittedAngles = useRef([...jointAngles]);
   const isSixAxis = robot.joints.length === 6;
 
   const { endEffector, jointTransforms } = useMemo(
@@ -31,6 +44,21 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
     [robot, jointAngles],
   );
   const toolOrientation = isSixAxis ? toolOrientationOf(jointTransforms[jointTransforms.length - 1]) : null;
+  const targetDistance = Math.hypot(
+    endEffector.x - CHALLENGE_TARGET.x,
+    endEffector.y - CHALLENGE_TARGET.y,
+    endEffector.z - CHALLENGE_TARGET.z,
+  );
+  const challengeAvailable = pilot === "forward-kinematics" && robot.id === "generic-2dof";
+  const challengeFailed = challengeActive && challengeProgress.moves >= 3 && !challengeProgress.complete;
+  useSharedLabState("joint-sliders", (state) => {
+    if (state.robotId !== robot.id) return;
+    setJointAngles(state.jointAngles);
+    setActiveJointIndex(0);
+    setChallengeActive(false);
+    setChallengeProgress({ moves: 0, touched: [false, false], complete: false });
+    challengeCommittedAngles.current = [...state.jointAngles];
+  });
   const jointGroups = isSixAxis
     ? [
         { label: "Kol · J1–J3", joints: robot.joints.slice(0, 3), offset: 0 },
@@ -51,13 +79,39 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
    * "observed" olayını üretir; sürekli sürüklemede yüzlerce "tried" kaydı
    * biriktirip localStorage'ı aşındırmaz.
    */
-  function commitJoint(index: number) {
+  function commitJoint(index: number, countChallengeMove = true) {
     record({ skillId: "forward-kinematics", stage: "observed", result: "success", metrics: { joint: index + 1 } });
+    if (!countChallengeMove) return;
+    const changedSinceCommit = challengeCommittedAngles.current[index] !== jointAngles[index];
+    challengeCommittedAngles.current[index] = jointAngles[index];
+    if (!changedSinceCommit) return;
+    if (!challengeActive || challengeProgress.complete || challengeProgress.moves >= 3) return;
+    setChallengeProgress((current) => {
+      const touched = current.touched.map((value, jointIndex) => value || jointIndex === index);
+      const moves = current.moves + 1;
+      return {
+        moves,
+        touched,
+        complete: touched.every(Boolean) && targetDistance <= CHALLENGE_TOLERANCE && moves <= 3,
+      };
+    });
+  }
+
+  function resetChallenge() {
+    setJointAngles(robot.joints.map(() => 0));
+    setActiveJointIndex(isSixAxis ? 5 : 0);
+    setChallengeProgress({ moves: 0, touched: [false, false], complete: false });
+    challengeCommittedAngles.current = robot.joints.map(() => 0);
   }
 
   function handleReset() {
-    setJointAngles(robot.joints.map(() => 0));
-    setActiveJointIndex(isSixAxis ? 5 : 0);
+    resetChallenge();
+  }
+
+  function toggleChallenge() {
+    const next = !challengeActive;
+    setChallengeActive(next);
+    resetChallenge();
   }
 
   return (
@@ -66,6 +120,21 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
       data-joint-sliders
       data-robot-id={robot.id}
     >
+      {challengeAvailable && (
+        <ChallengeHeader
+          seviye="ortaokul"
+          active={challengeActive}
+          eyebrow="Mini görev"
+          title="Biber hedefine üç hamlede dokun"
+          description="Turuncu hedefi sürükleyemezsin. Omuz ve dirsek kaydırıcılarını bırakışların birer hamle sayılır."
+          constraints={[
+            "İki eklemi de en az bir kez oynat.",
+            "Kolun ucunu en fazla üç hamlede turuncu hedefe getir.",
+          ]}
+          onToggle={toggleChallenge}
+        />
+      )}
+
       {/*
         Sahnenin bilgi içeriği aşağıdaki kaydırıcı etiketlerinde ve uç nokta
         özetinde metin olarak var (docs/02 "her sahnenin metin özeti olmalı") —
@@ -76,7 +145,14 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
         <div className={isSixAxis ? "min-w-0 md:sticky md:top-4" : "min-w-0"}>
           <p className="mb-2 text-sm font-semibold">Sahne</p>
           <SahneAlani className="aspect-[4/3] w-full overflow-hidden rounded-lg bg-ortaokul-bg sm:aspect-video md:aspect-[4/3]">
-            <RobotArm robot={robot} jointAngles={jointAngles} activeJointIndex={activeJointIndex} />
+            <RobotArm robot={robot} jointAngles={jointAngles} activeJointIndex={activeJointIndex}>
+              {challengeActive && (
+                <mesh position={[CHALLENGE_TARGET.x, CHALLENGE_TARGET.y, CHALLENGE_TARGET.z]}>
+                  <torusGeometry args={[0.12, 0.025, 16, 48]} />
+                  <meshStandardMaterial color="#f97316" />
+                </mesh>
+              )}
+            </RobotArm>
           </SahneAlani>
           {isSixAxis && (
             <div className="mt-2 space-y-1 text-xs leading-relaxed text-ortaokul-ink/70">
@@ -113,7 +189,7 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
                           }}
                           onPointerUp={() => commitJoint(index)}
                           onBlur={() => commitJoint(index)}
-                          onKeyUp={() => commitJoint(index)}
+                          onKeyUp={() => commitJoint(index, false)}
                         />
                       </label>
                     ) : (
@@ -130,7 +206,7 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
                           onChange={(event) => handleChange(index, Number(event.target.value))}
                           onPointerUp={() => commitJoint(index)}
                           onBlur={() => commitJoint(index)}
-                          onKeyUp={() => commitJoint(index)}
+                          onKeyUp={() => commitJoint(index, false)}
                         />
                       </label>
                     );
@@ -159,8 +235,46 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
               Sıfırla
             </button>
           </div>
+          {challengeActive && !challengeProgress.complete && (
+            <div className="mt-3 rounded-lg border border-ortaokul-ink/10 bg-ortaokul-surface p-3 text-sm" role="status">
+              {challengeFailed ? (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span>Üç hamle doldu. Hedefe başka bir açı çiftiyle yaklaşmayı dene.</span>
+                  <button type="button" onClick={resetChallenge} className="min-h-11 rounded-lg border border-ortaokul-ink/20 px-3 font-semibold">Görevi yeniden başlat</button>
+                </div>
+              ) : (
+                <span>Hamle {challengeProgress.moves} / 3 · Omuz {challengeProgress.touched[0] ? "✓" : "○"} · Dirsek {challengeProgress.touched[1] ? "✓" : "○"}</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {challengeActive && challengeProgress.complete && (
+        <ChallengeResult
+          seviye="ortaokul"
+          title="Kol hedefe ulaştı"
+          summary="Omuz ve dirseği birlikte kullanarak kolun ucunu turuncu halkaya getirdin."
+          metrics={[
+            { label: "Hamle", value: `${challengeProgress.moves} / 3` },
+            { label: "Omuz", value: `${round(toDegrees(jointAngles[0]))}°` },
+            { label: "Dirsek", value: `${round(toDegrees(jointAngles[1]))}°` },
+          ]}
+          onRetry={resetChallenge}
+        />
+      )}
+
+      {challengeAvailable && (
+        <ExperimentShareButton
+          seviye="ortaokul"
+          createShareUrl={() => createLabShareUrl({
+            kind: "joint-sliders",
+            version: 1,
+            robotId: robot.id,
+            jointAngles,
+          })}
+        />
+      )}
     </div>
   );
 }
