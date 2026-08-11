@@ -117,6 +117,25 @@ test("CodeRunner state'i doğrulanmış paylaşım bağlantısıyla geri yüklen
   await expect(page.getByLabel("Python kodu")).toHaveValue(sharedCode);
 });
 
+test("SignalTimeline state'i paylaşılır ve doğru el sıkışma sırası kanıtlanır", async ({ page }) => {
+  await page.goto("/ders/e-lise-el-sikisma");
+  await page.getByRole("button", { name: /Dolum robotu: Tepsi hazır — adım 2:/ }).click();
+  await page.getByRole("button", { name: /Kapaklama PLC: Aldım — adım 4:/ }).click();
+  await page.getByRole("button", { name: "Oynat" }).click();
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { stage?: string; predicateId?: string }) =>
+    event.stage === "passed" && event.predicateId === "handshake-signal-order-v1",
+  )).toBe(true);
+
+  await page.getByRole("button", { name: "Bu deneyi paylaş" }).click();
+  const href = await page.getByRole("link", { name: "Paylaşılan görünümü aç" }).getAttribute("href");
+  expect(href).not.toBeNull();
+  await page.goto(href!);
+  await expect(page.getByRole("button", { name: /Dolum robotu: Tepsi hazır — adım 2: AÇIK/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: /Kapaklama PLC: Aldım — adım 4: AÇIK/ })).toHaveAttribute("aria-pressed", "true");
+});
+
 test("iki eklemli kaydırıcı deneyi klavye ve pointer commit'iyle geçilebilir", async ({ page }) => {
   await page.goto("/ders/b-ortaokul-eklemleri-oynat");
   const experiment = page.locator("[data-joint-sliders]");

@@ -336,3 +336,53 @@ describe("CodeRunner rollout: golden + negatif predicate testleri", () => {
     expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 2 }, "observed")]).passed).toBe(false);
   });
 });
+
+describe("SignalTimeline rollout: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "handshake-signal-order-v1")!;
+  const run = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+    stage: EvidenceEvent["stage"] = "assessed",
+  ) => event(stage, result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "signal-timeline-v1",
+  });
+
+  it("golden: istekten sonra gelen onay değerlendirmesi geçer", () => {
+    expect(predicate.evaluate([run("success", {
+      requestStep: 2,
+      acknowledgementStep: 4,
+      complete: true,
+      correctOrder: true,
+    })]).passed).toBe(true);
+  });
+
+  it("negatif: onay istekten önceyse başarısız kalır", () => {
+    expect(predicate.evaluate([run("retry", {
+      requestStep: 4,
+      acknowledgementStep: 2,
+      complete: true,
+      correctOrder: false,
+    })]).passed).toBe(false);
+  });
+
+  it("negatif: sinyallerden biri eksikse başarı üretmez", () => {
+    expect(predicate.evaluate([run("retry", {
+      requestStep: 2,
+      acknowledgementStep: -1,
+      complete: false,
+      correctOrder: false,
+    })]).passed).toBe(false);
+  });
+
+  it("negatif: metrikleri doğru görünse bile assessed olmayan olay geçmez", () => {
+    expect(predicate.evaluate([run("success", {
+      requestStep: 2,
+      acknowledgementStep: 4,
+      complete: true,
+      correctOrder: true,
+    }, "observed")]).passed).toBe(false);
+  });
+});

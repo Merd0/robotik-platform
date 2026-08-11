@@ -58,7 +58,23 @@ export interface CodeRunnerLabState {
   code: string;
 }
 
-export type LabState = JointSlidersLabState | PlannerRaceLabState | IkTargetLabState | CodeRunnerLabState;
+export const MAX_SIGNAL_TIMELINE_SIGNALS = 12;
+export const MAX_SIGNAL_TIMELINE_STEPS = 32;
+
+export interface SignalTimelineLabState {
+  kind: "signal-timeline";
+  version: 1;
+  signals: string[];
+  steps: number;
+  pattern: boolean[][];
+}
+
+export type LabState =
+  | JointSlidersLabState
+  | PlannerRaceLabState
+  | IkTargetLabState
+  | CodeRunnerLabState
+  | SignalTimelineLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -201,6 +217,31 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "signal-timeline") {
+    if (record.version !== 1) return { ok: false, error: `signal-timeline: desteklenmeyen sürüm ${String(record.version)}` };
+    if (!Array.isArray(record.signals) || !record.signals.every((signal) => typeof signal === "string" && signal.length > 0)) {
+      return { ok: false, error: "signal-timeline: signals dolu string dizisi olmalı" };
+    }
+    if (typeof record.steps !== "number" || !Number.isSafeInteger(record.steps)) {
+      return { ok: false, error: "signal-timeline: steps güvenli tam sayı olmalı" };
+    }
+    if (!Array.isArray(record.pattern) || !record.pattern.every(
+      (row) => Array.isArray(row) && row.every((cell) => typeof cell === "boolean"),
+    )) {
+      return { ok: false, error: "signal-timeline: pattern boolean matris olmalı" };
+    }
+    return {
+      ok: true,
+      state: {
+        kind: "signal-timeline",
+        version: 1,
+        signals: record.signals,
+        steps: record.steps,
+        pattern: record.pattern,
+      },
+    };
+  }
+
   return { ok: false, error: `bilinmeyen laboratuvar türü: ${String(record.kind)}` };
 }
 
@@ -260,6 +301,19 @@ export function validateLabState(state: LabState): string[] {
         errors.push(`bilinmeyen robot id: ${state.robotId}`);
       }
     }
+    return errors;
+  }
+
+  if (state.kind === "signal-timeline") {
+    if (state.signals.length === 0 || state.signals.length > MAX_SIGNAL_TIMELINE_SIGNALS) {
+      errors.push(`signals uzunluğu 1-${MAX_SIGNAL_TIMELINE_SIGNALS} arasında olmalı`);
+    }
+    if (state.signals.some((signal) => signal.length > 120)) errors.push("sinyal adı 120 karakteri aşamaz");
+    if (state.steps < 1 || state.steps > MAX_SIGNAL_TIMELINE_STEPS) {
+      errors.push(`steps 1-${MAX_SIGNAL_TIMELINE_STEPS} arasında olmalı`);
+    }
+    if (state.pattern.length !== state.signals.length) errors.push("pattern satır sayısı signals ile eşleşmiyor");
+    if (state.pattern.some((row) => row.length !== state.steps)) errors.push("pattern satır uzunluğu steps ile eşleşmiyor");
     return errors;
   }
 

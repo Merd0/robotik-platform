@@ -1364,3 +1364,18 @@ güven verisini yanlış temel üzerine kurmasını engeller.
   eklendi ve paylaşım bağlantısı bileşene bağlandı.
 - Test: 12 yeni kontrol (interaction/predicate bağlantısı, state golden ve
   negatifleri, predicate golden + üç negatif ve paylaşım E2E'si).
+
+### 2026-08-12 · SignalTimeline (8 ders)
+
+- Bulgu: bileşen hiçbir kanıt üretmiyor, el sıkışma sırasını ölçmüyor ve
+  oynatma zamanlayıcılarını unmount sırasında temizlemiyordu. Bu yüzden mevcut
+  dersteki doğru/yanlış düzen registry tarafından doğrulanamıyordu; eski bir
+  false-positive predicate yoktu çünkü predicate hiç yoktu.
+- Düzeltme: ilk istek ve onay adımlarını saf motorda karşılaştıran görev yalnız
+  `Oynat` commit'inde değerlendirilir; ters, eşzamanlı veya eksik sıra başarı
+  sayılmaz. `handshake-signal-order-v1`, bileşen+motor manifesti,
+  `signal-timeline/v1` boyut/doğrulama sözleşmesi, paylaşım/geri yükleme ve
+  zamanlayıcı temizliği eklendi.
+- Test: 16 yeni kontrol (motor golden + üç negatif, state round-trip ve dört
+  negatif/geçerlilik kontrolü, interaction/predicate bağlantısı, predicate
+  golden + üç negatif ve paylaşım+kanıt E2E'si).

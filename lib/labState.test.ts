@@ -27,12 +27,24 @@ const codeRunner: LabState = {
   code: 'robot.eklem_ac(0, 60)\nprint("hazır")',
 };
 
+const signalTimeline: LabState = {
+  kind: "signal-timeline",
+  version: 1,
+  signals: ["Robot: Hazır", "PLC: Aldım"],
+  steps: 4,
+  pattern: [
+    [false, true, false, false],
+    [false, false, false, true],
+  ],
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
     ["planner-race", plannerRace],
     ["ik-target", ikTarget],
     ["code-runner", codeRunner],
+    ["signal-timeline", signalTimeline],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -111,6 +123,14 @@ describe("decodeLabState — biçim doğrulaması", () => {
     const encoded = encodeLabState({ ...codeRunner, code: ["print", "x"] } as unknown as LabState);
     expect(decodeLabState(encoded).ok).toBe(false);
   });
+
+  it("signal-timeline: yalnız boolean hücrelerden oluşan matrisi kabul eder", () => {
+    const encoded = encodeLabState({
+      ...signalTimeline,
+      pattern: [[false, "açık"], [false, true]],
+    } as unknown as LabState);
+    expect(decodeLabState(encoded).ok).toBe(false);
+  });
 });
 
 describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada geçersiz)", () => {
@@ -168,6 +188,20 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("code-runner: robot kullanmayan, sınır içindeki kod state'i geçerlidir", () => {
     expect(validateLabState({ ...codeRunner, robotId: null })).toEqual([]);
+  });
+
+  it("signal-timeline: satır ve adım boyutları eşleşmeyen state'i reddeder", () => {
+    const errors = validateLabState({ ...signalTimeline, pattern: [[false], [false, true]] });
+    expect(errors).toContain("pattern satır uzunluğu steps ile eşleşmiyor");
+  });
+
+  it("signal-timeline: boş veya aşırı büyük zaman çizelgesini reddeder", () => {
+    expect(validateLabState({ ...signalTimeline, signals: [], pattern: [] })).not.toEqual([]);
+    expect(validateLabState({ ...signalTimeline, steps: 33, pattern: [new Array(33).fill(false), new Array(33).fill(false)] })).not.toEqual([]);
+  });
+
+  it("signal-timeline: boyutları eşleşen state geçerlidir", () => {
+    expect(validateLabState(signalTimeline)).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

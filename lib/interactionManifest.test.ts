@@ -108,6 +108,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["CodeRunner"], ["generic-2dof"])).not.toThrow();
   });
 
+  it("SignalTimeline bileşeni ile el sıkışma motorunu interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.SignalTimeline).toEqual({
+      componentFile: "components/interactive/SignalTimeline.tsx",
+      engineFiles: ["lib/signalTimeline.ts"],
+    });
+    expect(() => computeInteractionHash(["SignalTimeline"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -140,6 +148,11 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
 
   it("CodeRunner ana dersini python-command-trace predicate sürümüne bağlar", () => {
     expect(computePredicateHash("d-lise-python-komut-dizisi"))
+      .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
+  });
+
+  it("SignalTimeline ana dersini handshake predicate sürümüne bağlar", () => {
+    expect(computePredicateHash("e-lise-el-sikisma"))
       .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
   });
 });

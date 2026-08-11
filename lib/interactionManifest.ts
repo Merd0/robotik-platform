@@ -69,6 +69,10 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
     engineFiles: ["lib/codeLab.ts", "lib/robotics/kinematics.ts"],
     workerFiles: ["lib/workers/pyodideWorker.ts", "lib/workers/executionLimits.ts"],
   },
+  SignalTimeline: {
+    componentFile: "components/interactive/SignalTimeline.tsx",
+    engineFiles: ["lib/signalTimeline.ts"],
+  },
 };
 
 /** Robot id → spesifikasyon dosyası. Yalnız pilot laboratuvarların kullandığı robotlar. */

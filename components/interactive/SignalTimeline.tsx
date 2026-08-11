@@ -1,6 +1,13 @@
 "use client";
 
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
+import { analyzeHandshake } from "@/lib/signalTimeline";
+import {
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
 
 interface SignalTimelineProps {
   /** Her satırın adı, ör. ["Sinyal"] veya ["Robot: Hazır", "PLC: Başla"]. */
@@ -8,6 +15,8 @@ interface SignalTimelineProps {
   /** Zaman ekseni kaç adımdan oluşsun. */
   steps?: number;
   theme?: "ortaokul" | "lise" | "universite";
+  /** Sürümlü, ölçülebilir görev; yalnız ilgili ders bunu etkinleştirir. */
+  pilot?: "handshake-order";
 }
 
 const THEME = {
@@ -52,16 +61,28 @@ const STEP_MS = 500;
  * Ders içine gömülen etkileşimli sahne: bir veya birden fazla sinyalin
  * zaman içindeki AÇIK/KAPALI durumunu tıklayarak kur, "Oynat" ile bir
  * "okuma başı" (playhead) zaman ekseninde ilerleyip her adımda hangi
- * sinyallerin AÇIK olduğunu gösterir. Hangi düzenin "doğru" bir el
- * sıkışma/protokol olduğuna bileşen karar vermez — bu, dersin metninde
- * ve Quiz'inde ele alınır (bkz. docs/07-tasarim-sistemi.md "etkileşimli
- * sahne bileşenleri seviyeden bağımsızdır").
+ * sinyallerin AÇIK olduğunu gösterir. Genel kullanımda düzeni yorumlamaz;
+ * sürümlü `handshake-order` görevi açıldığında iki satırın ilk AÇIK adımlarını
+ * yalnız "Oynat" commit'inde ölçer.
  */
-export function SignalTimeline({ signals, steps = 8, theme = "ortaokul" }: SignalTimelineProps) {
+export function SignalTimeline({ signals, steps = 8, theme = "ortaokul", pilot }: SignalTimelineProps) {
   const t = THEME[theme];
+  const record = useEvidenceRecorder();
   const [pattern, setPattern] = useState<boolean[][]>(() => signals.map(() => new Array(steps).fill(false)));
   const [playhead, setPlayhead] = useState<number | null>(null);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useSharedLabState("signal-timeline", (shared) => {
+    if (shared.steps !== steps || shared.signals.length !== signals.length) return;
+    if (shared.signals.some((signal, index) => signal !== signals[index])) return;
+    stopPlayback();
+    setPattern(shared.pattern);
+  });
+
+  useEffect(() => () => {
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+  }, []);
 
   function toggleCell(signalIndex: number, stepIndex: number) {
     setPattern((prev) =>
@@ -77,6 +98,20 @@ export function SignalTimeline({ signals, steps = 8, theme = "ortaokul" }: Signa
 
   function handlePlay() {
     stopPlayback();
+    if (pilot === "handshake-order") {
+      const analysis = analyzeHandshake(pattern);
+      record({
+        skillId: "handshake-order",
+        stage: "assessed",
+        result: analysis.correctOrder ? "success" : "retry",
+        metrics: {
+          requestStep: analysis.requestStep ?? -1,
+          acknowledgementStep: analysis.acknowledgementStep ?? -1,
+          complete: analysis.complete,
+          correctOrder: analysis.correctOrder,
+        },
+      });
+    }
     for (let i = 0; i < steps; i++) {
       const timeoutId = setTimeout(() => {
         setPlayhead(i);
@@ -141,6 +176,17 @@ export function SignalTimeline({ signals, steps = 8, theme = "ortaokul" }: Signa
           Sıfırla
         </button>
       </div>
+
+      <ExperimentShareButton
+        seviye={theme}
+        createShareUrl={() => createLabShareUrl({
+          kind: "signal-timeline",
+          version: 1,
+          signals,
+          steps,
+          pattern,
+        })}
+      />
     </div>
   );
 }

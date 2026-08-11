@@ -183,6 +183,24 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     },
   },
   {
+    id: "handshake-signal-order-v1",
+    lessonId: "e-lise-el-sikisma",
+    skillId: "handshake-order",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "handshake-order" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.complete === true &&
+        event.metrics?.correctOrder === true &&
+        typeof event.metrics?.requestStep === "number" &&
+        typeof event.metrics?.acknowledgementStep === "number" &&
+        event.metrics.requestStep < event.metrics.acknowledgementStep,
+      ),
+      metrics: { requiresRequestBeforeAcknowledgement: true },
+    }),
+  },
+  {
     // v1 → v2: predicate yalnız "algoritma denendi mi"yi sayıyordu (metrics.algorithm
     // hem başarılı hem başarısız/timeout koşularda yazılıyor), result alanına hiç
     // bakmıyordu — üç başarısız koşu bile passed=true üretiyordu (false positive).
