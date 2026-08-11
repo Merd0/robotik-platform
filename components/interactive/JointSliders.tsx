@@ -41,7 +41,18 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
   function handleChange(index: number, degrees: number) {
     setActiveJointIndex(index);
     setJointAngles((prev) => prev.map((angle, i) => (i === index ? toRadians(degrees) : angle)));
-    record({ skillId: "forward-kinematics", stage: "tried", result: "success", metrics: { joint: index + 1, degrees: round(degrees) } });
+  }
+
+  /**
+   * Görsel hareket (yukarıdaki onChange) her piksel için tetiklenir ve anlık
+   * kalmalı. Kalıcı kanıt yalnız kullanıcı bir değeri "bıraktığında" yazılır —
+   * pointer-up (mouse + touch, Pointer Events ikisini de aynı olayla verir),
+   * blur veya klavye commit'i (ok tuşu bırakıldığında). Üçü de aynı anlamsal
+   * "observed" olayını üretir; sürekli sürüklemede yüzlerce "tried" kaydı
+   * biriktirip localStorage'ı aşındırmaz.
+   */
+  function commitJoint(index: number) {
+    record({ skillId: "forward-kinematics", stage: "observed", result: "success", metrics: { joint: index + 1 } });
   }
 
   function handleReset() {
@@ -100,7 +111,9 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
                             setActiveJointIndex(index);
                             setJointAngles((prev) => prev.map((v, i) => (i === index ? Number(event.target.value) : v)));
                           }}
-                          onPointerUp={() => record({ skillId: "forward-kinematics", stage: "observed", result: "success", metrics: { joint: index + 1 } })}
+                          onPointerUp={() => commitJoint(index)}
+                          onBlur={() => commitJoint(index)}
+                          onKeyUp={() => commitJoint(index)}
                         />
                       </label>
                     ) : (
@@ -115,6 +128,9 @@ export function JointSliders({ robot: robotId }: JointSlidersProps) {
                           onFocus={() => setActiveJointIndex(index)}
                           onPointerDown={() => setActiveJointIndex(index)}
                           onChange={(event) => handleChange(index, Number(event.target.value))}
+                          onPointerUp={() => commitJoint(index)}
+                          onBlur={() => commitJoint(index)}
+                          onKeyUp={() => commitJoint(index)}
                         />
                       </label>
                     );

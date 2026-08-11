@@ -89,7 +89,7 @@ test("kavram kontrolü tek başına değil, kayıtlı deney predicate'iyle kanı
   expect(evidence.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
     event.stage === "passed" &&
     event.verification === "registry-predicate" &&
-    event.predicateId === "planner-three-way-comparison-v1",
+    event.predicateId === "planner-three-way-comparison-v2",
   )).toBe(true);
 });
 
@@ -100,6 +100,41 @@ test("yerel kayıt silme işlemi iki adımlıdır", async ({ page }) => {
   await expect(page.getByText("Bu tarayıcıdaki tüm deney kayıtları silinecek.")).toBeVisible();
   await page.getByRole("button", { name: "Silmeyi onayla" }).click();
   expect(await page.evaluate(() => localStorage.getItem("robotik-platform:evidence:v2"))).toBeNull();
+});
+
+test("iki eklemli kaydırıcı deneyi klavye ve pointer commit'iyle geçilebilir", async ({ page }) => {
+  await page.goto("/ders/b-ortaokul-eklemleri-oynat");
+  const experiment = page.locator("[data-joint-sliders]");
+  await experiment.scrollIntoViewIfNeeded();
+  const sliders = experiment.getByRole("slider");
+  await expect(sliders).toHaveCount(2);
+
+  // J1: klavye commit — odaklan, ok tuşuyla değiştir, tuş bırakılınca (keyup) "observed" yazılmalı.
+  await sliders.nth(0).focus();
+  await sliders.nth(0).press("ArrowRight");
+
+  // J2: pointer commit — Pointer Events mouse ve touch'ı aynı olayla temsil eder,
+  // bu yüzden tek bir pointerup dispatch'i ikisini de temsil eder.
+  await sliders.nth(1).evaluate((element) => {
+    const input = element as HTMLInputElement;
+    input.value = "30";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    input.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+  });
+
+  await page.getByRole("button", { name: "Robotun iki eklem açısını" }).click();
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { skillId?: string; stage?: string; metrics?: { joint?: number } }) =>
+    event.skillId === "forward-kinematics" && event.stage === "observed" && event.metrics?.joint === 1,
+  )).toBe(true);
+  expect(evidence.some((event: { skillId?: string; stage?: string; metrics?: { joint?: number } }) =>
+    event.skillId === "forward-kinematics" && event.stage === "observed" && event.metrics?.joint === 2,
+  )).toBe(true);
+  expect(evidence.some((event: { stage?: string; predicateId?: string }) =>
+    event.stage === "passed" && event.predicateId === "forward-kinematics-dual-joint-v2",
+  )).toBe(true);
 });
 
 test("homojen dönüşüm pilotu iki işlem sırasını ölçülebilir biçimde ayırır", async ({ page }) => {

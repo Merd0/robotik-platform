@@ -44,7 +44,7 @@ describe("Evidence v2 çalışma zamanı", () => {
       kind: "achievement",
       stage: "passed",
       verification: "registry-predicate",
-      predicateId: "planner-three-way-comparison-v1",
+      predicateId: "planner-three-way-comparison-v2",
     });
   });
 
@@ -81,5 +81,99 @@ describe("Evidence v2 çalışma zamanı", () => {
     expect(evidence.getEvidenceEvents()).toHaveLength(2);
     expect(fake.values.has(evidence.EVIDENCE_STORAGE_KEY)).toBe(true);
     expect(fake.removed).toEqual(expect.arrayContaining([oldKey, progressKey]));
+  });
+});
+
+describe("Evidence v2 saklama politikası (kör 1000-olay FIFO yerine semantik kota)", () => {
+  it("binlerce hareket olayından sonra bile eski read ve passed kaydı korunur", async () => {
+    fakeWindow();
+    const evidence = await import("./evidence");
+    const contentVersion = "sha256:current";
+
+    evidence.appendEvidence({ lessonId: "b-ortaokul-eklemleri-oynat", skillId: "legacy-manual-completion", contentVersion, stage: "read", result: "success" });
+
+    // Gerçek bir predicate'i tetikleyip gerçek bir "passed" milestone üret.
+    const fourLens = { lessonId: "b-lise-ileri-kinematik", skillId: "four-lens-forward-kinematics", contentVersion };
+    evidence.appendEvidence({ ...fourLens, stage: "observed", result: "neutral", metrics: { sampleIndex: 0 } });
+    evidence.appendEvidence({ ...fourLens, stage: "observed", result: "neutral", metrics: { sampleIndex: 3 } });
+    evidence.appendEvidence({ ...fourLens, stage: "assessed", result: "success", metrics: { finalSample: 3 } });
+    expect(evidence.summarizeEvidence(evidence.getEvidenceEvents(), fourLens.lessonId, contentVersion).passed).toBe(true);
+
+    // Ağır sürükleme benzetimi: binlerce farklı gözlem olayı (her biri farklı seed/elapsedMs,
+    // yani dedupe ile tek kayda inmez — gerçek bir aşınma senaryosu).
+    for (let i = 0; i < 3000; i++) {
+      evidence.appendEvidence({
+        lessonId: "c-universite-algoritma-karsilastirma-deneyi",
+        skillId: "planner-comparison",
+        contentVersion,
+        stage: "observed",
+        result: i % 11 === 0 ? "success" : "retry",
+        metrics: { algorithm: "astar", seed: i, elapsedMs: i * 1.7 },
+      });
+    }
+
+    const events = evidence.getEvidenceEvents();
+    expect(events.some((event) => event.lessonId === "b-ortaokul-eklemleri-oynat" && event.stage === "read")).toBe(true);
+    expect(evidence.summarizeEvidence(events, fourLens.lessonId, contentVersion).passed).toBe(true);
+    // Kör FIFO eskiden en fazla 1000 tutuyordu ve milestone ayrımı yapmıyordu;
+    // yeni politika toplamı bundan belirgin biçimde daha düşük tutar.
+    expect(events.length).toBeLessThan(1000);
+  });
+
+  it("aynı (ders, beceri, aşama, sonuç, metrik) tekrarını tek kayda indirger", async () => {
+    fakeWindow();
+    const evidence = await import("./evidence");
+    for (let i = 0; i < 50; i++) {
+      evidence.appendEvidence({
+        lessonId: "b-ortaokul-eklemleri-oynat",
+        skillId: "forward-kinematics",
+        contentVersion: "v1",
+        stage: "observed",
+        result: "success",
+        metrics: { joint: 1 },
+      });
+    }
+    const observed = evidence.getEvidenceEvents().filter(
+      (event) => event.lessonId === "b-ortaokul-eklemleri-oynat" && event.stage === "observed",
+    );
+    expect(observed).toHaveLength(1);
+  });
+
+  it("farklı içerikli gözlemler ders/beceri başına en yeni kayıtlarla sınırlanır", async () => {
+    fakeWindow();
+    const evidence = await import("./evidence");
+    for (let i = 0; i < 200; i++) {
+      evidence.appendEvidence({
+        lessonId: "ders-x",
+        skillId: "beceri-x",
+        contentVersion: "v1",
+        stage: "observed",
+        result: "success",
+        metrics: { i },
+      });
+    }
+    const observed = evidence.getEvidenceEvents().filter((event) => event.lessonId === "ders-x");
+    expect(observed.length).toBeGreaterThan(0);
+    expect(observed.length).toBeLessThan(200);
+    expect(observed.at(-1)?.metrics?.i).toBe(199);
+  });
+
+  it("performans: binlerce gözlem olayı eklemek hızlı kalır", async () => {
+    fakeWindow();
+    const evidence = await import("./evidence");
+    const startedAt = Date.now();
+    for (let i = 0; i < 3000; i++) {
+      evidence.appendEvidence({
+        lessonId: "c-universite-algoritma-karsilastirma-deneyi",
+        skillId: "planner-comparison",
+        contentVersion: "sha256:perf",
+        stage: "observed",
+        result: "retry",
+        metrics: { algorithm: ["astar", "rrt", "rrt_star"][i % 3], seed: i, elapsedMs: i },
+      });
+    }
+    const elapsedMs = Date.now() - startedAt;
+    expect(evidence.getEvidenceEvents().length).toBeLessThan(1000);
+    expect(elapsedMs).toBeLessThan(5000);
   });
 });
