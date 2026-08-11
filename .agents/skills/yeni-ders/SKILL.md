@@ -60,9 +60,10 @@ durum: taslak
 4. `etkilesimli` alanına sadece `components/interactive/index.ts` içindeki
    `mdxComponents` listesinde zaten var olan bir bileşen adı yaz. Yoksa önce
    dur ve bileşenin ayrıca yazılması gerektiğini belirt.
-5. `durum: taslak` olarak bırak, `incelendi_tarafindan`/`incelendi_tarih`
-   alanlarını boş bırak — bunlar sadece gerçek insan gözden geçirmesinden
-   sonra doldurulur (bkz. `docs/06-kalite-ve-topluluk.md`).
+5. `durum: taslak` olarak bırak, legacy `incelendi_tarafindan` /
+   `incelendi_tarih` alanlarını boş bırak. İnsan gözden geçirmesi yayın için
+   opsiyoneldir; gerçekten yapılırsa bu alanlarla değil, sürüme bağlı Review
+   Receipt ile kaydedilir (bkz. `docs/06-kalite-ve-topluluk.md`).
 6. Seviye kalibrasyonuna uy: ortaokulda formül yok, lisede formül var ama
    türetme yok, üniversitede türetme ve sınırlar var.
 7. Kanca çeşitliliğine dikkat et — aynı hat+seviyedeki bir önceki dersin

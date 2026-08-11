@@ -55,19 +55,23 @@ gösterilecek sürüm bu.**
 
 ## Faz 2 — Planlama ve temeller
 
+**Güncel durum notu (2026-08-10):** Aşağıdaki tarihli faz notları o günkü
+teslim durumunu kaydeder. Sonraki kararla korpustaki taslaklar yayına alındı
+ve insan incelemesi yayın için opsiyonel oldu; güncel politika `docs/06`'dadır.
+
 - [x] A*, RRT, RRT* TypeScript portu + Web Worker
 - [x] `PlannerRace` bileşeni — algoritmaları aynı sahnede yarıştır
 - [x] Kullanıcı kendi engel düzenini kurabilsin
-- [x] Hat C tamamı (3 seviye, 11 ders — taslak, insan incelemesi bekliyor)
-- [x] Hat A tamamı (3 seviye, 14 ders — taslak, insan incelemesi bekliyor)
+- [x] Hat C tamamı (3 seviye, 11 ders; faz kapanışında taslaktı, sonra yayımlandı)
+- [x] Hat A tamamı (3 seviye, 14 ders; faz kapanışında taslaktı, sonra yayımlandı)
 
 **Çıktı:** Üç hat yayında. Site artık "bir kaynak" sayılır.
 
 **Not (2026-08-01):** "Yayında" burada teknik anlamda — dosyalar `content/`
 altında, testler/build/lint temiz, `durum: taslak`. Faz 1'deki gibi
-(`docs/durum-denetim.md`), `durum: yayinda` işaretlemesi ve
-`incelendi_tarafindan` doldurulması ayrı, insan tarafından yapılacak bir
-adım; bu faz onu kapsamıyor. RRT/RRT* Python fixture'ına karşı bit-bit
+(`docs/durum-denetim.md`), `durum: yayinda` işaretlemesi ve insan incelemesi
+o tarihte ayrı bir adım olarak planlanmıştı; bu kural 2026-08-10'da yukarıdaki
+güncel durum notuyla değişti. RRT/RRT* Python fixture'ına karşı bit-bit
 doğrulanamadı (RNG farkı) — bunun yerine özellik testleriyle doğrulandı,
 bkz. `lib/robotics/planners/rrt.test.ts` başındaki not. `new Worker(new
 URL(...))` deseni bu projede (Next 16.2, hem Turbopack hem webpack) güvenilir
@@ -90,8 +94,8 @@ derleyip `public/workers/` altına koymak oldu (bkz. o script'in yorumu).
 
 **Not (2026-08-02):** Faz 2'deki gibi, "tamamlandı" burada teknik anlamda —
 19 yeni dosya (10 Hat D + 8 Hat G + 1 altyapı) `durum: taslak`, testler/
-build/lint temiz. `durum: yayinda` işaretlemesi ve `incelendi_tarafindan`
-doldurulması ayrı, insan tarafından yapılacak bir adım; bkz.
+build/lint temizdi. Yayın ve insan incelemesi o tarihte ayrı bir adım olarak
+planlanmıştı; güncel opsiyonel inceleme politikası için yukarıdaki nota ve
 `docs/durum-denetim.md` Faz 3 bölümü.
 
 ---

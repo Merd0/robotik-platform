@@ -114,7 +114,7 @@ export default async function SozlukTerimPage({ params }: SozlukTerimPageProps) 
             </div>
           ) : (
             <p className="mt-4 text-ortaokul-ink/75">
-              Bu konu hattının insan incelemesinden geçmiş dersleri yayımlandığında burada listelenecek.
+              Bu konu hattında yayımlanmış bir ders olduğunda burada listelenecek.
             </p>
           )}
         </section>

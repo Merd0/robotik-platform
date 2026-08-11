@@ -10,9 +10,9 @@ import { getAllLessons } from "../lib/content";
  * Bu script `out/` klasörünü açıp bakar — bir slug için dosya varsa o sayfa
  * yayında demektir, kim ne niyetle üretmiş olursa olsun.
  *
- * `docs/06-kalite-ve-topluluk.md` Katman 3: insan gözden geçirmesinden
- * geçmemiş bir ders yayınlanamaz. Bu, o kuralın derleme çıktısı üzerinde
- * doğrulanmış hâli. Hat H (güvenlik) dersleri için özellikle önemli.
+ * Bu kontrol insan incelemesini değil, editoryal `durum` alanını doğrular.
+ * İnsan incelemesi opsiyoneldir; buna karşılık `durum: yayinda` olmayan bir
+ * ders Hat H dahil hiçbir hatta üretim çıktısına giremez.
  *
  * Önizleme derlemesinde (ICERIK_TASLAK_ONIZLEME=1) kontrol atlanır — o
  * derleme zaten bilinçli olarak taslakları içerir ve yayına gitmez.
@@ -52,8 +52,7 @@ function main(): void {
     console.error(
       `HATA: ${sizanlar.length} taslak dersin sayfası üretim çıktısında yayında:\n` +
         sizanlar.map((satir) => `  - ${satir}`).join("\n") +
-        "\n\nTaslak dersler herkese açık adreste bulunmamalı " +
-        "(docs/06-kalite-ve-topluluk.md Katman 3).",
+        "\n\n`durum: yayinda` olmayan dersler herkese açık adreste bulunmamalı.",
     );
     process.exit(1);
   }

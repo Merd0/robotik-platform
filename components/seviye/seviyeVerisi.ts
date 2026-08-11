@@ -1,6 +1,7 @@
 import { getPublicTracksByLevel, hatEtiket, type Seviye } from "@/lib/content";
 import { computeTeachingHash } from "@/lib/lessonArtifact";
 import { etkilesimEtiketi } from "@/lib/etkilesimEtiket";
+import { CURATED_START_ROUTES } from "@/lib/learningRoutes";
 import { kanalKodu, onizlemeTuru, type OnizlemeTuru } from "./LessonPreview";
 
 /*
@@ -30,6 +31,7 @@ export interface HatBlogu {
 export interface SeviyeVerisi {
   hatlar: HatBlogu[];
   dersSayisi: number;
+  baslangicRotasi: DersKarti[];
 }
 
 export function seviyeVerisi(seviye: Seviye): SeviyeVerisi {
@@ -55,5 +57,16 @@ export function seviyeVerisi(seviye: Seviye): SeviyeVerisi {
       }),
     }));
 
-  return { hatlar, dersSayisi: hatlar.reduce((toplam, hat) => toplam + hat.dersler.length, 0) };
+  const dersBySlug = new Map(hatlar.flatMap((hat) => hat.dersler).map((ders) => [ders.slug, ders]));
+  const baslangicRotasi = CURATED_START_ROUTES[seviye].map((slug) => {
+    const ders = dersBySlug.get(slug);
+    if (!ders) throw new Error(`Başlangıç rotasındaki ders yayımlı değil: ${slug}`);
+    return ders;
+  });
+
+  return {
+    hatlar,
+    dersSayisi: hatlar.reduce((toplam, hat) => toplam + hat.dersler.length, 0),
+    baslangicRotasi,
+  };
 }

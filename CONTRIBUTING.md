@@ -56,15 +56,16 @@ npm run validate-content-graph   # ön koşul grafiği: döngü, eksik referans
 npm run build
 ```
 
-CI de aynılarını koşar. Yeşil olmayan hiçbir PR birleştirilmez — insan
-incelemesi otomasyonun yerine geçmez, ikisi birlikte çalışır.
+CI de aynılarını koşar. Bu otomatik kapılar temiz geçmeden hiçbir PR
+birleştirilmez.
 
 ---
 
-## Ders katkısı: üç kapı
+## Ders katkısı: iki zorunlu kapı, bir opsiyonel inceleme
 
-`docs/06-kalite-ve-topluluk.md`'deki üç katmanlı doğrulama, dış katkıda da
-aynen işler. Ayrıcalık yok.
+`docs/06-kalite-ve-topluluk.md`'deki kaynak ve sayısal doğrulama dış katkıda
+da zorunludur. İnsan gözden geçirmesi aynı araçlarla yapılabilir ama yayın
+şartı değildir.
 
 ### Kapı 1 — Kaynak (otomatik kontrol edilir)
 
@@ -97,17 +98,17 @@ karşılık geliyorsa `lib/robotics/` içindeki fonksiyonla veya
 bir kod varsa tek satırlık "Kaynak kodu" bağlantısı eklenir. **Uydurma link
 yazma** — implementasyon yoksa satır hiç eklenmez.
 
-### Kapı 3 — İnsan gözden geçirmesi (elle, atlanamaz)
+### Opsiyonel — İnsan gözden geçirmesi
 
-Bir ders `durum: yayinda` olamaz; PR'ında `durum: taslak` olarak gelir.
-Yayınlama, bir bakımcının dersi kaynaklarıyla satır satır karşılaştırıp
-etkileşimli sahnesini bizzat oynamasıyla olur ve `incelendi_tarafindan` /
-`incelendi_tarih` alanları o zaman doldurulur.
+Bir bakımcı dersi kaynaklarıyla satır satır karşılaştırmayı seçerse inceleme
+`npm run review` ile güncel ders sürümüne bağlı Review Receipt olarak
+kaydedilir. Legacy `incelendi_tarafindan` / `incelendi_tarih` alanları yeni
+bir yayının kanıtı değildir ve yayın şartı gibi doldurulmaz.
 
-Bir git hook'u (`.claude/hooks/check-lesson-frontmatter.mjs`) ve CI, bu
-alanlar boşken `durum: yayinda` yazılmasını reddeder. Bunu aşmaya çalışma;
-kural teknik olarak zorlanıyor çünkü projenin en önemli sözü bu:
-**yapay zekâ üretimi bir ders, insan gözden geçirmesi olmadan yayınlanamaz.**
+İnceleme yapılmaması yayını engellemez. Bunun dürüst sonucu şudur: otomatik
+kapılar kaynak alanının varlığını ve sayısal kodu denetler, ders metnindeki
+her iddianın kaynakla uyuştuğunu garanti etmez. Ayrıntılı kapsam tablosu
+`docs/06-kalite-ve-topluluk.md` içindedir.
 
 ---
 

@@ -37,8 +37,9 @@ dosyasını baştan sona yazmak.
    bölümü, standart numarası, üretici dokümantasyonu, akademik yayın).
    Kaynağı gösteremediğin iddiayı yazma.
 7. `durum: taslak`, `incelendi_tarafindan: ""`, `incelendi_tarih: ""` olarak
-   bırak — bunları SEN dolduramazsın, bu alan gerçek insan incelemesi
-   içindir (bkz. `docs/06`).
+   bırak. Son iki alan legacy kayıttır ve yayın şartı değildir. Opsiyonel
+   insan incelemesi gerçekten yapılırsa sürüme bağlı Review Receipt'i insan
+   kaydeder (bkz. `docs/06`).
 
 ## Dönüş
 

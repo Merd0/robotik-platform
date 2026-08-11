@@ -21,9 +21,9 @@ import { mdxDuzMetne, type AramaKaydiHam } from "../lib/arama";
 const CIKTI = path.join(process.cwd(), "public", "arama-index.json");
 
 function main(): void {
-  // Sitenin geri kalanıyla aynı kural: sadece insan gözden geçirmesinden
-  // geçmiş dersler listelenir (bkz. app/page.tsx, app/seviye/[seviye]/page.tsx).
-  // Taslak dersler doğrudan URL ile hâlâ açılabilir, ama aranamaz.
+  // Sitenin geri kalanıyla aynı editoryal durum kuralı: yalnız `yayinda`
+  // işaretli dersler listelenir. İnsan incelemesi opsiyoneldir ve bu filtre
+  // onun göstergesi değildir. Taslaklar üretim sayfasına ve aramaya girmez.
   const dersler = getAllLessons().filter((ders) => ders.frontmatter.durum === "yayinda");
 
   const kayitlar: AramaKaydiHam[] = dersler

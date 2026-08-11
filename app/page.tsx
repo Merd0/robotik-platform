@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { ContinueLearning } from "@/components/home/ContinueLearning";
 import { HeroExperiment } from "@/components/home/HeroExperiment";
 import { getAllLessons, getPublicLessons, HAT_ETIKET, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
 import { ETKILESIM_ETIKETI } from "@/lib/etkilesimEtiket";
+import { CURATED_START_ROUTES } from "@/lib/learningRoutes";
 
 const SEVIYELER: { seviye: Seviye; aciklama: string }[] = [
   { seviye: "ortaokul", aciklama: "Robot kavramı, eklem hareketi ve labirent planlamayı görerek dene." },
@@ -27,6 +29,21 @@ export default function HomePage() {
   const tracks = [...new Set(publishedLessons.map((lesson) => lesson.frontmatter.hat))];
   const interactiveCount = publishedLessons.filter((lesson) => lesson.frontmatter.etkilesimli.length > 0).length;
   const sourceCount = publishedLessons.reduce((toplam, lesson) => toplam + lesson.frontmatter.kaynaklar.length, 0);
+  const continueLessons = publishedLessons.map((lesson) => ({
+    slug: lesson.slug,
+    baslik: lesson.frontmatter.baslik,
+    seviye: lesson.frontmatter.seviye,
+    seviyeEtiketi: SEVIYE_ETIKET[lesson.frontmatter.seviye],
+  }));
+  const continueBySlug = new Map(continueLessons.map((lesson) => [lesson.slug, lesson]));
+  const continueRoutes = SEVIYELER.map(({ seviye }) => ({
+    seviye,
+    steps: CURATED_START_ROUTES[seviye].map((slug) => {
+      const lesson = continueBySlug.get(slug);
+      if (!lesson) throw new Error(`Başlangıç rotasındaki ders yayımlı değil: ${slug}`);
+      return lesson;
+    }),
+  }));
   const levelCards = SEVIYELER.map((card) => {
     const lessons = publishedLessons.filter((lesson) => lesson.frontmatter.seviye === card.seviye);
     const interactions = [...new Set(lessons.flatMap((lesson) => lesson.frontmatter.etkilesimli))]
@@ -40,6 +57,8 @@ export default function HomePage() {
     <main id="ana-icerik" className="min-h-screen overflow-hidden bg-poster-bg text-poster-ink">
       <div className="mx-auto flex max-w-7xl flex-col gap-16 px-4 py-8 sm:px-6 sm:py-12 lg:gap-24">
         <HeroExperiment />
+
+        <ContinueLearning lessons={continueLessons} routes={continueRoutes} />
 
         <section aria-labelledby="seviye-baslik" className="space-y-7">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -74,10 +93,15 @@ export default function HomePage() {
             <h2 className="mt-1 font-heading text-3xl font-extrabold">{tracks.length} hat, birbirine bağlanan robotik</h2>
             <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
               {tracks.map((track, index) => (
-                <div key={track} className="flex min-h-14 items-center gap-3 rounded-xl bg-poster-soft px-4 py-2 text-sm font-semibold">
+                <Link
+                  key={track}
+                  href={`/seviye/ortaokul/hat/${track}`}
+                  className="group flex min-h-14 items-center gap-3 rounded-xl bg-poster-soft px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:ring-2 hover:ring-poster-ink"
+                >
                   <span aria-hidden="true" className={`grid size-7 shrink-0 place-items-center rounded-full font-mono text-xs font-bold ${hatRengi(index, tracks.length)}`}>{String.fromCharCode(65 + index)}</span>
-                  <span>{HAT_ETIKET[track]}</span>
-                </div>
+                  <span className="flex-1">{HAT_ETIKET[track]}</span>
+                  <span aria-hidden="true" className="transition group-hover:translate-x-1">→</span>
+                </Link>
               ))}
             </div>
           </div>

@@ -4,10 +4,9 @@ import { getAllLessons, getPublicLessonBySlug, getPublicLessons, taslakOnizlemeA
 /**
  * Taslak derslerin üretimde herkese açık OLMAMASI kuralının testleri.
  *
- * Bu bir "güzel olsa iyi olur" değil, `docs/06-kalite-ve-topluluk.md`
- * Katman 3'ün ("insan gözden geçirmesi olmadan yayınlanamaz") teknik
- * güvencesi. Hat H güvenlik dersleri de dahil, doğrulanmamış hiçbir içerik
- * URL'i bilinerek açılabilir olmamalı.
+ * Bu insan incelemesi güvencesi değil, editoryal yayın durumunun teknik
+ * güvencesidir. Hat H güvenlik dersleri de dahil, `durum: yayinda` olmayan
+ * hiçbir içerik URL'i bilinerek açılabilir olmamalı.
  *
  * Derleme çıktısı üzerindeki karşılığı: `scripts/check-no-draft-pages.ts`.
  */
