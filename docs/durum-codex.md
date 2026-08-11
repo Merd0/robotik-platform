@@ -833,3 +833,517 @@ renderer nedeniyle CodeRunner embed'ini de kapsamalı. Her J1–J6 kontrolü
 konum veya yönelim üzerinden gözlemlenebilir sonuç üretmeli; özellikle J6
 tool triadını döndürmeli. Klavye, touch, reset, metin özeti ve yatay taşma
 test edilmelidir.
+
+# Sonraki faz — bağımsız analiz
+
+> Denetim tarihi: 2026-08-11
+>
+> İncelenen sürüm: `main@48a8d2fded7e063357bedad54f26bbfb6e3fc175`
+>
+> Kapsam: `docs/00-vizyon.md`, `docs/12-buyume-plani.md`, iki durum belgesi,
+> `docs/fikirler.md`, `app/`, `components/`, `lib/robotics/`, `content/`, CI,
+> review ve Evidence zinciri. Uygulama kodu değiştirilmedi.
+
+## Yönetici kararı
+
+Platformun bir sonraki büyük fazı **“daha çok ders”**, genel bir oyun alanı
+veya öğretmen paneli olmamalı. Bir sonraki fazın adı ve amacı şu olmalı:
+
+> **Rota ve Kanıt — 89 sayfalık kataloğu, doğru başlangıçtan ölçülebilir
+> başarıya ve geri dönüşe uzanan bir öğrenme ürününe dönüştür.**
+
+Bugünkü en büyük eksik içerik miktarı değil, şu döngünün tamamlanmamış olması:
+
+`keşfet → doğru yerden başla → bir şey başardığını gör → sıradakini bil → geri dön`
+
+Platform ilk üç adımın parçalarına sahip; bunları tek ürün döngüsü olarak
+birleştirmiyor. Kullanıcı yaş seviyesini seçtikten sonra 18, 25 veya 46 derslik
+bir katalogla karşılaşıyor. Geri geldiğinde ana sayfada kaldığı yer yok. Ders
+sonunda 89 dersin 79'unda ölçülebilir başarı tanımı hiç yok; tanımı olan
+derslerden birinin olay sözleşmesi de mevcut UI ile geçilemez durumda.
+
+Bu nedenle `docs/12-buyume-plani.md` güncel yol haritası olarak kullanılmamalı:
+
+- 6-DOF yerleşim, J6 ekseni ve tool yönelimi `b240f45` ile düzeltildi;
+- 50 taslağın tamamı yayımlandı; bugün 89/89 ders `yayinda`;
+- Review Receipt v2 kuruldu ve insan review'u kalıcı kararla opsiyonel oldu;
+- sözlük terim rotaları, ders OG görselleri ve JSON-LD gibi SEO derinleştirmesi
+  de temel seviyenin ötesine geçti.
+
+Dolayısıyla eski plandaki iki “hemen” işi ve “50 taslağı aç” orta-vade işi
+tamamlanmış/stale kabul edilmeli. Oyun alanı iyi bir vitrin fikri olmaya devam
+ediyor, fakat devam döngüsünden önce yapılırsa ziyaret üretip öğrenme ilişkisi
+kuramayan ayrı bir oyuncak olma riski yüksek.
+
+## 1. Mevcut durum — doğrulanan gerçek envanter
+
+| Alan | Güncel gerçek | Yorum |
+|---|---:|---|
+| Ders | **89/89 yayında** | Ortaokul 18, lise 25, üniversite 46; taslak 0 |
+| Müfredat | **8 hat × 3 seviye** | 24 hat-seviye hücresinin tamamı dolu; toplam 1.269 dakika |
+| Ön koşul grafiği | **89 kenar** | 81 dersin ön koşulu var; 17 kenar seviye değiştiriyor |
+| Sözlük | **72 terim + 72 tekil rota** | DefinedTerm JSON-LD ve sitemap kayıtları var |
+| MDX etkileşimi | **19 izinli bileşen** | 18 tür frontmatter'da fiilen kullanılıyor; ayrı capstone da var |
+| Ders deneyimi | **78 temel etkileşimli, 11 okuma+Quiz** | 11'in 10'u üniversite dersi |
+| Quiz | **79 ders** | Yaygın, fakat tek başına performans kanıtı sayılmıyor |
+| Evidence | **11 predicate / 10 benzersiz ders** | Bir predicate mevcut UI ile geçilemez; gerçek kapsam daha da dar |
+| Kaynak | **156 kayıt** | 140 legacy string, yalnız 16 yapılandırılmış SourceRef |
+| Review v2 | **3 kapsam makbuzu / 1 ders** | 88 dersin tam güncel v2 insan makbuzu yok; review opsiyonel |
+| SEO | **yaklaşık 192 sitemap URL'si** | Ders OG, Course/LearningResource JSON-LD, terim JSON-LD, robots ve canonical var |
+| Gizlilik | Hesap/çerez/profil yok | Evidence yalnız localStorage'da; dışa aktarma kullanıcı eylemiyle |
+
+Kullanıcının özetindeki sözlük, arama, capstone, 4+ laboratuvar, dark mode,
+cesur tasarım, CI/güvenlik ve SEO ifadeleri doğru. İki düzeltme gerekli:
+
+1. “4+ bileşen” mevcut ürünü küçük gösteriyor: allowlist 19 bileşen, beş derin
+   dikey laboratuvar ve ayrı robot hücresi capstone'u var.
+2. “89 ders tamamlandı” yalnız yayın durumunu anlatır. Pedagojik performans,
+   kaynak biçimi ve insan doğrulaması bakımından 89 ders eşit olgunlukta değil.
+
+İçerik hacmi yaklaşık 29.900 kelime. Bununla birlikte 89 dersin tamamı aynı
+ana başlık ritmini kullanıyor: `Kanca`, `Ne oldu`, `Gerçek dünyada`, `Sonraki`;
+87 derste ayrıca `Dene` var. Bu tutarlılık gezinmeyi kolaylaştırıyor, fakat
+art arda kullanımda “aynı şablonun yeniden doldurulması” hissi doğurabilir.
+Sonraki içerik turu yalnız cümle çeşitlendirmek değil; vaka, hata ayıklama,
+tasarım savunusu, karşı-örnek ve kaynak okuma gibi farklı öğrenme eylemleri
+üretmek zorunda.
+
+## 2. Boşluk analizi
+
+### En büyük eksik
+
+**89 yayınlık kataloğun keşif → doğru başlangıç → ölçülebilir başarı → kaldığın
+yerden dönüş döngüsü yok.** Bu yorum değil, kodun birlikte gösterdiği sonuçtur:
+
+| Döngü adımı | Kodda bugün olan | Kullanıcıda oluşan kırılma |
+|---|---|---|
+| Keşif | Ana sayfa üç yaş seviyesi sunuyor | Amaç, süre veya meraka göre başlangıç yok |
+| Rota | 89 ön koşul kenarı var | Ana sayfadaki 8 hat kutusu link değil; ön koşullar dersin en sonunda |
+| İlk başarı | Etkileşim ve Quiz var | 79 derste predicate yok; panel “Kanıt tanımsız” diyor |
+| Dönüş | Evidence localStorage'da tutuluyor | Ana sayfa onu okumuyor; “Devam et” yok |
+| İlerleme görünürlüğü | Hat sayfasında rozet var | Üç seviye sayfasında rozetler `sr-only`; gören kullanıcıdan gizli |
+| Taşınabilirlik | JSON dışa aktarma var | JSON'u içe alan/okuyan/doğrulayan hiçbir ürün yüzeyi yok |
+| Seviye değişimi | Vizyon aynı kavramı üç derinlikte vaat ediyor | Ders düzeyinde “aynı kavramın diğer seviyesi” eşlemesi yok |
+
+Ana sayfadaki “Müfredat haritası” sekiz `div` üretir; kullanıcı bir hatta doğrudan
+giremez. Derslerin 81'inde en az bir ön koşul olmasına rağmen bu uyarı,
+`LessonCompletionPanel` sonrasındaki alt navigasyonda görünür. Aramayla ileri
+bir derse inen öğrenci, yanlış yerden başladığını dersi bitirdikten sonra öğrenir.
+
+### Ortaokul öğrencisi
+
+- 18 dersin 17'sinde temel bir etkileşim var; ürünün en güçlü persona yüzeyi bu.
+- Buna rağmen yalnız 2 ders predicate registry'sinde. Bunlardan
+  `b-ortaokul-eklemleri-oynat` için predicate J1/J2 `observed` olayı ister,
+  revolute `JointSliders` ise yalnız `tried` yazar. Bu ders mevcut UI ile dürüst
+  biçimde `Kanıtlandı` olamaz.
+- `h-ortaokul-temel-guvenlik-kurallari` okuma+Quiz'dir; vizyondaki “önce oyna”
+  ilkesinin tek ortaokul istisnasıdır.
+- Global “Canlı lab” aynı mm/piksel, fikstür, mm/s ve ayrım mesafesi dilini tüm
+  yaşlara sunar; ortaokul çerçevesi yoktur.
+
+Muhtemel bırakma noktası: 8 hat/18 kart arasından “bugün benim için doğru olan
+hangisi?” sorusuna cevap alamamak; deneyi yaptıktan sonra da başarının ve
+sıradaki küçük adımın görünmemesi.
+
+### Lise öğrencisi
+
+- 25/25 derste temel etkileşim var ve üç gerçek Pyodide/Python laboratuvarı
+  bulunuyor. “Kod çalıştıramıyorum” artık doğru boşluk değildir.
+- Yalnız 2 lise dersi predicate kapsamındadır. Birçok derste sahne değişir ve
+  Quiz çözülür, ancak ürün bunun hedef beceriye dönüştüğünü söyleyemez.
+- Ortaokul sezgisinden üniversite matematiğine aynı deney durumu üzerinden
+  geçiş yok; kullanıcı yeniden seviye ana sayfasına ve kart listesine döner.
+
+Muhtemel bırakma noktası: tek tek iyi deneylerin bir proje/rota hissi vermemesi.
+Öğrenci “bunu denedim; şimdi ne yapabiliyorum?” sorusuna ürün düzeyinde cevap
+alamıyor.
+
+### Üniversite öğrencisi / mühendis
+
+- 46 dersin 10'u yalnız okuma+Quiz: hız-ivme profilleri, ABB RAPID, FANUC,
+  KUKA KRL, ROS 2, endüstriyel protokoller ve dört güvenlik dersi bu kümede.
+- Yalnız 6 üniversite dersi predicate registry'sinde.
+- 156 kaynak kaydının 140'ı legacy string; yalnız 16'sı yapılandırılmıştır.
+  89 dersin sadece 23'ünde kullanıcıyı açılabilir bir URL'ye götüren en az bir
+  kaynak bulunur. Kaynak sürümü, sayfa/konum ve iddia-kaynak eşlemesi çoğunlukla
+  makinece doğrulanamaz.
+- Trust paneli yalnız tam `verified` makbuzu gösterir; 88 dersin missing,
+  legacy veya untracked durumu kullanıcıdan bilinçli olarak saklanır. Buna
+  karşılık “her teknik iddia kaynaklara dayanır” cümlesi mevcut otomatik
+  garantiden daha güçlüdür.
+
+Muhtemel bırakma noktası: ileri düzey kullanıcı formülü ve sonucu görür, fakat
+sayının hangi fixture/model/sürümden geldiğini ve hangi kaynağın hangi iddiayı
+desteklediğini izleyemez. Bu, platformun üniversite düzeyindeki en büyük güven
+ve farklılaşma fırsatıdır.
+
+### Öğretmen
+
+- `/ogretmen`, `/odev`, `/ilerleme`, çalışma kâğıdı veya çıktı rotası yoktur.
+- Öğrenci Evidence JSON'u indirebilir; platform onu geri içe alamaz ve insan
+  dilinde özetleyemez. Öğretmen dosyayı alsa bile ürün içinde anlamlandıramaz.
+- Görev durumu/seed'i içeren kalıcı link, beklenen yanılgı, süre planı ve
+  cevap/kanıt açıklaması yoktur.
+- 79 derste ölçülebilir bitiş olmadığı için “şu görevi yap ve kaydı getir”
+  akışı yalnız küçük bir ders alt kümesinde dürüstçe kurulabilir.
+
+Muhtemel bırakma noktası: öğretmen iyi bir sayfa bulur, fakat onu 40 dakikalık
+ders akışına dönüştürmek, öğrenciye aynı görevi vermek ve sonucu okumak için
+platform dışı işi kendisi yapmak zorunda kalır. Büyük bir panelden önce gereken
+ürün **hesapsız görev paketi + yerel Evidence okuyucu**dur.
+
+### İkinci derecede ama somut keşif hataları
+
+- Her sözlük teriminin “İlgili dersler” bölümü terimin gerçekten geçtiği
+  dersleri değil, aynı hattaki bütün dersleri listeler. JSON-LD `subjectOf` da
+  aynı kaba eşlemeyi tekrarlar. 72 SEO giriş sayfası var, ancak semantik huni
+  gerçek terim-ders ilişkisine dayanmıyor.
+- `/ara` sayfası hâlâ taslakları “henüz insan gözden geçirmesinden geçmemiş”
+  diye açıklıyor. Review artık opsiyonel ve taslak sayısı sıfır; bu güven kıran
+  bir ürün metni borcudur.
+- Aynı bileşen çok sayıda derste tekrar kullanılıyor: örneğin JointSliders 17,
+  PlannerRace 12 derste. Yeniden kullanım teknik olarak doğru; her dersin farklı
+  bir gözlem/görev üretip üretmediği ayrıca denetlenmediğinde pedagojik çeşitlilik
+  yalnız farklı metinden ibaret kalabilir.
+
+## 3. Platforma yeni boyut katacak sekiz fikir
+
+Aşağıdaki liste; oyun alanı, DH/birim araçları, URDF yükleme, sesli komut,
+çoklu robot, AGV hattı, İngilizce, forum ve büyük öğretmen paneli gibi daha önce
+belgelenen fikirleri bilerek tekrar etmez.
+
+| Fikir | Ne? | Neden değerli? | Efor | En büyük risk |
+|---|---|---|---|---|
+| **1. Robotik Yol Bulucu** | Yaş testi değil; hareket tahmini, sinyal sırası ve güvenli karar gibi üç 30 saniyelik mikro görevden sonra yalnız tarayıcıda “şuradan başla, çünkü…” diyen 3 derslik rota | 18/25/46 kartlık soğuk başlangıcı çözer; Hero, Signal, Planner, Safety, `onkosul`, `sure` ve Evidence'ı yeniden kullanır | Orta | Sonucu sınav/seviye etiketi gibi sunmak; her zaman manuel seçim ve “öneridir” dili olmalı |
+| **2. Kavram Asansörü** | Aynı deney durumu için “gör → hesapla → sınırını kanıtla” geçişi; örneğin aynı iki-eklem pozu ortaokul, lise ve üniversite açıklamalarında korunur | Vizyonun üç derinlik vaadini gerçek bir ürün özelliğine çevirir; kullanıcı seviye ana sayfasında kaybolmaz | Orta–büyük | Kavramları zorla eşlemek ve state sözleşmelerini standartlaştırırken bileşenleri katılaştırmak |
+| **3. Deney Kaydı Okuyucu** | Evidence v2 JSON'u sürükle-bırakla tarayıcıda açar; şema, contentVersion ve predicate'i kontrol edip “denendi / kanıtlandı / eski sürüm” raporu verir | Bugünkü tek yönlü export'u hesapsız öğretmen iş akışına dönüştürür; sunucuya dosya göndermez | Küçük–orta | JSON düzenlenebilir; asla sertifika veya kişi doğrulaması iddia etmemeli, “imzasız yerel kayıt” demeli |
+| **4. Haftanın Robotik Vakası** | 5–8 küratörlü şablondan hafta+seed ile statik build'de üretilen ortak arıza/rota/kinematik vakası; aynı vaka linki ve OG kartı | Blog yazmadan geri dönüş ve paylaşım nedeni üretir; öğretmen aynı vakayı sınıfa atabilir | Orta | Az şablonla hızla tekrar hissi; streak/leaderboard kurmadan haftalık ve küratörlü kalmalı |
+| **5. “Bu sayı nereden geldi?” hesap izi** | Kritik çıktıya tıklanınca formül kimliği, girdiler, birimler, yuvarlama, robot/fixture, motor sürümü ve kaynak görünür | Üniversite ve öğretmen güveninde gerçek farklılaşma; Dört Mercek yaklaşımını platform sözleşmesine yükseltir | Orta–büyük | Elle instrumentasyonun eskimesi; descriptor şeması ve varsayılan kapalı ayrıntı katmanı gerekir |
+| **6. Hassasiyet Radarı** | Bir senaryoda parametreleri güvenli alanlarında tek tek pertürbe edip sonucu en çok oynatan varsayımları sıralar; safety, DLS, piksel-mm ve planner pilotları | Formül uygulamaktan robustluk/sistem düşüncesine geçirir; mevcut saf motorları kullanır | Orta | Kör ±%10 karşılaştırması yanlış öğretebilir; alan bazlı aralık, birim ve süreksizlik uyarısı şart |
+| **7. Kaynak Dedektifi** | Bir teknik iddia ve 2–3 kamu kaynağı üzerinden “doğrudan destek / çıkarım / belirtilmemiş” görevi | Datasheet, standart ve kanıt sınırı okuryazarlığı öğretir; SourceRef dönüşümünü kullanıcı değerine bağlar | Orta | Link rot, sürüm ve telif; yalnız kısa paraphrase ve kesin sayfa/sürüm referansı kullanılmalı |
+| **8. Mini-Lab Embed Kit** | Seçilmiş üç hafif 2B laboratuvar için kaynak, disclaimer ve tam derse dönüş linki taşıyan izole embed rotaları | Öğretmen/LMS/blog üzerinde ürünü bizzat deneyimletir; doğal backlink ve dağıtım yüzeyi üretir | Orta | Global CSP `frame-ancestors 'none'`; tüm siteyi açmadan yalnız allowlist embed rotasına ayrı politika ve performans bütçesi gerekir |
+
+Moonshot adayı: **“Bir sayı değişince ne kırılır?”** sistem etkisi laboratuvarı.
+Payload, erişim, ayrım mesafesi veya cycle-time değiştiğinde robot seçimi, rota,
+hız ve program kararlarının hangilerinin yeniden açıldığını gösterir. Robot
+Seçim Masası ve capstone state'ini gerçek sistem mühendisliği düşüncesine taşır;
+ancak yanlış dependency modeli öğretme riski nedeniyle ilk faz işi değildir.
+
+## 4. Gerçek kullanıcı kazanımı
+
+### Öncelik 1 — indekslemeyi doğrula; yeni “SEO sayfası” üretme
+
+Kodda teknik temel zaten güçlü: yaklaşık 192 URL'lik sitemap, robots, canonical,
+ders OG görselleri, Course/LearningResource ve DefinedTerm JSON-LD var. Dışarıdan
+2026-08-11'de yapılan sınırlı `site:` örneklemi alan adını sonuçlarda göstermedi;
+bu **Search Console kanıtı değildir**, yalnız alarmdır.
+
+İlk iş:
+
+1. Kalıcı canonical alan adını seç; ileride özel alan adına geçilecekse backlink
+   toplamadan önce geç. `SITE_URL` bugün kodda Vercel alan adına sabit.
+2. Google Search Console ve Bing Webmaster üzerinden sitemap/coverage/URL
+   inspection kontrolü yap. Siteye izleyici script eklemek gerekmez.
+3. En değerli 10 URL'nin index durumu, canonical seçimi ve gerçek sorgusunu
+   kaydet. Sitemap göndermek yalnız ipucudur, indeks garantisi değildir
+   ([Google Search Central](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)).
+4. Sözlük “ilgili ders” eşlemesini gerçek terim geçişine/küratörlü ilişkiye
+   çevir; ince ve yanlış iç link ağıyla daha fazla sayfa üretme.
+
+### Öncelik 2 — dar öğretmen/BİLSEM/meslek lisesi/robot kulübü pilotu
+
+Büyük panel yapma. 5–8 eğitimciye ana sayfa değil, tek 15 dakikalık görev linki,
+bir paragraf uygulama yönergesi ve Deney Kaydı Okuyucu ver. Başarı sinyali
+“beğendim” değil; en az üç eğitimcinin aynı görevi ikinci kez gerçek grupta
+kullanmasıdır.
+
+Bu kanal projeye özellikle uygundur:
+
+- tek öğretmen bir oturumda çok kullanıcı getirir;
+- hesap/kurulum gerektirmeyen mimari okul ortamındaki sürtünmeyi düşürür;
+- öğretmen geri bildirimi, 89 dersin hangisinin gerçekten öğretilebilir olduğunu
+  genel web trafiğinden daha hızlı gösterir.
+
+### Öncelik 3 — konu SEO'su değil, görev niyeti
+
+“Ters kinematik nedir?” sayfası kullanıcıyı bütün kinematik hattına bırakmamalı;
+doğrudan erişilebilir hedef veya çoklu çözüm deneyine götürmeli. İlk beş yüksek
+niyetli girişte akış şu olmalı:
+
+`30 saniyelik cevap → canlı görev → şaşırtıcı sonuç → neden → uygun seviye`
+
+Yeni blog fabrikası yerine mevcut en iyi laboratuvarların sorgu niyetine göre
+paketlenmesi daha güçlü ve daha az bakım ister.
+
+### Öncelik 4 — sosyal medya ürün çıktısı olsun
+
+Haftanın Vakasından 10–20 saniyelik tek şaşırtıcı sonuç ve aynı `caseId`'ye
+giden link üret. Genel robotik haber, motivasyon sözü ve her ağ için günlük
+takvim bu proje için zaman kaybıdır. Bir öğrenci odaklı kısa video kanalı;
+üniversite/mühendis vitrini gerekiyorsa ikincil LinkedIn yeterlidir.
+
+### Öncelik 5 — dağıtımı platform dışında kur, forumu platform içine alma
+
+Mini-lab embed, öğretmen materyali ve GitHub katkı akışı yararlı topluluktur.
+Site içi forum/Discord benzeri çocuk moderasyonu ise vizyonla çelişir ve asıl
+üründen daha ağır bir operasyon doğurur. GitHub güven/katkıcı kanalıdır; 12–18
+yaş öğrenci ediniminin ana kanalı değildir.
+
+### Ölçüm, veri toplamama ilkesini bozmadan
+
+- Ürüne analytics/session replay/kişisel profil ekleme.
+- Arama görünürlüğünü Search Console'un toplulaştırılmış sorgu ve index raporuyla
+  izle; siteye üçüncü taraf tracker koyma.
+- Öğrenme kalitesini moderasyonlu 10/30/120 saniye testleri, küçük sınıf pilotu
+  ve kullanıcının bilinçli gönderdiği Evidence dosyasıyla ölç.
+- Kampanya başarısını kişi takibiyle değil, belirli görev linkinin sınıfta ikinci
+  kullanım sayısıyla değerlendir.
+
+### Şimdilik zaman kaybı
+
+- sürekli blog/haber operasyonu;
+- site içi forum veya çocuk topluluğu;
+- talep doğrulanmadan öğretmen paneli;
+- Türkçe ürünün geri dönüşü çözülmeden İngilizce çeviri;
+- ilk başarı/geri dönüş ölçülmeden ücretli reklam ve influencer bütçesi;
+- daha fazla ders ve yüzlerce ince sözlük/SEO sayfası;
+- her sosyal ağ için genel içerik takvimi.
+
+## 5. Teknik borç — ilerlemeyi yavaşlatacak gerçek riskler
+
+### P0 — yeni ürün fazından önce
+
+#### 1. Review yokluğu ile bozuk review verisi aynı şekilde “uyarı”
+
+İnsan review'unun opsiyonel olması doğrudur; fakat mevcut makbuzun sahte/bozuk
+olması opsiyonel bir konu değildir. Buna rağmen CI `REVIEW_STRICT=1` kullanmaz.
+`check-review-integrity` şu durumlarda da exit 0 verir:
+
+- makbuz hash/sourceCommit/rol/şema uyuşmazlığı;
+- append-only kaydın silinmesi/değiştirilmesi;
+- baseline dışı veya tahrif edilmiş review debt;
+- yeni yayında yapılandırılmamış legacy kaynak.
+
+Salt-okunur çalıştırma bugün **47 yeni-yayın/legacy-kaynak sözleşme uyarısı**
+üretti ama başarılı çıktı. Çözüm: “makbuz yok” bilgi olarak kalmalı; **var olan
+makbuz/debt bütünlüğü ve kaynak şeması ihlali koşulsuz fatal** olmalı. 47 mevcut
+kayıt ayrı dondurulmuş migration baseline'ına alınmalı veya topluca
+yapılandırılmalı; her CI'da aynı 47 uyarıyı basmak yeni hatayı görünmez yapar.
+
+#### 2. `interactionHash` yok
+
+`teachingHash` MDX gövdesi ve öğretim frontmatter'ını kapsar; kullanılan
+`JointSliders`, `RobotArm`, robot spec, planner, worker, predicate veya başka
+robotik motor uygulamasını kapsamaz. Çalışan matematik değişse bile:
+
+- teknik/pedagojik/safety receipt güncel görünebilir;
+- öğrencinin eski `Kanıtlandı` kaydı yeni davranışta geçerli sayılabilir.
+
+Çözüm yönü: MDX AST'den kullanılan bileşenleri çıkaran deterministik bir
+dependency manifest; bileşen + ilgili saf motor/robot spec/worker + predicate
+sürümünden `interactionHash` ve gerekirse `fixtureHash`. Teknik/safety receipt
+ve Evidence sürüm kökü bunu taşımalı; tarih/mtime kullanılmamalı.
+
+#### 3. Evidence sözleşmesi bugün hem false negative hem false positive üretiyor
+
+- `b-ortaokul-eklemleri-oynat` predicate'i J1/J2 `observed` ister. Revolute
+  JointSliders her değişimde yalnız `tried` yazar; `observed` yalnız prismatic
+  dalda pointer-up'ta var. Mevcut UI ile hedef geçilemez.
+- `b-lise-ileri-kinematik` için eski `forward-kinematics-formula` predicate'i
+  yeni FourLens olay adlarıyla artık bağdaşmaz; aynı dersin yeni predicate'i
+  çalıştığı için ölü sözleşme sessizce kalır.
+- Planner predicate'i algoritma adını sayarken `result === success` aramaz.
+  Üç başarısız/timeout `observed + retry` olayı ve başarılı kavram yanıtı yanlış
+  `passed=true` üretebilir.
+
+Çözüm yönü: bileşen → event → predicate için tek tipli `LabContract` registry ve
+conformance testi. Planner yalnız başarılı sonucu saymalı; slider pointer-up,
+blur ve klavye commit'inde semantik `observed` üretmeli; ölü predicate
+kaldırılmalı veya açıkça sürümlenmeli.
+
+#### 4. Slider olayı localStorage'ı ve geçmiş ilerlemeyi aşındırıyor
+
+JointSliders, IkTarget ve JacobianViz hareket sırasında çok sık event yazar.
+Her event bütün diziyi senkron JSON.stringify + localStorage.setItem ile tekrar
+yazar; sonra global son 1.000 olayı tutar. Uzun sürükleme:
+
+- mobil ana thread/frame bütçesini tüketebilir;
+- eski derslerin `read/passed` olaylarını sessizce FIFO dışına atabilir.
+
+Çözüm yönü: görsel state anlık, kalıcı olay pointer-up/idle/onBlur/keyboard
+commit'inde; observation'lar lesson/skill bazlı compact/dedupe; achievement ve
+read kayıtları ayrı korunmuş store; global 1.000-event FIFO yerine semantik
+kota ve performans testi.
+
+### P1 — Rota ve Kanıt fazıyla birlikte
+
+#### 5. Pyodide cold-load ile kullanıcı kodu aynı 8 saniyeye sıkışıyor
+
+İlk CodeRunner çalıştırması yaklaşık **13.522.699 byte raw** Pyodide çekirdeğini
+indirip başlatır. 8 saniyelik timer worker yaratılır yaratılmaz başlar; yalnız
+kullanıcı kodunu değil cold-load'u da sayar. Yavaş ağda kod başlamadan timeout
+olabilir. Dokuz CodeRunner dersi var; E2E gerçek cold-run yapmıyor.
+
+Çözüm: worker `ready` handshake; indirme/başlatma ile kullanıcı kodu CPU
+timeout'unu ayır; sürümlü immutable asset/cache; yükleme ilerlemesi ve retry;
+cold-cache + yavaş ağ E2E.
+
+#### 6. Performans kapısı yanlış yüzeyi ölçüyor
+
+Mevcut script yalnız `out/index.html` başlangıç varlıklarına ve 650 KB
+sıkıştırılmamış sınıra bakıyor. Oysa hedef dokümanda 200 KB sıkıştırılmış ve
+asıl risk ders/3D/CodeRunner rotalarıdır. Aynı commit artifact ölçümünde home
+yaklaşık 184 KB gzip, en basit ders yaklaşık 219 KB gzip ve lazy 3D chunk ayrıca
+yaklaşık 242 KB gzip'tir. R3F canvas'lar animasyon olmadığı halde varsayılan
+sürekli frameloop ve DPR 2 kullanır.
+
+Çözüm: home + 3D'siz ders + 3D ders + CodeRunner için gzip/brotli ve lazy chunk
+bütçesi; düzenli Lighthouse/INP; `frameloop="demand"`, adaptif DPR ve görünmez
+canvas pause; gerçek orta sınıf telefon profili.
+
+#### 7. Test matrisi viewport'u cihaz sanıyor
+
+Üç Playwright projesi de `Desktop Chrome`; yalnız viewport 390/768/1440 olur.
+Gerçek touch/hasTouch, WebKit/Safari, Firefox ve ekran okuyucu yoktur. Vitest
+yalnız `lib/**/*.test.ts` toplar; kritik React interaction event sözleşmeleri
+component testine sahip değildir. Canvas için piksel/screenshot doğrulaması yok.
+
+Çözüm: kritik LabContract component testleri; en az bir gerçek mobile/touch
+emülasyonu, WebKit/Firefox smoke, cold CodeRunner ve deterministik WebGL
+screenshot; erişilebilirlikte yalnız axe değil klavye/duyuru akışı.
+
+#### 8. Python oracle kapsamı vaat edilen yüzeyden dar
+
+`reference-python/fixtures/` yalnız 2-DOF FK ve A* fixture'ı taşır. CI Python
+test/generator çalıştırmaz. 6-DOF FK/yönelim, DLS sınırları ve safety için
+bağımsız oracle yoktur; J6 gibi konvansiyon hataları ilişkisel TS testiyle yine
+kaçabilir.
+
+Çözüm: çoklu 6-DOF poz/yönelim, DLS normal/tekil/erişilemez ve safety sınır
+fixture'ları; Python test + fixture drift CI kapısı; derlenmiş worker/Pyodide
+smoke testi.
+
+#### 9. Kaynak ve content şeması yarı yapılandırılmış
+
+`gray-matter` verisi runtime doğrulama olmadan `as DersFrontmatter` cast edilir.
+`check-content` bazı zorunlu alanları/kaynağı kontrol eder; enum, pozitif süre,
+dosya yolu ↔ id/hat/seviye, sıra benzersizliği, gerçek JSX ↔ `etkilesimli`
+manifesti ve component prop şeması tam bir sözleşme değildir. Quiz'in
+frontmatter etkileşimine sayılıp sayılmadığı da açık tanımlı değil; ana sayfa
+pazarlama sayısını bu metadata'dan üretir.
+
+Çözüm: tek runtime içerik şeması + path/sıra kontrolleri; interaction manifestini
+AST'den türet veya Quiz hariç kuralını açıkça kodla; izinli component prop'larına
+build-time şema. 140 legacy kaynak string'ini SourceRef'e geçir; claim→source
+bağı ve tıklanabilir sürüm/konum ekle.
+
+#### 10. İçerik kataloğu build sırasında tekrar tekrar diskten okunuyor
+
+`getAllLessons()` her çağrıda 89 MDX'i yeniden bulur, okur ve parse eder. Bir ders
+sayfası lesson, prerequisite ve adjacent için 3–5 tam tarama yapabilir. 72 terim
+sayfası yalnız ilgili dersleri kurmak için en az 72 × 89 = 6.408 MDX okuması
+üretir. Bugün geçer; içerik büyüdükçe build süresi sayfa×ders ölçeğinde artar.
+
+Çözüm: build-scope memoized katalog + id/hat/seviye/terim indeksleri; dev'de
+dosya değişimini güvenli invalidation; ilişkileri her sayfada yeniden taramak
+yerine önceden kurmak.
+
+### P2 — güven ve bakım
+
+#### 11. Policy split-brain
+
+Root `CLAUDE.md` review'u opsiyonel der; daha özel `content/CLAUDE.md` reviewer
+ve tarih zorunlu der. `lib/content.ts` yorumları, arama metni ve bazı build
+yorumları eski “taslak = insan incelemedi” politikasını taşır. Ajanlar için daha
+özel dosya kazanacağı için bu yalnız dokümantasyon kusuru değil, gelecekte
+yanlış içerik değişikliği üreten bir talimat çatışmasıdır.
+
+Çözüm: tek karar belgesi; “yayında” ve “insan doğrulamalı” durumlarını ayrı
+isimlendir; instruction/comment/UI metinlerini aynı commit'te hizala. Trust
+paneli “her teknik iddia kaynaklıdır” yerine gerçekten otomatik doğrulanan şeyi
+söylesin.
+
+#### 12. Sözlük ilişkisi ve canonical yapı semantik borç
+
+Terim rotası aynı hattaki bütün dersleri “ilgili” sayar ve JSON-LD'ye yazar.
+`SITE_URL`, layout, robots ve release check Vercel URL'sine ayrı ayrı sabittir.
+
+Çözüm: küratörlü/gerçek metin eşleşmeli terim→ders bağı; canonical için tek
+build-time config; alan adı değişiminde sitemap/OG/robots/release testinin tek
+kaynaktan güncellenmesi.
+
+## 6. Önerilen faz planı
+
+### Faz 0 — gerçeklik ve bütünlük kapısı (küçük, önce)
+
+1. Evidence'in imkânsız FK ve false-positive planner predicate'lerini düzelt.
+2. Review yokluğunu bilgi, mevcut review/debt bütünlük ihlalini fatal yap.
+3. Eski review/taslak/search/trust metinlerini tek politikayla hizala.
+4. Sözlük “ilgili dersler” ve JSON-LD bağını gerçek ilişkiye geçir.
+5. 47 legacy-source uyarısı için açık migration baseline/planı oluştur.
+
+Bu işler kullanıcıya yeni özellik gibi görünmez; fakat sonraki fazın ilerleme ve
+güven verisini yanlış temel üzerine kurmasını engeller.
+
+### Faz 1 — Rota ve Kanıt çekirdeği (asıl büyük faz)
+
+1. Ana sayfada yerel, görünür **“Kaldığın yerden devam et”** ve son anlamlı
+   başarının ardından tek önerilen adım.
+2. Seviye kartlarında görünür progress; ön koşulu ders başında gösteren “bu ders
+   sana uygun mu?” kutusu.
+3. Robotik Yol Bulucu: üç mikro görevden 3 derslik açıklamalı rota; hesap/veri yok.
+4. 24 hat×seviye hücresinin her birinde en az bir **Evidence anchor**. Bugünkü
+   10 benzersiz registry dersi körlemesine 89'a yaymak yerine önce 24 güvenilir
+   merkez ders hedeflenmeli.
+5. `LabContract` + `interactionHash`; event/predicate conformance testleri.
+6. Evidence JSON Okuyucu; başka cihazda “güncel/eski/geçersiz” görünümü ve
+   açık “sertifika değildir” sınırı.
+
+### Faz 2 — dağıtım ürünleri (çekirdek çalışınca)
+
+1. Beş–sekiz eğitimciyle tek görev + Evidence Okuyucu pilotu.
+2. İlk beş görev-niyetli SEO girişinin canlı deneye doğrudan bağlanması.
+3. Haftanın Robotik Vakası; önceden üretilmiş caseId ve paylaşım kartı.
+4. Üç hafif 2B laboratuvarla güvenli Mini-Lab Embed pilotu.
+5. Search Console coverage ve öğretmenin ikinci kullanım sinyaline göre devam.
+
+### Faz 3 — derin mühendislik farkı
+
+1. “Bu sayı nereden geldi?” provenance sözleşmesi.
+2. Hassasiyet Radarı pilotları.
+3. Kaynak Dedektifi ve claim-level SourceRef.
+4. Sistem etkisi moonshot'ı; ancak dependency modeli bağımsız teknik/pedagojik
+   incelemeden geçerse.
+
+## 7. Bu fazın kabul ölçütleri
+
+- İlk ziyaretçi 90 saniye içinde neden önerildiği açıklanan bir göreve ulaşır;
+  isterse rota önerisini reddedip manuel seçer.
+- Geri gelen kullanıcı ana sayfada tek tıkla son anlamlı yerine döner; progress
+  gören kullanıcıdan gizli değildir.
+- 24 hat×seviye hücresinin her birinde en az bir geçilebilir, false-positive
+  üretmeyen Evidence anchor vardır.
+- Component/robotik motor/predicate değişikliği ilgili review ve öğrenci kanıtını
+  deterministik olarak eskitir.
+- Evidence dosyası başka tarayıcıda yerel olarak açılır; eski sürüm ve imzasız
+  kayıt açıkça ayrılır; hiçbir dosya sunucuya gitmez.
+- “Makbuz yok” CI'ı bozmaz; bozuk/sahte/değiştirilmiş mevcut makbuz mutlaka bozar.
+- Cold-cache CodeRunner yavaş ağ senaryosunda yükleme ve çalışma timeout'unu
+  ayırır; kullanıcı kod başlamadan “kod timeout” görmez.
+- En az üç eğitimci aynı görev paketini ikinci gerçek oturumda kullanır.
+- Index coverage, Search Console ile doğrulanır; sitemap varlığı başarı diye
+  sayılmaz.
+
+## 8. Doğrulanamayanlar
+
+- Production analytics olmadığı için gerçek bırakma/geri dönüş oranı bilinmiyor.
+- Search Console ve Bing Webmaster hesaplarına erişim olmadığı için index
+  coverage doğrulanmadı; dış `site:` örneklemi kesin ölçüm değildir.
+- Gerçek ortaokul/lise/üniversite öğrencisi ve öğretmen gözlemi yapılmadı.
+- Gerçek touch telefon, Safari/WebKit, ekran okuyucu ve düşük bant genişliği
+  matrisi bu turda çalıştırılmadı.
+- Robotik/safety iddialarının tamamı bağımsız uzman tarafından incelenmedi;
+  güncel tam Review Receipt yalnız bir derste var.
+- Gerçek robot, üretici koşullarının eşdeğerliği ve saha güvenliği bu eğitim
+  platformundan doğrulanamaz.
