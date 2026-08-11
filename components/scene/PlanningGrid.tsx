@@ -1,12 +1,12 @@
 "use client";
 
 import type { ThreeEvent } from "@react-three/fiber";
-import { Canvas } from "@react-three/fiber";
 import { Grid, Line } from "@react-three/drei";
 import type { Vec3 } from "@/lib/robotics/transform";
 import type { Obstacle } from "@/lib/robotics/collision";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SCENE_PALETTES } from "@/lib/theme";
+import { SceneCanvas } from "./SceneCanvas";
 
 export interface PlannerPathDisplay {
   algorithm: string;
@@ -63,7 +63,7 @@ export function PlanningGrid({ extent, obstacles, start, goal, paths, onPlaneCli
   const palette = SCENE_PALETTES[theme];
 
   return (
-    <Canvas camera={{ position: [0, 0.3, extent * 1.15], fov: 45 }} dpr={[1, 2]} className="touch-pan-y" style={{ background: palette.background }}>
+    <SceneCanvas camera={{ position: [0, 0.3, extent * 1.15], fov: 45 }} className="touch-pan-y" style={{ background: palette.background }}>
       <ambientLight intensity={0.7} />
       <directionalLight position={[3, 4, 4]} intensity={0.9} />
       <Grid
@@ -106,6 +106,6 @@ export function PlanningGrid({ extent, obstacles, start, goal, paths, onPlaneCli
         <sphereGeometry args={[markerRadius, 20, 20]} />
         <meshStandardMaterial color={palette.goal} />
       </mesh>
-    </Canvas>
+    </SceneCanvas>
   );
 }

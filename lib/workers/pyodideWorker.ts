@@ -22,6 +22,7 @@ import { BoundedTextCollector, BoundedTraceCollector } from "@/lib/workers/execu
  */
 
 export interface PyodideWorkerRequest {
+  type: "run";
   requestId: string;
   code: string;
   /**
@@ -38,7 +39,17 @@ export interface PyodideWorkerRequest {
   robotSpec?: RobotSpec;
 }
 
-export interface PyodideWorkerResponse {
+export interface PyodideWorkerReady {
+  type: "ready";
+}
+
+export interface PyodideWorkerLoadError {
+  type: "load-error";
+  error: string;
+}
+
+export interface PyodideWorkerResult {
+  type: "result";
   requestId: string;
   stdout: string;
   error: string | null;
@@ -49,6 +60,11 @@ export interface PyodideWorkerResponse {
     outputEmissions: number;
   };
 }
+
+export type PyodideWorkerResponse =
+  | PyodideWorkerReady
+  | PyodideWorkerLoadError
+  | PyodideWorkerResult;
 
 let pyodidePromise: Promise<PyodideAPI> | null = null;
 
@@ -69,7 +85,24 @@ function getPyodide(): Promise<PyodideAPI> {
   return pyodidePromise;
 }
 
+async function initializePyodide(): Promise<void> {
+  try {
+    await getPyodide();
+    ctx.postMessage({ type: "ready" });
+  } catch (error) {
+    ctx.postMessage({
+      type: "load-error",
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+// Ortam kullanıcı kodundan önce hazırlanır. Ana thread kod zaman aşımını
+// yalnız `ready` mesajından sonra başlatır; indirme/başlatma bütçeye girmez.
+void initializePyodide();
+
 ctx.onmessage = async (event) => {
+  if (event.data.type !== "run") return;
   const { requestId, code, jointCount, robotSpec } = event.data;
   const output = new BoundedTextCollector();
   const jointTrace = new BoundedTraceCollector<number[]>();
@@ -127,6 +160,7 @@ ctx.onmessage = async (event) => {
   }
 
   ctx.postMessage({
+    type: "result",
     requestId,
     stdout: output.toString(),
     error: errorMessage,

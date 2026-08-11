@@ -44,6 +44,39 @@ test("öğretmen pilotu görev, mobil ve baskı yüzeylerini birlikte korur", as
   await expect(page.locator("body > footer")).toBeHidden();
 });
 
+test("Pyodide cold-load süresi kullanıcı kodu zaman aşımına karışmaz", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "Cold-load sözleşmesi tek gerçek Chromium yüzeyinde yeterli.");
+  let firstRuntimeRequest = true;
+  await page.route("**/pyodide/**", async (route) => {
+    if (firstRuntimeRequest) {
+      firstRuntimeRequest = false;
+      await new Promise((resolve) => setTimeout(resolve, 9_000));
+    }
+    await route.continue();
+  });
+
+  await page.goto("/ders/d-lise-python-komut-dizisi");
+  await page.getByLabel("Python kodu").fill(
+    'robot.eklem_ac(0, 60)\nrobot.eklem_ac(1, -20)\nprint("Son duruş hazır.")',
+  );
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText(/ilk kullanım için hazırlanıyor/)).toBeVisible();
+  await expect(page.getByText("Son duruş hazır.", { exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/Otomatik test geçti/)).toBeVisible();
+});
+
+test("R3F canvas görünmezken durur ve cihaz DPR bütçesini kullanır", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "Canvas yaşam döngüsü tek gerçek Chromium yüzeyinde yeterli.");
+  await page.goto("/ders/b-lise-geometrik-ters-kinematik");
+  const scene = page.locator("[data-scene-active]").first();
+  await scene.scrollIntoViewIfNeeded();
+  await expect(scene).toHaveAttribute("data-scene-active", "true");
+  await expect(scene).toHaveAttribute("data-scene-dpr", "1");
+
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(scene).toHaveAttribute("data-scene-active", "false");
+});
+
 test("hero ilk anlamlı kontrolü ilk viewport içinde gösterir", async ({ page }) => {
   await page.goto("/");
   const prediction = page.getByRole("button", { name: "Sınırda durur" });
@@ -458,6 +491,9 @@ test("CspaceLab fiziksel sınıf çiftini kanıtlar ve state'i paylaşır", asyn
 });
 
 test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
+  // Dokuz ayrı sayfada tam Axe taraması, tam paralel CI yükünde varsayılan
+  // 30 saniyeyi aşabiliyor; uygulama bekleme sınırlarını değil bu denetimi uzat.
+  test.setTimeout(60_000);
   const denetlenen = [
     "/",
     "/seviye/ortaokul",

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
-  getPublishedLessons,
+  getPublishedLessonsByTrack,
   hatEtiket,
   SEVIYE_ETIKET,
   type Seviye,
@@ -45,12 +45,7 @@ export default async function SozlukTerimPage({ params }: SozlukTerimPageProps) 
   const terim = getTerimBySlug(slug);
   if (!terim) notFound();
 
-  const ilgiliDersler = getPublishedLessons()
-    .filter((lesson) => lesson.frontmatter.hat === terim.hat)
-    .sort((a, b) => {
-      const seviyeFarki = SEVIYELER.indexOf(a.frontmatter.seviye) - SEVIYELER.indexOf(b.frontmatter.seviye);
-      return seviyeFarki || (a.frontmatter.sira ?? 0) - (b.frontmatter.sira ?? 0);
-    });
+  const ilgiliDersler = getPublishedLessonsByTrack(terim.hat);
   const url = `${SITE_URL}/sozluk/${slug}`;
   const jsonLd = {
     "@context": "https://schema.org",

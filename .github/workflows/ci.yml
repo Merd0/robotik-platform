@@ -89,7 +89,7 @@ jobs:
       - name: Derleme + taslak sayfa sızıntısı kontrolü
         run: npm run build
 
-      - name: Başlangıç performans bütçesi
+      - name: Yüzey bazlı gzip/brotli performans bütçesi
         run: npm run check-performance-budget
 
       - name: Chromium kur

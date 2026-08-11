@@ -67,6 +67,22 @@ export interface Lesson {
   body: string;
 }
 
+interface LessonIndex {
+  lessons: readonly Lesson[];
+  bySlug: ReadonlyMap<string, Lesson>;
+  byLevel: ReadonlyMap<Seviye, readonly Lesson[]>;
+  byTrack: ReadonlyMap<string, readonly Lesson[]>;
+  byTrackAndLevel: ReadonlyMap<string, readonly Lesson[]>;
+}
+
+interface LessonCatalog {
+  signature: string;
+  all: LessonIndex;
+  published: LessonIndex;
+}
+
+let catalogCache: LessonCatalog | null = null;
+
 function findMdxFiles(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -76,13 +92,85 @@ function findMdxFiles(dir: string): string[] {
   });
 }
 
-export function getAllLessons(): Lesson[] {
-  return findMdxFiles(CONTENT_DIR).map((filePath) => {
+function trackAndLevelKey(hat: string, seviye: Seviye): string {
+  return `${hat}::${seviye}`;
+}
+
+function createIndex(lessons: readonly Lesson[]): LessonIndex {
+  const bySlug = new Map<string, Lesson>();
+  const byLevel = new Map<Seviye, Lesson[]>();
+  const byTrack = new Map<string, Lesson[]>();
+  const byTrackAndLevel = new Map<string, Lesson[]>();
+
+  for (const lesson of lessons) {
+    bySlug.set(lesson.slug, lesson);
+    const { hat, seviye } = lesson.frontmatter;
+    byLevel.set(seviye, [...(byLevel.get(seviye) ?? []), lesson]);
+    byTrack.set(hat, [...(byTrack.get(hat) ?? []), lesson]);
+    const key = trackAndLevelKey(hat, seviye);
+    byTrackAndLevel.set(key, [...(byTrackAndLevel.get(key) ?? []), lesson]);
+  }
+
+  const lessonOrder = (a: Lesson, b: Lesson) => (a.frontmatter.sira ?? 0) - (b.frontmatter.sira ?? 0);
+  for (const lessonsAtLevel of byLevel.values()) lessonsAtLevel.sort(lessonOrder);
+  for (const lessonsInTrack of byTrack.values()) {
+    lessonsInTrack.sort((a, b) => {
+      const levelDifference = SEVIYE_ORDER.indexOf(a.frontmatter.seviye) - SEVIYE_ORDER.indexOf(b.frontmatter.seviye);
+      return levelDifference || lessonOrder(a, b);
+    });
+  }
+  for (const lessonsInTrackLevel of byTrackAndLevel.values()) lessonsInTrackLevel.sort(lessonOrder);
+
+  return { lessons, bySlug, byLevel, byTrack, byTrackAndLevel };
+}
+
+function contentSignature(files: readonly string[]): string {
+  return files
+    .map((filePath) => {
+      const stat = fs.statSync(filePath);
+      return `${filePath}:${stat.size}:${stat.mtimeMs}`;
+    })
+    .join("|");
+}
+
+function loadCatalog(files: readonly string[], signature: string): LessonCatalog {
+  const lessons = files.map((filePath) => {
     const raw = fs.readFileSync(filePath, "utf8");
     const { data, content } = matter(raw);
     const frontmatter = data as DersFrontmatter;
     return { slug: frontmatter.id, filePath, frontmatter, body: content };
   });
+
+  return {
+    signature,
+    all: createIndex(lessons),
+    published: createIndex(lessons.filter((lesson) => lesson.frontmatter.durum === "yayinda")),
+  };
+}
+
+/**
+ * Bir process/build boyunca tek katalog. Production build'de ilk okumadan
+ * sonra dosya sistemine yeniden dokunmaz. Geliştirmede dosya imzasını (yol,
+ * boyut, mtime) denetler; MDX eklenir, silinir veya değişirse yeniden kurar.
+ */
+function getCatalog(): LessonCatalog {
+  if (catalogCache && process.env.NODE_ENV === "production") return catalogCache;
+
+  const files = findMdxFiles(CONTENT_DIR).sort((a, b) => a.localeCompare(b));
+  const signature = contentSignature(files);
+  if (!catalogCache || catalogCache.signature !== signature) {
+    catalogCache = loadCatalog(files, signature);
+  }
+  return catalogCache;
+}
+
+function getPublicIndex(): LessonIndex {
+  const catalog = getCatalog();
+  return taslakOnizlemeAcik() ? catalog.all : catalog.published;
+}
+
+export function getAllLessons(): Lesson[] {
+  return [...getCatalog().all.lessons];
 }
 
 /**
@@ -93,11 +181,11 @@ export function getAllLessons(): Lesson[] {
  * bu fonksiyona dayanmalıdır.
  */
 export function getPublishedLessons(): Lesson[] {
-  return getAllLessons().filter((lesson) => lesson.frontmatter.durum === "yayinda");
+  return [...getCatalog().published.lessons];
 }
 
 export function getLessonBySlug(slug: string): Lesson | undefined {
-  return getAllLessons().find((lesson) => lesson.slug === slug);
+  return getCatalog().all.bySlug.get(slug);
 }
 
 /**
@@ -126,26 +214,22 @@ export function taslakOnizlemeAcik(): boolean {
  * dayanır — böylece "listede görünmüyor ama URL çalışıyor" durumu oluşamaz.
  */
 export function getPublicLessons(): Lesson[] {
-  if (taslakOnizlemeAcik()) return getAllLessons();
-  return getPublishedLessons();
+  return [...getPublicIndex().lessons];
 }
 
 /** Slug herkese açık mı — değilse ders sayfası 404 vermeli. */
 export function getPublicLessonBySlug(slug: string): Lesson | undefined {
-  return getPublicLessons().find((lesson) => lesson.slug === slug);
+  return getPublicIndex().bySlug.get(slug);
 }
 
 export function getLessonsByLevel(seviye: Seviye): Lesson[] {
-  return getAllLessons()
-    .filter((lesson) => lesson.frontmatter.seviye === seviye)
-    .sort((a, b) => (a.frontmatter.sira ?? 0) - (b.frontmatter.sira ?? 0));
+  return [...(getCatalog().all.byLevel.get(seviye) ?? [])];
 }
 
 /** Yayın/önizleme kuralını koruyarak bir seviyedeki dersleri hat ve sıra düzeninde döndürür. */
 export function getPublicLessonsByLevel(seviye: Seviye): Lesson[] {
   const hatSirasi = Object.keys(HAT_ETIKET);
-  return getPublicLessons()
-    .filter((lesson) => lesson.frontmatter.seviye === seviye)
+  return [...(getPublicIndex().byLevel.get(seviye) ?? [])]
     .sort((a, b) => {
       const hatFarki = hatSirasi.indexOf(a.frontmatter.hat) - hatSirasi.indexOf(b.frontmatter.hat);
       return hatFarki || (a.frontmatter.sira ?? 0) - (b.frontmatter.sira ?? 0);
@@ -165,16 +249,19 @@ export function getPublicTracksByLevel(seviye: Seviye): { hat: string; lessons: 
  * üretimde 404 verecek bir taslak derse "sonraki" bağlantısı verirdi.
  */
 export function getOrderedLessons(hat: string, seviye: Seviye): Lesson[] {
-  return getPublicLessons()
-    .filter((lesson) => lesson.frontmatter.hat === hat && lesson.frontmatter.seviye === seviye)
-    .sort((a, b) => (a.frontmatter.sira ?? 0) - (b.frontmatter.sira ?? 0));
+  return [...(getPublicIndex().byTrackAndLevel.get(trackAndLevelKey(hat, seviye)) ?? [])];
+}
+
+/** Sözlük ve benzeri herkese açık yüzeyler için bir hattaki yayınlanmış dersler. */
+export function getPublishedLessonsByTrack(hat: string): Lesson[] {
+  return [...(getCatalog().published.byTrack.get(hat) ?? [])];
 }
 
 /** Ön koşullar — yine yalnızca herkese açık dersler (kırık bağlantı olmasın). */
 export function getPrerequisites(lesson: Lesson): Lesson[] {
-  const publicLessons = getPublicLessons();
+  const bySlug = getPublicIndex().bySlug;
   return lesson.frontmatter.onkosul
-    .map((id) => publicLessons.find((candidate) => candidate.slug === id))
+    .map((id) => bySlug.get(id))
     .filter((candidate): candidate is Lesson => candidate !== undefined);
 }
 

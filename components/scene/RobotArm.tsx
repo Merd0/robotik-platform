@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, type ReactNode } from "react";
-import { Canvas } from "@react-three/fiber";
 import { Cone, Cylinder, Grid, Line, Sphere, Torus } from "@react-three/drei";
 import * as THREE from "three";
 import { forwardKinematics, type RobotSpec } from "@/lib/robotics/kinematics";
@@ -15,6 +14,7 @@ import {
   roboticsVectorToScene,
   type FrameAxes,
 } from "./robotFrames";
+import { SceneCanvas } from "./SceneCanvas";
 
 interface RobotArmProps {
   robot: RobotSpec;
@@ -224,9 +224,8 @@ export function RobotArm({ robot, jointAngles, activeJointIndex, children }: Rob
   const isSpatialRobot = robot.joints.length === 6;
 
   return (
-    <Canvas
+    <SceneCanvas
       camera={isSpatialRobot ? { position: [1.8, 1.4, 2.4], fov: 45 } : { position: [0, 0.4, 4.6], fov: 50 }}
-      dpr={[1, 2]}
       className="touch-pan-y"
       style={{ background: palette.background }}
       data-robot-arm={robot.id}
@@ -250,6 +249,6 @@ export function RobotArm({ robot, jointAngles, activeJointIndex, children }: Rob
         palette={palette}
       />
       {children}
-    </Canvas>
+    </SceneCanvas>
   );
 }

@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { SceneRuntimeProvider } from "./SceneRuntime";
 
 /**
  * 3D sahnelerin tembel (lazy) yüklenmesi.
@@ -69,6 +70,7 @@ interface SahneAlaniProps {
  */
 export function SahneAlani({ className, children }: SahneAlaniProps) {
   const kutuRef = useRef<HTMLDivElement>(null);
+  const [baglandi, setBaglandi] = useState(false);
   const [gorunur, setGorunur] = useState(false);
 
   useEffect(() => {
@@ -77,27 +79,40 @@ export function SahneAlani({ className, children }: SahneAlaniProps) {
     if (typeof IntersectionObserver === "undefined") {
       // Efekt gövdesinde doğrudan setState çağırmak zincirleme render üretir
       // (react-hooks/set-state-in-effect); bir sonraki tik'e bırakılıyor.
-      const zamanlayici = setTimeout(() => setGorunur(true), 0);
+      const zamanlayici = setTimeout(() => {
+        setBaglandi(true);
+        setGorunur(true);
+      }, 0);
       return () => clearTimeout(zamanlayici);
     }
 
-    const gozlemci = new IntersectionObserver(
+    const yuklemeGozlemcisi = new IntersectionObserver(
       (girisler) => {
         if (girisler.some((giris) => giris.isIntersecting)) {
-          setGorunur(true);
-          gozlemci.disconnect();
+          setBaglandi(true);
+          yuklemeGozlemcisi.disconnect();
         }
       },
       // Kullanıcı sahneye ulaşmadan biraz önce yüklensin ki hazır bulsun.
       { rootMargin: "300px" },
     );
-    gozlemci.observe(kutu);
-    return () => gozlemci.disconnect();
+    const gorunurlukGozlemcisi = new IntersectionObserver(
+      (girisler) => setGorunur(girisler.some((giris) => giris.isIntersecting)),
+      { rootMargin: "0px" },
+    );
+    yuklemeGozlemcisi.observe(kutu);
+    gorunurlukGozlemcisi.observe(kutu);
+    return () => {
+      yuklemeGozlemcisi.disconnect();
+      gorunurlukGozlemcisi.disconnect();
+    };
   }, []);
 
   return (
     <div ref={kutuRef} aria-hidden="true" className={className}>
-      {gorunur ? children : <SahneIskeleti />}
+      <SceneRuntimeProvider active={gorunur}>
+        {baglandi ? children : <SahneIskeleti />}
+      </SceneRuntimeProvider>
     </div>
   );
 }

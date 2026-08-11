@@ -4,7 +4,11 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { getRobotById } from "@/lib/robotics/robots";
 import { forwardKinematics } from "@/lib/robotics/kinematics";
-import type { PyodideWorkerRequest, PyodideWorkerResponse } from "@/lib/workers/pyodideWorker";
+import type {
+  PyodideWorkerRequest,
+  PyodideWorkerResponse,
+  PyodideWorkerResult,
+} from "@/lib/workers/pyodideWorker";
 import { MAX_CODE_RUNTIME_MS } from "@/lib/workers/executionLimits";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import { evaluateCodeLab } from "@/lib/codeLab";
@@ -114,6 +118,10 @@ export function CodeRunner({
   const [traceIndex, setTraceIndex] = useState(0);
   const [testPassed, setTestPassed] = useState<boolean | null>(null);
   const workerRef = useRef<Worker | null>(null);
+  const workerReadyRef = useRef<Promise<Worker> | null>(null);
+  const workerReadyRejectRef = useRef<((reason?: unknown) => void) | null>(null);
+  const workerIsReadyRef = useRef(false);
+  const activeRequestIdRef = useRef<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toolPose = useMemo(() => {
     if (!robot) return null;
@@ -137,68 +145,120 @@ export function CodeRunner({
 
   useEffect(() => {
     return () => {
+      const rejectReady = workerReadyRejectRef.current;
+      activeRequestIdRef.current = null;
       workerRef.current?.terminate();
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      rejectReady?.(new Error("CodeRunner kapatıldı."));
     };
   }, []);
 
-  function ensureWorker(): Worker {
-    if (!workerRef.current) {
-      // type: "module" zorunlu — pyodide.mjs klasik worker'larda çalışmayı
-      // reddediyor (bkz. scripts/build-worker.mjs üstündeki not).
-      const worker = new Worker("/workers/pyodide-worker.js", { type: "module" });
-      // Worker top-level'da senkron bir hata atarsa "message" değil "error"
-      // olayı gelir — sessizce yutulmasın diye logluyoruz.
-      worker.addEventListener("error", (event) => {
-        console.error("[CodeRunner] worker hatası:", event.message);
-      });
-      workerRef.current = worker;
-    }
-    return workerRef.current;
+  function clearWorkerReferences() {
+    workerRef.current = null;
+    workerReadyRef.current = null;
+    workerReadyRejectRef.current = null;
+    workerIsReadyRef.current = false;
   }
 
-  function handleRun() {
+  function ensureWorker(): Promise<Worker> {
+    if (workerReadyRef.current) return workerReadyRef.current;
+
+    // type: "module" zorunlu — pyodide.mjs klasik worker'larda çalışmayı
+    // reddediyor (bkz. scripts/build-worker.mjs üstündeki not).
+    const worker = new Worker("/workers/pyodide-worker.js", { type: "module" });
+    workerRef.current = worker;
+    workerReadyRef.current = new Promise<Worker>((resolve, reject) => {
+      workerReadyRejectRef.current = reject;
+      function finish() {
+        worker.removeEventListener("message", onMessage);
+        worker.removeEventListener("error", onError);
+        workerReadyRejectRef.current = null;
+      }
+
+      function onMessage(event: MessageEvent<PyodideWorkerResponse>) {
+        if (event.data.type === "ready") {
+          finish();
+          workerIsReadyRef.current = true;
+          resolve(worker);
+        } else if (event.data.type === "load-error") {
+          finish();
+          worker.terminate();
+          clearWorkerReferences();
+          reject(new Error(event.data.error));
+        }
+      }
+
+      function onError(event: ErrorEvent) {
+        finish();
+        worker.terminate();
+        clearWorkerReferences();
+        reject(new Error(event.message || "Python worker başlatılamadı."));
+      }
+
+      worker.addEventListener("message", onMessage);
+      worker.addEventListener("error", onError);
+    });
+    return workerReadyRef.current;
+  }
+
+  async function handleRun() {
     if (state === "yukleniyor" || state === "calisiyor") return;
     setOutput("");
     setError(null);
 
-    const firstRun = !workerRef.current;
-    const worker = ensureWorker();
-    setState(firstRun ? "yukleniyor" : "calisiyor");
-
     const requestId = `${Date.now()}-${Math.random()}`;
+    activeRequestIdRef.current = requestId;
+    if (!workerIsReadyRef.current) setState("yukleniyor");
+
+    let worker: Worker;
+    try {
+      worker = await ensureWorker();
+    } catch (workerError) {
+      if (activeRequestIdRef.current !== requestId) return;
+      activeRequestIdRef.current = null;
+      setError(
+        `Python ortamı hazırlanamadı: ${workerError instanceof Error ? workerError.message : String(workerError)}`,
+      );
+      setState("bitti");
+      return;
+    }
+
+    if (activeRequestIdRef.current !== requestId) return;
+    setState("calisiyor");
 
     function onMessage(event: MessageEvent<PyodideWorkerResponse>) {
-      if (event.data.requestId !== requestId) return;
+      if (event.data.type !== "result" || event.data.requestId !== requestId) return;
       worker.removeEventListener("message", onMessage);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
+      activeRequestIdRef.current = null;
+      const result: PyodideWorkerResult = event.data;
       const warnings = [
-        event.data.limits.outputTruncated ? "[çıktı güvenlik kotasında kesildi]" : null,
-        event.data.limits.traceTruncated ? "[eklem izi 500 örnekte kesildi]" : null,
+        result.limits.outputTruncated ? "[çıktı güvenlik kotasında kesildi]" : null,
+        result.limits.traceTruncated ? "[eklem izi 500 örnekte kesildi]" : null,
       ]
         .filter(Boolean)
         .join("\n");
-      setOutput([event.data.stdout, warnings].filter(Boolean).join("\n"));
-      setError(event.data.error);
-      setJointTrace(event.data.jointTrace);
-      setTraceIndex(Math.max(0, event.data.jointTrace.length - 1));
-      if (robot && event.data.jointTrace.length > 0) {
-        setJointAngles(event.data.jointTrace[event.data.jointTrace.length - 1]);
+      setOutput([result.stdout, warnings].filter(Boolean).join("\n"));
+      setError(result.error);
+      setJointTrace(result.jointTrace);
+      setTraceIndex(Math.max(0, result.jointTrace.length - 1));
+      if (robot && result.jointTrace.length > 0) {
+        setJointAngles(result.jointTrace[result.jointTrace.length - 1]);
         setActiveJointIndex(
-          changedJointIndex(event.data.jointTrace, event.data.jointTrace.length - 1, robot.joints.length),
+          changedJointIndex(result.jointTrace, result.jointTrace.length - 1, robot.joints.length),
         );
       }
       const { outputMatches, poseMatches, hasAutomaticTest, passed } = evaluateCodeLab(
         { expectedOutput, expectedFinalDegrees, toleranceDegrees },
-        event.data,
+        result,
       );
       setTestPassed(hasAutomaticTest ? passed : null);
       record({
         skillId,
         stage: hasAutomaticTest ? "assessed" : "observed",
-        result: !event.data.error && (!hasAutomaticTest || passed) ? "success" : "retry",
-        metrics: { outputMatches, poseMatches, traceSteps: event.data.jointTrace.length },
+        result: !result.error && (!hasAutomaticTest || passed) ? "success" : "retry",
+        metrics: { outputMatches, poseMatches, traceSteps: result.jointTrace.length },
       });
       setState("bitti");
     }
@@ -206,7 +266,8 @@ export function CodeRunner({
     timeoutRef.current = setTimeout(() => {
       worker.removeEventListener("message", onMessage);
       worker.terminate();
-      workerRef.current = null;
+      clearWorkerReferences();
+      activeRequestIdRef.current = null;
       timeoutRef.current = null;
       setError(`Kod ${MAX_CODE_RUNTIME_MS / 1000} saniyelik çalışma sınırını aştı.`);
       setOutput("[worker süre aşımı nedeniyle sonlandırıldı]");
@@ -214,6 +275,7 @@ export function CodeRunner({
     }, MAX_CODE_RUNTIME_MS);
 
     const request: PyodideWorkerRequest = {
+      type: "run",
       requestId,
       code,
       jointCount: robot?.joints.length,
@@ -225,8 +287,11 @@ export function CodeRunner({
   function handleStop() {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = null;
+    const rejectReady = workerReadyRejectRef.current;
     workerRef.current?.terminate();
-    workerRef.current = null;
+    clearWorkerReferences();
+    activeRequestIdRef.current = null;
+    rejectReady?.(new Error("Python ortamı hazırlanırken durduruldu."));
     setState("hazir");
     setOutput((prev) => prev + "\n[durduruldu]");
   }
@@ -311,7 +376,11 @@ export function CodeRunner({
       />
 
       <div role="status" aria-live="polite" aria-atomic="true">
-        {output || error ? (
+        {state === "yukleniyor" && !output && !error ? (
+          <p className={`text-sm ${t.inkMuted}`}>
+            Python ortamı ilk kullanım için hazırlanıyor; bu süre kodun 8 saniyelik çalışma sınırına dahil değil.
+          </p>
+        ) : output || error ? (
           <pre className={`whitespace-pre-wrap rounded-lg border ${t.outline} ${t.bg} p-3 font-mono text-sm ${t.ink}`}>
             {output}
             {error && <span className="text-red-600">{"\n" + error}</span>}

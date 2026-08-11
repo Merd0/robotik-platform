@@ -494,7 +494,7 @@ select {
   max-width: 46rem;
 }
 
-/* Uzun formüller mobil sayfayı genişletmez; yalnız kod kutusu yatay kayar. */
+/* Uzun formüller mobil sayfayı genişletmez; odaklanabilir kod kutusu yatay kayar. */
 .ders-icerik pre {
   min-width: 0;
   max-width: 100%;

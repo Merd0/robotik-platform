@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getAllLessons, getPublicLessonBySlug, getPublicLessons, taslakOnizlemeAcik } from "./content";
+import {
+  getAllLessons,
+  getLessonBySlug,
+  getPublicLessonBySlug,
+  getPublicLessons,
+  taslakOnizlemeAcik,
+} from "./content";
 
 /**
  * Taslak derslerin üretimde herkese açık OLMAMASI kuralının testleri.
@@ -104,5 +110,17 @@ describe("getPublicLessons — geliştirme", () => {
   it("taslaklar dahil hepsini döndürür (yazarken önizleme gerekiyor)", () => {
     ortamiAyarla("development");
     expect(getPublicLessons().length).toBe(getAllLessons().length);
+  });
+});
+
+describe("build-scope ders kataloğu", () => {
+  it("çağrılar arasında ayrıştırılmış ders nesnelerini ve slug indeksini yeniden kullanır", () => {
+    const ilk = getAllLessons();
+    const ikinci = getAllLessons();
+    const ornek = ilk[0];
+
+    expect(ilk).not.toBe(ikinci);
+    expect(ikinci[0]).toBe(ornek);
+    expect(getLessonBySlug(ornek.slug)).toBe(ornek);
   });
 });

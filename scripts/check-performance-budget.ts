@@ -1,9 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { gzipSync } from "node:zlib";
 
 /**
- * Ölçüm yüzeyi kararı: SIKIŞTIRILMIŞ (gzip) bayt, ham dosya boyutu değil.
+ * Ölçüm yüzeyi kararı: SIKIŞTIRILMIŞ (gzip ve brotli) bayt, ham dosya boyutu değil.
  *
  * docs/05-deneyim-ve-guvenlik.md Bölüm 3'teki hız hedefleri zaten "ilk
  * yükleme JS boyutu < 200 KB (SIKIŞTIRILMIŞ)" diyor — bu script o hedefi
@@ -14,13 +13,9 @@ import { gzipSync } from "node:zlib";
  * (gzip/brotli, Vercel/Cloudflare Pages ikisini de otomatik uygular) çok daha
  * küçüktü — ölçülen yüzey gerçek etkiyle örtüşmüyordu.
  *
- * gzip seçildi, brotli değil: ikisi de Node'un yerleşik `zlib`'inde (yeni
- * bağımlılık yok, docs/08 minimum bağımlılık ilkesi), ama gzip HER tarayıcıda
- * desteklenir; brotli neredeyse evrensel (~%97) ama tam değil. Bütçe bir
- * güvenlik marjı olduğu için en KÖTÜ makul durumu (gzip'e düşen istemci)
- * ölçmek daha güvenli — brotli zaten daha küçük çıkar, bu yüzden gzip altında
- * geçen bir sayfa brotli altında da geçer. Ham bayt da konsolda loglanmaya
- * devam ediyor (görünürlük için) ama tek başına build'i kırmıyor.
+ * Gzip ve brotli Node'un yerleşik `zlib` desteğiyle ayrı ölçülür; yeni
+ * bağımlılık eklenmez. Gzip eski istemciler için güvenli tabanı, brotli ise
+ * modern statik barındırma yüzeyindeki gerçek aktarım maliyetini korur.
  *
  * UYARI: bu sadece ÖLÇÜM yüzeyini düzeltir. Ana sayfanın "kaldığın yerden
  * devam et" paneline 89 dersin tamamını prop olarak geçiren mimari israf
@@ -28,49 +23,98 @@ import { gzipSync } from "node:zlib";
  * components/home/ContinueLearning.tsx) — bütçeyi büyütüp geçmek o israfı
  * gizlerdi, çözmezdi.
  */
+import {
+  extractInitialLocalAssets,
+  measureFiles,
+  referencedLazyChunks,
+  sumTransferSizes,
+  type TransferSize,
+} from "../lib/performanceBudget";
 
-const out = path.resolve("out");
-const htmlPath = path.join(out, "index.html");
-if (!fs.existsSync(htmlPath)) throw new Error("out/index.html yok; önce npm run build çalıştırın.");
+const KIB = 1024;
+const MIB = 1024 * KIB;
+const outDir = path.resolve("out");
 
-const html = fs.readFileSync(htmlPath, "utf8");
-const localAssets = (pattern: RegExp) => [...html.matchAll(pattern)].map((match) => match[1]).filter((url) => url.startsWith("/"));
-const scripts = [...new Set(localAssets(/<script[^>]+src="([^"]+)"/g))];
-const styles = [...new Set(localAssets(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g))];
-
-const rawBytes = (asset: string) => fs.readFileSync(path.join(out, asset.replace(/^\//, ""))).length;
-const gzipBytes = (buffer: Buffer) => gzipSync(buffer, { level: 9 }).length;
-const gzipBytesOfFile = (asset: string) => gzipBytes(fs.readFileSync(path.join(out, asset.replace(/^\//, ""))));
-const gzipBytesOfAssets = (assets: string[]) => assets.reduce((total, asset) => total + gzipBytesOfFile(asset), 0);
-
-const rawMeasurements = {
-  htmlBytes: fs.statSync(htmlPath).size,
-  initialScriptBytes: scripts.reduce((total, asset) => total + rawBytes(asset), 0),
-  initialStyleBytes: styles.reduce((total, asset) => total + rawBytes(asset), 0),
-};
-const gzipMeasurements = {
-  htmlBytes: gzipBytes(fs.readFileSync(htmlPath)),
-  initialScriptBytes: gzipBytesOfAssets(scripts),
-  initialStyleBytes: gzipBytesOfAssets(styles),
-};
-
-// docs/05'teki "< 200 KB (sıkıştırılmış)" JS hedefiyle hizalı; html/style için
-// aynı dokümanda ayrı bir sayı yok, burada ~2 katı makul bir tavan olarak
-// seçildi (2026-08-12, htmlBytes ~13 KB, initialScriptBytes ~170 KB,
-// initialStyleBytes ~14 KB ölçüldükten sonra, gerçek değerin üstünde ama
-// sıkı bir baş payı bırakacak şekilde).
-const gzipBudgets = { htmlBytes: 25_000, initialScriptBytes: 200_000, initialStyleBytes: 30_000 };
-const failures = Object.entries(gzipBudgets).filter(([key, budget]) => gzipMeasurements[key as keyof typeof gzipMeasurements] > budget);
-
-console.log("Ana sayfa ham başlangıç bütçesi (bilgi amaçlı, kapı değil):", rawMeasurements);
-console.log("Ana sayfa gzip başlangıç bütçesi (gerçek ağ etkisi, kapı):", gzipMeasurements);
-if (failures.length > 0) {
-  for (const [key, budget] of failures) console.error(`${key}: ${gzipMeasurements[key as keyof typeof gzipMeasurements]} > ${budget} (gzip)`);
-  process.exit(1);
+interface SurfaceConfig {
+  name: string;
+  html: string;
+  deferred: "none" | "scene" | "code-runner";
+  initialScriptGzip?: number;
+  budget: { gzip: number; brotli: number };
 }
 
-const initialUrls = [...scripts, ...styles].join("\n");
-if (initialUrls.includes("pyodide") || initialUrls.includes("worker")) {
-  console.error("Ağır Pyodide/worker varlığı ana sayfa başlangıç grafiğine sızdı.");
-  process.exit(1);
+const surfaces: SurfaceConfig[] = [
+  { name: "Ana sayfa", html: "index.html", deferred: "none", initialScriptGzip: 200 * KIB, budget: { gzip: 220 * KIB, brotli: 200 * KIB } },
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 255 * KIB, brotli: 240 * KIB } },
+  { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 480 * KIB } },
+  { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
+];
+
+const pythonRuntimeAssets = [
+  "/workers/pyodide-worker.js",
+  "/pyodide/pyodide.mjs",
+  "/pyodide/pyodide.asm.mjs",
+  "/pyodide/pyodide.asm.wasm",
+  "/pyodide/python_stdlib.zip",
+  "/pyodide/pyodide-lock.json",
+];
+
+function format(size: number): string {
+  return `${(size / KIB).toFixed(1)} KiB`;
 }
+
+function add(left: TransferSize, right: TransferSize): TransferSize {
+  return sumTransferSizes([left, right]);
+}
+
+if (!fs.existsSync(outDir)) throw new Error("out/ yok; önce npm run build çalıştırın.");
+
+let failed = false;
+for (const surface of surfaces) {
+  const htmlPath = path.join(outDir, surface.html);
+  if (!fs.existsSync(htmlPath)) throw new Error(`${surface.html} yok; önce npm run build çalıştırın.`);
+
+  const html = fs.readFileSync(htmlPath, "utf8");
+  const initialAssets = extractInitialLocalAssets(html);
+  const initialScripts = measureFiles(outDir, initialAssets.filter((asset) => asset.endsWith(".js")));
+  const initial = measureFiles(outDir, [surface.html, ...initialAssets]);
+  const sceneAssets = surface.deferred === "none" ? [] : referencedLazyChunks(outDir, initialAssets);
+  const deferredAssets = surface.deferred === "code-runner"
+    ? [...sceneAssets, ...pythonRuntimeAssets]
+    : sceneAssets;
+  const deferred = measureFiles(outDir, deferredAssets);
+  const total = add(initial, deferred);
+  const initialScriptBudget = surface.initialScriptGzip;
+
+  console.log(
+    `${surface.name}: başlangıç JS gzip ${format(initialScripts.gzip)}` +
+      (initialScriptBudget === undefined ? " (bilgi); " : ` / ${format(initialScriptBudget)}; `) +
+      `başlangıç toplam gzip ${format(initial.gzip)} / br ${format(initial.brotli)}; ` +
+      `etkileşim gzip ${format(deferred.gzip)} / br ${format(deferred.brotli)}; ` +
+      `toplam gzip ${format(total.gzip)} / ${format(surface.budget.gzip)}, ` +
+      `br ${format(total.brotli)} / ${format(surface.budget.brotli)}`,
+  );
+
+  if (total.gzip > surface.budget.gzip || total.brotli > surface.budget.brotli) {
+    console.error(`${surface.name} sıkıştırılmış aktarım bütçesini aştı.`);
+    failed = true;
+  }
+
+  if (initialScriptBudget !== undefined && initialScripts.gzip > initialScriptBudget) {
+    console.error(`${surface.name} ilk yükleme JS gzip bütçesini aştı.`);
+    failed = true;
+  }
+
+  if (surface.deferred === "none") {
+    const initialGraph = initialAssets
+      .filter((asset) => asset.endsWith(".js"))
+      .map((asset) => fs.readFileSync(path.join(outDir, asset.replace(/^\//, "")), "utf8"))
+      .join("\n");
+    if (/pyodide\.asm|WebGLRenderer/.test(initialGraph)) {
+      console.error(`${surface.name} başlangıç grafiğine ağır worker/3D varlığı sızdı.`);
+      failed = true;
+    }
+  }
+}
+
+if (failed) process.exit(1);
