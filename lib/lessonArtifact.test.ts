@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getAllLessons, type DersFrontmatter } from "./content";
 import {
+  computeEvidenceVersionRoot,
   computeLessonSubjectHashes,
   computePresentationHash,
   computeSourceHash,
@@ -86,5 +87,29 @@ describe("ders sürüm kökleri", () => {
     for (const lesson of getAllLessons()) {
       expect(findUnpartitionedFrontmatterKeys(lesson.frontmatter), lesson.slug).toEqual([]);
     }
+  });
+});
+
+describe("computeEvidenceVersionRoot (Sprint 2)", () => {
+  const base = { teachingHash: "sha256:a", interactionHash: "sha256:b", predicateHash: "sha256:c" };
+
+  it("saf ve deterministik: aynı üç kök aynı sonucu üretir", () => {
+    expect(computeEvidenceVersionRoot(base)).toBe(computeEvidenceVersionRoot({ ...base }));
+    expect(computeEvidenceVersionRoot(base)).toMatch(/^sha256:[0-9a-f]{64}$/);
+  });
+
+  it("üç kökten herhangi biri değişince kök değişir", () => {
+    const root = computeEvidenceVersionRoot(base);
+    expect(computeEvidenceVersionRoot({ ...base, teachingHash: "sha256:degisti" })).not.toBe(root);
+    expect(computeEvidenceVersionRoot({ ...base, interactionHash: "sha256:degisti" })).not.toBe(root);
+    expect(computeEvidenceVersionRoot({ ...base, predicateHash: "sha256:degisti" })).not.toBe(root);
+  });
+
+  it("sadece ders metni değişip motor/predicate aynı kalırsa da kök değişir (teachingHash'i kapsıyor)", () => {
+    const hashes = computeLessonSubjectHashes(lesson);
+    const degisenMetin = computeLessonSubjectHashes({ frontmatter, body: "Değişen metin" });
+    const rootOnce = computeEvidenceVersionRoot({ teachingHash: hashes.teachingHash, interactionHash: "sha256:sabit", predicateHash: "sha256:sabit" });
+    const rootTwice = computeEvidenceVersionRoot({ teachingHash: degisenMetin.teachingHash, interactionHash: "sha256:sabit", predicateHash: "sha256:sabit" });
+    expect(rootOnce).not.toBe(rootTwice);
   });
 });

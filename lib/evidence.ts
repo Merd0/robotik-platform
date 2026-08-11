@@ -1,8 +1,15 @@
-export type EvidenceStage = "read" | "predicted" | "tried" | "observed" | "assessed" | "passed";
+// `as const` dizileri: hem tip (aşağıda türetilir) hem çalışma zamanı
+// doğrulaması (bkz. lib/evidenceImport.ts) AYNI kaynaktan gelsin diye.
+// docs/02-mimari.md'deki `REVIEW_SCOPES` deseniyle aynı.
+export const EVIDENCE_STAGES = ["read", "predicted", "tried", "observed", "assessed", "passed"] as const;
+export type EvidenceStage = (typeof EVIDENCE_STAGES)[number];
 export type RecordableEvidenceStage = Exclude<EvidenceStage, "passed">;
-export type EvidenceResult = "success" | "retry" | "neutral";
-export type EvidenceKind = "observation" | "assessment" | "achievement" | "legacy";
-export type EvidenceVerification = "self-reported" | "component-observed" | "registry-predicate" | "legacy-unverified";
+export const EVIDENCE_RESULTS = ["success", "retry", "neutral"] as const;
+export type EvidenceResult = (typeof EVIDENCE_RESULTS)[number];
+export const EVIDENCE_KINDS = ["observation", "assessment", "achievement", "legacy"] as const;
+export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
+export const EVIDENCE_VERIFICATIONS = ["self-reported", "component-observed", "registry-predicate", "legacy-unverified"] as const;
+export type EvidenceVerification = (typeof EVIDENCE_VERIFICATIONS)[number];
 
 export interface EvidenceEvent {
   schemaVersion: 2;
@@ -104,13 +111,23 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     }),
   },
   {
-    id: "multiple-ik-solutions-v1",
+    // v1 → v2 (Sprint 2): İki düzeltme birlikte.
+    // (a) Predicate yalnız metrics.elbow'un VARLIĞINA bakıyordu, result'a
+    //     bakmıyordu — IkTarget'ın dirsek değiştirme olayı ÇÖZÜMSÜZ bir
+    //     konumda bile koşulsuz kaydediliyordu (bkz. component düzeltmesi),
+    //     bu yüzden predicate de result === "success" şartı almalı.
+    // (b) IkTarget artık kaydı yalnız commit anında (pointer-up/blur/klavye)
+    //     yazıyor; eski sürümde her sürükleme karesi ayrı kayıttı, bu yüzden
+    //     iki farklı dirseği "denemek" fiilen daha kolaydı. Besleyen davranış
+    //     değiştiği için id sürümlendi (bkz. Sprint 0 "predicate id'lerini
+    //     sürümle" ilkesi).
+    id: "multiple-ik-solutions-v2",
     lessonId: "b-ortaokul-birden-fazla-yol",
     skillId: "multiple-ik-solutions",
     evaluate: (events) => {
       const elbows = new Set(
         events
-          .filter((event) => event.skillId === "multiple-ik-solutions" && event.stage === "observed")
+          .filter((event) => event.skillId === "multiple-ik-solutions" && event.stage === "observed" && event.result === "success")
           .map((event) => event.metrics?.elbow)
           .filter((elbow): elbow is string => typeof elbow === "string"),
       );
@@ -118,7 +135,13 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     },
   },
   {
-    id: "geometric-ik-boundary-v1",
+    // v1 → v2 (Sprint 2): mantık zaten doğruydu (result === "success" zaten
+    // aranıyordu), ama IkTarget artık sürüklemenin HER karesinde değil yalnız
+    // commit anında kaydediyor — eskiden tek bir sürükleme hareketiyle hem
+    // erişilebilir hem erişilemez bölgeden geçmek predicate'i tetikleyebilirdi,
+    // artık kullanıcı iki ayrı noktaya bilerek commit etmeli. Besleyen
+    // davranış değiştiği için sürümlendi.
+    id: "geometric-ik-boundary-v2",
     lessonId: "b-lise-geometrik-ters-kinematik",
     skillId: "geometric-ik",
     evaluate: (events) => {
