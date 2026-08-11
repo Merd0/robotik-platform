@@ -60,14 +60,17 @@ jobs:
         run: npx tsx scripts/check-mdx-guvenlik.ts
 
       # İnsan gözden geçirmesi 2026-08-10'da opsiyonele çevrildi (bkz.
-      # docs/06-kalite-ve-topluluk.md "Katman 3"). Bu iki adım artık yayın
-      # kapısı değil, bilgilendirici rapor: makbuz durumunu ve borç kaydının
-      # bütünlüğünü loga yazar, build'i kırmaz. Eski kapı davranışı gerekirse
-      # REVIEW_STRICT=1 ile geri alınır.
-      - name: Review durumu (bilgilendirici, kapı değil)
+      # docs/06-kalite-ve-topluluk.md "Katman 3"). Review kontrolü iki ayrı
+      # kanala bölündü (Sprint 0, tek REVIEW_STRICT bayrağının 47 zararsız
+      # legacy uyarısını da fatal yapıp CI'ı kilitleme riski vardı):
+      #  - receipt-integrity: bir makbuzun TAHRİF edilip edilmediği (hash,
+      #    şema, sourceCommit, rol, append-only). Bu HER ZAMAN fatal'dır.
+      #  - review-coverage/source-migration: eksik makbuz, legacy kaynak
+      #    borcu. Bu HER ZAMAN yalnız rapordur, build'i kırmaz.
+      - name: Review kapsamı (bilgilendirici, kapı değil)
         run: npm run check-review-debt
 
-      - name: Review makbuzu durumu (bilgilendirici, kapı değil)
+      - name: Review makbuzu bütünlüğü (tahrifat varsa fatal)
         run: npm run check-review-integrity
 
       # Kaynak gizliliği (docs/00-vizyon.md mutlak kuralı) için kalıp taraması:

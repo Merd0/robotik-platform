@@ -1,81 +1,55 @@
-import { getAllLessons, type Lesson } from "../lib/content";
+import { getAllLessons } from "../lib/content";
 import { computeLessonSubjectHashes } from "../lib/lessonArtifact";
 import {
-  findLegacyTextSources,
-  getLessonReviewStatus,
-  getRequiredReviewScopes,
-  REVIEW_DECISIONS,
-  REVIEW_SCOPES,
-  REVIEWER_ROLES,
-  reviewReceipts,
-  SCOPE_SUBJECT_KEYS,
-  type ReviewReceipt,
-} from "../lib/reviewReceipts";
-import { getOpenReviewDebtIds } from "../lib/reviewDebt";
+  checkAppendOnlyReceipts,
+  checkReceiptsSchema,
+  validateReceiptShape,
+  verifyReceiptSubjectHashes,
+} from "../lib/reviewIntegrityCheck";
+import { getLessonReviewStatus, reviewReceipts, type ReviewReceipt } from "../lib/reviewReceipts";
 import { isGitAvailable, objectExists, readFileAtCommit, readLessonAtCommit, resolveCommit } from "./git-lesson";
 
-const HASH_PATTERN = /^sha256:[0-9a-f]{64}$/;
-const COMMIT_PATTERN = /^[0-9a-f]{40}$/;
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+/**
+ * RECEIPT-INTEGRITY kanalı — bu script yalnız bunu denetler.
+ *
+ * "İki kanala böl" kararı (Sprint 0): bu dosya eskiden hem gerçek makbuz
+ * tahrifatını (hash/şema/sourceCommit/rol/append-only) hem de kapsam
+ * (coverage) bilgisini (legacy kaynak borcu, eksik makbuz bookkeeping'i) tek
+ * bir REVIEW_STRICT bayrağının arkasında karıştırıyordu. Bunun sonucu:
+ * REVIEW_STRICT=1'i açmak, 47 zararsız "legacy kaynak" uyarısını da fatal
+ * yapıp CI'ı kilitliyordu — üretim niyeti (gerçek tahrifatı yakalamak) ile
+ * sonuç (kapsam raporunun CI'ı kırması) örtüşmüyordu.
+ *
+ * Artık ayrım net: BU dosyadaki her hata bir makbuzun kendisiyle ilgili bir
+ * bütünlük sorunudur (bkz. lib/reviewIntegrityCheck.ts) ve HER ZAMAN
+ * fatal'dır — REVIEW_STRICT'e bağlı değildir, çünkü tahrif edilmiş bir
+ * makbuz asla "bilgilendirici" bir durum değildir. Kapsam/borç raporlama
+ * (eksik makbuz, legacy kaynak) scripts/check-review-debt.ts'e taşındı ve
+ * orada her zaman yalnız rapor, asla fatal.
+ */
 const APPEND_ONLY_BASE = process.env.REVIEW_APPEND_ONLY_BASE ?? "origin/main";
 
 const lessons = getAllLessons();
+const lessonSlugs = new Set(lessons.map((lesson) => lesson.slug));
 const lessonsById = new Map(lessons.map((lesson) => [lesson.slug, lesson]));
-const debtIds = new Set(getOpenReviewDebtIds());
 const errors: string[] = [];
 const notes: string[] = [];
 const gitReady = isGitAvailable();
 
-if (
-  reviewReceipts.schemaVersion !== 2 ||
-  reviewReceipts.hashAlgorithm !== "sha256" ||
-  reviewReceipts.canonicalization !== "lesson-artifact-v2"
-) {
-  errors.push("review-receipts.json Review Receipt v2 şemasıyla uyuşmuyor.");
-}
+errors.push(...checkReceiptsSchema(reviewReceipts));
 
-const receiptIds = new Set<string>();
+const seenIds = new Set<string>();
 for (const receipt of reviewReceipts.receipts) {
-  validateReceipt(receipt);
+  const shapeErrors = validateReceiptShape(receipt, lessonSlugs, seenIds);
+  errors.push(...shapeErrors);
+  if (shapeErrors.length === 0) verifySourceCommit(receipt);
 }
 
 checkAppendOnly();
 
-for (const lesson of lessons.filter((candidate) => candidate.frontmatter.durum === "yayinda")) {
-  const status = getLessonReviewStatus(lesson);
-  const inDebt = debtIds.has(lesson.slug);
-
-  if (inDebt && status.state === "verified") {
-    errors.push(`${lesson.slug}: güncel makbuz var; legacy review borcu kaydı kaldırılmalı.`);
-  }
-  // Makbuz yokluğu artık hata değil; yalnız yukarıdaki özet sayacına yansır.
-  if (!inDebt && findLegacyTextSources(lesson).length > 0) {
-    errors.push(`${lesson.slug}: yeni yayınlarda kaynaklar yapılandırılmış SourceRef olmalı; legacy metin kaynak kabul edilmez.`);
-  }
-}
-
-/**
- * Bu kontrol artık bir yayın kapısı DEĞİL.
- *
- * 2026-08-10'da alınan kalıcı proje kararıyla insan gözden geçirmesi
- * zorunluluğu kaldırıldı (bkz. docs/06-kalite-ve-topluluk.md "Katman 3").
- * Makbuz sistemi duruyor ve isteyen için çalışıyor, ama makbuzun yokluğu
- * yayını engellemiyor.
- *
- * Script yine de iki farklı şeyi ayırıyor:
- *  - VAR OLAN bir makbuzun tutarsız olması (hash sourceCommit'le uyuşmuyor,
- *    bilinmeyen ders, yetkisiz rol) — bu bir veri bütünlüğü hatasıdır,
- *    inceleme politikasından bağımsızdır ve raporlanır.
- *  - Bir yayının makbuzunun olmaması — artık yalnız bilgi.
- *
- * `REVIEW_STRICT=1` ile eski kapı davranışı geri alınabilir.
- */
-const strict = process.env.REVIEW_STRICT === "1";
-
 if (errors.length > 0) {
-  const baslik = strict ? "hata" : "uyarı";
-  console.warn(`Review/yayın bütünlüğü ${errors.length} ${baslik} üretti:\n${errors.map((error) => `  - ${error}`).join("\n")}`);
-  if (strict) process.exit(1);
+  console.error(`Review makbuzu bütünlüğü ${errors.length} hata üretti (fatal):\n${errors.map((error) => `  - ${error}`).join("\n")}`);
+  process.exit(1);
 }
 
 for (const note of notes) console.log(`  not: ${note}`);
@@ -84,57 +58,22 @@ const kapsanan = lessons.filter(
 ).length;
 const yayinSayisi = lessons.filter((lesson) => lesson.frontmatter.durum === "yayinda").length;
 console.log(
-  `Review durumu (bilgi): ${reviewReceipts.receipts.length} kapsam makbuzu, ` +
+  `Review makbuzu bütünlüğü: temiz. ${reviewReceipts.receipts.length} kapsam makbuzu, ` +
     `${yayinSayisi} yayının ${kapsanan}'i güncel makbuzlu. ` +
-    `İnsan incelemesi opsiyonel; makbuz yokluğu yayını engellemez.`,
+    `Eksik makbuz burada hata sayılmaz — bkz. \`npm run check-review-debt\`.`,
 );
-
-function validateReceipt(receipt: ReviewReceipt): void {
-  const label = receipt.id || "(boş id)";
-  if (!receipt.id || receiptIds.has(receipt.id)) errors.push(`Makbuz id geçersiz veya yineleniyor: ${label}`);
-  receiptIds.add(receipt.id);
-
-  const lesson = lessonsById.get(receipt.lessonId);
-  if (!lesson) {
-    errors.push(`${label}: bilinmeyen lessonId ${receipt.lessonId}.`);
-    return;
-  }
-  if (!REVIEW_SCOPES.includes(receipt.scope)) {
-    errors.push(`${label}: geçersiz scope ${receipt.scope}.`);
-    return;
-  }
-  if (!REVIEW_DECISIONS.includes(receipt.decision)) errors.push(`${label}: decision approved veya changes-requested olmalı.`);
-  if (!COMMIT_PATTERN.test(receipt.sourceCommit)) errors.push(`${label}: sourceCommit tam 40 karakter Git SHA olmalı.`);
-  if (!DATE_PATTERN.test(receipt.reviewedAt) || Number.isNaN(Date.parse(receipt.reviewedAt))) {
-    errors.push(`${label}: reviewedAt gerçek bir YYYY-MM-DD tarihi olmalı.`);
-  }
-  if (!receipt.reviewer?.displayName?.trim()) errors.push(`${label}: reviewer adı zorunlu.`);
-  if (!REVIEWER_ROLES.includes(receipt.reviewer?.role)) errors.push(`${label}: reviewer rolü geçersiz.`);
-  if (receipt.scope === "safety" && receipt.reviewer?.role !== "safety-sme") {
-    errors.push(`${label}: safety kapsamı yalnız safety-sme rolündeki bir inceleyene bağlanabilir.`);
-  }
-
-  const requiredKeys = SCOPE_SUBJECT_KEYS[receipt.scope];
-  const presentKeys = Object.keys(receipt.subject ?? {});
-  for (const key of requiredKeys) {
-    if (!HASH_PATTERN.test(receipt.subject?.[key] ?? "")) errors.push(`${label}: subject.${key} sha256 biçiminde değil.`);
-  }
-  for (const key of presentKeys) {
-    if (!requiredKeys.includes(key as (typeof requiredKeys)[number])) {
-      errors.push(`${label}: ${receipt.scope} kapsamı subject.${key} taşıyamaz.`);
-    }
-  }
-
-  verifySourceCommit(receipt, lesson, label);
-}
 
 /**
  * `sourceCommit` gerçekten bu makbuzun bağlandığı hash'leri üreten commit mi?
  *
  * Yalnız biçim kontrolü, uydurma bir SHA'yı kabul eder. Commit nesnesi elde
- * varsa dersi o commit'ten okuyup kökleri yeniden hesaplıyoruz.
+ * varsa dersi o commit'ten okuyup kökleri yeniden hesaplıyoruz ve
+ * verifyReceiptSubjectHashes ile karşılaştırıyoruz — uyuşmazlık tahrif
+ * edilmiş (veya yanlış derse/sürüme bağlanmış) bir makbuzun kanıtıdır.
  */
-function verifySourceCommit(receipt: ReviewReceipt, lesson: Lesson, label: string): void {
+function verifySourceCommit(receipt: ReviewReceipt): void {
+  const label = receipt.id;
+  const lesson = lessonsById.get(receipt.lessonId)!;
   if (!gitReady) {
     notes.push(`${label}: git yok, sourceCommit doğrulanamadı.`);
     return;
@@ -148,12 +87,7 @@ function verifySourceCommit(receipt: ReviewReceipt, lesson: Lesson, label: strin
     errors.push(`${label}: sourceCommit ${receipt.sourceCommit.slice(0, 8)} içinde ${lesson.slug} dosyası yok.`);
     return;
   }
-  const hashes = computeLessonSubjectHashes(historical);
-  for (const key of SCOPE_SUBJECT_KEYS[receipt.scope]) {
-    if (receipt.subject?.[key] !== hashes[key]) {
-      errors.push(`${label}: subject.${key}, sourceCommit'teki ders sürümüyle eşleşmiyor.`);
-    }
-  }
+  errors.push(...verifyReceiptSubjectHashes(receipt, computeLessonSubjectHashes(historical)));
 }
 
 /**
@@ -167,12 +101,7 @@ function checkAppendOnly(): void {
   }
   const previous = readReceiptsAtBase();
   if (!previous) return;
-  const current = new Map(reviewReceipts.receipts.map((receipt) => [receipt.id, JSON.stringify(receipt)]));
-  for (const receipt of previous) {
-    const now = current.get(receipt.id);
-    if (now === undefined) errors.push(`${receipt.id}: var olan makbuz silinmiş; makbuz dosyası append-only.`);
-    else if (now !== JSON.stringify(receipt)) errors.push(`${receipt.id}: var olan makbuz değiştirilmiş; düzeltme yeni makbuzla yapılır.`);
-  }
+  errors.push(...checkAppendOnlyReceipts(previous, reviewReceipts.receipts));
 }
 
 function readReceiptsAtBase(): ReviewReceipt[] | undefined {

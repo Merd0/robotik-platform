@@ -22,7 +22,9 @@ const event = (
 
 describe("Evidence v2 özeti", () => {
   it("okuma ve denemeyi başarıdan türetmez", () => {
-    expect(summarizeEvidence([event("passed", "success")], "ders-1")).toMatchObject({ read: false, tried: false, passed: true });
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "four-lens-fk-trace-v1")!;
+    const passedEvent = event("passed", "success", { lessonId: predicate.lessonId, skillId: predicate.skillId, predicateId: predicate.id });
+    expect(summarizeEvidence([passedEvent], predicate.lessonId)).toMatchObject({ read: false, tried: false, passed: true });
     expect(summarizeEvidence([event("read")], "ders-1")).toMatchObject({ read: true, tried: false, passed: false });
     expect(summarizeEvidence([event("observed")], "ders-1")).toMatchObject({ read: false, tried: true, passed: false });
   });
@@ -32,11 +34,27 @@ describe("Evidence v2 özeti", () => {
   });
 
   it("yalnız registry predicate tarafından doğrulanmış güncel başarıyı sayar", () => {
-    const unverified = event("passed", "success", { verification: "legacy-unverified", predicateId: undefined });
-    const verified = event("passed", "success");
-    expect(summarizeEvidence([unverified], "ders-1").passed).toBe(false);
-    expect(summarizeEvidence([verified], "ders-1", "artifact-2").passed).toBe(true);
-    expect(summarizeEvidence([verified], "ders-1", "artifact-3").passed).toBe(false);
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "four-lens-fk-trace-v1")!;
+    const overrides = { lessonId: predicate.lessonId, skillId: predicate.skillId, predicateId: predicate.id };
+    const unverified = event("passed", "success", { ...overrides, verification: "legacy-unverified", predicateId: undefined });
+    const verified = event("passed", "success", overrides);
+    expect(summarizeEvidence([unverified], predicate.lessonId).passed).toBe(false);
+    expect(summarizeEvidence([verified], predicate.lessonId, "artifact-2").passed).toBe(true);
+    expect(summarizeEvidence([verified], predicate.lessonId, "artifact-3").passed).toBe(false);
+  });
+
+  it("predicate id sürüm atlayınca eski koşuldan üretilmiş passed kaydı sessizce geçerli kalmaz", () => {
+    const planner = EVIDENCE_PREDICATES.find((item) => item.id === "planner-three-way-comparison-v2")!;
+    const staleV1Achievement = event("passed", "success", {
+      lessonId: planner.lessonId,
+      skillId: planner.skillId,
+      predicateId: "planner-three-way-comparison-v1",
+      verification: "registry-predicate",
+    });
+    expect(summarizeEvidence([staleV1Achievement], planner.lessonId).passed).toBe(false);
+
+    const currentAchievement = { ...staleV1Achievement, predicateId: "planner-three-way-comparison-v2" };
+    expect(summarizeEvidence([currentAchievement], planner.lessonId).passed).toBe(true);
   });
 });
 
@@ -114,6 +132,32 @@ describe("controlled pilot predicates", () => {
     });
     expect(predicate.evaluate([assessment]).passed).toBe(false);
     expect(predicate.evaluate([observation, assessment]).passed).toBe(true);
+  });
+
+  it("never derives passed from failed/timeout planner runs, only genuine successes", () => {
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "planner-three-way-comparison-v2")!;
+    const failedRun = (algorithm: string) => event("observed", "retry", {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      metrics: { algorithm, seed: 1, error: "timeout" },
+      contentVersion: "pilot-v1",
+    });
+    const assessment = event("assessed", "success", {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      contentVersion: "pilot-v1",
+    });
+    const threeFailedRuns = [failedRun("astar"), failedRun("rrt"), failedRun("rrt_star"), assessment];
+    expect(predicate.evaluate(threeFailedRuns).passed).toBe(false);
+
+    const successfulRun = (algorithm: string) => event("observed", "success", {
+      lessonId: predicate.lessonId,
+      skillId: predicate.skillId,
+      metrics: { algorithm, seed: 1 },
+      contentVersion: "pilot-v1",
+    });
+    const threeSuccessfulRuns = [successfulRun("astar"), successfulRun("rrt"), successfulRun("rrt_star"), assessment];
+    expect(predicate.evaluate(threeSuccessfulRuns).passed).toBe(true);
   });
 
   it("requires the first and final synchronized FK samples", () => {

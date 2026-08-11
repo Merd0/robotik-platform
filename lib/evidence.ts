@@ -89,20 +89,17 @@ const hasObservedJoints = (events: readonly EvidenceEvent[], required: readonly 
  */
 export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
   {
-    id: "forward-kinematics-dual-joint-v1",
+    // v1 → v2: JointSliders'ın revolute eklemleri yalnız "tried" yazıyordu,
+    // "observed" hiç üretilmiyordu; bu predicate hiçbir zaman geçilemiyordu
+    // (false negative). Bileşen artık pointer-up/blur/klavye commit'inde
+    // "observed" yazıyor. Mantık aynı ama besleyen olay akışı değişti;
+    // sürüm atlamak, hiçbir zaman gerçekleşmemiş olsa da eski id altında
+    // birikmiş olabilecek kaydı yeni id ile karıştırmaz.
+    id: "forward-kinematics-dual-joint-v2",
     lessonId: "b-ortaokul-eklemleri-oynat",
     skillId: "forward-kinematics",
     evaluate: (events) => ({
       passed: hasObservedJoints(events, [1, 2]) && hasSuccessfulAssessment(events, "forward-kinematics"),
-      metrics: { requiredJoints: 2 },
-    }),
-  },
-  {
-    id: "forward-kinematics-formula-v1",
-    lessonId: "b-lise-ileri-kinematik",
-    skillId: "forward-kinematics-formula",
-    evaluate: (events) => ({
-      passed: hasObservedJoints(events, [1, 2]) && hasSuccessfulAssessment(events, "forward-kinematics-formula"),
       metrics: { requiredJoints: 2 },
     }),
   },
@@ -147,19 +144,23 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     }),
   },
   {
-    id: "planner-three-way-comparison-v1",
+    // v1 → v2: predicate yalnız "algoritma denendi mi"yi sayıyordu (metrics.algorithm
+    // hem başarılı hem başarısız/timeout koşularda yazılıyor), result alanına hiç
+    // bakmıyordu — üç başarısız koşu bile passed=true üretiyordu (false positive).
+    // Artık yalnız gerçekten yol bulmuş (result === "success") koşular sayılıyor.
+    id: "planner-three-way-comparison-v2",
     lessonId: "c-universite-algoritma-karsilastirma-deneyi",
     skillId: "planner-comparison",
     evaluate: (events) => {
-      const algorithms = new Set(
+      const successfulAlgorithms = new Set(
         events
-          .filter((event) => event.skillId === "planner-comparison" && event.stage === "observed")
+          .filter((event) => event.skillId === "planner-comparison" && event.stage === "observed" && event.result === "success")
           .map((event) => event.metrics?.algorithm)
           .filter((algorithm): algorithm is string => typeof algorithm === "string"),
       );
       return {
-        passed: ["astar", "rrt", "rrt_star"].every((algorithm) => algorithms.has(algorithm)) && hasSuccessfulAssessment(events, "planner-comparison"),
-        metrics: { comparedAlgorithms: algorithms.size },
+        passed: ["astar", "rrt", "rrt_star"].every((algorithm) => successfulAlgorithms.has(algorithm)) && hasSuccessfulAssessment(events, "planner-comparison"),
+        metrics: { comparedAlgorithms: successfulAlgorithms.size },
       };
     },
   },
@@ -258,6 +259,66 @@ let initialized = false;
 let cachedEvents: readonly EvidenceEvent[] = EMPTY_EVIDENCE;
 let persistence: EvidencePersistence = "local";
 
+/**
+ * Saklama politikası: kör global 1000-olay FIFO'nun yerini alır.
+ *
+ * `read` ve `passed` milestone'lardır — bir öğrencinin "bu dersi okudum" ve
+ * "bunu kanıtladım" kaydı, ne kadar sürükleme/deneme olayı birikirse
+ * birikisin asla silinmemeli. Geri kalan her şey (tried/observed/assessed)
+ * "gözlem": sürekli sürüklemede aynı (ders, beceri, aşama, sonuç, metrik)
+ * onlarca kez tekrar edebilir (bkz. JointSliders/PlannerRace commit'leri),
+ * bu yüzden önce tekrar edenler tek kayda iner, sonra ders+beceri başına ve
+ * son olarak toplamda en yeniler kalacak şekilde kotalanır.
+ */
+const MAX_OBSERVATIONS_PER_SKILL = 30;
+const MAX_TOTAL_OBSERVATIONS = 500;
+
+function isMilestoneEvent(event: EvidenceEvent): boolean {
+  return event.stage === "read" || event.stage === "passed";
+}
+
+function observationFingerprint(event: EvidenceEvent): string {
+  const metricsKey = event.metrics
+    ? Object.keys(event.metrics).sort().map((key) => `${key}=${String(event.metrics![key])}`).join("&")
+    : "";
+  return [event.lessonId, event.skillId, event.stage, event.result, event.attempts ?? "", metricsKey].join("::");
+}
+
+function applyRetentionPolicy(events: readonly EvidenceEvent[]): EvidenceEvent[] {
+  const milestones = events.filter(isMilestoneEvent);
+  const observations = events.filter((event) => !isMilestoneEvent(event));
+
+  // 1) Tam tekrarı yalnız son örneğiyle tut (göreli kronolojik sıra korunur,
+  //    çünkü `observations` zaten orijinal ekleme sırasında).
+  const latestByFingerprint = new Map<string, EvidenceEvent>();
+  for (const observation of observations) latestByFingerprint.set(observationFingerprint(observation), observation);
+  const survivingFingerprintIds = new Set([...latestByFingerprint.values()].map((event) => event.id));
+  const dedupedObservations = observations.filter((event) => survivingFingerprintIds.has(event.id));
+
+  // 2) Ders+beceri başına kota: yalnız en yeni N kayıt kalır.
+  const bucketsBySkill = new Map<string, EvidenceEvent[]>();
+  for (const event of dedupedObservations) {
+    const key = `${event.lessonId}::${event.skillId}`;
+    const bucket = bucketsBySkill.get(key);
+    if (bucket) bucket.push(event);
+    else bucketsBySkill.set(key, [event]);
+  }
+  const perSkillSurvivorIds = new Set<string>();
+  for (const bucket of bucketsBySkill.values()) {
+    const kept = bucket.length > MAX_OBSERVATIONS_PER_SKILL ? bucket.slice(bucket.length - MAX_OBSERVATIONS_PER_SKILL) : bucket;
+    for (const event of kept) perSkillSurvivorIds.add(event.id);
+  }
+  const quotaedObservations = dedupedObservations.filter((event) => perSkillSurvivorIds.has(event.id));
+
+  // 3) Global semantik kota: milestone'lar hariç toplam gözlem sayısı sınırlı, en yeniler kalır.
+  const boundedObservations = quotaedObservations.length > MAX_TOTAL_OBSERVATIONS
+    ? quotaedObservations.slice(quotaedObservations.length - MAX_TOTAL_OBSERVATIONS)
+    : quotaedObservations;
+
+  const keep = new Set([...milestones.map((event) => event.id), ...boundedObservations.map((event) => event.id)]);
+  return events.filter((event) => keep.has(event.id));
+}
+
 const safeArray = (raw: string | null): unknown[] => {
   if (!raw) return [];
   try {
@@ -355,7 +416,7 @@ export function getEvidencePersistence(): EvidencePersistence {
 }
 
 function persistEvidence(events: readonly EvidenceEvent[]): void {
-  cachedEvents = events.slice(-1_000);
+  cachedEvents = applyRetentionPolicy(events);
   if (typeof window !== "undefined") {
     try {
       window.localStorage.setItem(EVIDENCE_STORAGE_KEY, JSON.stringify(cachedEvents));
@@ -457,11 +518,23 @@ export function summarizeEvidence(events: readonly EvidenceEvent[], lessonId: st
   const lessonEvents = events.filter(
     (event) => event.lessonId === lessonId && (!contentVersion || event.contentVersion === contentVersion),
   );
+  // Bir predicate düzeltilip id'si sürümlenince (ör. v1 → v2), o dersin GÜNCEL
+  // predicate kümesinde artık v1 yok. Eski koşuldan üretilmiş "passed" kaydı
+  // arşivde durur (append-only ruhu) ama burada sayılmaz — aksi halde
+  // düzeltilmiş bir hatanın ürettiği hatalı başarı sessizce geçerli kalırdı.
+  const currentPredicateIds = new Set(
+    EVIDENCE_PREDICATES.filter((predicate) => predicate.lessonId === lessonId).map((predicate) => predicate.id),
+  );
   return {
     read: lessonEvents.some((event) => event.stage === "read"),
     tried: lessonEvents.some((event) => event.stage === "tried" || event.stage === "observed"),
     passed: lessonEvents.some(
-      (event) => event.stage === "passed" && event.result === "success" && event.verification === "registry-predicate" && Boolean(event.predicateId),
+      (event) =>
+        event.stage === "passed" &&
+        event.result === "success" &&
+        event.verification === "registry-predicate" &&
+        Boolean(event.predicateId) &&
+        currentPredicateIds.has(event.predicateId!),
     ),
     hasPredicate: EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === lessonId),
     assessmentCount: lessonEvents.filter((event) => event.stage === "assessed").length,

@@ -206,8 +206,24 @@ yapılandırılmış olmasıdır. Review Receipt v2 opsiyoneldir; yazıldığın
 güncel sürüm kökleriyle eşleşmek zorundadır. Mevcut 39 yayının borç kaydı
 `content/review-debt.json` içindeki `baselineIds` olarak dondurulmuştur ve
 `scripts/check-review-debt.ts` içindeki tek sabit onu çıpalar; bu kayıt artık
-bir kapı değil, tarihsel bir izdir. `check-review-debt` ve
-`check-review-integrity` bilgilendiricidir (`REVIEW_STRICT=1` ile eski kapı
-davranışına dönerler). GitHub branch protection ise repo içinden
-doğrulanamaz; CI zorunluluğu ve koruma kuralı barındırma ayarlarında ayrıca
-insan tarafından etkinleştirilmelidir.
+bir kapı değil, tarihsel bir izdir.
+
+`check-review-debt` ve `check-review-integrity` iki ayrı kanaldır (Sprint 0'da
+ayrıldı — tek bir `REVIEW_STRICT` bayrağı, gerçek tahrifatla zararsız kapsam
+uyarısını ayıramıyordu ve açılması 47 legacy uyarıyı da fatal yapıp CI'ı
+kilitliyordu):
+
+- `check-review-integrity` — bir makbuzun **kendisinin** tutarlı olup
+  olmadığını denetler (şema, hash biçimi, `sourceCommit`'teki ders sürümüyle
+  eşleşme, reviewer rolü, append-only). Bu HER ZAMAN fatal'dır, hiçbir env
+  değişkenine bağlı değildir: tahrif edilmiş bir makbuz asla bilgilendirici
+  bir durum sayılmaz. Saf doğrulama mantığı `lib/reviewIntegrityCheck.ts`'de
+  ve birim testli.
+- `check-review-debt` — eksik makbuz ve legacy düz metin kaynak kullanan
+  yayınları raporlar. Bu HER ZAMAN yalnız rapordur ve exit 0 ile biter;
+  insan incelemesi opsiyonel olduğu için bir dersin hiç incelenmemiş olması
+  başlı başına bir hata değildir.
+
+GitHub branch protection ise repo içinden doğrulanamaz; CI zorunluluğu ve
+koruma kuralı barındırma ayarlarında ayrıca insan tarafından
+etkinleştirilmelidir.

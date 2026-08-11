@@ -1,7 +1,27 @@
 import { createHash } from "node:crypto";
 import { getAllLessons } from "../lib/content";
 import { getOpenReviewDebtIds, reviewDebt } from "../lib/reviewDebt";
-import { getLessonReviewStatus } from "../lib/reviewReceipts";
+import { findLegacyTextSources, getLessonReviewStatus } from "../lib/reviewReceipts";
+
+/**
+ * REVIEW-COVERAGE / SOURCE-MIGRATION kanalı — bu script yalnız bunu raporlar.
+ *
+ * "İki kanala böl" kararı (Sprint 0): bu dosya artık hem borç
+ * baseline'ının bookkeeping'ini hem de (eskiden check-review-integrity.ts'de
+ * yaşayan) "legacy düz metin kaynak kullanan yayın" ve "borç kaydı
+ * temizlenmemiş" kapsam uyarılarını taşıyor. İkisi de aynı doğaya sahip:
+ * bir dersin insan incelemesi veya kaynak biçimi eksik/eski — bu asla
+ * tahrifat değil, sadece bir kapsam boşluğu (docs/06-kalite-ve-topluluk.md
+ * "Katman 3": insan incelemesi opsiyonel).
+ *
+ * Bu yüzden bu kanal HER ZAMAN yalnız rapor eder ve exit 0 ile biter —
+ * REVIEW_STRICT'e bağlı DEĞİLDİR. Gerçek tahrifat (hash/şema/sourceCommit/
+ * rol/append-only) scripts/check-review-integrity.ts'e ait ve orası her
+ * zaman fatal'dır.
+ */
+const errors: string[] = [];
+const lessons = getAllLessons();
+const publishedLessons = lessons.filter((lesson) => lesson.frontmatter.durum === "yayinda");
 
 /**
  * DEĞİŞMEZ ÇIPA — asla yeniden hesaplanmaz.
@@ -21,9 +41,6 @@ import { getLessonReviewStatus } from "../lib/reviewReceipts";
  */
 const BASELINE_FINGERPRINT = "dbd7dcbba1edadc97b10b578879f8eee129bf3d976914278b399e8e7ac73a717";
 
-const errors: string[] = [];
-const lessons = getAllLessons();
-const publishedLessons = lessons.filter((lesson) => lesson.frontmatter.durum === "yayinda");
 const baselineIds = [...reviewDebt.baselineIds].sort();
 const baselineFingerprint = createHash("sha256").update(baselineIds.join("\n"), "utf8").digest("hex");
 const openDebtIds = getOpenReviewDebtIds();
@@ -59,26 +76,27 @@ for (const lesson of publishedLessons) {
   }
 }
 
-/**
- * Bu kontrol de artık bir yayın kapısı değil (bkz. check-review-integrity.ts
- * başındaki not ve docs/06 "Katman 3"). Dondurulmuş baseline'ın bütünlüğü
- * hâlâ raporlanıyor — o bir tarih kaydı ve bozulması bir veri hatasıdır —
- * ama yayını engellemiyor. `REVIEW_STRICT=1` eski davranışı geri getirir.
- */
-const strict = process.env.REVIEW_STRICT === "1";
-
-if (errors.length > 0) {
-  console.warn(
-    `Review borcu kaydı ${errors.length} ${strict ? "hata" : "uyarı"} üretti:\n${errors.map((error) => `  - ${error}`).join("\n")}`,
-  );
-  if (strict) process.exit(1);
+// scripts/check-review-integrity.ts'den taşındı: yeni yayınlarda kaynaklar
+// yapılandırılmış SourceRef olmalı. Legacy borç kaydındaki (baseline)
+// dersler bu kuraldan muaf — onların düz metin kaynağı zaten bilinen,
+// dondurulmuş bir borçtur.
+for (const lesson of publishedLessons) {
+  if (!openDebt.has(lesson.slug) && findLegacyTextSources(lesson).length > 0) {
+    errors.push(`${lesson.slug}: yeni yayınlarda kaynaklar yapılandırılmış SourceRef olmalı; legacy metin kaynak kabul edilmez.`);
+  }
 }
 
 const cleared = baselineIds.length - openDebtIds.length;
 const makbuzlu = publishedLessons.filter((lesson) => getLessonReviewStatus(lesson).state === "verified").length;
+
+if (errors.length > 0) {
+  console.warn(`Review kapsamı (bilgi, kapı değil) ${errors.length} not üretti:\n${errors.map((error) => `  - ${error}`).join("\n")}`);
+}
+
 console.log(
   `Review borcu (bilgi): ${reviewDebt.staleAfterContentChange.length} değişiklik sonrası eski, ` +
     `${reviewDebt.legacyUnverified.length} sürüme bağlanmamış legacy kayıt; ` +
     `${cleared}/${baselineIds.length} baseline borcu kapandı. ` +
-    `${publishedLessons.length} yayının ${makbuzlu}'i güncel makbuzlu.`,
+    `${publishedLessons.length} yayının ${makbuzlu}'i güncel makbuzlu. ` +
+    `İnsan incelemesi opsiyonel; bu script hiçbir zaman build'i kırmaz.`,
 );
