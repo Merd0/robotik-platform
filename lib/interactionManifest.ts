@@ -89,6 +89,10 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
     componentFile: "components/interactive/ScanPath.tsx",
     engineFiles: ["lib/scanPath.ts"],
   },
+  BlockEditor: {
+    componentFile: "components/interactive/BlockEditor.tsx",
+    engineFiles: ["lib/robotics/blockProgram.ts"],
+  },
 };
 
 /** Robot id → spesifikasyon dosyası. Yalnız pilot laboratuvarların kullandığı robotlar. */

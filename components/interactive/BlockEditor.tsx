@@ -1,10 +1,15 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { getRobotById } from "@/lib/robotics/robots";
-import { runBlockProgram, type Block } from "@/lib/robotics/blockProgram";
+import { blockPoseKey, countBlockType, runBlockProgram, type Block } from "@/lib/robotics/blockProgram";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
+import {
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
 
 type BlockType = Block["type"];
 
@@ -69,6 +74,18 @@ function hasBlockType(blocks: Block[], type: BlockType): boolean {
   ));
 }
 
+function maxGeneratedBlockId(blocks: readonly Block[]): number {
+  return blocks.reduce((max, block) => {
+    const own = Number(/^blok-(\d+)$/.exec(block.id)?.[1] ?? 0);
+    const nested = block.type === "repeat"
+      ? maxGeneratedBlockId(block.body)
+      : block.type === "if"
+        ? Math.max(maxGeneratedBlockId(block.body), maxGeneratedBlockId(block.elseBody))
+        : 0;
+    return Math.max(max, own, nested);
+  }, 0);
+}
+
 /**
  * Ortaokul seviyesi Hat D sahnesi: robotu tıkla-ekle bloklarla sürer
  * (yazılı kod yok). Yorumlayıcı `lib/robotics/blockProgram.ts`'de saf
@@ -88,11 +105,40 @@ export function BlockEditor({ robot: robotId, allowedBlocks, task }: BlockEditor
   const [running, setRunning] = useState(false);
   const [trace, setTrace] = useState<number[][]>([]);
   const [traceIndex, setTraceIndex] = useState(0);
-  const [conditionRuns, setConditionRuns] = useState({ trueBranch: false, falseBranch: false });
+  const [conditionRuns, setConditionRuns] = useState<{ truePose: string | null; falsePose: string | null }>({
+    truePose: null,
+    falsePose: null,
+  });
   const [taskPassed, setTaskPassed] = useState(false);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  useSharedLabState("block-editor", (shared) => {
+    if (
+      shared.robotId !== robot.id ||
+      shared.task !== (task ?? null) ||
+      shared.allowedBlocks.length !== allowed.length ||
+      shared.allowedBlocks.some((type, index) => type !== allowed[index])
+    ) return;
+    stopPlayback();
+    setBlocks(shared.blocks);
+    setEngelVar(shared.engelVar);
+    setJointAngles(robot.joints.map(() => 0));
+    setTrace([]);
+    setTraceIndex(0);
+    setConditionRuns({ truePose: null, falsePose: null });
+    setTaskPassed(false);
+    idCounter.current = maxGeneratedBlockId(shared.blocks);
+  });
+
+  useEffect(() => () => {
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+  }, []);
+
   function addBlock(type: BlockType, parentId: string | null, branch: "body" | "elseBody" = "body") {
+    stopPlayback();
+    setConditionRuns({ truePose: null, falsePose: null });
+    setTaskPassed(false);
     const newBlock: Block =
       type === "move"
         ? { id: nextId(), type: "move", joint: 0, degrees: 45 }
@@ -103,10 +149,16 @@ export function BlockEditor({ robot: robotId, allowedBlocks, task }: BlockEditor
   }
 
   function updateBlock(id: string, updater: (block: Block) => Block) {
+    stopPlayback();
+    setConditionRuns({ truePose: null, falsePose: null });
+    setTaskPassed(false);
     setBlocks((prev) => findAndUpdate(prev, id, updater));
   }
 
   function removeBlock(id: string) {
+    stopPlayback();
+    setConditionRuns({ truePose: null, falsePose: null });
+    setTaskPassed(false);
     setBlocks((prev) => removeById(prev, id));
   }
 
@@ -118,26 +170,46 @@ export function BlockEditor({ robot: robotId, allowedBlocks, task }: BlockEditor
 
   function handleRun() {
     stopPlayback();
-    const nextTrace = runBlockProgram(blocks, robot.joints.length, { engelVar }).slice(0, MAX_TRACE_STEPS);
+    const nextTrace = runBlockProgram(blocks, robot.joints.length, { engelVar }, MAX_TRACE_STEPS);
     if (nextTrace.length === 0) return;
     setTrace(nextTrace);
     setTraceIndex(0);
-    const nextRuns = hasBlockType(blocks, "if")
-      ? { trueBranch: conditionRuns.trueBranch || engelVar, falseBranch: conditionRuns.falseBranch || !engelVar }
+    const finalPose = blockPoseKey(nextTrace[nextTrace.length - 1]);
+    const distinctTraceSteps = new Set(nextTrace.map(blockPoseKey)).size;
+    const withinLimits = nextTrace.every((angles) => angles.every((angle, index) =>
+      Number.isFinite(angle) && angle >= robot.joints[index].limits.min && angle <= robot.joints[index].limits.max
+    ));
+    // Limit dışı bir dal ziyaret edilmiş sayılmaz; sonraki geçerli dal koşusu
+    // eski başarısız pozu yanlışlıkla eşleyip başarı üretemez.
+    const nextRuns = hasBlockType(blocks, "if") && withinLimits
+      ? engelVar
+        ? { ...conditionRuns, truePose: finalPose }
+        : { ...conditionRuns, falsePose: finalPose }
       : conditionRuns;
-    const distinctTraceSteps = new Set(nextTrace.map((angles) => angles.map((angle) => angle.toFixed(6)).join(","))).size;
+    const moveBlockCount = countBlockType(blocks, "move");
+    const trueBranch = nextRuns.truePose !== null;
+    const falseBranch = nextRuns.falsePose !== null;
+    const distinctBranchOutcomes = trueBranch && falseBranch && nextRuns.truePose !== nextRuns.falsePose;
     setConditionRuns(nextRuns);
     const passed = task === "sequence"
-      ? distinctTraceSteps >= 2
+      ? moveBlockCount >= 2 && distinctTraceSteps >= 2 && withinLimits
       : task === "condition"
-        ? nextRuns.trueBranch && nextRuns.falseBranch
+        ? distinctBranchOutcomes && withinLimits
         : false;
     setTaskPassed(passed);
     record({
       skillId: task === "condition" ? "block-condition" : "block-sequence",
       stage: task ? "assessed" : "observed",
       result: !task || passed ? "success" : "retry",
-      metrics: { traceSteps: nextTrace.length, distinctTraceSteps, trueBranch: nextRuns.trueBranch, falseBranch: nextRuns.falseBranch },
+      metrics: {
+        traceSteps: nextTrace.length,
+        distinctTraceSteps,
+        moveBlockCount,
+        trueBranch,
+        falseBranch,
+        distinctBranchOutcomes,
+        withinLimits,
+      },
     });
     setRunning(true);
     nextTrace.forEach((angles, index) => {
@@ -156,7 +228,7 @@ export function BlockEditor({ robot: robotId, allowedBlocks, task }: BlockEditor
     setJointAngles(robot.joints.map(() => 0));
     setTrace([]);
     setTraceIndex(0);
-    setConditionRuns({ trueBranch: false, falseBranch: false });
+    setConditionRuns({ truePose: null, falsePose: null });
     setTaskPassed(false);
   }
 
@@ -222,7 +294,20 @@ export function BlockEditor({ robot: robotId, allowedBlocks, task }: BlockEditor
         <input aria-label="Blok programı iz adımı" type="range" min="0" max={trace.length - 1} value={traceIndex} onChange={(event) => showTraceStep(Number(event.target.value))} className="mt-2 h-11 w-full accent-ortaokul-accent" />
         <div className="flex gap-2"><button type="button" onClick={() => showTraceStep(traceIndex - 1)} className="min-h-11 flex-1 rounded-md border border-ortaokul-ink/20">Geri</button><button type="button" onClick={() => showTraceStep(traceIndex + 1)} className="min-h-11 flex-1 rounded-md border border-ortaokul-ink/20">İleri</button></div>
       </div>}
-      {task && <p className={`rounded-lg border p-3 text-sm font-semibold ${taskPassed ? "border-success-border bg-success-surface text-success-ink" : "border-warning-border bg-warning-surface text-warning-ink"}`} role="status">{taskPassed ? "Görev kanıtı oluştu." : task === "condition" ? `İki dalı da dene: Engel yok ${conditionRuns.falseBranch ? "✓" : "○"} · Engel var ${conditionRuns.trueBranch ? "✓" : "○"}` : "Çalışma izinde en az iki farklı robot duruşu gerekiyor."}</p>}
+      {task && <p className={`rounded-lg border p-3 text-sm font-semibold ${taskPassed ? "border-success-border bg-success-surface text-success-ink" : "border-warning-border bg-warning-surface text-warning-ink"}`} role="status">{taskPassed ? "Görev kanıtı oluştu." : task === "condition" ? `İki farklı dal çıktısı gerekiyor: Engel yok ${conditionRuns.falsePose ? "✓" : "○"} · Engel var ${conditionRuns.truePose ? "✓" : "○"}` : "Çalışma izinde en az iki farklı ve limit içi robot duruşu gerekiyor."}</p>}
+
+      <ExperimentShareButton
+        seviye="ortaokul"
+        createShareUrl={() => createLabShareUrl({
+          kind: "block-editor",
+          version: 1,
+          robotId: robot.id,
+          allowedBlocks: allowed,
+          task: task ?? null,
+          blocks,
+          engelVar,
+        })}
+      />
     </div>
   );
 }

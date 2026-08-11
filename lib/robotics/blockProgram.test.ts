@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runBlockProgram, type Block } from "./blockProgram";
+import { blockPoseKey, countBlockType, runBlockProgram, type Block } from "./blockProgram";
 
 describe("runBlockProgram", () => {
   it("move bloğu ilgili eklemi mutlak açıya ayarlar", () => {
@@ -57,5 +57,31 @@ describe("runBlockProgram", () => {
 
   it("boş program boş iz döner", () => {
     expect(runBlockProgram([], 2, { engelVar: false })).toEqual([]);
+  });
+
+  it("iç içe tekrar programını üretim sırasında verilen iz sınırında durdurur", () => {
+    const blocks: Block[] = [{
+      id: "outer",
+      type: "repeat",
+      times: 20,
+      body: [{
+        id: "inner",
+        type: "repeat",
+        times: 20,
+        body: [{ id: "move", type: "move", joint: 0, degrees: 10 }],
+      }],
+    }];
+    expect(runBlockProgram(blocks, 2, { engelVar: false }, 25)).toHaveLength(25);
+  });
+
+  it("blok türlerini iç içe dallarda sayar ve poz anahtarını deterministik üretir", () => {
+    const blocks: Block[] = [{
+      id: "if",
+      type: "if",
+      body: [{ id: "a", type: "move", joint: 0, degrees: 10 }],
+      elseBody: [{ id: "b", type: "move", joint: 0, degrees: -10 }],
+    }];
+    expect(countBlockType(blocks, "move")).toBe(2);
+    expect(blockPoseKey([Math.PI / 2, 0])).toBe("1.570796,0.000000");
   });
 });

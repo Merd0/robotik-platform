@@ -148,6 +148,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["ScanPath"])).not.toThrow();
   });
 
+  it("BlockEditor bileşeni, yorumlayıcı motoru ve robot spec'ini interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.BlockEditor).toEqual({
+      componentFile: "components/interactive/BlockEditor.tsx",
+      engineFiles: ["lib/robotics/blockProgram.ts"],
+    });
+    expect(() => computeInteractionHash(["BlockEditor"], ["generic-2dof"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -206,5 +214,11 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
   it("ScanPath ana dersini satır yoğunluğu predicate sürümüne bağlar", () => {
     expect(computePredicateHash("f-universite-tarama-yolu-uretimi"))
       .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
+  });
+
+  it("BlockEditor'ın iki görev dersini kendi predicate sürümlerine bağlar", () => {
+    const empty = computePredicateHash("hic-boyle-bir-ders-yok");
+    expect(computePredicateHash("d-ortaokul-blok-komutlar")).not.toBe(empty);
+    expect(computePredicateHash("d-ortaokul-sirali-tekrar-kosul")).not.toBe(empty);
   });
 });

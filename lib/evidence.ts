@@ -286,6 +286,41 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     },
   },
   {
+    id: "block-sequence-trace-v1",
+    lessonId: "d-ortaokul-blok-komutlar",
+    skillId: "block-sequence",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "block-sequence" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.withinLimits === true &&
+        typeof event.metrics?.moveBlockCount === "number" &&
+        event.metrics.moveBlockCount >= 2 &&
+        typeof event.metrics?.distinctTraceSteps === "number" &&
+        event.metrics.distinctTraceSteps >= 2,
+      ),
+      metrics: { requiredDistinctTraceSteps: 2 },
+    }),
+  },
+  {
+    id: "block-condition-branches-v1",
+    lessonId: "d-ortaokul-sirali-tekrar-kosul",
+    skillId: "block-condition",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "block-condition" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.withinLimits === true &&
+        event.metrics?.trueBranch === true &&
+        event.metrics?.falseBranch === true &&
+        event.metrics?.distinctBranchOutcomes === true,
+      ),
+      metrics: { requiredDistinctBranches: 2 },
+    }),
+  },
+  {
     // v1 → v2: predicate yalnız "algoritma denendi mi"yi sayıyordu (metrics.algorithm
     // hem başarılı hem başarısız/timeout koşularda yazılıyor), result alanına hiç
     // bakmıyordu — üç başarısız koşu bile passed=true üretiyordu (false positive).

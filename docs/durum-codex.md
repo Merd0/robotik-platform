@@ -1441,3 +1441,19 @@ güven verisini yanlış temel üzerine kurmasını engeller.
 - Test: 14 yeni kontrol (motor golden/negatifleri, state
   round-trip/negatifleri, interaction/predicate bağlantısı, predicate golden +
   üç negatif ve paylaşım+kanıt E2E'si).
+
+### 2026-08-12 · BlockEditor (2 ders)
+
+- Bulgu: görev olayları yalnız `Çalıştır` commit'inde yazılıyordu; her karede
+  kayıt sorunu yoktu. Ancak iki koşul dalı aynı pozu üretse bile yalnız ziyaret
+  bayraklarıyla görev geçiyor, limit dışı açı başarıyı engellemiyor ve 200 adım
+  sınırı yorumlayıcı dev izi ürettikten sonra `slice` ile uygulanıyordu.
+- Düzeltme: yorumlayıcı artık yürütme sırasında 200 adımda duruyor. Sıra görevi
+  en az iki hareket bloğu + iki farklı limit-içi duruş; koşul görevi iki ayrı,
+  limit-içi dal sonucu istiyor. Program değişince eski dal sonuçları sıfırlanır.
+  İki ders için ayrı registry predicate'leri, bileşen+yorumlayıcı+robot spec
+  manifesti ve derinlik/sayı/id/tür/eklem limiti doğrulamalı `block-editor/v1`
+  paylaşım state'i eklendi; zamanlayıcılar unmount'ta temizleniyor.
+- Test: 15 yeni kontrol (yorumlayıcı sınır/yardımcıları, state
+  round-trip/negatifleri, interaction/predicate bağlantısı, iki predicate için
+  golden + negatifler ve paylaşım+kanıt E2E'si).

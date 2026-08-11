@@ -231,6 +231,31 @@ test("ScanPath iki tamamlanmış yoğunluğu kanıtlar ve state'i paylaşır", a
   await expect(page.getByRole("status").filter({ hasText: "Toplanan nokta sayısı" })).toHaveText(/36 \/ 36/);
 });
 
+test("BlockEditor limit-içi farklı duruşları kanıtlar ve programı paylaşır", async ({ page }) => {
+  await page.goto("/ders/d-ortaokul-blok-komutlar");
+  await page.getByRole("button", { name: "+ Hareket ekle" }).click();
+  await page.getByRole("button", { name: "+ Hareket ekle" }).click();
+  const degrees = page.getByRole("spinbutton");
+  await expect(degrees).toHaveCount(2);
+  await degrees.nth(1).fill("90");
+  const run = page.getByRole("button", { name: /^(Çalıştır|Çalışıyor…)$/ });
+  await run.click();
+  await expect(run).toBeEnabled({ timeout: 2_000 });
+  await expect(page.getByRole("status").filter({ hasText: "Görev kanıtı oluştu" })).toBeVisible();
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((item: { stage?: string; predicateId?: string }) =>
+    item.stage === "passed" && item.predicateId === "block-sequence-trace-v1",
+  )).toBe(true);
+
+  await page.getByRole("button", { name: "Bu deneyi paylaş" }).click();
+  const href = await page.getByRole("link", { name: "Paylaşılan görünümü aç" }).getAttribute("href");
+  expect(href).not.toBeNull();
+  await page.goto(href!);
+  await expect(page.getByRole("spinbutton")).toHaveCount(2);
+  await expect(page.getByRole("spinbutton").nth(1)).toHaveValue("90");
+});
+
 test("iki eklemli kaydırıcı deneyi klavye ve pointer commit'iyle geçilebilir", async ({ page }) => {
   await page.goto("/ders/b-ortaokul-eklemleri-oynat");
   const experiment = page.locator("[data-joint-sliders]");

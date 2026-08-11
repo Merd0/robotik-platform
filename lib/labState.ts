@@ -1,9 +1,10 @@
 import { getRobotById } from "./robotics/robots";
 import { PLANNER_IDS, type PlannerId } from "./robotics/planners";
 import type { Obstacle } from "./robotics/collision";
-import type { Elbow } from "./robotics/kinematics";
+import type { Elbow, RobotSpec } from "./robotics/kinematics";
 import type { IkSolverMode } from "./robotics/ikSolver";
 import { MAX_SCAN_ROWS, MIN_SCAN_ROWS, SCAN_PATH_COLUMNS } from "./scanPath";
+import type { Block } from "./robotics/blockProgram";
 
 /**
  * Sprint 2 "Kanıt Dikey Dilimi" — sürümlü, paylaşılabilir laboratuvar state'i.
@@ -104,6 +105,16 @@ export interface ScanPathLabState {
   visited: string[];
 }
 
+export interface BlockEditorLabState {
+  kind: "block-editor";
+  version: 1;
+  robotId: string;
+  allowedBlocks: Block["type"][];
+  task: "sequence" | "condition" | null;
+  blocks: Block[];
+  engelVar: boolean;
+}
+
 export type LabState =
   | JointSlidersLabState
   | PlannerRaceLabState
@@ -113,7 +124,8 @@ export type LabState =
   | SafetyZoneLabState
   | PixelToWorldLabState
   | JacobianVizLabState
-  | ScanPathLabState;
+  | ScanPathLabState
+  | BlockEditorLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -175,6 +187,43 @@ function isPoint2(value: unknown): value is { x: number; y: number } {
 
 function isPoint3(value: unknown): value is { x: number; y: number; z: number } {
   return isPoint2(value) && isFiniteNumber((value as { z?: unknown }).z);
+}
+
+const BLOCK_TYPES: readonly Block["type"][] = ["move", "repeat", "if"];
+const MAX_BLOCK_COUNT = 100;
+const MAX_BLOCK_DEPTH = 8;
+
+function parseBlocks(
+  value: unknown,
+  depth = 0,
+  counter: { count: number } = { count: 0 },
+): Block[] | null {
+  if (!Array.isArray(value) || depth > MAX_BLOCK_DEPTH) return null;
+  const parsed: Block[] = [];
+  for (const item of value) {
+    if (typeof item !== "object" || item === null) return null;
+    const block = item as Record<string, unknown>;
+    if (typeof block.id !== "string" || !block.id || block.id.length > 80) return null;
+    counter.count += 1;
+    if (counter.count > MAX_BLOCK_COUNT) return null;
+    if (block.type === "move") {
+      if (typeof block.joint !== "number" || !Number.isSafeInteger(block.joint) || !isFiniteNumber(block.degrees)) return null;
+      parsed.push({ id: block.id, type: "move", joint: block.joint, degrees: block.degrees });
+    } else if (block.type === "repeat") {
+      if (typeof block.times !== "number" || !Number.isSafeInteger(block.times) || block.times < 1 || block.times > 20) return null;
+      const body = parseBlocks(block.body, depth + 1, counter);
+      if (!body) return null;
+      parsed.push({ id: block.id, type: "repeat", times: block.times, body });
+    } else if (block.type === "if") {
+      const body = parseBlocks(block.body, depth + 1, counter);
+      const elseBody = parseBlocks(block.elseBody, depth + 1, counter);
+      if (!body || !elseBody) return null;
+      parsed.push({ id: block.id, type: "if", body, elseBody });
+    } else {
+      return null;
+    }
+  }
+  return parsed;
 }
 
 /** Yalnız BİÇİM denetimi (tip/şekil) — fiziksel geçerlilik `validateLabState`'te. */
@@ -364,6 +413,32 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "block-editor") {
+    if (record.version !== 1) return { ok: false, error: `block-editor: desteklenmeyen sürüm ${String(record.version)}` };
+    if (typeof record.robotId !== "string" || !record.robotId) return { ok: false, error: "block-editor: robotId eksik" };
+    if (!Array.isArray(record.allowedBlocks) || !record.allowedBlocks.every(
+      (type) => typeof type === "string" && BLOCK_TYPES.includes(type as Block["type"]),
+    )) return { ok: false, error: "block-editor: allowedBlocks geçersiz" };
+    if (record.task !== null && record.task !== "sequence" && record.task !== "condition") {
+      return { ok: false, error: "block-editor: task sequence/condition/null olmalı" };
+    }
+    if (typeof record.engelVar !== "boolean") return { ok: false, error: "block-editor: engelVar boolean olmalı" };
+    const blocks = parseBlocks(record.blocks);
+    if (!blocks) return { ok: false, error: "block-editor: blocks ağacı geçersiz veya sınırı aşıyor" };
+    return {
+      ok: true,
+      state: {
+        kind: "block-editor",
+        version: 1,
+        robotId: record.robotId,
+        allowedBlocks: record.allowedBlocks as Block["type"][],
+        task: record.task,
+        blocks,
+        engelVar: record.engelVar,
+      },
+    };
+  }
+
   return { ok: false, error: `bilinmeyen laboratuvar türü: ${String(record.kind)}` };
 }
 
@@ -499,6 +574,53 @@ export function validateLabState(state: LabState): string[] {
         errors.push(`visited hücresi sınır dışında: ${key}`);
       }
     }
+    return errors;
+  }
+
+  if (state.kind === "block-editor") {
+    const blockState = state;
+    let robot: RobotSpec;
+    try {
+      robot = getRobotById(blockState.robotId);
+    } catch {
+      errors.push(`bilinmeyen robot id: ${blockState.robotId}`);
+      return errors;
+    }
+    if (blockState.allowedBlocks.length === 0 || new Set(blockState.allowedBlocks).size !== blockState.allowedBlocks.length) {
+      errors.push("allowedBlocks boş veya yinelenen olamaz");
+    }
+    if (blockState.task === "sequence" && !blockState.allowedBlocks.includes("move")) errors.push("sequence görevi move bloğu gerektirir");
+    if (blockState.task === "condition" && !blockState.allowedBlocks.includes("if")) errors.push("condition görevi if bloğu gerektirir");
+    const ids = new Set<string>();
+    let blockCount = 0;
+    function validateBlocks(blocks: readonly Block[], depth: number) {
+      if (depth > MAX_BLOCK_DEPTH) errors.push(`blok derinliği ${MAX_BLOCK_DEPTH} sınırını aşıyor`);
+      for (const block of blocks) {
+        blockCount += 1;
+        if (ids.has(block.id)) errors.push(`yinelenen blok id: ${block.id}`);
+        ids.add(block.id);
+        if (!blockState.allowedBlocks.includes(block.type)) errors.push(`izin verilmeyen blok türü: ${block.type}`);
+        if (block.type === "move") {
+          if (block.joint < 0 || block.joint >= robot.joints.length) {
+            errors.push(`blok ${block.id}: eklem indexi sınır dışında`);
+          } else {
+            const radians = (block.degrees * Math.PI) / 180;
+            const joint = robot.joints[block.joint];
+            if (!Number.isFinite(radians) || radians < joint.limits.min || radians > joint.limits.max) {
+              errors.push(`blok ${block.id}: açı eklem limiti dışında`);
+            }
+          }
+        } else if (block.type === "repeat") {
+          if (!Number.isSafeInteger(block.times) || block.times < 1 || block.times > 20) errors.push(`blok ${block.id}: tekrar 1-20 olmalı`);
+          validateBlocks(block.body, depth + 1);
+        } else {
+          validateBlocks(block.body, depth + 1);
+          validateBlocks(block.elseBody, depth + 1);
+        }
+      }
+    }
+    validateBlocks(blockState.blocks, 0);
+    if (blockCount > MAX_BLOCK_COUNT) errors.push(`blok sayısı ${MAX_BLOCK_COUNT} sınırını aşıyor`);
     return errors;
   }
 

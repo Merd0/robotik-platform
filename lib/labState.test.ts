@@ -72,6 +72,19 @@ const scanPathState: LabState = {
   visited: ["0-0", "1-0", "1-1", "0-1"],
 };
 
+const blockEditor: LabState = {
+  kind: "block-editor",
+  version: 1,
+  robotId: "generic-2dof",
+  allowedBlocks: ["move"],
+  task: "sequence",
+  blocks: [
+    { id: "blok-1", type: "move", joint: 0, degrees: 45 },
+    { id: "blok-2", type: "move", joint: 1, degrees: 60 },
+  ],
+  engelVar: false,
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
@@ -83,6 +96,7 @@ describe("encodeLabState / decodeLabState — round-trip", () => {
     ["pixel-to-world", pixelToWorldState],
     ["jacobian-viz", jacobianViz],
     ["scan-path", scanPathState],
+    ["block-editor", blockEditor],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -188,6 +202,16 @@ describe("decodeLabState — biçim doğrulaması", () => {
   it("scan-path: rows tam sayı ve visited string dizisi olmalıdır", () => {
     expect(decodeLabState(encodeLabState({ ...scanPathState, rows: 2.5 } as unknown as LabState)).ok).toBe(false);
     expect(decodeLabState(encodeLabState({ ...scanPathState, visited: [1, 2] } as unknown as LabState)).ok).toBe(false);
+  });
+
+  it("block-editor: bozuk veya aşırı derin blok ağacını reddeder", () => {
+    expect(decodeLabState(encodeLabState({
+      ...blockEditor,
+      blocks: [{ id: "x", type: "bilinmeyen" }],
+    } as unknown as LabState)).ok).toBe(false);
+    let nested: unknown[] = [{ id: "leaf", type: "move", joint: 0, degrees: 10 }];
+    for (let depth = 0; depth < 10; depth++) nested = [{ id: `r-${depth}`, type: "repeat", times: 2, body: nested }];
+    expect(decodeLabState(encodeLabState({ ...blockEditor, blocks: nested } as unknown as LabState)).ok).toBe(false);
   });
 });
 
@@ -301,6 +325,24 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("scan-path: doğrulanmış kısmi tarama state'i geçerlidir", () => {
     expect(validateLabState(scanPathState)).toEqual([]);
+  });
+
+  it("block-editor: yinelenen id ve eklem limiti dışındaki açıyı reddeder", () => {
+    const errors = validateLabState({
+      ...blockEditor,
+      blocks: [
+        { id: "aynı", type: "move", joint: 0, degrees: 45 },
+        { id: "aynı", type: "move", joint: 1, degrees: 999 },
+      ],
+    });
+    expect(errors).toEqual(expect.arrayContaining([
+      "yinelenen blok id: aynı",
+      "blok aynı: açı eklem limiti dışında",
+    ]));
+  });
+
+  it("block-editor: robot ve paletle eşleşen ağaç state'i geçerlidir", () => {
+    expect(validateLabState(blockEditor)).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

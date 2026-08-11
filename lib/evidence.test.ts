@@ -585,3 +585,71 @@ describe("ScanPath rollout: golden + negatif predicate testleri", () => {
     ]).passed).toBe(false);
   });
 });
+
+describe("BlockEditor rollout: golden + negatif predicate testleri", () => {
+  const sequence = EVIDENCE_PREDICATES.find((item) => item.id === "block-sequence-trace-v1")!;
+  const condition = EVIDENCE_PREDICATES.find((item) => item.id === "block-condition-branches-v1")!;
+  const assessed = (
+    predicate: typeof sequence,
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+  ) => event("assessed", result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "block-editor-v1",
+  });
+
+  it("golden: iki blokla iki farklı limit-içi duruş üreten sıra geçer", () => {
+    expect(sequence.evaluate([assessed(sequence, "success", {
+      moveBlockCount: 2,
+      distinctTraceSteps: 2,
+      traceSteps: 2,
+      withinLimits: true,
+    })]).passed).toBe(true);
+  });
+
+  it("negatif: iki komut aynı duruşu üretiyorsa sıra görevi geçmez", () => {
+    expect(sequence.evaluate([assessed(sequence, "retry", {
+      moveBlockCount: 2,
+      distinctTraceSteps: 1,
+      traceSteps: 2,
+      withinLimits: true,
+    })]).passed).toBe(false);
+  });
+
+  it("negatif: limit dışı iz başarılı işaretlense bile sıra görevi geçmez", () => {
+    expect(sequence.evaluate([assessed(sequence, "success", {
+      moveBlockCount: 2,
+      distinctTraceSteps: 2,
+      withinLimits: false,
+    })]).passed).toBe(false);
+  });
+
+  it("golden: koşulun iki dalı farklı limit-içi sonuç üretirse geçer", () => {
+    expect(condition.evaluate([assessed(condition, "success", {
+      trueBranch: true,
+      falseBranch: true,
+      distinctBranchOutcomes: true,
+      withinLimits: true,
+    })]).passed).toBe(true);
+  });
+
+  it("negatif: yalnız bir dal çalıştıysa koşul görevi geçmez", () => {
+    expect(condition.evaluate([assessed(condition, "retry", {
+      trueBranch: true,
+      falseBranch: false,
+      distinctBranchOutcomes: false,
+      withinLimits: true,
+    })]).passed).toBe(false);
+  });
+
+  it("negatif: iki dal aynı son pozu üretiyorsa koşul görevi geçmez", () => {
+    expect(condition.evaluate([assessed(condition, "retry", {
+      trueBranch: true,
+      falseBranch: true,
+      distinctBranchOutcomes: false,
+      withinLimits: true,
+    })]).passed).toBe(false);
+  });
+});
