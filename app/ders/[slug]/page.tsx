@@ -16,6 +16,7 @@ import { SEVIYE_THEME } from "@/lib/seviyeTheme";
 import { LessonEvidenceProvider } from "@/components/lesson/LessonEvidenceProvider";
 import { LessonCompletionPanel } from "@/components/lesson/LessonCompletionPanel";
 import { LessonTrustPanel } from "@/components/lesson/LessonTrustPanel";
+import { LessonPrerequisiteNotice } from "@/components/lesson/LessonPrerequisiteNotice";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { computeTeachingHash } from "@/lib/lessonArtifact";
 import { lessonJsonLd, lessonUrl } from "@/lib/seo";
@@ -72,8 +73,8 @@ export default async function DersPage({ params }: DersPageProps) {
     components: mdxComponents,
     // blockJS varsayılanı MDX'teki tüm JS ifadelerini (obje/array prop'ları
     // dahil) siler — bu, üçüncü taraf/kullanıcı girdisi MDX'i için bir
-    // güvenlik varsayılanı. Bizim içeriğimiz güvenilir (yazan biziz, PR
-    // incelemesinden geçiyor, bkz. docs/08-guvenlik-sertlestirme.md), o
+    // güvenlik varsayılanı. Bizim içeriğimiz kullanıcı girdisi değil;
+    // sürüm kontrollü depo içeriği ve MDX güvenlik kontrolünden geçiyor, o
     // yüzden kapatıyoruz. blockDangerousJS varsayılan açık kalır (eval vb.
     // hâlâ engellenir).
     options: {
@@ -99,9 +100,10 @@ export default async function DersPage({ params }: DersPageProps) {
             <div className="min-w-0">
               <p className={`text-xs font-semibold uppercase tracking-[.18em] ${theme.accentText}`}>Deney dersi · {lesson.frontmatter.sure} dakika</p>
               <h1 className={`mt-3 max-w-4xl font-heading text-4xl font-semibold tracking-tight sm:text-5xl ${theme.ink}`}>{lesson.frontmatter.baslik}</h1>
+              <LessonPrerequisiteNotice prerequisites={prerequisites} seviye={seviye} />
               <article className="ders-icerik mt-8 flex min-w-0 flex-col gap-5">{content}</article>
               <div className="mt-10"><LessonCompletionPanel seviye={seviye} /></div>
-              <LessonNav prerequisites={prerequisites} previous={previous} next={next} seviye={seviye} />
+              <LessonNav previous={previous} next={next} seviye={seviye} />
             </div>
             <LessonTrustPanel lesson={lesson} />
           </div>

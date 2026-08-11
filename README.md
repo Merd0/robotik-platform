@@ -125,7 +125,7 @@ gerçekten okunduğu o dosyada yazar.
 ## Kalite
 
 Dersler büyük ölçüde yapay zeka yardımıyla yazılıyor. Bu hız kazandırır ama
-doğruluk kanıtı değildir, o yüzden üç kapı var
+doğruluk kanıtı değildir. İki otomatik kapı ve bir opsiyonel inceleme katmanı var
 ([`docs/06`](docs/06-kalite-ve-topluluk.md)):
 
 1. **Sayısal doğrulama** — matematik iddiaları `reference-python/`
@@ -133,10 +133,13 @@ doğruluk kanıtı değildir, o yüzden üç kapı var
 2. **Kaynak zorunluluğu** — `kaynaklar` alanı boş olan bir ders yayınlanamaz.
    Bu aynı zamanda bir gizlilik korumasıdır: kaynağı gösterilemeyen bilgi
    yazılmaz. Bir CI kontrolü ve bir git hook'u bunu otomatik zorlar.
-3. **İnsan gözden geçirmesi** — atlanamaz. `incelendi_tarafindan` ve
-   `incelendi_tarih` dolu olmadan `durum: yayinda` yapılamaz.
+3. **İnsan gözden geçirmesi** — opsiyoneldir. Yapılırsa güncel ders sürümüne
+   bağlı Review Receipt ile kaydedilir; legacy `incelendi_*` alanları yayın
+   şartı veya güncel inceleme kanıtı değildir.
 
-Bu proje "yapay zeka her şeyi yazdı, güvenip yayınladık" olmayacak.
+Bu ayrım bilinçlidir: otomatik kontroller kaynak alanının doluluğunu ve
+sayısal kodu doğrular, ders metnindeki her iddianın kaynakla uyuştuğunu garanti
+etmez. Hata bildirimleri açık düzeltme akışıyla ele alınır.
 
 ## Katkı
 

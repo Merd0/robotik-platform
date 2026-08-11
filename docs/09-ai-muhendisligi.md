@@ -232,8 +232,9 @@ bağımlı, frontmatter'ı elle regex'lemek yerine aynı ayrıştırıcıyı bur
 kullanmak daha güvenilir. Script mantığı: eğer değiştirilen dosya
 `content/**/*.mdx` ise VE (Write ise `content`, Edit ise mevcut dosya +
 `old_string`→`new_string` uygulanarak yeniden kurulan) sonuç içerik
-`durum: yayinda` yazıyorsa VE `kaynaklar` boşsa veya `incelendi_tarafindan`/
-`incelendi_tarih` boşsa → çık kodu 2 (engelle), sebebini Claude'a bildir.
+`durum: yayinda` yazıyorsa VE `kaynaklar` boşsa → çık kodu 2 (engelle),
+sebebini Claude'a bildir. İnsan incelemesi opsiyonel olduğu için hook legacy
+`incelendi_*` alanlarını veya Review Receipt'i yayın şartı olarak aramaz.
 
 **Korumalı dosyalar** (Faz 0'da kurulabilir)
 `reference-python/` klasörünün yanlışlıkla silinmesini/bozulmasını

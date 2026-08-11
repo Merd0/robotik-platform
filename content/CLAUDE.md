@@ -6,9 +6,10 @@
 - Her dosya `<hat>/<seviye>/<id>.mdx` yolunda, şablondaki frontmatter ile başlar.
 - `sira` alanı aynı hat+seviye içindeki öğretim sırasını belirler (1'den başlar).
   Ön koşul zinciri ve önceki/sonraki gezinmesi buna göre kurulur.
-- `kaynaklar` boşken `durum: yayinda` olamaz. `durum: yayinda` için
-  `incelendi_tarafindan` ve `incelendi_tarih` de dolu olmalı — bkz.
-  `docs/06-kalite-ve-topluluk.md`.
+- `kaynaklar` boşken `durum: yayinda` olamaz. İnsan gözden geçirmesi yayın
+  için opsiyoneldir; legacy `incelendi_tarafindan` / `incelendi_tarih`
+  alanlarını yayın şartı gibi doldurma. Gerçek bir inceleme yapılırsa sürüme
+  bağlı Review Receipt ile kaydedilir — bkz. `docs/06-kalite-ve-topluluk.md`.
 - Sadece `components/interactive/` altında zaten tanımlı bileşenler kullanılır.
   Yeni bir bileşeni MDX içinde icat etme; önce bileşeni yaz, ayrı incelensin
   (bkz. `docs/08-guvenlik-sertlestirme.md`).

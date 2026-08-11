@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Robotik Laboratuvarı",
     short_name: "Robotik Lab",
-    description: "Tahmin et, robotu çalıştır, farkı gör ve öğrendiğini kanıtla.",
+    description: "Tahmin et, robotu çalıştır, farkı gör ve seçili görevlerde öğrendiğini kanıtla.",
     start_url: "/",
     display: "standalone",
     background_color: "#f8fafc",

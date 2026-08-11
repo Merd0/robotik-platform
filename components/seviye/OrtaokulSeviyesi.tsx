@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LessonProgressBadge } from "@/components/ui/LessonProgressBadge";
+import { BaslangicRotasi } from "./BaslangicRotasi";
 import { SeviyeGecisi } from "./SeviyeGecisi";
 import type { SeviyeVerisi } from "./seviyeVerisi";
 
@@ -68,6 +69,8 @@ export function OrtaokulSeviyesi({ veri }: { veri: SeviyeVerisi }) {
           </div>
         </section>
 
+        <BaslangicRotasi seviye="ortaokul" dersler={veri.baslangicRotasi} />
+
         <section className="mt-14" aria-label="Ders listesi">
           <h2 className="font-heading text-4xl font-extrabold sm:text-5xl">Bugün hangi deneyi yapalım?</h2>
 
@@ -99,9 +102,14 @@ export function OrtaokulSeviyesi({ veri }: { veri: SeviyeVerisi }) {
                         >
                           <div className="flex items-start justify-between gap-3">
                             <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-full border-[3px] border-[#0a0a0a] bg-white font-mono text-[15px] font-bold">{harf}</span>
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 font-mono text-[11.5px] font-bold">
-                              <span aria-hidden="true" className="size-1.5 rounded-full bg-[#0a0a0a] [animation:pulse-dot_1.6s_ease-in-out_infinite]" />
-                              {ders.etkilesim}
+                            <span className="flex flex-col items-end gap-2">
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 px-3 py-1 font-mono text-[11.5px] font-bold">
+                                <span aria-hidden="true" className="size-1.5 rounded-full bg-[#0a0a0a] [animation:pulse-dot_1.6s_ease-in-out_infinite]" />
+                                {ders.etkilesim}
+                              </span>
+                              <span className="rounded-full bg-white px-3 py-1">
+                                <LessonProgressBadge slug={ders.slug} seviye="ortaokul" contentVersion={ders.teachingHash} />
+                              </span>
                             </span>
                           </div>
                           <h4 className="mt-4 font-heading text-2xl font-extrabold leading-tight">{ders.baslik}</h4>
@@ -115,11 +123,6 @@ export function OrtaokulSeviyesi({ veri }: { veri: SeviyeVerisi }) {
                   })}
                 </ul>
 
-                <div className="sr-only">
-                  {dersler.map((ders) => (
-                    <LessonProgressBadge key={ders.slug} slug={ders.slug} seviye="ortaokul" contentVersion={ders.teachingHash} />
-                  ))}
-                </div>
               </div>
             ))}
           </div>

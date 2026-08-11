@@ -86,7 +86,7 @@ export function getAllLessons(): Lesson[] {
 }
 
 /**
- * İnsan incelemesi tamamlanmış ve yayına alınmış dersler.
+ * İçerik durumu açıkça `yayinda` olarak işaretlenmiş dersler.
  *
  * Bu küme ortamdan bağımsızdır: taslak önizlemesi açıkken bile taslak veya
  * incelemedeki dersleri içermez. Sitemap gibi herkese açık dağıtım çıktıları
@@ -104,11 +104,10 @@ export function getLessonBySlug(slug: string): Lesson | undefined {
  * Taslak derslerin önizlenmesi açık mı?
  *
  * Yayınlanmış üretim sitesinde KAPALI olmalı: `durum: yayinda` olmayan bir
- * ders herkese açık adreste hiç var olmamalı. Bu yalnızca bir liste kuralı
- * değil, `docs/06-kalite-ve-topluluk.md` Katman 3'ün ("insan gözden geçirmesi
- * olmadan yayınlanamaz") teknik karşılığı. Özellikle Hat H (güvenlik)
- * dersleri için kritik: doğrulanmamış bir güvenlik metni, kimsenin
- * listelemediği ama URL'i bilinen bir sayfada durmamalı.
+ * ders herkese açık adreste hiç var olmamalı. Bu insan incelemesi göstergesi
+ * değildir; yalnız editoryal yayın durumunun teknik karşılığıdır. Özellikle
+ * Hat H dahil hiçbir taslak, listelenmese bile URL'i bilinen bir sayfa olarak
+ * üretim çıktısına sızmamalı.
  *
  * Geliştirme sırasında AÇIK: yazarken dersi tarayıcıda görebilmek gerekiyor.
  * `ICERIK_TASLAK_ONIZLEME=1` ile bilinçli olarak bir önizleme derlemesi de

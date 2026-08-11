@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LessonProgressBadge } from "@/components/ui/LessonProgressBadge";
+import { BaslangicRotasi } from "./BaslangicRotasi";
 import { LessonPreview } from "./LessonPreview";
 import { PickAndPlaceCell } from "./PickAndPlaceCell";
 import { SeviyeGecisi } from "./SeviyeGecisi";
@@ -71,6 +72,8 @@ export function LiseSeviyesi({ veri }: { veri: SeviyeVerisi }) {
           </div>
         </section>
 
+        <BaslangicRotasi seviye="lise" dersler={veri.baslangicRotasi} />
+
         <section className="mt-10" aria-label="Ders listesi">
           <h2 className="font-heading text-4xl font-extrabold">Ders listesi</h2>
           <p className="mt-1 text-sm text-poster-subtle">Her kart, derste kullanacağın etkileşimli sahnenin önizlemesini taşır.</p>
@@ -92,9 +95,12 @@ export function LiseSeviyesi({ veri }: { veri: SeviyeVerisi }) {
                   {dersler.map((ders) => (
                     <li key={ders.slug}>
                       <Link href={`/ders/${ders.slug}`} className="lab-window group flex h-full flex-col transition hover:-translate-y-0.5 hover:border-poster-blue">
-                        <div className="flex items-center justify-between border-b border-poster-line px-4 py-2.5 font-mono text-[9.5px] font-bold uppercase tracking-[0.06em] text-poster-subtle">
+                        <div className="flex items-center justify-between gap-3 border-b border-poster-line px-4 py-2.5 font-mono text-[9.5px] font-bold uppercase tracking-[0.06em] text-poster-subtle">
                           <span>{harf} · {ders.kanal}</span>
-                          <span>{ders.sure} dk</span>
+                          <span className="flex items-center gap-2">
+                            <LessonProgressBadge slug={ders.slug} seviye="lise" contentVersion={ders.teachingHash} />
+                            <span>{ders.sure} dk</span>
+                          </span>
                         </div>
                         <div className="grid h-24 place-items-center bg-poster-soft">
                           <LessonPreview tur={ders.onizleme} />
@@ -111,11 +117,6 @@ export function LiseSeviyesi({ veri }: { veri: SeviyeVerisi }) {
                   ))}
                 </ul>
 
-                <div className="sr-only">
-                  {dersler.map((ders) => (
-                    <LessonProgressBadge key={ders.slug} slug={ders.slug} seviye="lise" contentVersion={ders.teachingHash} />
-                  ))}
-                </div>
               </div>
             ))}
           </div>

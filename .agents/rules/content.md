@@ -10,10 +10,10 @@ Tam süreç ve şablon: `docs/04-icerik-rehberi.md`, `docs/06-kalite-ve-topluluk
 gereken, sık unutulan noktalar.
 
 - Şablon: Kanca → etkileşimli sahne → Ne oldu → Gerçek dünyada → Dene → Sonraki.
-- `kaynaklar` boş olamaz. `durum: yayinda` için ayrıca `incelendi_tarafindan`
-  ve `incelendi_tarih` dolu olmalı — hook bunu zaten otomatik reddediyor,
-  ama yeni yazarken baştan doldurmaya çalışma, boş taslak (`durum: taslak`)
-  olarak bırak.
+- `kaynaklar` boş olamaz ve `durum: yayinda` için zorunlu içerik kapısı budur.
+  İnsan gözden geçirmesi opsiyoneldir. Legacy `incelendi_tarafindan` /
+  `incelendi_tarih` alanlarını yayın şartı gibi doldurma; gerçek inceleme
+  sürüme bağlı Review Receipt ile kaydedilir.
 - Sadece `components/interactive/index.ts` içindeki `mdxComponents` listesinde
   olan bileşenler kullanılabilir. Yeni bileşen gerekiyorsa önce onu yaz ve
   listeye ekle, MDX içinde icat etme.

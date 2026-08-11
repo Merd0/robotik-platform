@@ -193,13 +193,14 @@ raporlar: hangi iskelet kaç derste, ardışık tekrar nerede.
 4. Hangi etkileşimli bileşenin gerektiğini belirle; yoksa önce onu yaz
 5. Açıklamayı yaz
 6. Alıştırmaları yaz
-7. `durum: inceleme` yap
+7. `npm run check-content` ve ilgili sayısal testleri çalıştır
 8. Yüksek sesle oku — takıldığın her cümle yeniden yazılmalı
 9. Mümkünse hedef seviyeden birine okut
-10. Ders artifact hash'ini üret; kaynak, teknik ve pedagojik insan incelemesini
-    bu hash'e bağlı Review Receipt olarak kaydet. Güvenlik dersinde ayrıca
-    safety uzman kapsamı gerekir.
-11. `durum: yayinda`
+10. `kaynaklar` yapılandırılmış ve zorunlu otomatik kontroller temizse
+    `durum: yayinda` yap. İnsan incelemesi yayın şartı değildir.
+11. İnsan incelemesi gerçekten yapılırsa ders artifact hash'ine bağlı Review
+    Receipt olarak kaydet. Güvenlik kapsamı yalnız gerçek bir safety uzmanı
+    tarafından onaylanabilir; makbuzun yokluğu yayını engellemez.
 
 ## Üniversite seviyesinde gerçek koda bağlantı
 

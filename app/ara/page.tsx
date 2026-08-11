@@ -18,9 +18,9 @@ export default function AraPage() {
       </div>
 
       <p className="mt-10 text-sm text-ortaokul-ink/70">
-        Arama yalnızca yayınlanmış dersleri kapsar — henüz insan gözden
-        geçirmesinden geçmemiş taslak dersler listelenmez. Terimlerin
-        Türkçe-İngilizce karşılıkları için{" "}
+        Arama şu anda yayımdaki derslerin tamamını kapsar. Sonuçları başlık,
+        kazanım ve ders metninde arayabilirsin. Terimlerin Türkçe-İngilizce
+        karşılıkları için{" "}
         <Link href="/sozluk" className="text-ortaokul-accent-text underline">
           sözlüğe
         </Link>{" "}

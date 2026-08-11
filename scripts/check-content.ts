@@ -60,8 +60,8 @@ function checkFile(filePath: string): string[] {
   }
 
   // Her frontmatter alanı, ders sürüm köklerinden birine (kaynak / ders metni /
-  // sunum) atanmış olmalı. Kapsam dışı kalan bir alan, hangi insan incelemesini
-  // eskiteceği kararlaştırılmadan içeriğe girmiş demektir.
+  // sunum) atanmış olmalı. Kapsam dışı kalan bir alanın hangi sürüm kökünü
+  // değiştirdiği ve varsa hangi inceleme kaydını eskittiği bilinemez.
   const kapsamDisi = findUnpartitionedFrontmatterKeys(data as DersFrontmatter);
   if (kapsamDisi.length > 0) {
     errors.push(
@@ -70,12 +70,10 @@ function checkFile(filePath: string): string[] {
     );
   }
 
-  // Legacy inceleme alanları yalnız dondurulmuş borç baseline'ındaki 39 ders
-  // için zorunlu kalır. Bu kümenin dışındaki bir yayının kanıtı artık
-  // frontmatter alanı değil, sürüme bağlı Review Receipt'tir; onu
-  // `check-review-integrity` zorunlu tutar. Legacy alanı yeni yayınlara da
-  // dayatmak, projenin "bu alan tek başına kanıt değildir" kararıyla çelişir
-  // (docs/06 "Sürüme bağlı inceleme kaydı").
+  // Legacy inceleme alanları dondurulmuş 39 derslik tarihsel baseline'da
+  // tutarlılık için korunur; bu genel bir yayın şartı veya güncel inceleme
+  // kanıtı değildir. Yeni bir yayında Review Receipt opsiyoneldir, varsa
+  // `check-review-integrity` yalnız makbuzun kendi bütünlüğünü doğrular.
   if (data.durum === "yayinda" && LEGACY_REVIEW_BASELINE.has(data.id)) {
     if (!data.incelendi_tarafindan) {
       errors.push(`${relativePath}: durum: yayinda için "incelendi_tarafindan" dolu olmalı (legacy baseline dersi).`);

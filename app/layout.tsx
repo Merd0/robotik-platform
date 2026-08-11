@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "tr_TR",
     title: "Robotik Laboratuvarı",
-    description: "Tahmin et, robotu çalıştır, farkı gör ve öğrendiğini kanıtla.",
+    description: "Tahmin et, robotu çalıştır, farkı gör ve seçili görevlerde öğrendiğini kanıtla.",
   },
 };
 
