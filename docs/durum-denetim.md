@@ -2440,10 +2440,11 @@ olmadan yapılacak riskli bir işlem olurdu (başka bir oturumun işini
 kesebilir) — bu yüzden `npm ci` yarım bırakıldı, `node_modules` öncekiyle
 aynı (57 paket) durumda kaldı, hiçbir zarar verilmedi.
 
-**Öneri:** ana dizindeki `next dev` sunucusu (ve varsa orada çalışan diğer
-ajan oturumları) durdurulduğunda `npm ci` tekrar denenmeli. O ana kadar
-hook, `content/**/*.mdx` dosyalarını `Edit`/`Write` ile değiştiren her
-işlemde sessizce (non-blocking) çalışmıyor — yani `kaynaklar` zorunluluğu
-kontrolü şu an ana dizinde fiilen devre dışı. Diğer worktree'ler (ör. bu
-oturumda kullanılan `linux-repro` scratch worktree) kendi tam
-`node_modules`'lerine sahip olduğu için etkilenmiyor.
+**Çözüldü (aynı gün).** Kullanıcı onayıyla, 3 gündür (09.08'den beri) açık
+kalmış eski `next dev` sunucusu süreçleri (5 `node.exe` PID) sonlandırıldı —
+zaman damgaları (`Get-Process` ile doğrulandı) bu sürecin o gün çalışan
+hiçbir aktif oturuma ait olmadığını, unutulmuş bir kalıntı olduğunu
+gösteriyordu. Ardından ana dizinde `npm ci` tekrar çalıştırıldı: 604 paket
+kuruldu, 0 zafiyet. `node .claude/hooks/check-lesson-frontmatter.mjs`
+artık `ERR_MODULE_NOT_FOUND` fırlatmadan çalışıyor — hook ana dizinde
+fiilen tekrar aktif.
