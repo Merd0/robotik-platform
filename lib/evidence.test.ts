@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { EVIDENCE_PREDICATES, migrateLegacyEvidence, summarizeEvidence, type EvidenceEvent } from "./evidence";
+import { createFourLensTrace } from "./robotics/fourLensTrace";
 
 const event = (
   stage: EvidenceEvent["stage"],
@@ -22,7 +23,7 @@ const event = (
 
 describe("Evidence v2 özeti", () => {
   it("okuma ve denemeyi başarıdan türetmez", () => {
-    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "four-lens-fk-trace-v1")!;
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "four-lens-fk-trace-v2")!;
     const passedEvent = event("passed", "success", { lessonId: predicate.lessonId, skillId: predicate.skillId, predicateId: predicate.id });
     expect(summarizeEvidence([passedEvent], predicate.lessonId)).toMatchObject({ read: false, tried: false, passed: true });
     expect(summarizeEvidence([event("read")], "ders-1")).toMatchObject({ read: true, tried: false, passed: false });
@@ -34,7 +35,7 @@ describe("Evidence v2 özeti", () => {
   });
 
   it("yalnız registry predicate tarafından doğrulanmış güncel başarıyı sayar", () => {
-    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "four-lens-fk-trace-v1")!;
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "four-lens-fk-trace-v2")!;
     const overrides = { lessonId: predicate.lessonId, skillId: predicate.skillId, predicateId: predicate.id };
     const unverified = event("passed", "success", { ...overrides, verification: "legacy-unverified", predicateId: undefined });
     const verified = event("passed", "success", overrides);
@@ -181,22 +182,62 @@ describe("controlled pilot predicates", () => {
     expect(predicate.evaluate(threeSuccessfulRuns).passed).toBe(true);
   });
 
-  it("requires the first and final synchronized FK samples", () => {
-    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "four-lens-fk-trace-v1")!;
-    const sample = (sampleIndex: number) => event("observed", "neutral", {
-      lessonId: predicate.lessonId,
-      skillId: predicate.skillId,
-      metrics: { sampleIndex },
+  const fourLensPredicate = EVIDENCE_PREDICATES.find((item) => item.id === "four-lens-fk-trace-v2")!;
+  const fourLensTrace = createFourLensTrace();
+  const fourLensSample = (sampleIndex: number, metrics: Record<string, number | string | boolean> = {}) => {
+    const sample = fourLensTrace[sampleIndex];
+    const roundedX = Number(sample.end.x.toFixed(3));
+    const roundedY = Number(sample.end.y.toFixed(3));
+    return event("observed", "neutral", {
+      lessonId: fourLensPredicate.lessonId,
+      skillId: fourLensPredicate.skillId,
+      metrics: {
+        sampleIndex,
+        codeLine: sample.line,
+        q1: sample.jointDegrees[0],
+        q2: sample.jointDegrees[1],
+        endX: roundedX,
+        endY: roundedY,
+        matrixX: roundedX,
+        matrixY: roundedY,
+        ...metrics,
+      },
       contentVersion: "pilot-v1",
     });
-    const assessment = event("assessed", "success", {
-      lessonId: predicate.lessonId,
-      skillId: predicate.skillId,
-      metrics: { finalSample: 3 },
-      contentVersion: "pilot-v1",
-    });
-    expect(predicate.evaluate([sample(0), assessment]).passed).toBe(false);
-    expect(predicate.evaluate([sample(0), sample(3), assessment]).passed).toBe(true);
+  };
+  const fourLensAssessment = (result: EvidenceEvent["result"] = "success", metrics: Record<string, number | string | boolean> = {}) => event("assessed", result, {
+    lessonId: fourLensPredicate.lessonId,
+    skillId: fourLensPredicate.skillId,
+    metrics: {
+      prediction: "decrease",
+      actual: "decrease",
+      directionMatches: true,
+      finalSample: 3,
+      previousX: Number(fourLensTrace[2].end.x.toFixed(3)),
+      finalX: Number(fourLensTrace[3].end.x.toFixed(3)),
+      ...metrics,
+    },
+    contentVersion: "pilot-v1",
+  });
+
+  it("four-lens golden: four synchronized samples and measured direction pass", () => {
+    expect(fourLensPredicate.evaluate([0, 1, 2, 3].map((index) => fourLensSample(index)).concat(fourLensAssessment())).passed).toBe(true);
+  });
+
+  it("four-lens negative: skipping an intermediate sample never passes", () => {
+    expect(fourLensPredicate.evaluate([fourLensSample(0), fourLensSample(2), fourLensSample(3), fourLensAssessment()]).passed).toBe(false);
+  });
+
+  it("four-lens negative: scene and matrix mismatch never passes", () => {
+    const events = [0, 1, 2, 3].map((index) => fourLensSample(index));
+    events[2] = fourLensSample(2, { matrixX: 99 });
+    expect(fourLensPredicate.evaluate([...events, fourLensAssessment()]).passed).toBe(false);
+  });
+
+  it("four-lens negative: retry or a false direction claim never passes", () => {
+    const samples = [0, 1, 2, 3].map((index) => fourLensSample(index));
+    expect(fourLensPredicate.evaluate([...samples, fourLensAssessment("retry")]).passed).toBe(false);
+    expect(fourLensPredicate.evaluate([...samples, fourLensAssessment("success", { directionMatches: false })]).passed).toBe(false);
   });
 
   it("planner comparison: partial success (2/3 algorithms) never passes", () => {

@@ -196,6 +196,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["RobotSelectionTable"])).not.toThrow();
   });
 
+  it("FourLensTraceLab bileşeni ile ileri kinematik iz motorunu interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.FourLensTraceLab).toEqual({
+      componentFile: "components/interactive/FourLensTraceLab.tsx",
+      engineFiles: ["lib/robotics/fourLensTrace.ts"],
+    });
+    expect(() => computeInteractionHash(["FourLensTraceLab"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -284,6 +292,11 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
 
   it("RobotSelectionTable dersini v2 dört-kriter predicate sürümüne bağlar", () => {
     expect(computePredicateHash("a-universite-robot-mimarileri"))
+      .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
+  });
+
+  it("FourLensTraceLab dersini v2 dört-örnek predicate sürümüne bağlar", () => {
+    expect(computePredicateHash("b-lise-ileri-kinematik"))
       .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
   });
 });

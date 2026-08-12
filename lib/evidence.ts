@@ -1,3 +1,5 @@
+import { createFourLensTrace } from "./robotics/fourLensTrace";
+
 // `as const` dizileri: hem tip (aşağıda türetilir) hem çalışma zamanı
 // doğrulaması (bkz. lib/evidenceImport.ts) AYNI kaynaktan gelsin diye.
 // docs/02-mimari.md'deki `REVIEW_SCOPES` deseniyle aynı.
@@ -532,21 +534,53 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     },
   },
   {
-    id: "four-lens-fk-trace-v1",
+    // v2: v1 yalnız örnek 0 ve 3'ü görmeyi yeterli sayıyordu; ara örnekleri,
+    // sahne-matris eşitliğini ve ölçülen son yönü doğrulamıyordu.
+    id: "four-lens-fk-trace-v2",
     lessonId: "b-lise-ileri-kinematik",
     skillId: "four-lens-forward-kinematics",
     evaluate: (events) => {
-      const samples = new Set(events
-        .filter((event) => event.skillId === "four-lens-forward-kinematics" && event.stage === "observed")
-        .map((event) => event.metrics?.sampleIndex)
-        .filter((sample): sample is number => typeof sample === "number"));
+      const expectedTrace = createFourLensTrace();
+      const samples = new Set<number>();
+      for (const event of events) {
+        if (event.skillId !== "four-lens-forward-kinematics" || event.stage !== "observed" || event.result !== "neutral") continue;
+        const sampleIndex = event.metrics?.sampleIndex;
+        if (typeof sampleIndex !== "number" || !Number.isSafeInteger(sampleIndex) || sampleIndex < 0 || sampleIndex > 3) continue;
+        const expected = expectedTrace[sampleIndex];
+        const endX = event.metrics?.endX;
+        const endY = event.metrics?.endY;
+        const matrixX = event.metrics?.matrixX;
+        const matrixY = event.metrics?.matrixY;
+        if (
+          event.metrics?.codeLine === sampleIndex + 1 &&
+          event.metrics?.q1 === expected.jointDegrees[0] &&
+          event.metrics?.q2 === expected.jointDegrees[1] &&
+          typeof endX === "number" && Number.isFinite(endX) &&
+          typeof endY === "number" && Number.isFinite(endY) &&
+          typeof matrixX === "number" && Number.isFinite(matrixX) &&
+          typeof matrixY === "number" && Number.isFinite(matrixY) &&
+          Math.abs(endX - matrixX) < 0.001 &&
+          Math.abs(endY - matrixY) < 0.001 &&
+          Math.abs(endX - expected.end.x) < 0.001 &&
+          Math.abs(endY - expected.end.y) < 0.001
+        ) samples.add(sampleIndex);
+      }
       const assessedFinal = events.some((event) =>
         event.skillId === "four-lens-forward-kinematics" &&
         event.stage === "assessed" &&
         event.result === "success" &&
-        event.metrics?.finalSample === 3,
+        event.metrics?.prediction === "decrease" &&
+        event.metrics?.actual === "decrease" &&
+        event.metrics?.directionMatches === true &&
+        event.metrics?.finalSample === 3 &&
+        typeof event.metrics?.previousX === "number" &&
+        typeof event.metrics?.finalX === "number" &&
+        event.metrics.finalX < event.metrics.previousX,
       );
-      return { passed: samples.has(0) && samples.has(3) && assessedFinal, metrics: { observedSamples: samples.size, requiredFinalSample: 3 } };
+      return {
+        passed: [0, 1, 2, 3].every((sampleIndex) => samples.has(sampleIndex)) && assessedFinal,
+        metrics: { observedSamples: samples.size, requiredSamples: 4, requiredFinalSample: 3 },
+      };
     },
   },
 ] as const;
