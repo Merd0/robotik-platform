@@ -2352,3 +2352,98 @@ karar.
 **Sonraki adım (Aşama 2):** `interactionHash` — `etkilesimli` bileşenleri ve
 onların `lib/robotics/` bağımlılıkları. Bugün bir bileşen değişikliği hiçbir
 kapsamı eskitmiyor; b240f45 bunun gerçekleşmiş örneği.
+
+## Linux CI taşma zincirinin gerçek kapanışı (2026-08-12)
+
+`debug/overflow-repro` dalındaki 8f22150 fix'i (LessonTrustPanel `min-w-0` +
+Hero `mt-2`) 3 orijinal hatadan **ikisini** gerçekten kapattı: Hero alt-piksel
+sınırı ve `LessonTrustPanel`'in eski format düz metin kaynaklardaki
+kırılmasız URL'den kaynaklanan sayfa taşması (ThresholdViewer dersi dahil).
+Ama commit mesajındaki "muhtemelen bir 6-DOF dersi" tahmini **yanlış**
+çıktı — main'e merge edilip CI'da doğrulanınca (run #77) altı yayınlı
+6-DOF dersinden biri hâlâ taşıyordu. Yerelde (Windows) bu hiç
+reprodüklenemedi; kök neden yalnız gerçek Linux CI runner'ında, `debug/
+overflow-repro-2` dalına yedi tur (`_debug-overflow{2..7}.spec.ts`, her
+biri main'e asla girmeden, PR #14 üzerinden CI tetiklenip sonucu okunup
+silindi) teşhis push'uyla bulundu:
+
+1. **Tur 2-3:** taşıyan tek sayfa `a-universite-dh-parametreleri` —
+   `scrollWidth` 394, `clientWidth` 390, ama `getBoundingClientRect().right`
+   HİÇBİR elementte 391'i geçmiyordu (dağıtık görünen ama aslında yanlış
+   yerde arandığı için "kayıp" bir taşma).
+2. **Tur 4 (yanlış teşhis, sonra düzeltildi):** sayfadaki TEK `<table>`
+   (DH parametre tablosu) şüpheliydi — `.ders-icerik table { width: 100% }`
+   auto table-layout'ta bir ÜST SINIR değil, yalnız bir ipucu; sütun
+   min-content genişliği bunu aşarsa tarayıcı tabloyu yine de daha geniş
+   render eder (Bootstrap'in `.table-responsive`'inin var olma nedeni
+   tam bu). `AccessibleTable` (`components/lesson/AccessibleTable.tsx`,
+   `AccessiblePre` ile aynı desen — MDX `table` öğesini klavyeyle
+   kaydırılabilir bir `<div overflow-x-auto>`'ya sarmalıyor) eklendi ve
+   yerel stress testle doğrulandı (866px'lik yapay tablo, sayfa taşmadı).
+   **Ama bu gerçek kök neden değildi** — run #79'da AYNI test yine
+   kırmızıydı.
+3. **Tur 6-7 (gerçek kök neden):** `el.scrollWidth > el.clientWidth`
+   taramasıyla (bounding-rect değil, elementin KENDİ içerik taşması)
+   asıl suçlu bulundu — ders metnindeki satır içi kod açıklığı
+   `` `lib/robotics/robots/genericSixDof.ts` `` (37 karakter, boşluksuz
+   dosya yolu). Linux CI'da `offsetWidth` 360px ölçüldü, paragrafın
+   358px'lik sütununu 2px aştı. Satır içi `<code>` hiçbir zaman
+   `overflow-wrap` almamıştı (yalnız kod BLOKLARI, yani `pre`, zaten
+   `AccessiblePre` ile korunuyordu — `docs/09`'daki a11y turu satır içi
+   açıklıkları kapsamamıştı). `.ders-icerik code { overflow-wrap: anywhere }`
+   eklendi; yerelde 120 karakterlik yapay bir açıklıkla doğrulandı
+   (`docOverflow: 0`, önceki gerçek taşmanın 3 katından fazla).
+
+**Sonuç:** her iki fix de (`AccessibleTable` + `code` overflow-wrap)
+`b5921ec` ile main'e gitti; PR #14 üzerinden CI run #85 gerçek Linux
+runner'ında YEŞİL döndü (75/75), sonra main'e push edilince run #86 da
+YEŞİL (490 birim test + 75 e2e). Bu, 9-11 Ağustos'tan beri arızi olan CI
+zincirinin gerçek kapanışı — `AccessibleTable` kendi başına doğru bir
+sertleştirmeydi (tabloların genel olarak taşma riski taşıdığı doğru) ama
+BU SPESİFİK taşmanın nedeni değildi; iki bulgu da kalıcı kaldı, biri
+gerçek kök nedeni kapattığı için.
+
+**Metodolojik not:** GitHub'ın public REST API'si (`api.github.com`)
+saatte 60 isteklik kimliksiz rate limit'e sahip; yedi teşhis turu +
+durum sorguları bunu bir noktada aştı (`API rate limit exceeded`). Bundan
+sonra run durumunu tarayıcı (`github.com` web arayüzü, ayrı bir rate
+limit havuzu) üzerinden okumaya geçildi. Ayrıca: `debug/overflow-repro-2`
+gibi `main` DIŞI bir dalda CI'ı tetiklemek için `ci.yml`'in tetikleyicisi
+(`push: branches: [main]` + `pull_request`) yüzünden bir PR açılması
+gerekiyor — bu depoda `gh` CLI kurulu değil ve saklı git kimlik bilgisini
+API çağrısı için okumak (güvenlik sınırının doğru şekilde reddettiği bir
+istek) mümkün değil; PR'ı kullanıcı elle açtı, sonrası otomatikti.
+
+## `check-lesson-frontmatter.mjs` hook hatası — kök neden bulundu (2026-08-12)
+
+Önceki oturumda 4 kez görülen (engellemeyen, "non-blocking status") hata:
+
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'gray-matter' imported
+from C:\Users\hp\Desktop\robotik-platform\.claude\hooks\check-lesson-frontmatter.mjs
+```
+
+**Kök neden hook script'inde değil, ortamda.** Ana çalışma dizini
+(`C:\Users\hp\Desktop\robotik-platform`, worktree'lerin "birincil" kopyası)
+`node_modules`'ü eksik/eski — `gray-matter` `package.json`'da bağımlılık
+olarak tanımlı ve `package-lock.json`'da kilitli, ama diskte yalnız 57 paket
+var (tam bir Next.js kurulumu binlerce paket gerektirir). Hook, `docs/09
+§4`'te tarif edildiği gibi doğru şekilde `gray-matter` import ediyor; sorun
+onun ortamı değil.
+
+**Düzeltme denendi, tamamlanamadı:** `npm ci` `EPERM` ile başarısız oldu —
+`node_modules/lightningcss-win32-x64-msvc/...node` dosyası kilitliydi.
+`tasklist` ana dizinde ÇALIŞAN bir `next dev` sunucusu (birkaç PID) VE aynı
+dizine bağlı görünen başka Codex kernel süreçleri (muhtemelen paralel başka
+bir oturum/ajan) gösterdi. Bu süreçleri sonlandırmak kullanıcının onayı
+olmadan yapılacak riskli bir işlem olurdu (başka bir oturumun işini
+kesebilir) — bu yüzden `npm ci` yarım bırakıldı, `node_modules` öncekiyle
+aynı (57 paket) durumda kaldı, hiçbir zarar verilmedi.
+
+**Öneri:** ana dizindeki `next dev` sunucusu (ve varsa orada çalışan diğer
+ajan oturumları) durdurulduğunda `npm ci` tekrar denenmeli. O ana kadar
+hook, `content/**/*.mdx` dosyalarını `Edit`/`Write` ile değiştiren her
+işlemde sessizce (non-blocking) çalışmıyor — yani `kaynaklar` zorunluluğu
+kontrolü şu an ana dizinde fiilen devre dışı. Diğer worktree'ler (ör. bu
+oturumda kullanılan `linux-repro` scratch worktree) kendi tam
+`node_modules`'lerine sahip olduğu için etkilenmiyor.
