@@ -135,17 +135,20 @@ describe("controlled pilot predicates", () => {
   });
 
   it("requires a matching observation and four-criterion robot decision", () => {
-    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "robot-selection-four-criteria-v1")!;
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "robot-selection-four-criteria-v2")!;
     const observation = event("observed", "neutral", {
       lessonId: predicate.lessonId,
       skillId: predicate.skillId,
-      metrics: { taskId: "electronics", candidateId: "epson-gx4-350" },
+      metrics: { taskId: "electronics", candidateId: "epson-gx4-350", decisionStatus: "fit", failedConstraints: 0 },
       contentVersion: "pilot-v1",
     });
     const assessment = event("assessed", "success", {
       lessonId: predicate.lessonId,
       skillId: predicate.skillId,
-      metrics: { taskId: "electronics", candidateId: "epson-gx4-350", decisionStatus: "fit", numericCriteria: 4, rationaleLength: 45 },
+      metrics: {
+        taskId: "electronics", candidateId: "epson-gx4-350", decisionStatus: "fit", failedConstraints: 0,
+        numericCriteria: 4, eligibleNumericCriteria: 4, distinctCriteria: true, rationaleLength: 45,
+      },
       contentVersion: "pilot-v1",
     });
     expect(predicate.evaluate([assessment]).passed).toBe(false);
@@ -530,6 +533,73 @@ describe("CspaceLab rollout: golden + negatif predicate testleri", () => {
     expect(predicate.evaluate([
       observation("success", safe),
       observation("success", collision),
+    ]).passed).toBe(false);
+  });
+});
+
+describe("RobotSelectionTable rollout: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "robot-selection-four-criteria-v2")!;
+  const observation = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+  ) => event("observed", result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "robot-selection-v2",
+  });
+  const decision = (metrics: Record<string, number | string | boolean>) => event("assessed", "success", {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "robot-selection-v2",
+  });
+  const observed = { taskId: "electronics", candidateId: "epson-gx4-350", decisionStatus: "fit", failedConstraints: 0 };
+  const assessed = {
+    ...observed,
+    numericCriteria: 4,
+    eligibleNumericCriteria: 4,
+    distinctCriteria: true,
+    rationaleLength: 80,
+  };
+
+  it("golden: aynı uygun adayın nötr gözlemi ve dört ayrı ölçülü kararı geçer", () => {
+    expect(predicate.evaluate([
+      observation("neutral", observed),
+      decision(assessed),
+    ]).passed).toBe(true);
+  });
+
+  it("negatif: fail/retry gözlemi sonraki assessment ile eşleşmez", () => {
+    expect(predicate.evaluate([
+      observation("retry", { ...observed, decisionStatus: "fail", failedConstraints: 1 }),
+      decision(assessed),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: yinelenen veya uygun havuzu aşan kriter sayısı geçmez", () => {
+    expect(predicate.evaluate([
+      observation("neutral", observed),
+      decision({ ...assessed, distinctCriteria: false }),
+    ]).passed).toBe(false);
+    expect(predicate.evaluate([
+      observation("neutral", observed),
+      decision({ ...assessed, numericCriteria: 5, eligibleNumericCriteria: 4 }),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: gözlem ve kararın adayı/status'u farklıysa veya hard fail varsa geçmez", () => {
+    expect(predicate.evaluate([
+      observation("neutral", observed),
+      decision({ ...assessed, candidateId: "epson-gx8-450" }),
+    ]).passed).toBe(false);
+    expect(predicate.evaluate([
+      observation("neutral", observed),
+      decision({ ...assessed, decisionStatus: "review" }),
+    ]).passed).toBe(false);
+    expect(predicate.evaluate([
+      observation("neutral", observed),
+      decision({ ...assessed, failedConstraints: 1 }),
     ]).passed).toBe(false);
   });
 });

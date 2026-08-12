@@ -119,6 +119,18 @@ const cspace: LabState = {
   observed: { safe: true, collision: true },
 };
 
+const robotSelection: LabState = {
+  kind: "robot-selection",
+  version: 1,
+  taskId: "intralogistics",
+  layoutChangesOften: true,
+  selectedId: "mir250",
+  evidenceKeys: ["payload", "speed", "width", "positioning"],
+  rationale: "Dört sayısal sınır karşılanıyor; saha trafiği ayrıca doğrulanmalı.",
+  submitted: true,
+  attempts: 1,
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
@@ -135,6 +147,7 @@ describe("encodeLabState / decodeLabState — round-trip", () => {
     ["transform-order", transformOrder],
     ["dls-trace", dlsTrace],
     ["cspace", cspace],
+    ["robot-selection", robotSelection],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -272,6 +285,12 @@ describe("decodeLabState — biçim doğrulaması", () => {
   it("cspace: q1/q2 tam sayı ve observed sınıfları boolean olmalıdır", () => {
     expect(decodeLabState(encodeLabState({ ...cspace, q1: 2.5 } as unknown as LabState)).ok).toBe(false);
     expect(decodeLabState(encodeLabState({ ...cspace, observed: { safe: "evet", collision: true } } as unknown as LabState)).ok).toBe(false);
+  });
+
+  it("robot-selection: task, evidence dizisi ve attempts biçimini doğrular", () => {
+    expect(decodeLabState(encodeLabState({ ...robotSelection, taskId: "hayali" } as unknown as LabState)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState({ ...robotSelection, evidenceKeys: [1, 2] } as unknown as LabState)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState({ ...robotSelection, attempts: 1.5 } as unknown as LabState)).ok).toBe(false);
   });
 });
 
@@ -440,6 +459,19 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("cspace: iki sınıfı taşıyan geçerli görünüm state'i kabul edilir", () => {
     expect(validateLabState(cspace)).toEqual([]);
+  });
+
+  it("robot-selection: görev dışı aday, yinelenen/uygunsuz kriter ve aday yokken kararı reddeder", () => {
+    expect(validateLabState({ ...robotSelection, selectedId: "epson-gx4-350" })).toContain("selectedId seçili görevde aday değil");
+    expect(validateLabState({ ...robotSelection, evidenceKeys: ["payload", "payload"] })).toEqual(expect.arrayContaining([
+      "evidenceKeys yinelenemez",
+    ]));
+    expect(validateLabState({ ...robotSelection, evidenceKeys: ["application"] })).toContain("uygun olmayan evidence key: application");
+    expect(validateLabState({ ...robotSelection, selectedId: null })).toContain("aday seçilmeden kanıt/not/submit state'i taşınamaz");
+  });
+
+  it("robot-selection: görev motoruyla eşleşen karar state'i geçerlidir", () => {
+    expect(validateLabState(robotSelection)).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

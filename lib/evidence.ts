@@ -496,7 +496,10 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     },
   },
   {
-    id: "robot-selection-four-criteria-v1",
+    // v1 → v2: aynı görev/adayın retry gözlemi de assessment ile eşleşebiliyor,
+    // seçilen ölçütlerin ayrı ve gerçekten uygun havuzdan geldiği doğrulanmıyordu.
+    // Artık gözlem ve karar aynı status'ta, sıfır hard-fail ile eşleşmelidir.
+    id: "robot-selection-four-criteria-v2",
     lessonId: "a-universite-robot-mimarileri",
     skillId: "robot-selection",
     evaluate: (events) => {
@@ -504,15 +507,23 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
         event.skillId === "robot-selection" &&
         event.stage === "assessed" &&
         event.result === "success" &&
-        typeof event.metrics?.numericCriteria === "number" && event.metrics.numericCriteria >= 4 &&
+        (event.metrics?.decisionStatus === "fit" || event.metrics?.decisionStatus === "review") &&
+        event.metrics?.failedConstraints === 0 &&
+        event.metrics?.distinctCriteria === true &&
+        typeof event.metrics?.numericCriteria === "number" && Number.isSafeInteger(event.metrics.numericCriteria) && event.metrics.numericCriteria >= 4 &&
+        typeof event.metrics?.eligibleNumericCriteria === "number" && Number.isSafeInteger(event.metrics.eligibleNumericCriteria) &&
+        event.metrics.numericCriteria <= event.metrics.eligibleNumericCriteria &&
         typeof event.metrics?.rationaleLength === "number" && event.metrics.rationaleLength >= 40 &&
-        event.metrics?.decisionStatus !== "fail",
+        event.metrics.rationaleLength <= 4_000,
       );
       const observedSameCandidate = Boolean(successfulDecision && events.some((event) =>
         event.skillId === "robot-selection" &&
         event.stage === "observed" &&
+        event.result === "neutral" &&
         event.metrics?.taskId === successfulDecision.metrics?.taskId &&
-        event.metrics?.candidateId === successfulDecision.metrics?.candidateId,
+        event.metrics?.candidateId === successfulDecision.metrics?.candidateId &&
+        event.metrics?.decisionStatus === successfulDecision.metrics?.decisionStatus &&
+        event.metrics?.failedConstraints === 0,
       ));
       return {
         passed: Boolean(successfulDecision && observedSameCandidate),

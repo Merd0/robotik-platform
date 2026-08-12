@@ -109,6 +109,10 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
     componentFile: "components/interactive/CspaceLab.tsx",
     engineFiles: ["lib/robotics/learningLabs.ts", "lib/robotics/kinematics.ts"],
   },
+  RobotSelectionTable: {
+    componentFile: "components/interactive/RobotSelectionTable.tsx",
+    engineFiles: ["lib/robotSelection.ts"],
+  },
 };
 
 /** Robot id → spesifikasyon dosyası. Yalnız pilot laboratuvarların kullandığı robotlar. */

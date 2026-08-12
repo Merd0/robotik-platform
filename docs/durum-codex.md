@@ -1530,3 +1530,20 @@ güven verisini yanlış temel üzerine kurmasını engeller.
 - Test: 10 yeni kontrol (state round-trip/negatifleri, interaction/predicate
   bağlantısı, predicate golden + üç negatif); mevcut üç-viewport E2E fiziksel
   sınıf çifti, transfer, v2 başarı ve paylaşım geri yüklemeyle genişletildi.
+
+### 2026-08-12 · RobotSelectionTable (1 ders)
+
+- Bulgu: karar motoru hard constraint, en az dört kriter ve 40 karakter notu UI
+  tarafında doğru denetliyordu; olaylar yalnız aday seçimi/karar submit'inde
+  yazılıyordu. Ancak `robot-selection-four-criteria-v1`, aynı görev/aday için
+  geçmiş bir `retry` gözlemini de eşleştirebiliyor; dört kriterin ayrı ve seçilen
+  adayın uygun sayısal havuzu içinde olduğunu doğrulamıyordu.
+- Düzeltme: `robot-selection-four-criteria-v2`, nötr ve sıfır hard-fail aday
+  gözlemini aynı görev/aday/status'taki başarılı kararla eşleştirir. Assessment
+  ayrıca ayrı kriter bayrağı, uygun kriter kapasitesi, sıfır fail ve gerekçe
+  sınırlarını taşır. Bileşen+aday/kısıt motoru manifesti ile görev, yerleşim
+  varyantı, aday, uygun kriterler, not ve deneme sayısını motor kataloğuna karşı
+  doğrulayan `robot-selection/v1` paylaşım state'i eklendi.
+- Test: 10 yeni kontrol (state round-trip/negatifleri, interaction/predicate
+  bağlantısı, predicate golden + üç negatif); mevcut üç-viewport E2E kararın
+  v2 kanıtını ve tüm form state'inin paylaşım geri yüklemesini kapsıyor.

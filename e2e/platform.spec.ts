@@ -454,7 +454,7 @@ test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
   }
 });
 
-test("Robot Seçim Masası tek kısıt değişimini ve dört ölçülü kararı kanıtlar", async ({ page }) => {
+test("RobotSelectionTable dört ölçülü kararı kanıtlar ve state'i paylaşır", async ({ page }) => {
   await page.goto("/ders/a-universite-robot-mimarileri");
   await page.getByRole("button", { name: /Hat içi malzeme taşıma/ }).click();
   const k05 = page.locator('[data-candidate-id="kivnon-k05"]');
@@ -471,7 +471,18 @@ test("Robot Seçim Masası tek kısıt değişimini ve dört ölçülü kararı 
   await expect(page.getByText(/Kararın kanıtlandı/)).toBeVisible();
   expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
   const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
-  expect(evidence.some((event: { predicateId?: string; stage?: string }) => event.stage === "passed" && event.predicateId === "robot-selection-four-criteria-v1")).toBe(true);
+  expect(evidence.some((event: { predicateId?: string; stage?: string }) => event.stage === "passed" && event.predicateId === "robot-selection-four-criteria-v2")).toBe(true);
+
+  await page.getByRole("button", { name: "Bu deneyi paylaş" }).click();
+  const href = await page.getByRole("link", { name: "Paylaşılan görünümü aç" }).getAttribute("href");
+  expect(href).not.toBeNull();
+  await page.goto(href!);
+  await expect(page.getByRole("button", { name: /Hat içi malzeme taşıma/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByLabel(/Yerleşim sık değişiyor/)).toBeChecked();
+  await expect(page.locator('[data-candidate-id="mir250"]')).toContainText("Seçildi");
+  await expect(page.getByLabel(/Karar notu/)).toHaveValue(/Dört sayısal sınırı karşılıyor/);
+  await expect(page.getByText(/Kararın kanıtlandı/)).toBeVisible();
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
 });
 
 test("İz Laboratuvarı sahne, matris, grafik ve kodu aynı son örneğe taşır", async ({ page }) => {

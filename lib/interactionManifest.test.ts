@@ -188,6 +188,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["CspaceLab"], ["generic-2dof"])).not.toThrow();
   });
 
+  it("RobotSelectionTable bileşeni ile aday/kısıt motorunu interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.RobotSelectionTable).toEqual({
+      componentFile: "components/interactive/RobotSelectionTable.tsx",
+      engineFiles: ["lib/robotSelection.ts"],
+    });
+    expect(() => computeInteractionHash(["RobotSelectionTable"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -271,6 +279,11 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
 
   it("CspaceLab dersini v2 fiziksel sınır predicate sürümüne bağlar", () => {
     expect(computePredicateHash("c-universite-c-space"))
+      .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
+  });
+
+  it("RobotSelectionTable dersini v2 dört-kriter predicate sürümüne bağlar", () => {
+    expect(computePredicateHash("a-universite-robot-mimarileri"))
       .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
   });
 });

@@ -3,6 +3,11 @@
 import { useMemo, useState } from "react";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import {
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
+import {
   ROBOT_SOURCES,
   ROBOT_TASKS,
   evaluateTask,
@@ -95,6 +100,16 @@ export function RobotSelectionTable() {
   const [submitted, setSubmitted] = useState(false);
   const [attempts, setAttempts] = useState(0);
 
+  useSharedLabState("robot-selection", (shared) => {
+    setTaskId(shared.taskId);
+    setLayoutChangesOften(shared.layoutChangesOften);
+    setSelectedId(shared.selectedId);
+    setEvidenceKeys(shared.evidenceKeys);
+    setRationale(shared.rationale);
+    setSubmitted(shared.submitted);
+    setAttempts(shared.attempts);
+  });
+
   const baseTask = ROBOT_TASKS.find((task) => task.id === taskId) ?? ROBOT_TASKS[0];
   const task = taskId === "intralogistics" ? withLayoutChange(baseTask, layoutChangesOften) : baseTask;
   const evaluations = useMemo(() => evaluateTask(task), [task]);
@@ -143,7 +158,10 @@ export function RobotSelectionTable() {
         taskId,
         candidateId: selected?.candidate.id ?? "none",
         decisionStatus: selected?.status ?? "none",
+        failedConstraints: selected?.constraints.filter((constraint) => constraint.status === "fail").length ?? 0,
         numericCriteria: evidenceKeys.length,
+        eligibleNumericCriteria: eligibleEvidence.length,
+        distinctCriteria: new Set(evidenceKeys).size === evidenceKeys.length,
         rationaleLength: rationale.trim().length,
       },
     });
@@ -233,6 +251,20 @@ export function RobotSelectionTable() {
       </div>}
 
       <div className="mt-5 rounded-xl border border-universite-ink/10 p-3 text-xs text-universite-ink/65"><strong>Kaynak ve review durumu:</strong> Sayılar üretici dokümanlarına bağlandı; farklı test koşulları eşdeğer kabul edilmedi. Bu laboratuvarın teknik, pedagojik ve safety insan incelemesi henüz tamamlanmadı. Satın alma veya gerçek robot devreye alma önerisi değildir. Kaynak erişim tarihi: 2026-08-09.</div>
+      <ExperimentShareButton
+        seviye="universite"
+        createShareUrl={() => createLabShareUrl({
+          kind: "robot-selection",
+          version: 1,
+          taskId,
+          layoutChangesOften,
+          selectedId,
+          evidenceKeys,
+          rationale,
+          submitted,
+          attempts,
+        })}
+      />
     </section>
   );
 }

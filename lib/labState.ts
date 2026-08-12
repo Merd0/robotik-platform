@@ -5,6 +5,7 @@ import type { Elbow, RobotSpec } from "./robotics/kinematics";
 import type { IkSolverMode } from "./robotics/ikSolver";
 import { MAX_SCAN_ROWS, MIN_SCAN_ROWS, SCAN_PATH_COLUMNS } from "./scanPath";
 import type { Block } from "./robotics/blockProgram";
+import { evaluateTask, ROBOT_TASKS, withLayoutChange, type TaskSpec } from "./robotSelection";
 
 /**
  * Sprint 2 "Kanıt Dikey Dilimi" — sürümlü, paylaşılabilir laboratuvar state'i.
@@ -149,6 +150,18 @@ export interface CspaceLabState {
   observed: { safe: boolean; collision: boolean };
 }
 
+export interface RobotSelectionLabState {
+  kind: "robot-selection";
+  version: 1;
+  taskId: TaskSpec["id"];
+  layoutChangesOften: boolean;
+  selectedId: string | null;
+  evidenceKeys: string[];
+  rationale: string;
+  submitted: boolean;
+  attempts: number;
+}
+
 export type LabState =
   | JointSlidersLabState
   | PlannerRaceLabState
@@ -163,7 +176,8 @@ export type LabState =
   | ThresholdViewerLabState
   | TransformOrderLabState
   | DlsTraceLabState
-  | CspaceLabState;
+  | CspaceLabState
+  | RobotSelectionLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -567,6 +581,40 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "robot-selection") {
+    if (record.version !== 1) return { ok: false, error: `robot-selection: desteklenmeyen sürüm ${String(record.version)}` };
+    if (record.taskId !== "electronics" && record.taskId !== "shared-assembly" && record.taskId !== "intralogistics") {
+      return { ok: false, error: "robot-selection: taskId geçersiz" };
+    }
+    if (typeof record.layoutChangesOften !== "boolean") return { ok: false, error: "robot-selection: layoutChangesOften boolean olmalı" };
+    if (record.selectedId !== null && (typeof record.selectedId !== "string" || !record.selectedId)) {
+      return { ok: false, error: "robot-selection: selectedId null veya dolu string olmalı" };
+    }
+    if (!Array.isArray(record.evidenceKeys) || !record.evidenceKeys.every((key) => typeof key === "string" && key.length > 0)) {
+      return { ok: false, error: "robot-selection: evidenceKeys dolu string dizisi olmalı" };
+    }
+    if (typeof record.rationale !== "string" || typeof record.submitted !== "boolean") {
+      return { ok: false, error: "robot-selection: rationale string ve submitted boolean olmalı" };
+    }
+    if (typeof record.attempts !== "number" || !Number.isSafeInteger(record.attempts)) {
+      return { ok: false, error: "robot-selection: attempts güvenli tam sayı olmalı" };
+    }
+    return {
+      ok: true,
+      state: {
+        kind: "robot-selection",
+        version: 1,
+        taskId: record.taskId,
+        layoutChangesOften: record.layoutChangesOften,
+        selectedId: record.selectedId,
+        evidenceKeys: record.evidenceKeys,
+        rationale: record.rationale,
+        submitted: record.submitted,
+        attempts: record.attempts,
+      },
+    };
+  }
+
   return { ok: false, error: `bilinmeyen laboratuvar türü: ${String(record.kind)}` };
 }
 
@@ -786,6 +834,36 @@ export function validateLabState(state: LabState): string[] {
       if (angle < -180 || angle > 180 || angle % 5 !== 0) {
         errors.push(`${name} -180 ile 180 arasında ve 5'in katı olmalı`);
       }
+    }
+    return errors;
+  }
+
+  if (state.kind === "robot-selection") {
+    if (state.taskId !== "intralogistics" && state.layoutChangesOften) {
+      errors.push("layoutChangesOften yalnız intralogistics görevinde true olabilir");
+    }
+    if (state.rationale.length > 4_000) errors.push("rationale 4000 karakteri aşamaz");
+    if (state.attempts < 0 || state.attempts > 1_000) errors.push("attempts 0-1000 arasında olmalı");
+    if (new Set(state.evidenceKeys).size !== state.evidenceKeys.length) errors.push("evidenceKeys yinelenemez");
+    const baseTask = ROBOT_TASKS.find((task) => task.id === state.taskId)!;
+    const task = state.taskId === "intralogistics" ? withLayoutChange(baseTask, state.layoutChangesOften) : baseTask;
+    const evaluation = state.selectedId === null
+      ? null
+      : evaluateTask(task).find((candidate) => candidate.candidate.id === state.selectedId) ?? null;
+    if (state.selectedId !== null && !evaluation) errors.push("selectedId seçili görevde aday değil");
+    if (state.selectedId === null) {
+      if (state.evidenceKeys.length > 0 || state.rationale.length > 0 || state.submitted) {
+        errors.push("aday seçilmeden kanıt/not/submit state'i taşınamaz");
+      }
+      return errors;
+    }
+    const eligibleKeys = new Set(
+      evaluation?.constraints
+        .filter((constraint) => constraint.quantitative && constraint.status !== "fail")
+        .map((constraint) => constraint.key) ?? [],
+    );
+    for (const key of state.evidenceKeys) {
+      if (!eligibleKeys.has(key)) errors.push(`uygun olmayan evidence key: ${key}`);
     }
     return errors;
   }
