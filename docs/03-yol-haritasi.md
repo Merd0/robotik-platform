@@ -144,6 +144,33 @@ tamamen bitti.
 
 ---
 
+## Bir sonraki sprint — contentVersion entegrasyonu + TransferChallenge predicate sertleştirmesi
+
+**Amaç:** hazırlanmış kanıt hash altyapısını canlı Evidence sürüm sözleşmesine
+bağlamak; “hash hesaplanabiliyor” durumunu “eski kanıt gerçekten geçersizleşiyor”
+durumuna taşımak.
+
+- [ ] Ders sayfasındaki `contentVersion`ı yalnız `teachingHash` yerine
+      `computeEvidenceVersionRoot({ teachingHash, interactionHash,
+      predicateHash })` sonucuna bağla. Bileşen, motor, robot spec, worker veya
+      predicate sürümü değişince eski `passed` kaydı güncel sayılmamalı.
+- [ ] `Quiz`, `PredictionPrompt` ve özellikle `TransferChallenge` bileşenlerini
+      Evidence üreten bağımlılıklar olarak interaction manifest kapsamına al;
+      ortak `lib/quiz.ts` karıştırma motorunu da hash'e kat.
+- [ ] `TransferChallenge` assessment olayına kararlı challenge revizyonu ve
+      seçenek kimliği ekle. Predicate yalnız `result: success` ve görüntülenen
+      indexe güvenmemeli; beklenen challenge sürümünü doğrulamalı.
+- [ ] Golden/negatif ve stale-version testleri ekle: doğru challenge + deney
+      geçer; yanlış cevap, eski challenge revizyonu, uydurma success veya eski
+      interaction/predicate kökü geçmez. Evidence dışa/içe aktarma stale ayrımı
+      birleşik kökle doğrulanmalı.
+
+**Bitti ölçütü:** canlı `LessonEvidenceProvider` birleşik kökü kullanıyor;
+`TransferChallenge` veya `lib/quiz.ts` değişikliği eski kanıtı güncel göstermiyor;
+testler bu davranışı kaynak kodu değişikliği simülasyonuyla kanıtlıyor.
+
+---
+
 ## Sürekli işler (her fazda)
 
 - Her ders için `kaynaklar` doldurulmuş mu kontrolü

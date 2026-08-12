@@ -1563,3 +1563,33 @@ güven verisini yanlış temel üzerine kurmasını engeller.
 - Test: 9 yeni birim kontrolü (state round-trip/negatifleri,
   interaction/predicate bağlantısı, predicate golden + üç negatif); mevcut
   üç-viewport E2E v2 başarı ve son örnek paylaşım geri yüklemeyle genişletildi.
+
+### 2026-08-12 · Değerlendirme bileşenleri ve yarım kalan kanıt sürüm kökü
+
+- Kalıcı kapsam düzeltmesi: `Quiz`, `PredictionPrompt` ve
+  `TransferChallenge` motorlu/paylaşılabilir laboratuvar state'i değildir;
+  ancak Evidence mekanizmasının dışında da değildir. Üçü de aynı
+  `LessonEvidenceProvider -> appendEvidence` yolunu kullanır. `QuizSorusu`
+  `observed/success|retry`, `PredictionPrompt` `predicted/neutral`,
+  `TransferChallenge` ise `assessed/success|retry` olayı yazar.
+- Predicate etkisi: genel quiz olaylarının kayıtlı bir başarı predicate'i yoktur;
+  doğru quiz yanıtı tek başına `passed` üretemez. Mevcut predicate'ler tahmin
+  olaylarını okumaz. Buna karşılık `TransferChallenge`, aynı `skillId` için
+  başarılı assessment arayan sekiz laboratuvar predicate'inin kavram kontrolü
+  ayağıdır; bu nedenle kanıt zincirinin aktif ve güvenlik açısından anlamlı bir
+  parçasıdır.
+- Sertleştirme açığı: `TransferChallenge` olayı yalnız görüntülenen `selected`
+  indexini taşır; predicate bileşenin yazdığı `result: success` değerine güvenir.
+  Karıştırma/cevap semantiğini belirleyen bileşenler ve `lib/quiz.ts` bugün
+  `LAB_DEPENDENCY_REGISTRY` içinde değildir. Paylaşım state'i bu kişisel ve
+  geçici cevaplar için zorunlu değildir; fakat Evidence üreticisi oldukları için
+  interaction sürüm kapsamı dışında kalmaları doğru değildir.
+- **Yanlış tamamlanmışlık izlenimi:** `interactionHash`, `predicateHash` ve
+  bunları `teachingHash` ile birleştiren `computeEvidenceVersionRoot` altyapısı
+  vardır; fakat canlı ders sayfası `contentVersion` olarak hâlâ yalnız
+  `computeTeachingHash(lesson)` kullanır. Bu nedenle motor, worker, robot spec,
+  değerlendirme bileşeni veya predicate kodu değiştiğinde mevcut öğrenci kanıtı
+  otomatik olarak eskimez. Hash katmanı hazırlanmıştır ama kanıt koruması
+  **tamamlanmış değildir; entegrasyon yarımdır.** Sonraki iş
+  `docs/03-yol-haritasi.md` içindeki “contentVersion entegrasyonu +
+  TransferChallenge predicate sertleştirmesi” maddesidir.
