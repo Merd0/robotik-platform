@@ -485,17 +485,28 @@ test("RobotSelectionTable dört ölçülü kararı kanıtlar ve state'i paylaş�
   expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
 });
 
-test("İz Laboratuvarı sahne, matris, grafik ve kodu aynı son örneğe taşır", async ({ page }) => {
+test("FourLensTraceLab dört senkron örneği kanıtlar ve state'i paylaşır", async ({ page }) => {
   await page.goto("/ders/b-lise-ileri-kinematik");
-  await page.getByRole("button", { name: "Azalır" }).click();
-  await page.getByRole("button", { name: "Programı çalıştır" }).click();
-  for (let step = 0; step < 3; step++) await page.getByRole("button", { name: "Sonraki örnek" }).click();
-  await expect(page.getByText(/Tahminin ölçümle uyuştu/)).toBeVisible();
-  await expect(page.getByRole("img", { name: /Örnek 3: uç nokta/ })).toBeVisible();
-  await expect(page.locator('[aria-current="step"]')).toContainText("q[0] = 75");
+  let lab = page.locator("section").filter({ has: page.getByRole("heading", { name: "İleri kinematik İz Laboratuvarı" }) });
+  await lab.getByRole("button", { name: "Azalır" }).click();
+  await lab.getByRole("button", { name: "Programı çalıştır" }).click();
+  for (let step = 0; step < 3; step++) await lab.getByRole("button", { name: "Sonraki örnek" }).click();
+  await expect(lab.getByText(/Tahminin ölçümle uyuştu/)).toBeVisible();
+  await expect(lab.getByRole("img", { name: /Örnek 3: uç nokta/ })).toBeVisible();
+  await expect(lab.locator('[aria-current="step"]')).toContainText("q[0] = 75");
   expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
   const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
-  expect(evidence.some((event: { predicateId?: string; stage?: string }) => event.stage === "passed" && event.predicateId === "four-lens-fk-trace-v1")).toBe(true);
+  expect(evidence.some((event: { predicateId?: string; stage?: string }) => event.stage === "passed" && event.predicateId === "four-lens-fk-trace-v2")).toBe(true);
+
+  await lab.getByRole("button", { name: "Bu deneyi paylaş" }).click();
+  const href = await lab.getByRole("link", { name: "Paylaşılan görünümü aç" }).getAttribute("href");
+  expect(href).not.toBeNull();
+  await page.goto(href!);
+  lab = page.locator("section").filter({ has: page.getByRole("heading", { name: "İleri kinematik İz Laboratuvarı" }) });
+  await expect(lab.getByRole("slider")).toHaveValue("3");
+  await expect(lab.locator('[aria-current="step"]')).toContainText("q[0] = 75");
+  await expect(lab.getByText(/Tahminin ölçümle uyuştu/)).toBeVisible();
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
 });
 
 test("altı yayınlı 6-DOF deneyi sahne ve gruplanmış kontrollerle kompakt kalır", async ({ page }) => {

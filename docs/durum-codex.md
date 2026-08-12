@@ -1547,3 +1547,19 @@ güven verisini yanlış temel üzerine kurmasını engeller.
 - Test: 10 yeni kontrol (state round-trip/negatifleri, interaction/predicate
   bağlantısı, predicate golden + üç negatif); mevcut üç-viewport E2E kararın
   v2 kanıtını ve tüm form state'inin paylaşım geri yüklemesini kapsıyor.
+
+### 2026-08-12 · FourLensTraceLab (1 ders)
+
+- Bulgu: olaylar yalnız `Programı çalıştır` ve örnek değiştirme commit'lerinde
+  yazılıyor; her-kare yazma yok. Ancak `four-lens-fk-trace-v1`, örnek 0'dan
+  doğrudan 3'e atlanınca geçebiliyor; ara örnekleri, kod/eklem eşleşmesini,
+  sahne-matris senkronunu ve ölçülen son yönü doğrulamıyordu.
+- Düzeltme: `four-lens-fk-trace-v2`, dört örneğin tamamında satır, eklem,
+  motor uç konumu ve matris son sütununu birlikte doğrular; başarılı son olayda
+  tahmin/gerçek yön eşleşmesini ve x'in gerçekten azaldığını zorunlu kılar.
+  Bileşen+ileri kinematik iz motoru manifesti ile lens, tahmin, çalışma, örnek
+  ve assessment alanlarını tutarlı doğrulayan `four-lens-trace/v1` paylaşım
+  state'i eklendi.
+- Test: 9 yeni birim kontrolü (state round-trip/negatifleri,
+  interaction/predicate bağlantısı, predicate golden + üç negatif); mevcut
+  üç-viewport E2E v2 başarı ve son örnek paylaşım geri yüklemeyle genişletildi.

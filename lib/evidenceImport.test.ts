@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EVIDENCE_PREDICATES, serializeEvidence, type EvidenceEvent } from "./evidence";
 import { analyzeEvidenceExport, EVIDENCE_EXPORT_SCHEMA } from "./evidenceImport";
 
-const fourLens = EVIDENCE_PREDICATES.find((item) => item.id === "four-lens-fk-trace-v1")!;
+const fourLens = EVIDENCE_PREDICATES.find((item) => item.id === "four-lens-fk-trace-v2")!;
 
 function makeEvent(overrides: Partial<EvidenceEvent> = {}): EvidenceEvent {
   return {

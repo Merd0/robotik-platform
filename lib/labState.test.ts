@@ -131,6 +131,16 @@ const robotSelection: LabState = {
   attempts: 1,
 };
 
+const fourLensTrace: LabState = {
+  kind: "four-lens-trace",
+  version: 1,
+  activeLens: "code",
+  prediction: "decrease",
+  running: true,
+  sampleIndex: 3,
+  assessed: true,
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
@@ -148,6 +158,7 @@ describe("encodeLabState / decodeLabState — round-trip", () => {
     ["dls-trace", dlsTrace],
     ["cspace", cspace],
     ["robot-selection", robotSelection],
+    ["four-lens-trace", fourLensTrace],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -291,6 +302,12 @@ describe("decodeLabState — biçim doğrulaması", () => {
     expect(decodeLabState(encodeLabState({ ...robotSelection, taskId: "hayali" } as unknown as LabState)).ok).toBe(false);
     expect(decodeLabState(encodeLabState({ ...robotSelection, evidenceKeys: [1, 2] } as unknown as LabState)).ok).toBe(false);
     expect(decodeLabState(encodeLabState({ ...robotSelection, attempts: 1.5 } as unknown as LabState)).ok).toBe(false);
+  });
+
+  it("four-lens-trace: lens, prediction ve örnek biçimini doğrular", () => {
+    expect(decodeLabState(encodeLabState({ ...fourLensTrace, activeLens: "hayali" } as unknown as LabState)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState({ ...fourLensTrace, prediction: "aynı" } as unknown as LabState)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState({ ...fourLensTrace, sampleIndex: 1.5 } as unknown as LabState)).ok).toBe(false);
   });
 });
 
@@ -472,6 +489,18 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("robot-selection: görev motoruyla eşleşen karar state'i geçerlidir", () => {
     expect(validateLabState(robotSelection)).toEqual([]);
+  });
+
+  it("four-lens-trace: çalıştırma ve değerlendirme durumlarını tutarlı tutar", () => {
+    expect(validateLabState({ ...fourLensTrace, running: false })).toEqual(expect.arrayContaining([
+      "çalıştırılmamış state örnek 0'da ve değerlendirilmemiş olmalı",
+    ]));
+    expect(validateLabState({ ...fourLensTrace, prediction: null })).toContain("çalışan state bir prediction gerektirir");
+    expect(validateLabState({ ...fourLensTrace, sampleIndex: 2 })).toContain("değerlendirilmiş state son örnekte olmalı");
+  });
+
+  it("four-lens-trace: son örnekteki değerlendirilmiş görünüm geçerlidir", () => {
+    expect(validateLabState(fourLensTrace)).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { createFourLensTrace } from "./robotics/fourLensTrace";
 
 function fakeWindow(initial: Record<string, string> = {}, failWrites = false) {
   const values = new Map(Object.entries(initial));
@@ -94,9 +95,39 @@ describe("Evidence v2 saklama politikası (kör 1000-olay FIFO yerine semantik k
 
     // Gerçek bir predicate'i tetikleyip gerçek bir "passed" milestone üret.
     const fourLens = { lessonId: "b-lise-ileri-kinematik", skillId: "four-lens-forward-kinematics", contentVersion };
-    evidence.appendEvidence({ ...fourLens, stage: "observed", result: "neutral", metrics: { sampleIndex: 0 } });
-    evidence.appendEvidence({ ...fourLens, stage: "observed", result: "neutral", metrics: { sampleIndex: 3 } });
-    evidence.appendEvidence({ ...fourLens, stage: "assessed", result: "success", metrics: { finalSample: 3 } });
+    const trace = createFourLensTrace();
+    for (const [sampleIndex, sample] of trace.entries()) {
+      const endX = Number(sample.end.x.toFixed(3));
+      const endY = Number(sample.end.y.toFixed(3));
+      evidence.appendEvidence({
+        ...fourLens,
+        stage: "observed",
+        result: "neutral",
+        metrics: {
+          sampleIndex,
+          codeLine: sample.line,
+          q1: sample.jointDegrees[0],
+          q2: sample.jointDegrees[1],
+          endX,
+          endY,
+          matrixX: endX,
+          matrixY: endY,
+        },
+      });
+    }
+    evidence.appendEvidence({
+      ...fourLens,
+      stage: "assessed",
+      result: "success",
+      metrics: {
+        prediction: "decrease",
+        actual: "decrease",
+        directionMatches: true,
+        finalSample: 3,
+        previousX: Number(trace[2].end.x.toFixed(3)),
+        finalX: Number(trace[3].end.x.toFixed(3)),
+      },
+    });
     expect(evidence.summarizeEvidence(evidence.getEvidenceEvents(), fourLens.lessonId, contentVersion).passed).toBe(true);
 
     // Ağır sürükleme benzetimi: binlerce farklı gözlem olayı (her biri farklı seed/elapsedMs,

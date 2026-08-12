@@ -113,6 +113,10 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
     componentFile: "components/interactive/RobotSelectionTable.tsx",
     engineFiles: ["lib/robotSelection.ts"],
   },
+  FourLensTraceLab: {
+    componentFile: "components/interactive/FourLensTraceLab.tsx",
+    engineFiles: ["lib/robotics/fourLensTrace.ts"],
+  },
 };
 
 /** Robot id → spesifikasyon dosyası. Yalnız pilot laboratuvarların kullandığı robotlar. */

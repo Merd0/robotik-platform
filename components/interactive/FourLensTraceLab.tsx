@@ -2,6 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
+import {
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
 import { createFourLensTrace, finalXDirection } from "@/lib/robotics/fourLensTrace";
 
 type Lens = "scene" | "matrix" | "graph" | "code";
@@ -26,11 +31,39 @@ export function FourLensTraceLab() {
   const [running, setRunning] = useState(false);
   const [sampleIndex, setSampleIndex] = useState(0);
   const [assessed, setAssessed] = useState(false);
+
+  useSharedLabState("four-lens-trace", (shared) => {
+    setActiveLens(shared.activeLens);
+    setPrediction(shared.prediction);
+    setRunning(shared.running);
+    setSampleIndex(shared.sampleIndex);
+    setAssessed(shared.assessed);
+  });
+
   const sample = trace[sampleIndex];
   const finalDirection = finalXDirection(trace);
   const elbow = point(sample.elbow);
   const end = point(sample.end);
   const maxIndex = trace.length - 1;
+
+  function recordSample(index: number) {
+    const next = trace[index];
+    record({
+      skillId: "four-lens-forward-kinematics",
+      stage: "observed",
+      result: "neutral",
+      metrics: {
+        sampleIndex: index,
+        codeLine: next.line,
+        q1: next.jointDegrees[0],
+        q2: next.jointDegrees[1],
+        endX: Number(round(next.end.x)),
+        endY: Number(round(next.end.y)),
+        matrixX: Number(round(next.endTransform[0][3])),
+        matrixY: Number(round(next.endTransform[1][3])),
+      },
+    });
+  }
 
   function run() {
     if (!prediction) return;
@@ -38,15 +71,27 @@ export function FourLensTraceLab() {
     setSampleIndex(0);
     setAssessed(false);
     record({ skillId: "four-lens-forward-kinematics", stage: "predicted", result: "neutral", metrics: { prediction } });
-    record({ skillId: "four-lens-forward-kinematics", stage: "observed", result: "neutral", metrics: { sampleIndex: 0, codeLine: trace[0].line } });
+    recordSample(0);
   }
 
   function moveTo(next: number) {
     setSampleIndex(next);
-    record({ skillId: "four-lens-forward-kinematics", stage: "observed", result: "neutral", metrics: { sampleIndex: next, codeLine: trace[next].line, endX: Number(round(trace[next].end.x)), endY: Number(round(trace[next].end.y)) } });
+    recordSample(next);
     if (next === maxIndex && !assessed) {
       const success = prediction === finalDirection;
-      record({ skillId: "four-lens-forward-kinematics", stage: "assessed", result: success ? "success" : "retry", metrics: { prediction: prediction ?? "none", actual: finalDirection, finalSample: next } });
+      record({
+        skillId: "four-lens-forward-kinematics",
+        stage: "assessed",
+        result: success ? "success" : "retry",
+        metrics: {
+          prediction: prediction ?? "none",
+          actual: finalDirection,
+          directionMatches: success,
+          finalSample: next,
+          previousX: Number(round(trace[maxIndex - 1].end.x)),
+          finalX: Number(round(trace[maxIndex].end.x)),
+        },
+      });
       setAssessed(true);
     }
   }
@@ -78,6 +123,18 @@ export function FourLensTraceLab() {
         <div className="mt-2 flex gap-2"><button type="button" disabled={sampleIndex === 0} onClick={() => moveTo(sampleIndex - 1)} className="min-h-11 flex-1 rounded-lg border border-lise-ink/15 disabled:opacity-40">Geri sar</button><button type="button" disabled={sampleIndex === maxIndex} onClick={() => moveTo(sampleIndex + 1)} className="min-h-11 flex-1 rounded-lg border border-lise-ink/15 disabled:opacity-40">Sonraki örnek</button></div>
         {sampleIndex === maxIndex && <p className={`mt-3 rounded-lg border p-3 text-sm ${prediction === finalDirection ? "border-emerald-600/35 bg-emerald-500/10" : "border-amber-600/35 bg-amber-500/10"}`} aria-live="polite">{prediction === finalDirection ? "Tahminin ölçümle uyuştu." : "Tahminin ölçümle uyuşmadı."} Son iki örnekte x, {round(trace[maxIndex - 1].end.x)} m’den {round(trace[maxIndex].end.x)} m’ye {finalDirection === "decrease" ? "azaldı" : "arttı"}. Hareketin yönünü yalnız q₁ sayısından değil, q₁+q₂ toplamından oku.</p>}
       </>}
+      <ExperimentShareButton
+        seviye="lise"
+        createShareUrl={() => createLabShareUrl({
+          kind: "four-lens-trace",
+          version: 1,
+          activeLens,
+          prediction,
+          running,
+          sampleIndex,
+          assessed,
+        })}
+      />
     </section>
   );
 }

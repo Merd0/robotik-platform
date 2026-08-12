@@ -162,6 +162,16 @@ export interface RobotSelectionLabState {
   attempts: number;
 }
 
+export interface FourLensTraceLabState {
+  kind: "four-lens-trace";
+  version: 1;
+  activeLens: "scene" | "matrix" | "graph" | "code";
+  prediction: "increase" | "decrease" | null;
+  running: boolean;
+  sampleIndex: number;
+  assessed: boolean;
+}
+
 export type LabState =
   | JointSlidersLabState
   | PlannerRaceLabState
@@ -177,7 +187,8 @@ export type LabState =
   | TransformOrderLabState
   | DlsTraceLabState
   | CspaceLabState
-  | RobotSelectionLabState;
+  | RobotSelectionLabState
+  | FourLensTraceLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -581,6 +592,34 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "four-lens-trace") {
+    if (record.version !== 1) return { ok: false, error: `four-lens-trace: desteklenmeyen sürüm ${String(record.version)}` };
+    if (record.activeLens !== "scene" && record.activeLens !== "matrix" && record.activeLens !== "graph" && record.activeLens !== "code") {
+      return { ok: false, error: "four-lens-trace: activeLens geçersiz" };
+    }
+    if (record.prediction !== null && record.prediction !== "increase" && record.prediction !== "decrease") {
+      return { ok: false, error: "four-lens-trace: prediction geçersiz" };
+    }
+    if (typeof record.running !== "boolean" || typeof record.assessed !== "boolean") {
+      return { ok: false, error: "four-lens-trace: running ve assessed boolean olmalı" };
+    }
+    if (typeof record.sampleIndex !== "number" || !Number.isSafeInteger(record.sampleIndex)) {
+      return { ok: false, error: "four-lens-trace: sampleIndex güvenli tam sayı olmalı" };
+    }
+    return {
+      ok: true,
+      state: {
+        kind: "four-lens-trace",
+        version: 1,
+        activeLens: record.activeLens,
+        prediction: record.prediction,
+        running: record.running,
+        sampleIndex: record.sampleIndex,
+        assessed: record.assessed,
+      },
+    };
+  }
+
   if (record.kind === "robot-selection") {
     if (record.version !== 1) return { ok: false, error: `robot-selection: desteklenmeyen sürüm ${String(record.version)}` };
     if (record.taskId !== "electronics" && record.taskId !== "shared-assembly" && record.taskId !== "intralogistics") {
@@ -835,6 +874,16 @@ export function validateLabState(state: LabState): string[] {
         errors.push(`${name} -180 ile 180 arasında ve 5'in katı olmalı`);
       }
     }
+    return errors;
+  }
+
+  if (state.kind === "four-lens-trace") {
+    if (state.sampleIndex < 0 || state.sampleIndex > 3) errors.push("sampleIndex 0-3 arasında olmalı");
+    if (!state.running && (state.sampleIndex !== 0 || state.assessed)) {
+      errors.push("çalıştırılmamış state örnek 0'da ve değerlendirilmemiş olmalı");
+    }
+    if (state.running && state.prediction === null) errors.push("çalışan state bir prediction gerektirir");
+    if (state.assessed && state.sampleIndex !== 3) errors.push("değerlendirilmiş state son örnekte olmalı");
     return errors;
   }
 
