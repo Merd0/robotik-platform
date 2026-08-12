@@ -49,7 +49,7 @@ test("DEBUG: hero height chain", async ({ page }, testInfo) => {
   const info = await page.evaluate(() => {
     const target = Array.from(document.querySelectorAll("button")).find((b) => b.textContent?.trim() === "Sınırda durur");
     const chain: Array<{ tag: string; cls: string; top: number; bottom: number; height: number }> = [];
-    let el: Element | null = target;
+    let el: Element | null = target ?? null;
     while (el) {
       const r = el.getBoundingClientRect();
       chain.push({
