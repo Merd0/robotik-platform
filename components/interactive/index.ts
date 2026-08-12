@@ -18,6 +18,7 @@ import { CspaceLab } from "./CspaceLab";
 import { RobotSelectionTable } from "./RobotSelectionTable";
 import { FourLensTraceLab } from "./FourLensTraceLab";
 import { AccessiblePre } from "@/components/lesson/AccessiblePre";
+import { AccessibleTable } from "@/components/lesson/AccessibleTable";
 import type { IZINLI_BILESEN_ADLARI } from "@/lib/izinliBilesenler";
 
 /**
@@ -28,8 +29,8 @@ import type { IZINLI_BILESEN_ADLARI } from "@/lib/izinliBilesenler";
  *
  * Tip, adları `lib/izinliBilesenler.ts`'ten alıyor: o liste MDX güvenlik
  * denetiminin (lib/mdxGuvenlik.ts) de kaynağı. Yerel Markdown öğeleri için
- * kullanılan `pre` eşlemesi bu kaynak allowlist'ine dahil değildir; MDX
- * derleyicisinin zaten ürettiği öğeye erişilebilir davranış kazandırır.
+ * kullanılan `pre`/`table` eşlemeleri bu kaynak allowlist'ine dahil değildir;
+ * MDX derleyicisinin zaten ürettiği öğeye erişilebilir davranış kazandırır.
  */
 const interactiveComponents = {
   JointSliders,
@@ -59,4 +60,5 @@ const interactiveComponents = {
 export const mdxComponents = {
   ...interactiveComponents,
   pre: AccessiblePre,
+  table: AccessibleTable,
 };

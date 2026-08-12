@@ -476,7 +476,7 @@ select {
   font-size: 0.9rem;
 }
 
-.ders-icerik > :is(p, h2, h3, ul, ol, blockquote, pre, table) {
+.ders-icerik > :is(p, h2, h3, ul, ol, blockquote, pre, .ders-tablo-scroll) {
   max-width: 46rem;
 }
 
