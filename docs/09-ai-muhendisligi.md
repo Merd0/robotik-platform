@@ -307,16 +307,33 @@ işaretlemesi** idi. Kural sadeleştirildi.
 
 ### Varsayılan: otomatik merge
 
+**Kural (2026-08-12'de sıkılaştırıldı):** aşağıdaki liste `.github/workflows/ci.yml`'in
+çalıştırdığı adımların **birebir aynısı**, aynı sırada. Bu bir tercih değil —
+9-11 Ağustos 2026'da bu liste CI'dan geride kaldığı (performans bütçesi ve
+E2E adımları listede yoktu) için main 2,5 gün boyunca, 25 ardışık push
+boyunca kırmızı kaldı ve kimse fark etmedi: liste "yeşil" diyordu, CI
+"kırmızı" diyordu. Bu listeyi CI'dan ayrıştırmak bir daha bu durumu
+üretmemeli — `ci.yml` değişirse bu liste AYNI PR'da güncellenir.
+
 Aşağıdaki kontrollerin **hepsi** temiz geçtiyse, PR açıp beklemeye gerek
 yok — dal doğrudan `main`'e merge edilir:
 
 ```bash
-npx tsc --noEmit
+npx tsc
 npm run lint
 npm test
 npm run check-content
 npm run validate-content-graph
+npm run check-quiz-dagilimi
+npm run check-mdx-guvenlik
+npm run check-review-debt
+npm run check-review-integrity
+npm run check-sensitive-terms
 npm run build
+npm run check-performance-budget
+npx playwright install --with-deps chromium   # yalnız ilk kurulumda / tarayıcı güncellenince gerekir
+npm run test:e2e
+npm audit --audit-level=high
 ```
 
 Yeni/değişen ders içeriği varsa buna **`kalite-denetci` subagent'ı** da
@@ -324,10 +341,20 @@ eklenir (mümkün olduğunda — bkz. bölüm 2). Denetçi bulgu raporlarsa,
 bulgular düzeltilip kontroller tekrar koşulmadan merge edilmez.
 
 Bunun güvenli olmasının dayanağı: bu kontroller `kaynaklar` zorunluluğunu,
-ön koşul graph'ının bütünlüğünü, matematik testlerini ve build'i zaten
-kapsıyor. Bir insanın PR ekranında yapacağı ek şey yok. `durum: yayinda`
-işaretlemesi ayrı ve elle kalmaya devam ediyor (docs/06 Katman 3) — merge
-edilmiş olmak "yayınlandı" demek değil.
+ön koşul graph'ının bütünlüğünü, matematik testlerini, MDX/gizlilik
+taramalarını, review makbuzu bütünlüğünü, performans bütçesini, üç viewport
+erişilebilirlik/kullanıcı akışını ve bağımlılık güvenlik taramasını —
+yani CI'ın kapsadığı HER ŞEYİ — zaten kapsıyor. Bir insanın PR ekranında
+yapacağı ek şey yok. `durum: yayinda` işaretlemesi ayrı ve elle kalmaya
+devam ediyor (docs/06 Katman 3) — merge edilmiş olmak "yayınlandı" demek
+değil.
+
+Liste kısaymış gibi görünmesi cazip gelebilir ("zaten CI koşacak, yerelde
+hepsini çalıştırmaya gerek yok") — tam olarak bu varsayım 9-11 Ağustos
+olayını üretti: yerel kontrol CI'ın bir alt kümesiydi, alt kümenin hepsi
+yeşildi, merge edildi, CI'daki fazladan iki adım (performans bütçesi, E2E)
+hiç çalıştırılmadan kırılmaya devam etti. Alt küme çalıştırmak istisna
+değil, bu yüzden yasak: ya tam liste koşar ya da CI'ın kendisi beklenir.
 
 ### Tek istisna: yönetişim (governance) dosyaları
 

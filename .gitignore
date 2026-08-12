@@ -14,6 +14,7 @@ public/workers/
 public/pyodide/
 public/arama-index.json
 public/evidence-manifest.json
+public/devam-index.json
 
 # Test/araç önbellekleri
 .turbo/
