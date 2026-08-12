@@ -111,6 +111,14 @@ const dlsTrace: LabState = {
   step: 3,
 };
 
+const cspace: LabState = {
+  kind: "cspace",
+  version: 1,
+  q1: 20,
+  q2: 0,
+  observed: { safe: true, collision: true },
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
@@ -126,6 +134,7 @@ describe("encodeLabState / decodeLabState — round-trip", () => {
     ["threshold-viewer", thresholdViewer],
     ["transform-order", transformOrder],
     ["dls-trace", dlsTrace],
+    ["cspace", cspace],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -258,6 +267,11 @@ describe("decodeLabState — biçim doğrulaması", () => {
     expect(decodeLabState(encodeLabState({ ...dlsTrace, damping: Number.NaN } as unknown as LabState)).ok).toBe(false);
     expect(decodeLabState(encodeLabState({ ...dlsTrace, step: 1.5 } as unknown as LabState)).ok).toBe(false);
     expect(decodeLabState(encodeLabState({ ...dlsTrace, solved: "evet" } as unknown as LabState)).ok).toBe(false);
+  });
+
+  it("cspace: q1/q2 tam sayı ve observed sınıfları boolean olmalıdır", () => {
+    expect(decodeLabState(encodeLabState({ ...cspace, q1: 2.5 } as unknown as LabState)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState({ ...cspace, observed: { safe: "evet", collision: true } } as unknown as LabState)).ok).toBe(false);
   });
 });
 
@@ -417,6 +431,15 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("dls-trace: çözülmüş iz görünümü geçerlidir", () => {
     expect(validateLabState(dlsTrace)).toEqual([]);
+  });
+
+  it("cspace: slider sınırı ve 5 derece adımı dışını reddeder", () => {
+    expect(validateLabState({ ...cspace, q1: 181 })).toContain("q1 -180 ile 180 arasında ve 5'in katı olmalı");
+    expect(validateLabState({ ...cspace, q2: 7 })).toContain("q2 -180 ile 180 arasında ve 5'in katı olmalı");
+  });
+
+  it("cspace: iki sınıfı taşıyan geçerli görünüm state'i kabul edilir", () => {
+    expect(validateLabState(cspace)).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

@@ -461,17 +461,37 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     },
   },
   {
-    id: "configuration-space-boundary-v1",
+    // v1 → v2: eski predicate yalnız iki configuration etiketini sayıyordu;
+    // result, motorun collides sınıfı, açı ızgarası, robot ve sabit engel imzası
+    // doğrulanmıyordu. Artık iki sınıf da aynı fiziksel deney sözleşmesine bağlı.
+    id: "configuration-space-boundary-v2",
     lessonId: "c-universite-c-space",
     skillId: "configuration-space",
     evaluate: (events) => {
-      const configurations = new Set(events
-        .filter((event) => event.skillId === "configuration-space" && event.stage === "observed")
-        .map((event) => event.metrics?.configuration)
-        .filter((configuration): configuration is string => typeof configuration === "string"));
+      const observations = events.filter((event) => {
+        const metrics = event.metrics;
+        if (
+          event.skillId !== "configuration-space" || event.stage !== "observed" || event.result !== "success" || !metrics ||
+          (metrics.configuration !== "safe" && metrics.configuration !== "collision") ||
+          typeof metrics.collides !== "boolean" ||
+          typeof metrics.q1 !== "number" || !Number.isSafeInteger(metrics.q1) ||
+          typeof metrics.q2 !== "number" || !Number.isSafeInteger(metrics.q2)
+        ) return false;
+        return metrics.configuration === (metrics.collides ? "collision" : "safe") &&
+          metrics.q1 >= -180 && metrics.q1 <= 180 && metrics.q1 % 5 === 0 &&
+          metrics.q2 >= -180 && metrics.q2 <= 180 && metrics.q2 % 5 === 0 &&
+          metrics.robotId === "generic-2dof" &&
+          metrics.obstacleX === 0.72 && metrics.obstacleY === 0.28 && metrics.obstacleRadius === 0.24;
+      });
+      const compared = observations.some((safe) => observations.some((collision) =>
+        safe !== collision &&
+        safe.metrics!.configuration === "safe" &&
+        collision.metrics!.configuration === "collision" &&
+        (safe.metrics!.q1 !== collision.metrics!.q1 || safe.metrics!.q2 !== collision.metrics!.q2),
+      ));
       return {
-        passed: configurations.has("safe") && configurations.has("collision") && hasSuccessfulAssessment(events, "configuration-space"),
-        metrics: { observedConfigurationClasses: configurations.size },
+        passed: compared && hasSuccessfulAssessment(events, "configuration-space"),
+        metrics: { observedConfigurationClasses: compared ? 2 : 0 },
       };
     },
   },

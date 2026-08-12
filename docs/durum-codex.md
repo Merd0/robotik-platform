@@ -1513,3 +1513,20 @@ güven verisini yanlış temel üzerine kurmasını engeller.
   bağlantısı, iki golden + üç negatif predicate testi); mevcut üç-viewport E2E
   aynı hedefte iki bandı, transfer başarısını ve iz paylaşımını kapsayacak şekilde
   genişletildi.
+
+### 2026-08-12 · CspaceLab (1 ders)
+
+- Bulgu: fiziksel temas `configurationCollides` ile doğru hesaplanıyor ve olay
+  yalnız açık `Bu konfigürasyonu kaydet` commit'inde yazılıyordu. Buna karşılık
+  `configuration-space-boundary-v1` yalnız `safe/collision` etiketlerini sayıyor;
+  olay sonucu, motorun `collides` sınıfı, açı ızgarası, robot ve engel imzası
+  doğrulanmıyordu.
+- Düzeltme: `configuration-space-boundary-v2` yalnız success olaylarını kabul
+  eder; sınıf etiketi fiziksel `collides` sonucuyla, açılar UI sınırı/5° adımıyla,
+  deney ise `generic-2dof` ve sabit dairesel engel imzasıyla uyuşmalıdır. Serbest
+  ve çarpışan kayıtlar farklı açılarda olmalı ve transfer de geçmelidir.
+  Bileşen+çarpışma/kinematik+robot spec manifesti ile açıları ve iki gözlem
+  bayrağını doğrulayan `cspace/v1` paylaşım state'i eklendi.
+- Test: 10 yeni kontrol (state round-trip/negatifleri, interaction/predicate
+  bağlantısı, predicate golden + üç negatif); mevcut üç-viewport E2E fiziksel
+  sınıf çifti, transfer, v2 başarı ve paylaşım geri yüklemeyle genişletildi.

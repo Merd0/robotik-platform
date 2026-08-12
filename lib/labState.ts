@@ -141,6 +141,14 @@ export interface DlsTraceLabState {
   step: number;
 }
 
+export interface CspaceLabState {
+  kind: "cspace";
+  version: 1;
+  q1: number;
+  q2: number;
+  observed: { safe: boolean; collision: boolean };
+}
+
 export type LabState =
   | JointSlidersLabState
   | PlannerRaceLabState
@@ -154,7 +162,8 @@ export type LabState =
   | BlockEditorLabState
   | ThresholdViewerLabState
   | TransformOrderLabState
-  | DlsTraceLabState;
+  | DlsTraceLabState
+  | CspaceLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -535,6 +544,29 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "cspace") {
+    if (record.version !== 1) return { ok: false, error: `cspace: desteklenmeyen sürüm ${String(record.version)}` };
+    if (
+      typeof record.q1 !== "number" || !Number.isSafeInteger(record.q1) ||
+      typeof record.q2 !== "number" || !Number.isSafeInteger(record.q2)
+    ) return { ok: false, error: "cspace: q1/q2 güvenli tam sayı olmalı" };
+    if (
+      typeof record.observed !== "object" || record.observed === null ||
+      typeof (record.observed as { safe?: unknown }).safe !== "boolean" ||
+      typeof (record.observed as { collision?: unknown }).collision !== "boolean"
+    ) return { ok: false, error: "cspace: observed safe/collision boolean olmalı" };
+    return {
+      ok: true,
+      state: {
+        kind: "cspace",
+        version: 1,
+        q1: record.q1,
+        q2: record.q2,
+        observed: record.observed as CspaceLabState["observed"],
+      },
+    };
+  }
+
   return { ok: false, error: `bilinmeyen laboratuvar türü: ${String(record.kind)}` };
 }
 
@@ -746,6 +778,15 @@ export function validateLabState(state: LabState): string[] {
     }
     if (state.step < 0 || state.step > 80) errors.push("step 0-80 arasında olmalı");
     if (!state.solved && state.step !== 0) errors.push("çalıştırılmamış state step 0 olmalı");
+    return errors;
+  }
+
+  if (state.kind === "cspace") {
+    for (const [name, angle] of [["q1", state.q1], ["q2", state.q2]] as const) {
+      if (angle < -180 || angle > 180 || angle % 5 !== 0) {
+        errors.push(`${name} -180 ile 180 arasında ve 5'in katı olmalı`);
+      }
+    }
     return errors;
   }
 

@@ -2,6 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
+import {
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
 import { configurationCollides, type CircleObstacle } from "@/lib/robotics/learningLabs";
 import { forwardKinematics } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
@@ -26,6 +31,12 @@ export function CspaceLab() {
   const [q1, setQ1] = useState(0);
   const [q2, setQ2] = useState(0);
   const [observed, setObserved] = useState({ safe: false, collision: false });
+
+  useSharedLabState("cspace", (shared) => {
+    setQ1(shared.q1);
+    setQ2(shared.q2);
+    setObserved(shared.observed);
+  });
   const angles = useMemo(() => [radians(q1), radians(q2)], [q1, q2]);
   const positions = useMemo(() => forwardKinematics(robot, angles).jointPositions, [angles]);
   const collides = useMemo(() => configurationCollides(robot, angles, obstacle), [angles]);
@@ -35,7 +46,21 @@ export function CspaceLab() {
   function observe() {
     const kind = collides ? "collision" : "safe";
     setObserved((current) => ({ ...current, [kind]: true }));
-    record({ skillId: "configuration-space", stage: "observed", result: "success", metrics: { configuration: kind, q1, q2 } });
+    record({
+      skillId: "configuration-space",
+      stage: "observed",
+      result: "success",
+      metrics: {
+        configuration: kind,
+        collides,
+        q1,
+        q2,
+        robotId: robot.id,
+        obstacleX: obstacle.x,
+        obstacleY: obstacle.y,
+        obstacleRadius: obstacle.radius,
+      },
+    });
   }
 
   return (
@@ -80,6 +105,16 @@ export function CspaceLab() {
         <p className={`text-sm font-semibold ${collides ? "text-red-700 dark:text-red-300" : "text-success-ink"}`} role="status">{collides ? "Çarpışma: bu nokta C-space'te yasak." : "Serbest: bu nokta geçerli bir konfigürasyon."}</p>
       </div>
       <p className="mt-2 text-xs text-universite-ink/65">Gözlem görevi: bir serbest ve bir çarpışan konfigürasyon kaydet. Serbest {observed.safe ? "✓" : "○"} · Çarpışan {observed.collision ? "✓" : "○"}</p>
+      <ExperimentShareButton
+        seviye="universite"
+        createShareUrl={() => createLabShareUrl({
+          kind: "cspace",
+          version: 1,
+          q1,
+          q2,
+          observed,
+        })}
+      />
     </section>
   );
 }

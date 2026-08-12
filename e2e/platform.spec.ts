@@ -407,7 +407,7 @@ test("DlsTraceLab aynı hedefte iki bandı kanıtlar ve iz state'ini paylaşır"
   expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
 });
 
-test("C-space pilotu fiziksel çarpışmayı açı uzayındaki yasak bölgeye bağlar", async ({ page }) => {
+test("CspaceLab fiziksel sınıf çiftini kanıtlar ve state'i paylaşır", async ({ page }) => {
   await page.goto("/ders/c-universite-c-space");
   await page.getByRole("button", { name: /Serbest örneğe git/ }).click();
   await expect(page.getByText(/Serbest: bu nokta/)).toBeVisible();
@@ -416,6 +416,22 @@ test("C-space pilotu fiziksel çarpışmayı açı uzayındaki yasak bölgeye ba
   await expect(page.getByText(/Çarpışma: bu nokta/)).toBeVisible();
   await page.getByRole("button", { name: "Bu konfigürasyonu kaydet" }).click();
   await expect(page.getByText(/Serbest ✓ · Çarpışan ✓/)).toBeVisible();
+
+  await page.getByRole("button", { name: /Altı; her dönel eklem/ }).click();
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { predicateId?: string; stage?: string }) =>
+    event.stage === "passed" && event.predicateId === "configuration-space-boundary-v2",
+  )).toBe(true);
+
+  await page.getByRole("button", { name: "Bu deneyi paylaş" }).click();
+  const href = await page.getByRole("link", { name: "Paylaşılan görünümü aç" }).getAttribute("href");
+  expect(href).not.toBeNull();
+  await page.goto(href!);
+  await expect(page.getByRole("slider").nth(0)).toHaveValue("20");
+  await expect(page.getByRole("slider").nth(1)).toHaveValue("0");
+  await expect(page.getByText(/Çarpışma: bu nokta/)).toBeVisible();
+  await expect(page.getByText(/Serbest ✓ · Çarpışan ✓/)).toBeVisible();
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
 });
 
 test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {

@@ -119,10 +119,16 @@ describe("controlled pilot predicates", () => {
   });
 
   it("requires a safe and colliding configuration plus transfer", () => {
-    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "configuration-space-boundary-v1")!;
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "configuration-space-boundary-v2")!;
     const events = [
-      pilotEvent(predicate.lessonId, predicate.skillId, "observed", { configuration: "safe" }),
-      pilotEvent(predicate.lessonId, predicate.skillId, "observed", { configuration: "collision" }),
+      pilotEvent(predicate.lessonId, predicate.skillId, "observed", {
+        configuration: "safe", collides: false, q1: 0, q2: 0, robotId: "generic-2dof",
+        obstacleX: 0.72, obstacleY: 0.28, obstacleRadius: 0.24,
+      }),
+      pilotEvent(predicate.lessonId, predicate.skillId, "observed", {
+        configuration: "collision", collides: true, q1: 20, q2: 0, robotId: "generic-2dof",
+        obstacleX: 0.72, obstacleY: 0.28, obstacleRadius: 0.24,
+      }),
       pilotEvent(predicate.lessonId, predicate.skillId, "assessed", {}),
     ];
     expect(predicate.evaluate(events).passed).toBe(true);
@@ -452,6 +458,78 @@ describe("DlsTraceLab rollout: golden + negatif predicate testleri", () => {
     expect(predicate.evaluate([
       observation("success", low),
       observation("success", damped),
+    ]).passed).toBe(false);
+  });
+});
+
+describe("CspaceLab rollout: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "configuration-space-boundary-v2")!;
+  const observation = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+  ) => event("observed", result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "cspace-v2",
+  });
+  const assessment = () => event("assessed", "success", {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    contentVersion: "cspace-v2",
+  });
+  const safe = {
+    configuration: "safe", collides: false, q1: 0, q2: 0, robotId: "generic-2dof",
+    obstacleX: 0.72, obstacleY: 0.28, obstacleRadius: 0.24,
+  };
+  const collision = {
+    configuration: "collision", collides: true, q1: 20, q2: 0, robotId: "generic-2dof",
+    obstacleX: 0.72, obstacleY: 0.28, obstacleRadius: 0.24,
+  };
+
+  it("golden: aynı deneyde motorla tutarlı serbest/çarpışan çift ve transfer geçer", () => {
+    expect(predicate.evaluate([
+      observation("success", safe),
+      observation("success", collision),
+      assessment(),
+    ]).passed).toBe(true);
+  });
+
+  it("negatif: configuration etiketi collides sonucuyla çelişirse geçmez", () => {
+    expect(predicate.evaluate([
+      observation("success", { ...safe, collides: true }),
+      observation("success", collision),
+      assessment(),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: başarısız olay, yanlış robot/engel veya grid dışı açı geçmez", () => {
+    expect(predicate.evaluate([
+      observation("retry", safe),
+      observation("success", collision),
+      assessment(),
+    ]).passed).toBe(false);
+    expect(predicate.evaluate([
+      observation("success", safe),
+      observation("success", { ...collision, robotId: "başka-robot" }),
+      assessment(),
+    ]).passed).toBe(false);
+    expect(predicate.evaluate([
+      observation("success", safe),
+      observation("success", { ...collision, q1: 21 }),
+      assessment(),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: iki sınıf aynı açıda veya transfer olmadan kaydedilirse geçmez", () => {
+    expect(predicate.evaluate([
+      observation("success", safe),
+      observation("success", { ...collision, q1: 0, q2: 0 }),
+      assessment(),
+    ]).passed).toBe(false);
+    expect(predicate.evaluate([
+      observation("success", safe),
+      observation("success", collision),
     ]).passed).toBe(false);
   });
 });

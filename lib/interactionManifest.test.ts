@@ -180,6 +180,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["DlsTraceLab"], ["generic-2dof"])).not.toThrow();
   });
 
+  it("CspaceLab bileşeni, çarpışma/kinematik motoru ve robot spec'ini interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.CspaceLab).toEqual({
+      componentFile: "components/interactive/CspaceLab.tsx",
+      engineFiles: ["lib/robotics/learningLabs.ts", "lib/robotics/kinematics.ts"],
+    });
+    expect(() => computeInteractionHash(["CspaceLab"], ["generic-2dof"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -258,6 +266,11 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
 
   it("DlsTraceLab dersini v2 sönümleme karşılaştırma predicate sürümüne bağlar", () => {
     expect(computePredicateHash("b-universite-ters-kinematik"))
+      .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
+  });
+
+  it("CspaceLab dersini v2 fiziksel sınır predicate sürümüne bağlar", () => {
+    expect(computePredicateHash("c-universite-c-space"))
       .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
   });
 });
