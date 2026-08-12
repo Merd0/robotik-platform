@@ -109,6 +109,15 @@ seç, ne olacağını gör. Ders yok, hedef yok, ölçüm yok.
 Bu sayfa muhtemelen sitenin en çok paylaşılan bağlantısı olacak. Öğrenciler
 buraya arkadaşlarını getirir, sonra derslere sızarlar.
 
+**Gerçekleşen V1 (2026-08-12):** `/oyun-alani` artık "Kendi Robotun" deney
+ortamı olarak çalışır. Kullanıcı 1–6 dönel eklemli düzlemsel bir robotun
+bağlantı uzunluklarını ve açı limitlerini tanımlar; aynı ekranda FK
+kaydırıcılarını, IK hedefini ve TCP izini dener. Son geçerli robot tanımı
+localStorage'da kalır ve sürümlü `labState` URL fragment'ıyla hesapsız
+paylaşılır. Bu sayfada ders ilerlemesi, puan veya başarı predicate'i yoktur.
+İlk paragraftaki engel yerleştirme ve planlayıcı seçimi daha geniş kum havuzu
+vizyonunun sonraki kapsamıdır; V1 bunları yapılmış gibi göstermez.
+
 ## Mikro-kazanç ilkesi
 
 Her ders, kullanıcının **yaptığı** bir şeyle bitmeli, okuduğu bir şeyle değil.

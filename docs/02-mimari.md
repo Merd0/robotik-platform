@@ -121,6 +121,22 @@ interface RobotSpec {
 
 Robot tanımları veri, kod değil. Yeni robot eklemek dosya eklemektir.
 
+`RobotSpec` yalnız depodaki sabit katalog robotlarıyla sınırlı değildir.
+`/oyun-alani`, kullanıcı girdisini önce saf `lib/robotics/customRobot.ts`
+doğrulayıcısından geçirir, sonra aynı sözleşmenin tarayıcıda üretilmiş bir
+örneğine dönüştürür. V1 kullanıcı robotu 1–6 düzlemsel, yalnız dönel eklemden
+oluşur; her eklem DH `a` uzunluğu ile radyan cinsine çevrilen mekanik limitleri
+taşır. Üretilen örnek katalog kayıt defterine eklenmez ve mevcut
+`generic-*` robotları değiştirmez; FK/IK hesapları doğrudan aynı `RobotSpec`
+üzerinden çalışır.
+
+Kullanıcı robotunun paylaşılabilir durumu `labState` içinde sürümlü
+`custom-robot` türüdür: doğrulanmış tanım, eklem duruşu ve IK hedefi URL
+fragment'ına kodlanabilir. Aynı kod yerel kalıcılıkta da kullanılır; böylece
+localStorage ve paylaşım için iki ayrı doğrulama yolu oluşmaz. Bu genişleme
+`RobotSpec` arayüzünü değiştirmez, sözleşmenin zaten izin verdiği kullanıcı
+tanımlı örnekleri devreye alır.
+
 ### 2. Planlayıcı arayüzü
 
 Mevcut Python `Planner` sözleşmesinin TypeScript karşılığı:

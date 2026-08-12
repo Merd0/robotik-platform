@@ -7,6 +7,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-8 text-sm text-site-muted sm:flex-row sm:items-center sm:justify-between">
         <p>Açık çekirdek · Hesapsız ilerleme · Veriler yalnızca bu tarayıcıda</p>
         <div className="flex flex-wrap items-center gap-4">
+          <Link href="/oyun-alani" className="min-h-11 py-3 underline underline-offset-4">Oyun alanı</Link>
           <Link href="/ogretmen" className="min-h-11 py-3 underline underline-offset-4">Öğretmen kaynağı</Link>
           <Link href="/sozluk" className="min-h-11 py-3 underline underline-offset-4">Sözlük</Link>
           <span title="Yayın sürümü">sürüm {build}</span>

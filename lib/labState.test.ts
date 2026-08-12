@@ -141,6 +141,20 @@ const fourLensTrace: LabState = {
   assessed: true,
 };
 
+const customRobot = {
+  kind: "custom-robot",
+  version: 1,
+  definition: {
+    name: "Öğretmen kolu",
+    joints: [
+      { type: "revolute", linkLength: 1, minDegrees: -120, maxDegrees: 120 },
+      { type: "revolute", linkLength: 0.7, minDegrees: -90, maxDegrees: 135 },
+    ],
+  },
+  jointAngles: [0.2, -0.3],
+  target: { x: 0.8, y: 0.5 },
+} as unknown as LabState;
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
@@ -159,6 +173,7 @@ describe("encodeLabState / decodeLabState — round-trip", () => {
     ["cspace", cspace],
     ["robot-selection", robotSelection],
     ["four-lens-trace", fourLensTrace],
+    ["custom-robot", customRobot],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -308,6 +323,17 @@ describe("decodeLabState — biçim doğrulaması", () => {
     expect(decodeLabState(encodeLabState({ ...fourLensTrace, activeLens: "hayali" } as unknown as LabState)).ok).toBe(false);
     expect(decodeLabState(encodeLabState({ ...fourLensTrace, prediction: "aynı" } as unknown as LabState)).ok).toBe(false);
     expect(decodeLabState(encodeLabState({ ...fourLensTrace, sampleIndex: 1.5 } as unknown as LabState)).ok).toBe(false);
+  });
+
+  it("custom-robot: bozuk eklem alanlarını URL'den kabul etmez", () => {
+    const encoded = encodeLabState({
+      ...(customRobot as object),
+      definition: {
+        name: "Bozuk kol",
+        joints: [{ type: "revolute", linkLength: "uzun", minDegrees: -90, maxDegrees: 90 }],
+      },
+    } as unknown as LabState);
+    expect(decodeLabState(encoded).ok).toBe(false);
   });
 });
 
@@ -501,6 +527,27 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("four-lens-trace: son örnekteki değerlendirilmiş görünüm geçerlidir", () => {
     expect(validateLabState(fourLensTrace)).toEqual([]);
+  });
+
+  it("custom-robot: geçerli kullanıcı robotunu ve deney durumunu kabul eder", () => {
+    expect(validateLabState(customRobot)).toEqual([]);
+  });
+
+  it("custom-robot: fiziksel olarak geçersiz uzunluk ve limit dışı açıyı reddeder", () => {
+    const state = customRobot as unknown as {
+      definition: { name: string; joints: Array<{ type: string; linkLength: number; minDegrees: number; maxDegrees: number }> };
+      jointAngles: number[];
+    };
+    const invalidLength = {
+      ...state,
+      definition: { ...state.definition, joints: [{ ...state.definition.joints[0], linkLength: 0 }] },
+      jointAngles: [0],
+    } as unknown as LabState;
+    const invalidAngle = { ...customRobot, jointAngles: [10, 0] } as unknown as LabState;
+
+    expect(validateLabState(invalidLength).some((error) => error.includes("0,05"))).toBe(true);
+    expect(validateLabState(invalidAngle).some((error) => error.includes("limit dışında"))).toBe(true);
+    expect(decodeLabState(encodeLabState(invalidLength)).ok).toBe(false);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

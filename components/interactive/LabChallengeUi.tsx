@@ -160,11 +160,17 @@ export function ExperimentShareButton({
   createShareUrl,
   disabled = false,
   disabledReason,
+  buttonLabel = "Bu deneyi paylaş",
+  linkLabel = "Paylaşılan görünümü aç",
+  idleDescription = "Bağlantı yalnız bu sahnenin durumunu taşır; hesap veya ad içermez.",
 }: {
   seviye: Seviye;
   createShareUrl: () => string | null;
   disabled?: boolean;
   disabledReason?: string;
+  buttonLabel?: string;
+  linkLabel?: string;
+  idleDescription?: string;
 }) {
   const [status, setStatus] = useState<"idle" | "copying" | "copied" | "error">("idle");
   const [sharedUrl, setSharedUrl] = useState<string | null>(null);
@@ -191,7 +197,7 @@ export function ExperimentShareButton({
         disabled={disabled || status === "copying"}
         className={`min-h-11 rounded-xl border px-4 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45 ${theme.border} ${theme.surface} ${theme.ink}`}
       >
-        {status === "copying" ? "Bağlantı hazırlanıyor…" : "Bu deneyi paylaş"}
+        {status === "copying" ? "Bağlantı hazırlanıyor…" : buttonLabel}
       </button>
       <p className={`text-xs ${theme.muted}`} role="status" aria-live="polite">
         {disabled && disabledReason
@@ -200,11 +206,11 @@ export function ExperimentShareButton({
             ? "Bağlantı panoya kopyalandı."
           : status === "error"
             ? "Pano kullanılamadı; tarayıcı izinlerini kontrol et."
-            : "Bağlantı yalnız bu sahnenin durumunu taşır; hesap veya ad içermez."}
+            : idleDescription}
       </p>
       {sharedUrl && (
         <a href={sharedUrl} className={`inline-flex min-h-11 items-center text-xs font-semibold underline underline-offset-4 ${theme.accent}`}>
-          Paylaşılan görünümü aç
+          {linkLabel}
         </a>
       )}
     </div>
@@ -230,19 +236,32 @@ export function createLabShareUrl(state: LabState): string {
 export function useSharedLabState<Kind extends LabState["kind"]>(
   kind: Kind,
   restore: (state: LabStateFor<Kind>) => void,
+  onError?: (error: string) => void,
 ) {
   const restoreRef = useRef(restore);
+  const errorRef = useRef(onError);
 
   useEffect(() => {
     restoreRef.current = restore;
   }, [restore]);
 
   useEffect(() => {
+    errorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
     function restoreFromFragment() {
       const encoded = new URLSearchParams(window.location.hash.slice(1)).get("lab");
       if (!encoded) return;
       const decoded = decodeLabState(encoded);
-      if (!decoded.ok || decoded.state.kind !== kind) return;
+      if (!decoded.ok) {
+        errorRef.current?.(`Paylaşım bağlantısı açılamadı: ${decoded.error}`);
+        return;
+      }
+      if (decoded.state.kind !== kind) {
+        errorRef.current?.("Paylaşım bağlantısı bu deney alanına ait değil.");
+        return;
+      }
       restoreRef.current(decoded.state as LabStateFor<Kind>);
     }
 

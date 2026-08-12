@@ -3,6 +3,7 @@ import { PLANNER_IDS, type PlannerId } from "./robotics/planners";
 import type { Obstacle } from "./robotics/collision";
 import type { Elbow, RobotSpec } from "./robotics/kinematics";
 import type { IkSolverMode } from "./robotics/ikSolver";
+import { createCustomRobotSpec, type CustomRobotDefinition } from "./robotics/customRobot";
 import { MAX_SCAN_ROWS, MIN_SCAN_ROWS, SCAN_PATH_COLUMNS } from "./scanPath";
 import type { Block } from "./robotics/blockProgram";
 import { evaluateTask, ROBOT_TASKS, withLayoutChange, type TaskSpec } from "./robotSelection";
@@ -172,6 +173,15 @@ export interface FourLensTraceLabState {
   assessed: boolean;
 }
 
+export interface CustomRobotLabState {
+  kind: "custom-robot";
+  version: 1;
+  definition: CustomRobotDefinition;
+  /** Radyan cinsinden, tanımdaki eklem sırasıyla. */
+  jointAngles: number[];
+  target: { x: number; y: number };
+}
+
 export type LabState =
   | JointSlidersLabState
   | PlannerRaceLabState
@@ -188,7 +198,8 @@ export type LabState =
   | DlsTraceLabState
   | CspaceLabState
   | RobotSelectionLabState
-  | FourLensTraceLabState;
+  | FourLensTraceLabState
+  | CustomRobotLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -250,6 +261,30 @@ function isPoint2(value: unknown): value is { x: number; y: number } {
 
 function isPoint3(value: unknown): value is { x: number; y: number; z: number } {
   return isPoint2(value) && isFiniteNumber((value as { z?: unknown }).z);
+}
+
+function parseCustomRobotDefinitionShape(value: unknown): CustomRobotDefinition | null {
+  if (typeof value !== "object" || value === null) return null;
+  const record = value as Record<string, unknown>;
+  if (typeof record.name !== "string" || !Array.isArray(record.joints)) return null;
+  const joints: CustomRobotDefinition["joints"] = [];
+  for (const valueJoint of record.joints) {
+    if (typeof valueJoint !== "object" || valueJoint === null) return null;
+    const joint = valueJoint as Record<string, unknown>;
+    if (
+      joint.type !== "revolute" ||
+      !isFiniteNumber(joint.linkLength) ||
+      !isFiniteNumber(joint.minDegrees) ||
+      !isFiniteNumber(joint.maxDegrees)
+    ) return null;
+    joints.push({
+      type: "revolute",
+      linkLength: joint.linkLength,
+      minDegrees: joint.minDegrees,
+      maxDegrees: joint.maxDegrees,
+    });
+  }
+  return { name: record.name, joints };
 }
 
 const BLOCK_TYPES: readonly Block["type"][] = ["move", "repeat", "if"];
@@ -620,6 +655,26 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "custom-robot") {
+    if (record.version !== 1) return { ok: false, error: `custom-robot: desteklenmeyen sürüm ${String(record.version)}` };
+    const definition = parseCustomRobotDefinitionShape(record.definition);
+    if (!definition) return { ok: false, error: "custom-robot: robot tanımı biçimsel olarak geçersiz" };
+    if (!Array.isArray(record.jointAngles) || !record.jointAngles.every(isFiniteNumber)) {
+      return { ok: false, error: "custom-robot: jointAngles sonlu sayı dizisi olmalı" };
+    }
+    if (!isPoint2(record.target)) return { ok: false, error: "custom-robot: target sonlu (x,y) olmalı" };
+    return {
+      ok: true,
+      state: {
+        kind: "custom-robot",
+        version: 1,
+        definition,
+        jointAngles: record.jointAngles,
+        target: record.target,
+      },
+    };
+  }
+
   if (record.kind === "robot-selection") {
     if (record.version !== 1) return { ok: false, error: `robot-selection: desteklenmeyen sürüm ${String(record.version)}` };
     if (record.taskId !== "electronics" && record.taskId !== "shared-assembly" && record.taskId !== "intralogistics") {
@@ -884,6 +939,27 @@ export function validateLabState(state: LabState): string[] {
     }
     if (state.running && state.prediction === null) errors.push("çalışan state bir prediction gerektirir");
     if (state.assessed && state.sampleIndex !== 3) errors.push("değerlendirilmiş state son örnekte olmalı");
+    return errors;
+  }
+
+  if (state.kind === "custom-robot") {
+    const result = createCustomRobotSpec(state.definition);
+    if (!result.ok) return result.issues.map((issue) => issue.message);
+    const robot = result.robot;
+    if (state.jointAngles.length !== robot.joints.length) {
+      errors.push(`jointAngles uzunluğu (${state.jointAngles.length}) robotun eklem sayısıyla (${robot.joints.length}) eşleşmiyor`);
+      return errors;
+    }
+    robot.joints.forEach((joint, index) => {
+      const angle = state.jointAngles[index];
+      if (!Number.isFinite(angle) || angle < joint.limits.min || angle > joint.limits.max) {
+        errors.push(`J${index + 1} değeri (${angle}) limit dışında [${joint.limits.min}, ${joint.limits.max}]`);
+      }
+    });
+    const reach = robot.joints.reduce((sum, joint) => sum + joint.dhParams.a, 0);
+    if (Math.abs(state.target.x) > reach || Math.abs(state.target.y) > reach) {
+      errors.push(`hedef koordinatları ±${reach} m deney alanının dışında`);
+    }
     return errors;
   }
 
