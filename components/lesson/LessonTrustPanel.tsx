@@ -7,11 +7,11 @@ function kaynakGoster(kaynak: string | SourceRef) {
     const label = [kaynak.publisher, kaynak.title, kaynak.version].filter(Boolean).join(" · ");
     const detail = kaynak.accessedAt ? ` (erişim: ${kaynak.accessedAt})` : "";
     if (!kaynak.url) return `${label}${detail}`;
-    return <a href={kaynak.url} rel="noreferrer" target="_blank" className="underline decoration-site-border underline-offset-4 hover:text-site-accent-text">{label}{detail}</a>;
+    return <a href={kaynak.url} rel="noreferrer" target="_blank" className="break-words underline decoration-site-border underline-offset-4 hover:text-site-accent-text">{label}{detail}</a>;
   }
   const url = kaynak.match(/https?:\/\/[^\s)]+/)?.[0];
   if (!url) return kaynak;
-  return <a href={url} rel="noreferrer" target="_blank" className="underline decoration-site-border underline-offset-4 hover:text-site-accent-text">{kaynak}</a>;
+  return <a href={url} rel="noreferrer" target="_blank" className="break-words underline decoration-site-border underline-offset-4 hover:text-site-accent-text">{kaynak}</a>;
 }
 
 export function LessonTrustPanel({ lesson }: { lesson: Lesson }) {
@@ -19,7 +19,7 @@ export function LessonTrustPanel({ lesson }: { lesson: Lesson }) {
   const reviewStatus = getLessonReviewStatus(lesson);
   const verified = reviewStatus.state === "verified";
   return (
-    <aside className="lab-panel p-5 lg:sticky lg:top-24" aria-labelledby="guven-paneli-baslik">
+    <aside className="min-w-0 lab-panel p-5 lg:sticky lg:top-24" aria-labelledby="guven-paneli-baslik">
       <p className="text-xs font-semibold uppercase tracking-[.16em] text-site-accent-text">Ders kimliği</p>
       <h2 id="guven-paneli-baslik" className="mt-2 font-heading text-lg font-semibold">Ne öğreneceksin, neye dayanıyor?</h2>
       <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">

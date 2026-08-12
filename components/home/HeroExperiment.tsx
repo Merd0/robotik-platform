@@ -168,7 +168,16 @@ export function HeroExperiment() {
             )}
           </p>
 
-          <fieldset className="mt-3">
+          {/*
+            mt-2 (mt-3 değil): ilk viewport sınırı e2e'de ölçülüyor
+            (hero ilk anlamlı kontrolü testi) ve CI'ın Linux runner'ında
+            gövde yazı tipi metrikleri Windows'tan farklı sıra dışı
+            piksel kesirleri üretiyor (2026-08-12, Linux'ta 844.515625 >
+            844 — yarım pikselden az bir taşma). CSS'in bunu kesin sıfıra
+            indirmesi mümkün değil (yazı tipi rasterlemesi platforma
+            göre değişir); bu yüzden gerçek bir pay bırakıldı.
+          */}
+          <fieldset className="mt-2">
             <legend className="text-sm font-semibold text-poster-ink">Komutu sonuna kadar çekersen ne olur?</legend>
             <div className="mt-2 grid grid-cols-2 gap-2">
               {([["durur", "Sınırda durur"], ["devam", "Dirsek devralır"]] as const).map(([value, label]) => (
