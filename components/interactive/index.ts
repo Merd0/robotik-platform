@@ -17,19 +17,21 @@ import { DlsTraceLab } from "./DlsTraceLab";
 import { CspaceLab } from "./CspaceLab";
 import { RobotSelectionTable } from "./RobotSelectionTable";
 import { FourLensTraceLab } from "./FourLensTraceLab";
+import { AccessiblePre } from "@/components/lesson/AccessiblePre";
 import type { IZINLI_BILESEN_ADLARI } from "@/lib/izinliBilesenler";
 
 /**
- * MDX'e açılan bileşenlerin TEK listesi. Bir ders dosyası burada olmayan bir
- * bileşeni kullanamaz — bkz. CLAUDE.md "içerikte sadece önceden tanımlı
- * components/interactive/ bileşenleri kullanılır".
+ * MDX kaynağında açıkça kullanılabilen etkileşimli bileşenlerin TEK listesi.
+ * Bir ders dosyası burada olmayan bir etkileşimli bileşeni kullanamaz — bkz.
+ * CLAUDE.md "içerikte sadece önceden tanımlı components/interactive/
+ * bileşenleri kullanılır".
  *
  * Tip, adları `lib/izinliBilesenler.ts`'ten alıyor: o liste MDX güvenlik
- * denetiminin (lib/mdxGuvenlik.ts) de kaynağı. Böylece bir bileşen ekleyip
- * listeye yazmamak (ya da tersi) DERLEME hatası veriyor — denetim sessizce
- * eskiyemiyor.
+ * denetiminin (lib/mdxGuvenlik.ts) de kaynağı. Yerel Markdown öğeleri için
+ * kullanılan `pre` eşlemesi bu kaynak allowlist'ine dahil değildir; MDX
+ * derleyicisinin zaten ürettiği öğeye erişilebilir davranış kazandırır.
  */
-export const mdxComponents = {
+const interactiveComponents = {
   JointSliders,
   IkTarget,
   JacobianViz,
@@ -53,3 +55,8 @@ export const mdxComponents = {
   // zamanında zorlar, ama değer tiplerini geniştetmez (compileMDX bileşen
   // tiplerini görmeye devam eder).
 } satisfies Record<(typeof IZINLI_BILESEN_ADLARI)[number], unknown>;
+
+export const mdxComponents = {
+  ...interactiveComponents,
+  pre: AccessiblePre,
+};

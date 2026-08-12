@@ -1,18 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { EMPTY_EVIDENCE, getEvidenceEvents, subscribeEvidence } from "@/lib/evidence";
 import { getContinueState, type ContinueLesson, type ContinueRoute } from "@/lib/continueLearning";
 
-export function ContinueLearning({
-  lessons,
-  routes,
-}: {
-  lessons: readonly ContinueLesson[];
-  routes: readonly ContinueRoute[];
-}) {
+/**
+ * Rota adımlarındaki (routes prop'u, ~9 ders) dersler her zaman bilinir —
+ * fetch tamamlanmadan önce "son yer" o adımlardan biriyse panel yine de
+ * doğru gösterilir. Kaydın son olayı rota dışı bir dersteyse (89 dersin
+ * geri kalanı), tam çözümleme yalnız `/devam-index.json` indikten sonra
+ * mümkün olur — bkz. scripts/build-continue-index.ts.
+ */
+function routeLessons(routes: readonly ContinueRoute[]): ContinueLesson[] {
+  return routes.flatMap((route) => route.steps);
+}
+
+export function ContinueLearning({ routes }: { routes: readonly ContinueRoute[] }) {
   const events = useSyncExternalStore(subscribeEvidence, getEvidenceEvents, () => EMPTY_EVIDENCE);
+  const [devamIndeksi, setDevamIndeksi] = useState<readonly ContinueLesson[] | null>(null);
+  const istendi = useRef(false);
+
+  // Kaydı olmayan (ilk kez gelen) ziyaretçi hiçbir zaman bu dosyayı indirmez —
+  // aşağıdaki koşul olmadan her ana sayfa yüklemesinde 89 dersin tamamı inerdi,
+  // tam da app/page.tsx'teki eski prop mimarisinin ürettiği israfı geri getirirdi.
+  useEffect(() => {
+    if (events.length === 0 || istendi.current) return;
+    istendi.current = true;
+    fetch("/devam-index.json")
+      .then((yanit) => (yanit.ok ? (yanit.json() as Promise<ContinueLesson[]>) : Promise.reject(yanit.status)))
+      .then((data) => setDevamIndeksi(data))
+      .catch(() => setDevamIndeksi([]));
+  }, [events.length]);
+
+  const lessons = devamIndeksi ?? routeLessons(routes);
   const state = getContinueState(events, lessons, routes);
   if (!state) return null;
 

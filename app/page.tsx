@@ -29,17 +29,27 @@ export default function HomePage() {
   const tracks = [...new Set(publishedLessons.map((lesson) => lesson.frontmatter.hat))];
   const interactiveCount = publishedLessons.filter((lesson) => lesson.frontmatter.etkilesimli.length > 0).length;
   const sourceCount = publishedLessons.reduce((toplam, lesson) => toplam + lesson.frontmatter.kaynaklar.length, 0);
-  const continueLessons = publishedLessons.map((lesson) => ({
-    slug: lesson.slug,
-    baslik: lesson.frontmatter.baslik,
-    seviye: lesson.frontmatter.seviye,
-    seviyeEtiketi: SEVIYE_ETIKET[lesson.frontmatter.seviye],
-  }));
-  const continueBySlug = new Map(continueLessons.map((lesson) => [lesson.slug, lesson]));
+  // Yalnız rota adımlarının (3 seviye × 3 ders) çözümlemesi için — 89 dersin
+  // tamamını istemci bileşenine prop olarak geçirmiyoruz. "Kaldığın yerden
+  // devam et" panelinin rota dışı bir dersi çözmesi gerekirse
+  // (kullanıcının son kaydı 9 rota dersinden biri değilse), bu veriyi
+  // ContinueLearning bileşeni /devam-index.json'dan tembel yükler
+  // (bkz. scripts/build-continue-index.ts, components/home/ContinueLearning.tsx).
+  const continueLessonBySlug = new Map(
+    publishedLessons.map((lesson) => [
+      lesson.slug,
+      {
+        slug: lesson.slug,
+        baslik: lesson.frontmatter.baslik,
+        seviye: lesson.frontmatter.seviye,
+        seviyeEtiketi: SEVIYE_ETIKET[lesson.frontmatter.seviye],
+      },
+    ]),
+  );
   const continueRoutes = SEVIYELER.map(({ seviye }) => ({
     seviye,
     steps: CURATED_START_ROUTES[seviye].map((slug) => {
-      const lesson = continueBySlug.get(slug);
+      const lesson = continueLessonBySlug.get(slug);
       if (!lesson) throw new Error(`Başlangıç rotasındaki ders yayımlı değil: ${slug}`);
       return lesson;
     }),
@@ -58,7 +68,7 @@ export default function HomePage() {
       <div className="mx-auto flex max-w-7xl flex-col gap-16 px-4 py-8 sm:px-6 sm:py-12 lg:gap-24">
         <HeroExperiment />
 
-        <ContinueLearning lessons={continueLessons} routes={continueRoutes} />
+        <ContinueLearning routes={continueRoutes} />
 
         <section aria-labelledby="seviye-baslik" className="space-y-7">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
