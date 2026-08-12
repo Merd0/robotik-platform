@@ -12,6 +12,7 @@ export function SiteHeader() {
         <nav aria-label="Ana menü" className="flex items-center gap-1 text-sm">
           <Link href="/ara" className="inline-flex min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft">Ara</Link>
           <Link href="/sozluk" className="hidden min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft sm:inline-flex">Sözlük</Link>
+          <Link href="/ogretmen" className="hidden min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft sm:inline-flex">Öğretmen</Link>
           <Link href="/laboratuvar/robot-hucresi" className="inline-flex min-h-11 items-center rounded-lg bg-site-soft px-3 font-medium text-site-accent-text hover:bg-site-border">Canlı lab</Link>
           <ThemeToggle />
         </nav>
