@@ -101,6 +101,16 @@ const transformOrder: LabState = {
   revealed: true,
 };
 
+const dlsTrace: LabState = {
+  kind: "dls-trace",
+  version: 1,
+  targetX: 1.15,
+  targetY: 0.65,
+  damping: 0.02,
+  solved: true,
+  step: 3,
+};
+
 describe("encodeLabState / decodeLabState — round-trip", () => {
   it.each([
     ["joint-sliders", jointSliders],
@@ -115,6 +125,7 @@ describe("encodeLabState / decodeLabState — round-trip", () => {
     ["block-editor", blockEditor],
     ["threshold-viewer", thresholdViewer],
     ["transform-order", transformOrder],
+    ["dls-trace", dlsTrace],
   ] as const)("%s: encode sonra decode aynı state'i verir", (_label, state) => {
     const encoded = encodeLabState(state);
     const result = decodeLabState(encoded);
@@ -241,6 +252,12 @@ describe("decodeLabState — biçim doğrulaması", () => {
     expect(decodeLabState(encodeLabState({ ...transformOrder, order: "ters" } as unknown as LabState)).ok).toBe(false);
     expect(decodeLabState(encodeLabState({ ...transformOrder, prediction: "z" } as unknown as LabState)).ok).toBe(false);
     expect(decodeLabState(encodeLabState({ ...transformOrder, angleDegrees: 91.5 } as unknown as LabState)).ok).toBe(false);
+  });
+
+  it("dls-trace: hedef/damping sonlu sayı, step tam sayı ve solved boolean olmalıdır", () => {
+    expect(decodeLabState(encodeLabState({ ...dlsTrace, damping: Number.NaN } as unknown as LabState)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState({ ...dlsTrace, step: 1.5 } as unknown as LabState)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState({ ...dlsTrace, solved: "evet" } as unknown as LabState)).ok).toBe(false);
   });
 });
 
@@ -390,6 +407,16 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
 
   it("transform-order: doğrulanmış karşılaştırma görünümü geçerlidir", () => {
     expect(validateLabState(transformOrder)).toEqual([]);
+  });
+
+  it("dls-trace: slider sınırı/adımı dışını ve çalıştırılmamış izi reddeder", () => {
+    expect(validateLabState({ ...dlsTrace, targetX: 1.17 })).toContain("targetX 0.2-1.7 arasında ve 0.05 adımında olmalı");
+    expect(validateLabState({ ...dlsTrace, damping: 0.021 })).toContain("damping 0.005-0.2 arasında ve 0.005 adımında olmalı");
+    expect(validateLabState({ ...dlsTrace, solved: false })).toContain("çalıştırılmamış state step 0 olmalı");
+  });
+
+  it("dls-trace: çözülmüş iz görünümü geçerlidir", () => {
+    expect(validateLabState(dlsTrace)).toEqual([]);
   });
 
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {

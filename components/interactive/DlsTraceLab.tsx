@@ -2,6 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
+import {
+  createLabShareUrl,
+  ExperimentShareButton,
+  useSharedLabState,
+} from "@/components/interactive/LabChallengeUi";
 import { forwardKinematics, inverseKinematicsNumerical, type NumericalIkResult } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
 
@@ -28,6 +33,20 @@ export function DlsTraceLab() {
   const [result, setResult] = useState<NumericalIkResult | null>(null);
   const [step, setStep] = useState(0);
 
+  useSharedLabState("dls-trace", (shared) => {
+    const restoredTarget = { x: shared.targetX, y: shared.targetY };
+    setTarget(restoredTarget);
+    setDamping(shared.damping);
+    if (shared.solved) {
+      const restoredResult = solve(restoredTarget, shared.damping);
+      setResult(restoredResult);
+      setStep(Math.min(shared.step, Math.max(0, restoredResult.trace.length - 1)));
+    } else {
+      setResult(null);
+      setStep(0);
+    }
+  });
+
   const iteration = result?.trace[Math.min(step, Math.max(0, result.trace.length - 1))];
   const positions = useMemo(
     () => forwardKinematics(robot, iteration?.angles ?? [-0.55, 1.1]).jointPositions,
@@ -49,7 +68,17 @@ export function DlsTraceLab() {
       skillId: "dls-convergence",
       stage: "observed",
       result: next.converged ? "success" : "retry",
-      metrics: { dampingBand, damping, iterations: next.iterations, finalError: Number(round(next.finalError)) },
+      metrics: {
+        dampingBand,
+        damping,
+        targetX: target.x,
+        targetY: target.y,
+        converged: next.converged,
+        iterations: next.iterations,
+        traceLength: next.trace.length,
+        initialError: Number(round(next.trace[0]?.errorNorm ?? next.finalError)),
+        finalError: Number(round(next.finalError)),
+      },
     });
   }
 
@@ -96,6 +125,19 @@ export function DlsTraceLab() {
           <table className="mt-2 w-full"><thead><tr><th className="text-left">Eklem</th><th className="text-right">Açı</th></tr></thead><tbody>{iteration?.angles.map((angle, index) => <tr key={index}><td>θ{index + 1}</td><td className="text-right font-mono">{round(toDegrees(angle), 2)}°</td></tr>)}</tbody></table>
         </div>
       </div>}
+
+      <ExperimentShareButton
+        seviye="universite"
+        createShareUrl={() => createLabShareUrl({
+          kind: "dls-trace",
+          version: 1,
+          targetX: target.x,
+          targetY: target.y,
+          damping,
+          solved: result !== null,
+          step,
+        })}
+      />
     </section>
   );
 }

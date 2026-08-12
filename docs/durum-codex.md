@@ -1495,3 +1495,21 @@ güven verisini yanlış temel üzerine kurmasını engeller.
   bağlantısı ve predicate golden + üç negatif); mevcut üç-viewport E2E senaryosu
   paylaşım geri yükleme, gerçek Pyodide kod değerlendirmesi ve v2 başarı kaydıyla
   genişletildi.
+
+### 2026-08-12 · DlsTraceLab (1 ders)
+
+- Bulgu: bileşen yalnız `80 adıma kadar çöz` commit'inde olay yazıyordu; her
+  karede kayıt yoktu ve motor yakınsama sonucunu doğru üretiyordu. Ancak
+  `dls-damping-comparison-v1` yalnız iki serbest metin bant etiketini sayıyor;
+  farklı hedefler, λ ile çelişen etiketler, eksik iz ve `converged/result`
+  çelişkisi de transfer yanıtıyla birlikte yanlışlıkla başarı olabiliyordu.
+- Düzeltme: `dls-damping-comparison-v2`, aynı hedefte düşük ve sönümlü iki
+  tamamlanmış koşu ister; λ-bandı, iterasyon/iz uzunluğu ve yakınsama-sonuç
+  ilişkisini doğrular. Dersin açık talebine uygun olarak, 80 adımlık tam izi
+  `retry` olarak dürüstçe kaydedilen yakınsamama da karşılaştırma gözlemidir.
+  Bileşen+sayısal IK+`generic-2dof` spec manifesti ile hedef/λ/çözüm/iz adımını
+  doğrulayıp deterministik olarak yeniden kuran `dls-trace/v1` state'i eklendi.
+- Test: 11 yeni kontrol (state round-trip/negatifleri, interaction/predicate
+  bağlantısı, iki golden + üç negatif predicate testi); mevcut üç-viewport E2E
+  aynı hedefte iki bandı, transfer başarısını ve iz paylaşımını kapsayacak şekilde
+  genişletildi.

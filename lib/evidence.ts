@@ -419,17 +419,44 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     },
   },
   {
-    id: "dls-damping-comparison-v1",
+    // v1 → v2: eski predicate yalnız iki elle yazılan bant etiketini sayıyordu;
+    // farklı hedefler, damping ile uyuşmayan etiketler veya converged/result
+    // çelişkisi de karşılaştırma sayılabiliyordu. Yakınsamayan tamamlanmış koşu
+    // hâlâ geçerli gözlemdir, fakat sayısal iz ve retry sonucu tutarlı olmalıdır.
+    id: "dls-damping-comparison-v2",
     lessonId: "b-universite-ters-kinematik",
     skillId: "dls-convergence",
     evaluate: (events) => {
-      const bands = new Set(events
-        .filter((event) => event.skillId === "dls-convergence" && event.stage === "observed")
-        .map((event) => event.metrics?.dampingBand)
-        .filter((band): band is string => typeof band === "string"));
+      const completed = events.filter((event) => {
+        const metrics = event.metrics;
+        if (
+          event.skillId !== "dls-convergence" || event.stage !== "observed" || !metrics ||
+          typeof metrics.damping !== "number" ||
+          typeof metrics.targetX !== "number" || typeof metrics.targetY !== "number" ||
+          typeof metrics.converged !== "boolean" ||
+          typeof metrics.iterations !== "number" || !Number.isSafeInteger(metrics.iterations) ||
+          typeof metrics.traceLength !== "number" || !Number.isSafeInteger(metrics.traceLength) ||
+          typeof metrics.initialError !== "number" || metrics.initialError < 0 ||
+          typeof metrics.finalError !== "number" || metrics.finalError < 0
+        ) return false;
+        const expectedBand = metrics.damping <= 0.02 ? "dusuk" : metrics.damping >= 0.08 ? "sonumlu" : "orta";
+        const expectedResult = metrics.converged ? "success" : "retry";
+        const expectedTraceLength = metrics.converged ? metrics.iterations + 1 : metrics.iterations;
+        return metrics.dampingBand === expectedBand &&
+          event.result === expectedResult &&
+          metrics.iterations >= 0 && metrics.iterations <= 80 &&
+          metrics.traceLength === expectedTraceLength && metrics.traceLength > 0;
+      });
+      const compared = completed.some((low) => completed.some((damped) =>
+        low !== damped &&
+        low.metrics!.dampingBand === "dusuk" &&
+        damped.metrics!.dampingBand === "sonumlu" &&
+        low.metrics!.targetX === damped.metrics!.targetX &&
+        low.metrics!.targetY === damped.metrics!.targetY,
+      ));
       return {
-        passed: bands.has("dusuk") && bands.has("sonumlu") && hasSuccessfulAssessment(events, "dls-convergence"),
-        metrics: { comparedDampingBands: bands.size },
+        passed: compared && hasSuccessfulAssessment(events, "dls-convergence"),
+        metrics: { comparedDampingBands: compared ? 2 : 0 },
       };
     },
   },

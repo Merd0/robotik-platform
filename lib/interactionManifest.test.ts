@@ -172,6 +172,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["TransformOrderLab"])).not.toThrow();
   });
 
+  it("DlsTraceLab bileşeni, sayısal IK motoru ve robot spec'ini interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.DlsTraceLab).toEqual({
+      componentFile: "components/interactive/DlsTraceLab.tsx",
+      engineFiles: ["lib/robotics/kinematics.ts"],
+    });
+    expect(() => computeInteractionHash(["DlsTraceLab"], ["generic-2dof"])).not.toThrow();
+  });
+
   it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
     expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
   });
@@ -245,6 +253,11 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
 
   it("TransformOrderLab dersini v2 karşılaştırma predicate sürümüne bağlar", () => {
     expect(computePredicateHash("a-universite-homojen-donusum"))
+      .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
+  });
+
+  it("DlsTraceLab dersini v2 sönümleme karşılaştırma predicate sürümüne bağlar", () => {
+    expect(computePredicateHash("b-universite-ters-kinematik"))
       .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
   });
 });

@@ -103,10 +103,16 @@ describe("controlled pilot predicates", () => {
   });
 
   it("requires low and damped DLS runs plus transfer", () => {
-    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "dls-damping-comparison-v1")!;
+    const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "dls-damping-comparison-v2")!;
     const events = [
-      pilotEvent(predicate.lessonId, predicate.skillId, "observed", { dampingBand: "dusuk" }),
-      pilotEvent(predicate.lessonId, predicate.skillId, "observed", { dampingBand: "sonumlu" }),
+      pilotEvent(predicate.lessonId, predicate.skillId, "observed", {
+        dampingBand: "dusuk", damping: 0.02, targetX: 1.15, targetY: 0.65,
+        converged: true, iterations: 12, traceLength: 13, initialError: 0.8, finalError: 0.0005,
+      }),
+      pilotEvent(predicate.lessonId, predicate.skillId, "observed", {
+        dampingBand: "sonumlu", damping: 0.08, targetX: 1.15, targetY: 0.65,
+        converged: true, iterations: 20, traceLength: 21, initialError: 0.8, finalError: 0.0007,
+      }),
       pilotEvent(predicate.lessonId, predicate.skillId, "assessed", {}),
     ];
     expect(predicate.evaluate(events).passed).toBe(true);
@@ -371,6 +377,81 @@ describe("TransformOrderLab rollout: golden + negatif predicate testleri", () =>
     expect(predicate.evaluate([
       observation("success", translated),
       observation("success", rotated),
+    ]).passed).toBe(false);
+  });
+});
+
+describe("DlsTraceLab rollout: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "dls-damping-comparison-v2")!;
+  const observation = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+  ) => event("observed", result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "dls-trace-v2",
+  });
+  const assessment = () => event("assessed", "success", {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    contentVersion: "dls-trace-v2",
+  });
+  const low = {
+    dampingBand: "dusuk", damping: 0.02, targetX: 1.15, targetY: 0.65,
+    converged: true, iterations: 12, traceLength: 13, initialError: 0.8, finalError: 0.0005,
+  };
+  const damped = {
+    dampingBand: "sonumlu", damping: 0.08, targetX: 1.15, targetY: 0.65,
+    converged: true, iterations: 20, traceLength: 21, initialError: 0.8, finalError: 0.0007,
+  };
+
+  it("golden: aynı hedefte iki tutarlı, tamamlanmış bant koşusu ve transfer geçer", () => {
+    expect(predicate.evaluate([
+      observation("success", low),
+      observation("success", damped),
+      assessment(),
+    ]).passed).toBe(true);
+  });
+
+  it("golden: yakınsamayan koşu retry ve 80 adımlık tam izle dürüstçe kaydedilmişse karşılaştırılabilir", () => {
+    expect(predicate.evaluate([
+      observation("retry", { ...low, converged: false, iterations: 80, traceLength: 80, finalError: 0.2 }),
+      observation("success", damped),
+      assessment(),
+    ]).passed).toBe(true);
+  });
+
+  it("negatif: converged=false koşu success diye işaretlenirse geçmez", () => {
+    expect(predicate.evaluate([
+      observation("success", { ...low, converged: false, iterations: 80, traceLength: 80, finalError: 0.2 }),
+      observation("success", damped),
+      assessment(),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: etiket damping değeriyle uyuşmazsa veya iz uzunluğu eksikse geçmez", () => {
+    expect(predicate.evaluate([
+      observation("success", { ...low, damping: 0.08 }),
+      observation("success", damped),
+      assessment(),
+    ]).passed).toBe(false);
+    expect(predicate.evaluate([
+      observation("success", low),
+      observation("success", { ...damped, traceLength: 20 }),
+      assessment(),
+    ]).passed).toBe(false);
+  });
+
+  it("negatif: farklı hedeflerdeki koşular veya transfersiz çift geçmez", () => {
+    expect(predicate.evaluate([
+      observation("success", low),
+      observation("success", { ...damped, targetX: 1.1 }),
+      assessment(),
+    ]).passed).toBe(false);
+    expect(predicate.evaluate([
+      observation("success", low),
+      observation("success", damped),
     ]).passed).toBe(false);
   });
 });

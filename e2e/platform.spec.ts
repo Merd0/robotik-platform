@@ -377,12 +377,34 @@ test("TransformOrderLab iki gerçek sonucu kanıtlar ve state'i paylaşır", asy
   expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
 });
 
-test("DLS pilotu gerçek yineleme izini ve hata eğrisini gösterir", async ({ page }) => {
+test("DlsTraceLab aynı hedefte iki bandı kanıtlar ve iz state'ini paylaşır", async ({ page }) => {
   await page.goto("/ders/b-universite-ters-kinematik");
-  await page.getByRole("button", { name: "80 adıma kadar çöz" }).click();
+  const damping = page.getByRole("slider", { name: /Sönümleme λ/ });
+  const solve = page.getByRole("button", { name: "80 adıma kadar çöz" });
+
+  await expect(damping).toHaveValue("0.08");
+  await solve.click();
+  await expect(page.getByText(/Yakınsadı · \d+ iterasyon/)).toBeVisible();
+  await damping.fill("0.02");
+  await solve.click();
   await expect(page.getByText(/Yakınsadı · \d+ iterasyon/)).toBeVisible();
   await expect(page.getByRole("img", { name: "DLS hata normunun iterasyonlara göre azalışı" })).toBeVisible();
   await expect(page.getByRole("slider", { name: /İz adımı/ })).toBeVisible();
+
+  await page.getByRole("button", { name: /Eklem güncellemeleri daha fazla bastırılır/ }).click();
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { predicateId?: string; stage?: string }) =>
+    event.stage === "passed" && event.predicateId === "dls-damping-comparison-v2",
+  )).toBe(true);
+
+  await page.getByRole("button", { name: "Bu deneyi paylaş" }).click();
+  const href = await page.getByRole("link", { name: "Paylaşılan görünümü aç" }).getAttribute("href");
+  expect(href).not.toBeNull();
+  await page.goto(href!);
+  await expect(page.getByRole("slider", { name: /Sönümleme λ/ })).toHaveValue("0.02");
+  await expect(page.getByText(/Yakınsadı · \d+ iterasyon/)).toBeVisible();
+  await expect(page.getByRole("img", { name: "DLS hata normunun iterasyonlara göre azalışı" })).toBeVisible();
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
 });
 
 test("C-space pilotu fiziksel çarpışmayı açı uzayındaki yasak bölgeye bağlar", async ({ page }) => {

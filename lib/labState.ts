@@ -131,6 +131,16 @@ export interface TransformOrderLabState {
   revealed: boolean;
 }
 
+export interface DlsTraceLabState {
+  kind: "dls-trace";
+  version: 1;
+  targetX: number;
+  targetY: number;
+  damping: number;
+  solved: boolean;
+  step: number;
+}
+
 export type LabState =
   | JointSlidersLabState
   | PlannerRaceLabState
@@ -143,7 +153,8 @@ export type LabState =
   | ScanPathLabState
   | BlockEditorLabState
   | ThresholdViewerLabState
-  | TransformOrderLabState;
+  | TransformOrderLabState
+  | DlsTraceLabState;
 
 export type LabStateDecodeResult = { ok: true; state: LabState } | { ok: false; error: string };
 
@@ -501,6 +512,29 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
     };
   }
 
+  if (record.kind === "dls-trace") {
+    if (record.version !== 1) return { ok: false, error: `dls-trace: desteklenmeyen sürüm ${String(record.version)}` };
+    if (!isFiniteNumber(record.targetX) || !isFiniteNumber(record.targetY) || !isFiniteNumber(record.damping)) {
+      return { ok: false, error: "dls-trace: hedef ve damping sonlu sayı olmalı" };
+    }
+    if (typeof record.solved !== "boolean") return { ok: false, error: "dls-trace: solved boolean olmalı" };
+    if (typeof record.step !== "number" || !Number.isSafeInteger(record.step)) {
+      return { ok: false, error: "dls-trace: step güvenli tam sayı olmalı" };
+    }
+    return {
+      ok: true,
+      state: {
+        kind: "dls-trace",
+        version: 1,
+        targetX: record.targetX,
+        targetY: record.targetY,
+        damping: record.damping,
+        solved: record.solved,
+        step: record.step,
+      },
+    };
+  }
+
   return { ok: false, error: `bilinmeyen laboratuvar türü: ${String(record.kind)}` };
 }
 
@@ -696,6 +730,22 @@ export function validateLabState(state: LabState): string[] {
       errors.push("angleDegrees 0-180 arasında ve 15'in katı olmalı");
     }
     if (state.revealed && state.prediction === null) errors.push("revealed state bir prediction gerektirir");
+    return errors;
+  }
+
+  if (state.kind === "dls-trace") {
+    const isGridStep = (value: number, scale: number) => Math.abs(value * scale - Math.round(value * scale)) < 1e-8;
+    if (state.targetX < 0.2 || state.targetX > 1.7 || !isGridStep(state.targetX, 20)) {
+      errors.push("targetX 0.2-1.7 arasında ve 0.05 adımında olmalı");
+    }
+    if (state.targetY < -1.4 || state.targetY > 1.4 || !isGridStep(state.targetY, 20)) {
+      errors.push("targetY -1.4-1.4 arasında ve 0.05 adımında olmalı");
+    }
+    if (state.damping < 0.005 || state.damping > 0.2 || !isGridStep(state.damping, 200)) {
+      errors.push("damping 0.005-0.2 arasında ve 0.005 adımında olmalı");
+    }
+    if (state.step < 0 || state.step > 80) errors.push("step 0-80 arasında olmalı");
+    if (!state.solved && state.step !== 0) errors.push("çalıştırılmamış state step 0 olmalı");
     return errors;
   }
 
