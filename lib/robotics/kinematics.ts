@@ -260,6 +260,16 @@ export interface NumericalIkIteration {
   angles: number[];
 }
 
+function projectRevoluteAngleToLimits(angle: number, min: number, max: number): number {
+  const normalized = normalizeAngle(angle);
+  const twoPi = 2 * Math.PI;
+  const equivalentInside = [normalized, normalized - twoPi, normalized + twoPi]
+    .filter((candidate) => candidate >= min && candidate <= max)
+    .sort((first, second) => Math.abs(first - angle) - Math.abs(second - angle))[0];
+  if (equivalentInside !== undefined) return equivalentInside;
+  return Math.min(max, Math.max(min, normalized));
+}
+
 /**
  * Sönümlü en küçük kareler (damped least squares) ile sayısal ters kinematik.
  * dtheta = J^T (J J^T + lambda^2 I)^-1 * hata. Tekillik yakınında da kararlı
@@ -275,7 +285,15 @@ export function inverseKinematicsNumerical(
   const tolerance = options.tolerance ?? 1e-4;
   const damping = options.damping ?? 0.05;
 
-  let angles = options.initialGuess ? [...options.initialGuess] : robot.joints.map(() => 0.1);
+  const projectToLimits = (angle: number, index: number) => {
+    const joint = robot.joints[index];
+    if (joint.type === "revolute") {
+      return projectRevoluteAngleToLimits(angle, joint.limits.min, joint.limits.max);
+    }
+    return Math.min(joint.limits.max, Math.max(joint.limits.min, angle));
+  };
+  let angles = (options.initialGuess ? [...options.initialGuess] : robot.joints.map(() => 0.1))
+    .map(projectToLimits);
   const trace: NumericalIkIteration[] = [];
 
   for (let iteration = 0; iteration < maxIterations; iteration++) {
@@ -301,10 +319,7 @@ export function inverseKinematicsNumerical(
     const maxStep = options.maxStep ?? 0.3;
     const scale = dthetaNorm > maxStep ? maxStep / dthetaNorm : 1;
 
-    angles = angles.map((angle, i) => {
-      const next = angle + dtheta[i] * scale;
-      return robot.joints[i].type === "revolute" ? normalizeAngle(next) : next;
-    });
+    angles = angles.map((angle, i) => projectToLimits(angle + dtheta[i] * scale, i));
   }
 
   const finalPosition = forwardKinematics(robot, angles).endEffector;

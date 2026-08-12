@@ -137,6 +137,23 @@ localStorage ve paylaşım için iki ayrı doğrulama yolu oluşmaz. Bu genişle
 `RobotSpec` arayüzünü değiştirmez, sözleşmenin zaten izin verdiği kullanıcı
 tanımlı örnekleri devreye alır.
 
+`custom-robot` v1 durumu geriye uyumlu, isteğe bağlı bir öğretim programı da
+taşıyabilir: en fazla 32 eklem pozu ve `0.05–1.0` hız ölçeği. Eski bağlantılarda
+bu alan yoksa boş program olarak açılır. `lib/robotics/customRobotMotion.ts`,
+her pozu bağımsız eklem limitleri ve düzlemsel bağlantı merkez çizgilerinin
+öz-kesişimi açısından denetler; pozlar arasındaki hareketi sıfır uç-hızlı kübik
+profille zamanlar ve süreyi `JointSpec.maxVelocity` aşılmayacak şekilde uzatır.
+Ara yol en fazla 2° eklem adımıyla tekrar denetlenmeden oynatılmaz; URL'den
+açılan program da oyun alanında aynı provayı yeniden geçer. Sayısal IK başlangıç
+tahminini ve her DLS iterasyonunu mekanik limitlere izdüşürür; çözücü limit
+dışından geçip yalnız son noktada kontrol yapamaz.
+
+Bu bir **kinematik dijital prova**, tam rijit-cisim dinamiği değildir. V1;
+tork, yerçekimi, yük, ivme/jerk, denetleyici gecikmesi, bağlantı kalınlığı,
+motor gövdesi, kablo kaynaklı bağlı limitler ve çevre çarpışmasını modellemez.
+Dolayısıyla öğretilen yol gerçek robot komutu olarak dışa aktarılmaz; bu sınır
+arayüzde de deneyin hemen yanında görünür.
+
 ### 2. Planlayıcı arayüzü
 
 Mevcut Python `Planner` sözleşmesinin TypeScript karşılığı:

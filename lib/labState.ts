@@ -8,6 +8,8 @@ import { MAX_SCAN_ROWS, MIN_SCAN_ROWS, SCAN_PATH_COLUMNS } from "./scanPath";
 import type { Block } from "./robotics/blockProgram";
 import { evaluateTask, ROBOT_TASKS, withLayoutChange, type TaskSpec } from "./robotSelection";
 
+const CUSTOM_ROBOT_MAX_SHARED_WAYPOINTS = 32;
+
 /**
  * Sprint 2 "Kanıt Dikey Dilimi" — sürümlü, paylaşılabilir laboratuvar state'i.
  *
@@ -180,6 +182,11 @@ export interface CustomRobotLabState {
   /** Radyan cinsinden, tanımdaki eklem sırasıyla. */
   jointAngles: number[];
   target: { x: number; y: number };
+  /** İsteğe bağlı teach-by-demonstration programı; eski v1 bağlantılarıyla geriye uyumludur. */
+  program?: {
+    waypoints: number[][];
+    speedScale: number;
+  };
 }
 
 export type LabState =
@@ -663,6 +670,26 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
       return { ok: false, error: "custom-robot: jointAngles sonlu sayı dizisi olmalı" };
     }
     if (!isPoint2(record.target)) return { ok: false, error: "custom-robot: target sonlu (x,y) olmalı" };
+    let program: CustomRobotLabState["program"];
+    if (record.program !== undefined) {
+      if (typeof record.program !== "object" || record.program === null) {
+        return { ok: false, error: "custom-robot: program bir obje olmalı" };
+      }
+      const rawProgram = record.program as Record<string, unknown>;
+      if (
+        !Array.isArray(rawProgram.waypoints) ||
+        !rawProgram.waypoints.every(
+          (waypoint) => Array.isArray(waypoint) && waypoint.every(isFiniteNumber),
+        ) ||
+        !isFiniteNumber(rawProgram.speedScale)
+      ) {
+        return { ok: false, error: "custom-robot: program yolu sonlu açı dizilerinden oluşmalı" };
+      }
+      program = {
+        waypoints: rawProgram.waypoints.map((waypoint) => [...waypoint]),
+        speedScale: rawProgram.speedScale,
+      };
+    }
     return {
       ok: true,
       state: {
@@ -671,6 +698,7 @@ function parseStateShape(value: unknown): LabStateDecodeResult {
         definition,
         jointAngles: record.jointAngles,
         target: record.target,
+        ...(program ? { program } : {}),
       },
     };
   }
@@ -959,6 +987,26 @@ export function validateLabState(state: LabState): string[] {
     const reach = robot.joints.reduce((sum, joint) => sum + joint.dhParams.a, 0);
     if (Math.abs(state.target.x) > reach || Math.abs(state.target.y) > reach) {
       errors.push(`hedef koordinatları ±${reach} m deney alanının dışında`);
+    }
+    if (state.program) {
+      if (state.program.waypoints.length > CUSTOM_ROBOT_MAX_SHARED_WAYPOINTS) {
+        errors.push(`öğretilmiş yol en fazla ${CUSTOM_ROBOT_MAX_SHARED_WAYPOINTS} poz içerebilir`);
+      }
+      if (state.program.speedScale < 0.05 || state.program.speedScale > 1) {
+        errors.push("program hızı %5 ile %100 arasında olmalı");
+      }
+      state.program.waypoints.forEach((waypoint, waypointIndex) => {
+        if (waypoint.length !== robot.joints.length) {
+          errors.push(`öğretilmiş poz ${waypointIndex + 1}: eklem sayısı robotla eşleşmiyor`);
+          return;
+        }
+        waypoint.forEach((angle, jointIndex) => {
+          const joint = robot.joints[jointIndex];
+          if (angle < joint.limits.min || angle > joint.limits.max) {
+            errors.push(`öğretilmiş poz ${waypointIndex + 1}: J${jointIndex + 1} eklem limiti dışında`);
+          }
+        });
+      });
     }
     return errors;
   }

@@ -550,6 +550,30 @@ describe("validateLabState — fiziksel doğrulama (biçim doğru, değer sahada
     expect(decodeLabState(encodeLabState(invalidLength)).ok).toBe(false);
   });
 
+  it("custom-robot: öğretilmiş yolu paylaşımda korur, bozuk programı reddeder", () => {
+    const withProgram = {
+      ...customRobot,
+      program: {
+        waypoints: [[0.2, -0.3], [0.35, -0.1]],
+        speedScale: 0.5,
+      },
+    } as unknown as LabState;
+    const decoded = decodeLabState(encodeLabState(withProgram));
+    expect(decoded).toEqual({ ok: true, state: withProgram });
+
+    const outsideLimits = {
+      ...withProgram,
+      program: { waypoints: [[0.2, -0.3], [10, 0]], speedScale: 0.5 },
+    } as unknown as LabState;
+    const tooManyWaypoints = {
+      ...withProgram,
+      program: { waypoints: Array.from({ length: 33 }, () => [0, 0]), speedScale: 0.5 },
+    } as unknown as LabState;
+
+    expect(decodeLabState(encodeLabState(outsideLimits)).ok).toBe(false);
+    expect(decodeLabState(encodeLabState(tooManyWaypoints)).ok).toBe(false);
+  });
+
   it("decodeLabState fiziksel olarak geçersiz ama biçimsel olarak doğru bir state'i de reddeder", () => {
     const encoded = encodeLabState({ ...jointSliders, jointAngles: [10, 0] });
     const result = decodeLabState(encoded);

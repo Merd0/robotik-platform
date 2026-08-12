@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createLabShareUrl,
   ExperimentShareButton,
@@ -18,10 +18,21 @@ import {
 } from "@/lib/robotics/customRobot";
 import { forwardKinematics, type RobotSpec } from "@/lib/robotics/kinematics";
 import { solveIkTarget } from "@/lib/robotics/ikSolver";
+import {
+  analyzeCustomRobotPose,
+  CUSTOM_ROBOT_MAX_WAYPOINTS,
+  planJointTrajectory,
+  sampleJointTrajectory,
+  sampleTrajectoryTcpPath,
+  type JointTrajectory,
+  type JointTrajectoryPlanResult,
+} from "@/lib/robotics/customRobotMotion";
 import { decodeLabState, encodeLabState, type CustomRobotLabState } from "@/lib/labState";
 
 const STORAGE_KEY = "robotik-platform:custom-robot:v1";
 const MAX_TRACE_POINTS = 160;
+const DEFAULT_PROGRAM_SPEED = 0.35;
+const MIN_RECORDED_ANGLE_DELTA = (2 * Math.PI) / 180;
 const DEFAULT_DEFINITION = createDefaultCustomRobotDefinition(2);
 
 function round(value: number, digits = 3) {
@@ -51,7 +62,40 @@ function stateFromDefinition(definition: CustomRobotDefinition): CustomRobotLabS
     definition: result.definition,
     jointAngles: homeAngles(result.robot),
     target: defaultTarget(result.robot),
+    program: { waypoints: [], speedScale: DEFAULT_PROGRAM_SPEED },
   };
+}
+
+function programOf(state: CustomRobotLabState) {
+  return state.program ?? { waypoints: [], speedScale: DEFAULT_PROGRAM_SPEED };
+}
+
+function describeRejectedPose(robot: RobotSpec, angles: number[]) {
+  const analysis = analyzeCustomRobotPose(robot, angles);
+  if (analysis.limitViolations.length > 0) {
+    const violation = analysis.limitViolations[0];
+    return `Hareket reddedildi · J${violation.jointIndex + 1} mekanik limitin dışına çıkıyor.`;
+  }
+  if (analysis.selfCollisionPairs.length > 0) {
+    const [first, second] = analysis.selfCollisionPairs[0];
+    return `Hareket reddedildi · idealize ön kontrolde L${first + 1} ile L${second + 1} kesişiyor.`;
+  }
+  return null;
+}
+
+function describeTrajectoryFailure(result: JointTrajectoryPlanResult) {
+  if (result.ok) return null;
+  if (result.reason === "not-enough-waypoints") return "Prova için en az iki farklı poz öğret.";
+  if (result.reason === "invalid-speed") return "Prova hızı %5 ile %100 arasında olmalı.";
+  if (result.reason === "joint-limit") {
+    const joint = result.analysis?.limitViolations[0];
+    return `Prova reddedildi · ${joint ? `J${joint.jointIndex + 1}` : "bir eklem"} mekanik limitin dışına çıkıyor.`;
+  }
+  if (result.reason === "self-collision") {
+    const pair = result.analysis?.selfCollisionPairs[0];
+    return `Prova reddedildi · ${pair ? `L${pair[0] + 1} ile L${pair[1] + 1}` : "bağlantılar"} ara harekette kesişiyor.`;
+  }
+  return "Prova reddedildi · programdaki eklem sayıları robotla eşleşmiyor.";
 }
 
 function tracePoint(robot: RobotSpec, angles: number[]) {
@@ -64,12 +108,21 @@ function PlanarRobotDiagram({
   angles,
   target,
   trace,
+  taughtPath,
+  taughtPoints,
+  guideEnabled,
+  onGuideTarget,
 }: {
   robot: RobotSpec;
   angles: number[];
   target: { x: number; y: number };
   trace: Array<{ x: number; y: number }>;
+  taughtPath: Array<{ x: number; y: number }>;
+  taughtPoints: Array<{ x: number; y: number }>;
+  guideEnabled: boolean;
+  onGuideTarget: (target: { x: number; y: number }) => void;
 }) {
+  const dragging = useRef(false);
   const { jointPositions, endEffector } = useMemo(
     () => forwardKinematics(robot, angles),
     [angles, robot],
@@ -83,15 +136,42 @@ function PlanarRobotDiagram({
     const scenePoint = toSvg(point);
     return `${index === 0 ? "M" : "L"} ${scenePoint.x} ${scenePoint.y}`;
   }).join(" ");
+  const taughtPathData = taughtPath.map((point, index) => {
+    const scenePoint = toSvg(point);
+    return `${index === 0 ? "M" : "L"} ${scenePoint.x} ${scenePoint.y}`;
+  }).join(" ");
+  const sceneTaughtPoints = taughtPoints.map(toSvg);
   const grid = Array.from({ length: 9 }, (_, index) => 32 + index * 42);
+
+  function guideFromPointer(event: React.PointerEvent<SVGSVGElement>) {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (bounds.width <= 0 || bounds.height <= 0) return;
+    const sceneX = ((event.clientX - bounds.left) / bounds.width) * 400;
+    const sceneY = ((event.clientY - bounds.top) / bounds.height) * 400;
+    onGuideTarget({ x: (sceneX - 200) / scale, y: (200 - sceneY) / scale });
+  }
 
   return (
     <div className="relative aspect-square min-h-72 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 shadow-inner">
       <svg
         viewBox="0 0 400 400"
-        className="h-full w-full"
+        className={`h-full w-full ${guideEnabled ? "cursor-crosshair touch-none" : ""}`}
         role="img"
         aria-label={`${robot.displayName}: ${robot.joints.length} dönel eklemli düzlemsel robot. Uç nokta x ${round(endEffector.x)} metre, y ${round(endEffector.y)} metre.`}
+        onPointerDown={(event) => {
+          if (!guideEnabled) return;
+          dragging.current = true;
+          event.currentTarget.setPointerCapture(event.pointerId);
+          guideFromPointer(event);
+        }}
+        onPointerMove={(event) => {
+          if (guideEnabled && dragging.current) guideFromPointer(event);
+        }}
+        onPointerUp={(event) => {
+          dragging.current = false;
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+        }}
+        onPointerCancel={() => { dragging.current = false; }}
       >
         <rect width="400" height="400" fill="#071217" />
         <g stroke="#17343d" strokeWidth="1">
@@ -116,6 +196,21 @@ function PlanarRobotDiagram({
             opacity="0.72"
           />
         )}
+
+        {taughtPathData && (
+          <path
+            d={taughtPathData}
+            fill="none"
+            stroke="#c084fc"
+            strokeWidth="3"
+            opacity="0.9"
+          />
+        )}
+        <g fill="#581c87" stroke="#e9d5ff" strokeWidth="2">
+          {sceneTaughtPoints.map((position, index) => (
+            <circle key={`taught-${index}`} cx={position.x} cy={position.y} r="5" />
+          ))}
+        </g>
 
         <g stroke="#b8d7df" strokeWidth="8" strokeLinecap="round">
           {sceneJoints.slice(0, -1).map((position, index) => (
@@ -150,6 +245,11 @@ function PlanarRobotDiagram({
       <p className="absolute bottom-3 left-4 font-mono text-[11px] font-semibold tracking-wide text-slate-300">
         TCP [{round(endEffector.x)}, {round(endEffector.y)}]
       </p>
+      {guideEnabled && (
+        <p className="pointer-events-none absolute right-3 top-3 rounded-full border border-teal-400/50 bg-slate-950/90 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-teal-200">
+          TCP yönlendirme açık
+        </p>
+      )}
     </div>
   );
 }
@@ -199,6 +299,10 @@ export function CustomRobotPlayground() {
   const [announcement, setAnnouncement] = useState("Varsayılan iki eksenli robot deneye hazır.");
   const [ikStatus, setIkStatus] = useState("IK henüz çalıştırılmadı; hedefi seçip “Hedefe çöz” düğmesini kullan.");
   const [shareNotice, setShareNotice] = useState<string | null>(null);
+  const [guideEnabled, setGuideEnabled] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [motionStatus, setMotionStatus] = useState("Öğretim programı boş; robotu konumlandırıp ilk pozu kaydet.");
+  const [playback, setPlayback] = useState<{ trajectory: JointTrajectory; startedAt: number } | null>(null);
 
   const robotResult = useMemo(() => createCustomRobotSpec(activeState.definition), [activeState.definition]);
   const robot = robotResult.ok
@@ -211,15 +315,54 @@ export function CustomRobotPlayground() {
     [activeState.jointAngles, robot],
   );
   const reach = robot.joints.reduce((sum, joint) => sum + joint.dhParams.a, 0);
+  const program = programOf(activeState);
+  const poseAnalysis = useMemo(
+    () => analyzeCustomRobotPose(robot, activeState.jointAngles),
+    [activeState.jointAngles, robot],
+  );
+  const trajectoryPlan = useMemo(
+    () => program.waypoints.length >= 2
+      ? planJointTrajectory(robot, program.waypoints, program.speedScale)
+      : null,
+    [program, robot],
+  );
+  const taughtPath = useMemo(
+    () => trajectoryPlan?.ok ? sampleTrajectoryTcpPath(robot, trajectoryPlan.trajectory) : [],
+    [robot, trajectoryPlan],
+  );
+  const taughtPoints = useMemo(
+    () => program.waypoints.map((angles) => {
+      const point = forwardKinematics(robot, angles).endEffector;
+      return { x: point.x, y: point.y };
+    }),
+    [program.waypoints, robot],
+  );
 
   function restoreState(state: CustomRobotLabState, source: "storage" | "share") {
     const result = createCustomRobotSpec(state.definition);
     if (!result.ok) return;
+    const restoredProgram = state.program ?? { waypoints: [], speedScale: DEFAULT_PROGRAM_SPEED };
+    const restoredPlan = restoredProgram.waypoints.length >= 2
+      ? planJointTrajectory(result.robot, restoredProgram.waypoints, restoredProgram.speedScale)
+      : null;
     setDraft(result.definition);
-    setActiveState({ ...state, definition: result.definition });
+    setActiveState({
+      ...state,
+      definition: result.definition,
+      program: restoredProgram,
+    });
     setIssues([]);
     setTrace([tracePoint(result.robot, state.jointAngles)]);
     setIkStatus("IK durumu yüklendi; hedefi değiştirebilir veya yeniden çözebilirsin.");
+    setMotionStatus(restoredPlan?.ok
+      ? `${restoredProgram.waypoints.length} öğretilmiş poz yüklendi; dijital provayı çalıştırabilirsin.`
+      : restoredPlan
+        ? describeTrajectoryFailure(restoredPlan) ?? "Öğretilmiş program yüklendi."
+        : restoredProgram.waypoints.length === 1
+          ? "Bir öğretilmiş poz yüklendi; prova için ikinci pozu öğret."
+          : "Öğretim programı boş; robotu konumlandırıp ilk pozu kaydet.");
+    setIsRecording(false);
+    setPlayback(null);
     if (source === "share") {
       setAnnouncement("Paylaşılan robot yüklendi ve bu tarayıcıya kaydedildi.");
       setShareNotice(null);
@@ -282,6 +425,25 @@ export function CustomRobotPlayground() {
     return () => window.clearTimeout(timer);
   }, [activeState, storageReady]);
 
+  useEffect(() => {
+    if (!playback) return;
+    let frame = 0;
+    const animate = (now: number) => {
+      const elapsed = (now - playback.startedAt) / 1_000;
+      const angles = sampleJointTrajectory(playback.trajectory, elapsed);
+      setActiveState((current) => ({ ...current, jointAngles: angles }));
+      if (elapsed >= playback.trajectory.totalDurationSeconds) {
+        setTrace((current) => [...current, tracePoint(robot, angles)].slice(-MAX_TRACE_POINTS));
+        setMotionStatus("Program tamamlandı · robot öğretilmiş yolun son pozunda.");
+        setPlayback(null);
+        return;
+      }
+      frame = window.requestAnimationFrame(animate);
+    };
+    frame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(frame);
+  }, [playback, robot]);
+
   function updateDof(nextDof: number) {
     const defaults = createDefaultCustomRobotDefinition(nextDof).joints;
     setDraft((current) => ({
@@ -312,16 +474,47 @@ export function CustomRobotPlayground() {
     setIssues([]);
     setTrace([tracePoint(result.robot, nextState.jointAngles)]);
     setIkStatus("IK henüz çalıştırılmadı; yeni robot için bir hedef seç.");
+    setMotionStatus("Yeni robot için öğretim programı temizlendi; ilk pozu kaydedebilirsin.");
+    setGuideEnabled(false);
+    setIsRecording(false);
+    setPlayback(null);
     setAnnouncement(storageAvailable === false
       ? "Robot uygulandı; yerel depolama kapalı olduğu için yalnız bu sekmede kalacak."
       : "Robot tarayıcıya kaydedildi.");
   }
 
+  function appendRecordedPose(currentProgram: ReturnType<typeof programOf>, angles: number[], force: boolean) {
+    const last = currentProgram.waypoints.at(-1);
+    const movedEnough = !last || Math.max(...angles.map((angle, index) => Math.abs(angle - last[index]))) >= MIN_RECORDED_ANGLE_DELTA;
+    if ((!force && !movedEnough) || (force && last && angles.every((angle, index) => Math.abs(angle - last[index]) < 1e-9))) {
+      return currentProgram;
+    }
+    if (currentProgram.waypoints.length >= CUSTOM_ROBOT_MAX_WAYPOINTS) return currentProgram;
+    return { ...currentProgram, waypoints: [...currentProgram.waypoints, [...angles]] };
+  }
+
+  function commitSafePose(angles: number[], status: string, target?: { x: number; y: number }) {
+    const rejection = describeRejectedPose(robot, angles);
+    if (rejection) {
+      setMotionStatus(rejection);
+      return false;
+    }
+    setActiveState((current) => {
+      const nextProgram = isRecording
+        ? appendRecordedPose(programOf(current), angles, false)
+        : programOf(current);
+      return { ...current, jointAngles: angles, ...(target ? { target } : {}), program: nextProgram };
+    });
+    setTrace((current) => [...current, tracePoint(robot, angles)].slice(-MAX_TRACE_POINTS));
+    setMotionStatus(isRecording ? `Yol kaydı sürüyor · en fazla ${CUSTOM_ROBOT_MAX_WAYPOINTS} ayırt edici poz saklanır.` : status);
+    return true;
+  }
+
   function setJointAngle(index: number, degrees: number) {
     const angles = activeState.jointAngles.map((angle, jointIndex) => jointIndex === index ? (degrees * Math.PI) / 180 : angle);
-    setActiveState((current) => ({ ...current, jointAngles: angles }));
-    setTrace((current) => [...current, tracePoint(robot, angles)].slice(-MAX_TRACE_POINTS));
-    setIkStatus("FK güncellendi; turkuaz çizgi TCP izini gösteriyor.");
+    if (commitSafePose(angles, "FK pozu geçerli · eklem limitleri ve idealize öz-çarpışma kontrol edildi.")) {
+      setIkStatus("FK güncellendi; turkuaz çizgi TCP izini gösteriyor.");
+    }
   }
 
   function setTarget(axis: "x" | "y", value: number) {
@@ -338,9 +531,98 @@ export function CustomRobotPlayground() {
       setIkStatus(`IK hedefe yakınsamadı · son hata ${Number.isFinite(solution.residual) ? round(solution.residual, 4) : "∞"} m. Hedefi veya eklem limitlerini değiştir.`);
       return;
     }
-    setActiveState((current) => ({ ...current, jointAngles: solution.angles! }));
-    setTrace((current) => [...current, tracePoint(robot, solution.angles!)].slice(-MAX_TRACE_POINTS));
-    setIkStatus(`IK çözümü bulundu · ${solution.solver === "analytical" ? "analitik" : "DLS"} · ${solution.iterations} iterasyon · hata ${round(solution.residual, 5)} m.`);
+    if (commitSafePose(solution.angles, "IK pozu fiziksel ön kontrolden geçti.")) {
+      setIkStatus(`IK çözümü bulundu · ${solution.solver === "analytical" ? "analitik" : "DLS"} · ${solution.iterations} iterasyon · hata ${round(solution.residual, 5)} m.`);
+    } else {
+      setIkStatus("IK matematiksel bir aday buldu ancak hareket öz-çarpışma ön kontrolünden geçmedi.");
+    }
+  }
+
+  function guideTcp(target: { x: number; y: number }) {
+    let solution = solveIkTarget(robot, target, "auto", "up", activeState.jointAngles);
+    if ((!solution.converged || !solution.angles || describeRejectedPose(robot, solution.angles)) && robot.joints.length === 2) {
+      solution = solveIkTarget(robot, target, "auto", "down", activeState.jointAngles);
+    }
+    if (!solution.converged || !solution.angles) {
+      setMotionStatus(`TCP bu noktaya yönlendirilemedi · son IK hatası ${Number.isFinite(solution.residual) ? round(solution.residual, 4) : "∞"} m.`);
+      return;
+    }
+    if (commitSafePose(solution.angles, "TCP elle yönlendirildi; poz ön kontrolden geçti.", target)) {
+      setIkStatus(`Canlı IK · ${solution.solver === "analytical" ? "analitik" : "DLS"} · hata ${round(solution.residual, 5)} m.`);
+    }
+  }
+
+  function teachCurrentPose() {
+    const nextProgram = appendRecordedPose(program, activeState.jointAngles, true);
+    if (nextProgram === program) {
+      setMotionStatus(program.waypoints.length >= CUSTOM_ROBOT_MAX_WAYPOINTS
+        ? `Program ${CUSTOM_ROBOT_MAX_WAYPOINTS} poz sınırında; önce yolu temizle.`
+        : "Bu poz zaten son öğretilmiş pozla aynı.");
+      return;
+    }
+    setActiveState((current) => ({ ...current, program: nextProgram }));
+    const plan = nextProgram.waypoints.length >= 2
+      ? planJointTrajectory(robot, nextProgram.waypoints, nextProgram.speedScale)
+      : null;
+    setMotionStatus(plan?.ok
+      ? `Prova hazır · ${nextProgram.waypoints.length} poz, ${round(plan.trajectory.totalDurationSeconds, 2)} saniyelik hız-sınırlı hareket.`
+      : plan
+        ? describeTrajectoryFailure(plan) ?? "Prova tamamlanamadı."
+        : "İlk poz öğretildi; robotu başka bir konuma getirip ikinci pozu kaydet.");
+  }
+
+  function toggleRecording() {
+    if (isRecording) {
+      setIsRecording(false);
+      const plan = program.waypoints.length >= 2
+        ? planJointTrajectory(robot, program.waypoints, program.speedScale)
+        : null;
+      setMotionStatus(plan?.ok
+        ? `Prova hazır · ${program.waypoints.length} poz ve ${plan.trajectory.checkedSamples} ara kontrol.`
+        : plan
+          ? describeTrajectoryFailure(plan) ?? "Kayıt bitti ancak prova tamamlanamadı."
+          : "Kayıt bitti; oynatma için en az iki farklı poz öğret.");
+      return;
+    }
+    const nextProgram = appendRecordedPose(program, activeState.jointAngles, true);
+    setActiveState((current) => ({ ...current, program: nextProgram }));
+    setIsRecording(true);
+    setPlayback(null);
+    setMotionStatus("Yol kaydı başladı · eklemleri veya TCP’yi hareket ettir; ayırt edici pozlar otomatik saklanacak.");
+  }
+
+  function updateProgramSpeed(speedScale: number) {
+    setActiveState((current) => ({ ...current, program: { ...programOf(current), speedScale } }));
+    const nextPlan = program.waypoints.length >= 2
+      ? planJointTrajectory(robot, program.waypoints, speedScale)
+      : null;
+    setMotionStatus(nextPlan?.ok
+      ? `Program hızı %${Math.round(speedScale * 100)}; prova RobotSpec hız limitine göre yeniden zamanlandı.`
+      : nextPlan
+        ? describeTrajectoryFailure(nextPlan) ?? "Program yeniden prova edilemedi."
+        : `Program hızı %${Math.round(speedScale * 100)}; süre iki poz öğretildiğinde hesaplanacak.`);
+  }
+
+  function playProgram() {
+    if (!trajectoryPlan?.ok) {
+      setMotionStatus("Program oynatılamadı · en az iki güvenli poz öğret ve dijital provayı geçir.");
+      return;
+    }
+    setIsRecording(false);
+    setGuideEnabled(false);
+    setActiveState((current) => ({
+      ...current,
+      jointAngles: [...trajectoryPlan.trajectory.segments[0].startAngles],
+    }));
+    setPlayback({ trajectory: trajectoryPlan.trajectory, startedAt: performance.now() });
+    setMotionStatus(`Program oynatılıyor · ${round(trajectoryPlan.trajectory.totalDurationSeconds, 2)} saniye.`);
+  }
+
+  function clearProgram() {
+    setPlayback(null);
+    setIsRecording(false);
+    setActiveState((current) => ({ ...current, program: { waypoints: [], speedScale: programOf(current).speedScale } }));
+    setMotionStatus("Öğretim programı temizlendi; robot geometrisi ve mevcut poz korunuyor.");
   }
 
   function resetExperiment() {
@@ -348,6 +630,10 @@ export function CustomRobotPlayground() {
     setActiveState(next);
     setTrace([tracePoint(robot, next.jointAngles)]);
     setIkStatus("Deney sıfırlandı; robot güvenli başlangıç duruşunda.");
+    setGuideEnabled(false);
+    setIsRecording(false);
+    setPlayback(null);
+    setMotionStatus("Deney ve öğretim programı sıfırlandı.");
   }
 
   const issueFor = (field: string) => issues.some((issue) => issue.field === field || (issue.field.endsWith(".limits") && field.startsWith(issue.field.slice(0, -"limits".length))));
@@ -476,6 +762,10 @@ export function CustomRobotPlayground() {
             <div>
               <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-site-accent-text">FK / IK / TCP izi</p>
               <h2 className="mt-2 font-heading text-3xl font-bold tracking-tight text-site-ink">{robot.displayName}</h2>
+              <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-site-muted">
+                <span aria-hidden="true" className={`h-2.5 w-2.5 rounded-full ${poseAnalysis.valid ? "bg-teal-600" : "bg-red-600"}`} />
+                {poseAnalysis.valid ? "Poz ön kontrolden geçti" : "Poz fiziksel ön kontrolden geçmedi"}
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-site-border bg-site-border text-center font-mono text-[10px] uppercase tracking-wider text-site-muted">
               <div className="bg-site-surface px-3 py-2"><strong className="block text-sm text-site-ink">{robot.joints.length}</strong>DOF</div>
@@ -485,7 +775,16 @@ export function CustomRobotPlayground() {
 
           <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(17rem,0.85fr)]">
             <div>
-              <PlanarRobotDiagram robot={robot} angles={activeState.jointAngles} target={activeState.target} trace={trace} />
+              <PlanarRobotDiagram
+                robot={robot}
+                angles={activeState.jointAngles}
+                target={activeState.target}
+                trace={trace}
+                taughtPath={taughtPath}
+                taughtPoints={taughtPoints}
+                guideEnabled={guideEnabled && !playback}
+                onGuideTarget={guideTcp}
+              />
               <p className="sr-only">
                 Robotun uç noktası x {round(endEffector.x)} metre, y {round(endEffector.y)} metre. Hedef x {round(activeState.target.x)} metre, y {round(activeState.target.y)} metre.
               </p>
@@ -541,6 +840,96 @@ export function CustomRobotPlayground() {
                 <p role="status" aria-live="polite" className="min-h-10 rounded-xl border border-site-border bg-site-soft p-3 text-xs leading-5 text-site-muted">{ikStatus}</p>
               </fieldset>
 
+              <section className="grid gap-4 border-t border-site-border pt-5" aria-labelledby="teach-motion-title">
+                <div>
+                  <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-poster-purple-text">Teach-by-demonstration</p>
+                  <h3 id="teach-motion-title" className="mt-1 font-heading text-2xl font-bold text-site-ink">Hareketi öğret</h3>
+                  <p className="mt-1 text-xs leading-5 text-site-muted">TCP’yi sahnede yönlendir veya eklem kaydırıcılarını kullan. Pozları kaydet; mor eğri noktaları düz bağlamaz, eklem uzayındaki hız-sınırlı hareketten doğan gerçek TCP yolunu gösterir.</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    aria-pressed={guideEnabled}
+                    disabled={Boolean(playback)}
+                    onClick={() => {
+                      setGuideEnabled((current) => !current);
+                      setMotionStatus(guideEnabled
+                        ? "TCP yönlendirme kapatıldı."
+                        : "TCP yönlendirme açık · sahneye dokunup sürükleyerek canlı IK çalıştır.");
+                    }}
+                    className="min-h-11 rounded-xl border border-site-border bg-site-surface px-3 text-xs font-bold text-site-ink hover:bg-site-soft disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {guideEnabled ? "Yönlendirmeyi kapat" : "TCP’yi elle yönlendir"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={teachCurrentPose}
+                    disabled={Boolean(playback)}
+                    className="min-h-11 rounded-xl bg-poster-purple px-3 text-xs font-bold text-poster-bg hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Bu pozu öğret
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={isRecording}
+                    onClick={toggleRecording}
+                    disabled={Boolean(playback)}
+                    className="min-h-11 rounded-xl border border-poster-purple/40 bg-poster-purple/10 px-3 text-xs font-bold text-poster-purple-text hover:bg-poster-purple/15 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isRecording ? "Kaydı bitir" : "Yolu kaydet"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearProgram}
+                    disabled={program.waypoints.length === 0}
+                    className="min-h-11 rounded-xl border border-site-border bg-site-surface px-3 text-xs font-bold text-site-ink hover:bg-site-soft disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Programı temizle
+                  </button>
+                </div>
+
+                <label className="grid gap-1 text-xs font-semibold text-site-muted">
+                  <span className="flex justify-between gap-3">
+                    <span>Prova hızı</span>
+                    <output className="font-mono text-site-ink">%{Math.round(program.speedScale * 100)}</output>
+                  </span>
+                  <input
+                    type="range"
+                    aria-label="Program hızı"
+                    value={program.speedScale}
+                    min="0.05"
+                    max="1"
+                    step="0.05"
+                    onChange={(event) => updateProgramSpeed(Number(event.currentTarget.value))}
+                    className="min-h-11 w-full accent-poster-purple"
+                  />
+                </label>
+
+                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-site-border bg-site-border font-mono text-[10px] text-site-muted">
+                  <p aria-label={`${program.waypoints.length} öğretilmiş poz`} className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{program.waypoints.length}</strong>öğretilmiş poz</p>
+                  <p className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{trajectoryPlan?.ok ? `${round(trajectoryPlan.trajectory.totalDurationSeconds, 2)} s` : "—"}</strong>zamanlı prova</p>
+                  <p className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{trajectoryPlan?.ok ? trajectoryPlan.trajectory.checkedSamples : "—"}</strong>ara kontrol</p>
+                  <p className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{trajectoryPlan?.ok ? `${round(trajectoryPlan.trajectory.tcpTravelMeters, 2)} m` : "—"}</strong>TCP yolu</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={playProgram}
+                  disabled={!trajectoryPlan?.ok || Boolean(playback)}
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-site-strong px-4 py-3 text-sm font-bold text-site-on-strong hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  {playback ? "Program oynatılıyor…" : "Programı oynat"}
+                </button>
+                <p role="status" aria-live="polite" className="min-h-12 rounded-xl border border-poster-purple/35 bg-poster-purple/10 p-3 text-xs leading-5 text-site-ink">{motionStatus}</p>
+              </section>
+
+              <aside className="rounded-2xl border border-warning-border bg-warning-surface p-4 text-warning-ink">
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em]">Gerçeklik kapsamı</p>
+                <p className="mt-2 text-xs font-bold">Kinematik, eklem limitleri, azami hız ve merkez çizgisi öz-çarpışması denetlenir.</p>
+                <p className="mt-1 text-xs leading-5">Tork, yerçekimi, yük, ivme/jerk sınırı ve denetleyici gecikmesi modellenmiyor. Bağlantı kalınlığı, motor gövdesi ve çevre engelleri de bu düzlemsel V1’in dışında; gerçek robota doğrudan komut üretmez.</p>
+              </aside>
+
               <div className="grid grid-cols-2 gap-3 border-t border-site-border pt-5">
                 <button type="button" onClick={() => setTrace([tracePoint(robot, activeState.jointAngles)])} className="min-h-11 rounded-xl border border-site-border bg-site-surface px-3 text-xs font-bold text-site-ink hover:bg-site-soft">İzi temizle</button>
                 <button type="button" onClick={resetExperiment} className="min-h-11 rounded-xl border border-site-border bg-site-surface px-3 text-xs font-bold text-site-ink hover:bg-site-soft">Deneyi sıfırla</button>
@@ -553,16 +942,17 @@ export function CustomRobotPlayground() {
             createShareUrl={() => createLabShareUrl(activeState)}
             buttonLabel="Bu robotu paylaş"
             linkLabel="Paylaşılan robotu aç"
-            idleDescription="Bağlantı son uygulanan geçerli RobotSpec'i, eklem duruşunu ve IK hedefini taşır; hesap gerektirmez."
+            idleDescription="Bağlantı geçerli RobotSpec'i, eklem duruşunu, IK hedefini ve öğretilmiş hareket programını taşır; hesap gerektirmez."
           />
         </section>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
           ["01 / Sınır", "1–6 DOF", "Bu aralık mobil kontrolleri okunur tutar ve mevcut tarayıcı motorunun doğrulanmış üst sınırıyla eşleşir."],
           ["02 / Model", "Revolute v1", "Her eklemde α, d ve θ ofseti sıfır; kullanıcı DH a uzunluğunu ve mekanik açı aralığını belirler."],
-          ["03 / Gizlilik", "Yerel + URL", "Robot yerel depoda kalır. Paylaşım verisi URL fragment'ındadır; sunucuya, hesaba veya izleyiciye gitmez."],
+          ["03 / Öğretim", "Göster ve prova et", "TCP’yi elle yönlendir, pozları kaydet; hız-sınırlı eklem hareketinin oluşturduğu TCP yolunu oynatmadan önce gör."],
+          ["04 / Gizlilik", "Yerel + URL", "Robot ve öğretilmiş program yerel depoda kalır. Paylaşım verisi URL fragment’ındadır; sunucuya gitmez."],
         ].map(([eyebrow, title, body]) => (
           <article key={eyebrow} className="rounded-2xl border border-site-border bg-site-surface p-5">
             <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-site-accent-text">{eyebrow}</p>

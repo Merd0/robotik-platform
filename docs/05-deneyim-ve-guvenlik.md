@@ -118,6 +118,20 @@ paylaşılır. Bu sayfada ders ilerlemesi, puan veya başarı predicate'i yoktur
 İlk paragraftaki engel yerleştirme ve planlayıcı seçimi daha geniş kum havuzu
 vizyonunun sonraki kapsamıdır; V1 bunları yapılmış gibi göstermez.
 
+**Hareket öğretme genişlemesi (2026-08-13):** Kullanıcı TCP'yi sahnede
+sürükleyerek canlı IK ile robota poz gösterebilir, tek tek poz öğretebilir veya
+hareket ederken ayırt edici pozları kaydedebilir. Sistem öğretilen yolu
+oynatmadan önce eklem limitleri, idealize merkez çizgisi öz-çarpışması ve
+`maxVelocity` açısından prova eder. Mor önizleme, öğretilmiş TCP noktalarını
+düz çizgiyle birleştirmez; kübik eklem-uzayı hareketinin gerçekten ürettiği TCP
+yoludur. Böylece kullanıcı “hangi noktaları öğrettim?” ile “robotun ucu arada
+nereden geçti?” farkını görür. Program yerel kayda ve paylaşım URL'sine dahildir.
+
+Bu genişleme tam fizik iddiasında bulunmaz. Tork, yerçekimi, yük, ivme/jerk,
+denetleyici gecikmesi, gerçek bağlantı kalınlığı, motor gövdesi ve çevre
+engelleri modellenmez; arayüz bunu sürekli görünür bir “Gerçeklik kapsamı”
+kutusunda söyler ve gerçek robota komut dışa aktarmaz.
+
 ## Mikro-kazanç ilkesi
 
 Her ders, kullanıcının **yaptığı** bir şeyle bitmeli, okuduğu bir şeyle değil.

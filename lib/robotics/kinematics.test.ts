@@ -144,4 +144,48 @@ describe("inverseKinematicsNumerical", () => {
     expect(result.converged).toBe(false);
     expect(result.angles).toBeNull();
   });
+
+  it("başlangıç tahmini ve bütün DLS iterasyonlarını mekanik eklem limitlerine izdüşürür", () => {
+    const limitedRobot = {
+      id: "limited-3dof",
+      displayName: "Limitli üç eksen",
+      joints: Array.from({ length: 3 }, () => ({
+        type: "revolute" as const,
+        dhParams: { a: 0.7, alpha: 0, d: 0, theta: 0 },
+        limits: { min: -0.25, max: 0.25 },
+        maxVelocity: 1,
+      })),
+    };
+    const result = inverseKinematicsNumerical(
+      limitedRobot,
+      { x: 1.4, y: 1.4, z: 0 },
+      { initialGuess: [2, -2, 2], maxIterations: 20 },
+    );
+
+    expect(result.trace.length).toBeGreaterThan(0);
+    expect(result.trace.every((step) => step.angles.every((angle) => angle >= -0.25 && angle <= 0.25))).toBe(true);
+    if (result.angles) {
+      expect(result.angles.every((angle) => angle >= -0.25 && angle <= 0.25)).toBe(true);
+    }
+  });
+
+  it("−180° eşdeğerini yalnız negatif tarafta çalışan mekanik limitte korur", () => {
+    const negativeHalfTurnRobot = {
+      id: "negative-half-turn",
+      displayName: "Negatif yarım tur",
+      joints: [{
+        type: "revolute" as const,
+        dhParams: { a: 1, alpha: 0, d: 0, theta: 0 },
+        limits: { min: -Math.PI, max: -2.8 },
+        maxVelocity: 1,
+      }],
+    };
+    const result = inverseKinematicsNumerical(
+      negativeHalfTurnRobot,
+      { x: -1, y: 0, z: 0 },
+      { initialGuess: [-Math.PI], maxIterations: 1 },
+    );
+
+    expect(result.trace[0].angles[0]).toBeCloseTo(-Math.PI, 10);
+  });
 });

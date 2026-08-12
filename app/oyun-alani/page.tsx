@@ -3,7 +3,7 @@ import { CustomRobotPlayground } from "@/components/playground/CustomRobotPlaygr
 
 export const metadata: Metadata = {
   title: "Kendi robotun",
-  description: "1–6 eksenli özel robotunu tanımla; ileri ve ters kinematiği çalıştır, TCP izini gör ve bağlantıyla paylaş.",
+  description: "1–6 eksenli özel robotunu tanımla; TCP’yi elle yönlendir, hareketi öğret, fiziksel ön kontrolden geçir ve bağlantıyla paylaş.",
 };
 
 export default function OyunAlaniPage() {
@@ -19,7 +19,7 @@ export default function OyunAlaniPage() {
           <div>
             <p className="font-mono text-xs font-bold uppercase tracking-[0.22em] text-teal-300">Deney ortamı / RobotSpec v1</p>
             <h1 className="mt-4 max-w-4xl font-heading text-5xl font-black leading-[0.9] tracking-[-0.035em] sm:text-7xl lg:text-8xl">Kendi robotunu tasarla.</h1>
-            <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">Ders yok, puan yok. Kinematik zincirini tanımla; eklemleri sür, bir hedef çöz ve TCP izinin robot geometrisini nasıl anlattığını gör.</p>
+            <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">Ders yok, puan yok. Kinematik zincirini tanımla; TCP’yi elle yönlendir, hareketi robota öğret ve hız-sınırlı dijital provada ne olacağını gör.</p>
           </div>
           <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-slate-700 bg-slate-700 text-center font-mono">
             <div className="bg-slate-900/95 px-3 py-4"><dt className="text-[10px] uppercase tracking-wider text-slate-400">DOF</dt><dd className="mt-1 text-xl font-bold text-teal-300">1—6</dd></div>
