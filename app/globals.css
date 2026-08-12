@@ -470,6 +470,20 @@ select {
   line-height: 1.7;
 }
 
+/*
+  Satır içi `code` açıklıkları (dosya yolu, tanımlayıcı gibi boşluksuz
+  tokenlar) varsayılan olarak KIRILMAZ -- tek bir uzun token paragrafın
+  genişliğini aşarsa satır sarmaz, sayfayı yatayda taşırır. `pre` içindeki
+  kod bloklarını etkilemez: `pre`nin `white-space: pre`si zaten sarmayı
+  kapatıyor, `overflow-wrap` orada devre dışı kalır (yatay kaydırma
+  `AccessiblePre`den geliyor). Kök neden: a-universite-dh-parametreleri
+  içindeki `lib/robotics/robots/genericSixDof.ts` açıklığı Linux CI'da
+  360px ölçüldü, 358px'lik sütunu 2px aştı (2026-08-12).
+*/
+.ders-icerik code {
+  overflow-wrap: anywhere;
+}
+
 .ders-icerik table {
   width: 100%;
   border-collapse: collapse;
