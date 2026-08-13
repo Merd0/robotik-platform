@@ -86,10 +86,21 @@ function distance(first: Vec3, second: Vec3): number {
   return Math.hypot(first.x - second.x, first.y - second.y, first.z - second.z);
 }
 
-function releasedWorkpiecePosition(tcp: Vec3): Vec3 {
+/** Gripper açıldığında parçayı XY konumunun altındaki en yüksek hücre yüzeyine oturtur. */
+export function releasedWorkpiecePosition(tcp: Vec3): Vec3 {
   const overDropZone = Math.hypot(tcp.x - ROBOT_CELL_WORKPIECE.drop.x, tcp.y - ROBOT_CELL_WORKPIECE.drop.y)
     <= ROBOT_CELL_WORKPIECE.dropZoneRadiusMetres;
-  return overDropZone ? { ...ROBOT_CELL_WORKPIECE.drop } : { ...tcp };
+  if (overDropZone) return { ...ROBOT_CELL_WORKPIECE.drop };
+
+  const halfPart = ROBOT_CELL_WORKPIECE.sizeMetres / 2;
+  const supportingSurfaces = ROBOT_CELL_OBSTACLES
+    .filter((obstacle) => ["table", "fixture", "bin"].includes(obstacle.id))
+    .filter((obstacle) => Math.abs(tcp.x - obstacle.center.x) <= obstacle.halfSize.x
+      && Math.abs(tcp.y - obstacle.center.y) <= obstacle.halfSize.y)
+    .map((obstacle) => obstacle.center.z + obstacle.halfSize.z + halfPart)
+    .filter((surfaceCentreZ) => surfaceCentreZ <= tcp.z + 0.002);
+  const landingZ = supportingSurfaces.length > 0 ? Math.max(...supportingSurfaces) : halfPart;
+  return { x: tcp.x, y: tcp.y, z: landingZ };
 }
 
 export function createTaughtPose(

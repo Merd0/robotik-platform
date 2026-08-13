@@ -8,6 +8,7 @@ import {
   assessRobotCellGrip,
   solveRobotCellDragTarget,
   solveRobotCellDirectTarget,
+  releasedWorkpiecePosition,
   ROBOT_CELL_SAMPLE_JOB,
   ROBOT_CELL_WORKPIECE,
   preflightRobotCellProgram,
@@ -32,6 +33,23 @@ function shortestAngleDistance(first: number, second: number): number {
 }
 
 describe("3B robot hücresi öğretim programı", () => {
+  it("gripper hedef dışında açıldığında parçayı havada bırakmayıp altındaki yüzeye oturtur", () => {
+    expect(releasedWorkpiecePosition({ x: 0.845, y: 0.051, z: 0.7 })).toEqual({
+      x: 0.845,
+      y: 0.051,
+      z: 0.36,
+    });
+    expect(releasedWorkpiecePosition({ x: 0.7, y: -0.1, z: 0.9 })).toEqual(expect.objectContaining({
+      x: 0.7,
+      y: -0.1,
+      z: expect.closeTo(0.65, 8),
+    }));
+  });
+
+  it("mavi bırakma alanında açılan parçayı tabla merkezine oturtur", () => {
+    expect(releasedWorkpiecePosition({ x: 0.56, y: -0.39, z: 0.8 })).toEqual(ROBOT_CELL_WORKPIECE.drop);
+  });
+
   it("basit kumandada her hedefte gripper yaklaşma eksenini düşey aşağı kilitler", () => {
     const targets = [
       { x: 0.65, y: 0.02, z: 0.82 },

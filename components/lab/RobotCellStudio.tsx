@@ -13,7 +13,7 @@ import {
 } from "@/lib/robotics/robotCellStudio";
 import { computeJacobian, forwardKinematics, isNearSingularity } from "@/lib/robotics/kinematics";
 import { planRobotCellMoveJ, planRobotCellMoveL, ROBOT_CELL_OBSTACLES, sampleRobotCellMotion, type RobotCellMotionKind } from "@/lib/robotics/robotCellMotion";
-import { assessRobotCellGrip, createRobotCellSampleJob, createTaughtPose, preflightRobotCellProgram, ROBOT_CELL_WORKPIECE, solveRobotCellDirectTarget, type RobotCellProgramCommand } from "@/lib/robotics/robotCellProgram";
+import { assessRobotCellGrip, createRobotCellSampleJob, createTaughtPose, preflightRobotCellProgram, releasedWorkpiecePosition, ROBOT_CELL_WORKPIECE, solveRobotCellDirectTarget, type RobotCellProgramCommand } from "@/lib/robotics/robotCellProgram";
 import { robotCellAxisTarget } from "@/lib/robotics/robotCellVisual";
 import { genericSixDofRobot } from "@/lib/robotics/robots/genericSixDof";
 import type { Vec3 } from "@/lib/robotics/transform";
@@ -67,6 +67,7 @@ export function RobotCellStudio() {
   const [workpiecePosition, setWorkpiecePosition] = useState<Vec3>(() => ({ ...ROBOT_CELL_WORKPIECE.start }));
   const [gripperClosed, setGripperClosed] = useState(false);
   const [holdingPart, setHoldingPart] = useState(false);
+  const [directTaskFinished, setDirectTaskFinished] = useState(false);
   const [directStatus, setDirectStatus] = useState("Önce Z ile güvenli yüksekliğe çık; sonra X ve Y ile turuncu parçanın üstüne ilerle.");
   const playbackFrame = useRef<number | null>(null);
   const programPlaybackFrame = useRef<number | null>(null);
@@ -207,6 +208,7 @@ export function RobotCellStudio() {
     addGripperCommand("close");
     setGripperClosed(true);
     setHoldingPart(true);
+    setDirectTaskFinished(false);
     setDirectStatus("Parça kavrandı. Şimdi mavi bırakma alanına taşı.");
   }
 
@@ -214,18 +216,16 @@ export function RobotCellStudio() {
     const currentTcp = forwardKinematics(genericSixDofRobot, displayedAngles).endEffector;
     const atDrop = Math.hypot(currentTcp.x - ROBOT_CELL_WORKPIECE.drop.x, currentTcp.y - ROBOT_CELL_WORKPIECE.drop.y) <= 0.012
       && Math.abs(currentTcp.z - ROBOT_CELL_WORKPIECE.drop.z) <= 0.012;
-    if (!atDrop) {
-      setDirectStatus("Parçayı bırakmadan önce X/Y/Z farklarını sıfırla ve mavi tablanın merkezine in.");
-      return;
-    }
-    saveDirectMove("Bırakma konumu");
+    saveDirectMove(atDrop ? "Bırakma konumu" : "Elle bırakma konumu");
     addGripperCommand("open");
     setGripperClosed(false);
     setHoldingPart(false);
-    const tcp = forwardKinematics(genericSixDofRobot, displayedAngles).endEffector;
-    const overBin = Math.hypot(tcp.x - ROBOT_CELL_WORKPIECE.drop.x, tcp.y - ROBOT_CELL_WORKPIECE.drop.y) <= ROBOT_CELL_WORKPIECE.dropZoneRadiusMetres;
-    setWorkpiecePosition(overBin ? { ...ROBOT_CELL_WORKPIECE.drop } : { ...tcp });
-    setDirectStatus(overBin ? "Parça mavi alana bırakıldı. Programı oynatıp bütün işi izle." : "Parça burada bırakıldı.");
+    const landedPosition = releasedWorkpiecePosition(currentTcp);
+    setWorkpiecePosition(landedPosition);
+    setDirectTaskFinished(atDrop);
+    setDirectStatus(atDrop
+      ? "Parça mavi alana bırakıldı. Programı oynatıp bütün işi izle."
+      : "Gripper açıldı. Parça altındaki yüzeye bırakıldı ve iki komut programa kaydedildi.");
   }
 
   function teachCurrentPose() {
@@ -623,10 +623,12 @@ export function RobotCellStudio() {
                   holdingPart={holdingPart}
                   directStatus={directStatus}
                   tcp={kinematics.endEffector}
-                  activeTarget={holdingPart ? ROBOT_CELL_WORKPIECE.drop : ROBOT_CELL_WORKPIECE.start}
+                  activeTarget={holdingPart ? ROBOT_CELL_WORKPIECE.drop : workpiecePosition}
+                  taskFinished={directTaskFinished}
                   playing={programPlaying}
                   onGrip={gripPart}
                   onRelease={releasePart}
+                  onSavePose={() => saveDirectMove("Kaydedilen ara konum")}
                   onJog={jogGripper}
                   onReset={() => {
                     setPreviewAngles(null);
@@ -639,6 +641,7 @@ export function RobotCellStudio() {
                     setWorkpiecePosition({ ...ROBOT_CELL_WORKPIECE.start });
                     setGripperClosed(false);
                     setHoldingPart(false);
+                    setDirectTaskFinished(false);
                     programCommandProgress.current = 0;
                     setProgramCompleted(false);
                     setDirectStatus("Program temizlendi. Gripper’ı yeniden parçanın üstüne getir.");
@@ -676,6 +679,7 @@ export function RobotCellStudio() {
                     setWorkpiecePosition({ ...ROBOT_CELL_WORKPIECE.start });
                     setGripperClosed(false);
                     setHoldingPart(false);
+                    setDirectTaskFinished(false);
                     programCommandProgress.current = 0;
                     setProgramCompleted(false);
                   }}

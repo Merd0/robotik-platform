@@ -22,9 +22,11 @@ export function RobotCellDirectTeaching({
   directStatus,
   tcp,
   activeTarget,
+  taskFinished,
   playing,
   onGrip,
   onRelease,
+  onSavePose,
   onJog,
   onReset,
   onClear,
@@ -37,16 +39,16 @@ export function RobotCellDirectTeaching({
   directStatus: string;
   tcp: Vec3;
   activeTarget: Vec3;
+  taskFinished: boolean;
   playing: boolean;
   onGrip: () => void;
   onRelease: () => void;
+  onSavePose: () => void;
   onJog: (axis: "x" | "y" | "z", delta: number) => void;
   onReset: () => void;
   onClear: () => void;
 }) {
   const [stepMetres, setStepMetres] = useState(0.05);
-  const lastCommand = commands.at(-1);
-  const taskFinished = lastCommand?.type === "gripper" && lastCommand.action === "open";
   const targetDistance = Math.hypot(tcp.x - activeTarget.x, tcp.y - activeTarget.y, tcp.z - activeTarget.z);
   const atTarget = targetDistance <= 0.012;
   const mustLift = holdingPart && tcp.z < 0.74;
@@ -112,6 +114,9 @@ export function RobotCellDirectTeaching({
       </div>
 
       <button type="button" onClick={gripperClosed ? onRelease : onGrip} disabled={taskFinished || playing || (!gripperClosed && !grip.canGrip)} className="mt-3 min-h-14 w-full rounded-xl bg-site-accent px-3 text-sm font-bold text-site-on-accent disabled:opacity-40">{taskFinished ? "Al-bırak tamamlandı" : gripperClosed ? "Gripper’ı aç · bırak" : "Gripper’ı kapat · kavra"}</button>
+
+      <button type="button" onClick={onSavePose} disabled={playing} className="mt-2 min-h-12 w-full rounded-xl border border-site-accent bg-site-accent/10 px-3 text-sm font-bold text-site-accent-text disabled:opacity-40">Bu pozu programa kaydet</button>
+      <p className="mt-1 text-xs leading-5 text-site-subtle">Jog hareketleri robotu sürer; bu düğme bulunduğun konumu program satırı yapar. Kavrama ve bırakma konumları otomatik kaydedilir.</p>
 
       <div className="mt-2 grid grid-cols-2 gap-2">
         <button type="button" onClick={onReset} disabled={playing} className="min-h-11 rounded-xl border border-site-border px-3 text-sm font-semibold text-site-ink disabled:opacity-40">Robotu başa al</button>
