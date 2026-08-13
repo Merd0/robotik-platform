@@ -32,6 +32,7 @@ export function RobotCellTeachingWorkbench({
   onTeachPose,
   onAddGripper,
   onRemoveCommand,
+  onRepair,
   onClear,
   onLoadSample,
 }: {
@@ -44,6 +45,7 @@ export function RobotCellTeachingWorkbench({
   onTeachPose: () => void;
   onAddGripper: (action: "open" | "close") => void;
   onRemoveCommand: (id: string) => void;
+  onRepair: () => void;
   onClear: () => void;
   onLoadSample: () => void;
 }) {
@@ -77,7 +79,10 @@ export function RobotCellTeachingWorkbench({
           <p className="text-xs font-semibold uppercase tracking-[.14em] text-site-subtle">Program şeridi</p>
           <p className="mt-1 text-xs text-site-muted">{commands.length === 0 ? "Henüz komut yok" : `${commands.length} komut · ${moveCount} hareket`}</p>
         </div>
-        <button type="button" onClick={onClear} disabled={commands.length === 0 || playing} className="min-h-11 rounded-xl px-3 text-xs font-semibold text-site-muted disabled:opacity-35">Programı temizle</button>
+        <div className="flex flex-wrap justify-end gap-1">
+          <button type="button" onClick={onRepair} disabled={commands.length === 0 || playing} className="min-h-11 rounded-xl px-3 text-xs font-semibold text-site-ink disabled:opacity-35">Akıllı onar</button>
+          <button type="button" onClick={onClear} disabled={commands.length === 0 || playing} className="min-h-11 rounded-xl px-3 text-xs font-semibold text-site-muted disabled:opacity-35">Programı temizle</button>
+        </div>
       </div>
 
       {commands.length === 0 && <button type="button" onClick={onLoadSample} className="mt-3 min-h-11 w-full rounded-xl border border-site-border bg-site-surface px-4 text-sm font-semibold text-site-ink">Örnek al-bırak işini yükle</button>}

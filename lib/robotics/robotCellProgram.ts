@@ -21,6 +21,17 @@ export type RobotCellProgramCommand =
   | { id: string; type: "move"; motion: RobotCellMotionKind; pose: RobotCellTaughtPose }
   | { id: string; type: "gripper"; action: "open" | "close" };
 
+export interface RobotCellSmartRecordResult {
+  commands: RobotCellProgramCommand[];
+  change: "added" | "replaced" | "ignored";
+}
+
+export interface RobotCellProgramRepairResult {
+  commands: RobotCellProgramCommand[];
+  removedCommandIds: string[];
+  preflight: RobotCellProgramPreflight;
+}
+
 export type RobotCellProgramIssueReason = Exclude<RobotCellMotionStatus, "safe"> | "grip-zone" | "already-holding" | "not-holding";
 export type RobotCellProgramStepStatus = "ready" | "blocked" | "not-checked";
 
@@ -86,6 +97,98 @@ function distance(first: Vec3, second: Vec3): number {
   return Math.hypot(first.x - second.x, first.y - second.y, first.z - second.z);
 }
 
+const SMART_POSE_DISTANCE_METRES = 0.015;
+const SMART_POSE_ANGLE_RADIANS = 2 * Math.PI / 180;
+const SMART_SINGLETON_MOVE_LABELS = new Set(["Güvenli kaldırma", "Bırakma üstü"]);
+const SMART_CRITICAL_MOVE_LABELS = new Set(["Kavrama konumu", "Bırakma konumu", "Elle bırakma konumu"]);
+const RELEASE_SURFACE_SNAP_METRES = 0.025;
+
+function isJogLabel(label: string): boolean {
+  return /^(X|Y|Z) jog$/.test(label);
+}
+
+function shortestAngleDistance(first: number, second: number): number {
+  return Math.abs(Math.atan2(Math.sin(second - first), Math.cos(second - first)));
+}
+
+/** Basit öğretimde aynı iş evresindeki gereksiz örnekleri tekilleştirir. */
+export function recordRobotCellCommandSmart(
+  commands: readonly RobotCellProgramCommand[],
+  command: RobotCellProgramCommand,
+): RobotCellSmartRecordResult {
+  if (command.type === "gripper") {
+    const previousGripper = [...commands].reverse().find((item) => item.type === "gripper");
+    if (previousGripper?.type === "gripper" && previousGripper.action === command.action) {
+      return { commands: [...commands], change: "ignored" };
+    }
+    return { commands: [...commands, command], change: "added" };
+  }
+
+  let phaseStart = 0;
+  for (let index = commands.length - 1; index >= 0; index -= 1) {
+    if (commands[index].type === "gripper") {
+      phaseStart = index + 1;
+      break;
+    }
+  }
+  const phaseMoves = commands
+    .map((item, index) => ({ item, index }))
+    .filter(({ item, index }) => index >= phaseStart && item.type === "move") as Array<{
+      item: RobotCellProgramCommand & { type: "move" };
+      index: number;
+    }>;
+  const duplicate = phaseMoves.find(({ item }) => {
+    const closeInSpace = distance(item.pose.tcp, command.pose.tcp) <= SMART_POSE_DISTANCE_METRES;
+    const closeInJoints = item.pose.jointAngles.every((angle, index) =>
+      shortestAngleDistance(angle, command.pose.jointAngles[index]) <= SMART_POSE_ANGLE_RADIANS);
+    return closeInSpace && closeInJoints;
+  });
+  if (duplicate) {
+    if (!SMART_CRITICAL_MOVE_LABELS.has(command.pose.label) || duplicate.item.pose.label === command.pose.label) {
+      return { commands: [...commands], change: "ignored" };
+    }
+    const previous = duplicate.item;
+    const replacement: RobotCellProgramCommand = {
+      ...command,
+      id: previous.id,
+      pose: Object.freeze({ ...command.pose, id: previous.pose.id }),
+    };
+    const updated = [...commands];
+    updated[duplicate.index] = replacement;
+    return { commands: updated, change: "replaced" };
+  }
+
+  const previousMove = phaseMoves.at(-1);
+  if (previousMove && isJogLabel(command.pose.label) && previousMove.item.pose.label === command.pose.label) {
+    const previous = previousMove.item;
+    const replacement: RobotCellProgramCommand = {
+      ...command,
+      id: previous.id,
+      pose: Object.freeze({ ...command.pose, id: previous.pose.id }),
+    };
+    const updated = [...commands];
+    updated[previousMove.index] = replacement;
+    return { commands: updated, change: "replaced" };
+  }
+
+  if (SMART_SINGLETON_MOVE_LABELS.has(command.pose.label)) {
+    const previousSemanticPose = phaseMoves.find(({ item }) => item.pose.label === command.pose.label);
+    if (previousSemanticPose) {
+      const previous = previousSemanticPose.item;
+      const replacement: RobotCellProgramCommand = {
+        ...command,
+        id: previous.id,
+        pose: Object.freeze({ ...command.pose, id: previous.pose.id }),
+      };
+      const updated = [...commands];
+      updated[previousSemanticPose.index] = replacement;
+      return { commands: updated, change: "replaced" };
+    }
+  }
+
+  return { commands: [...commands, command], change: "added" };
+}
+
 /** Gripper açıldığında parçayı XY konumunun altındaki en yüksek hücre yüzeyine oturtur. */
 export function releasedWorkpiecePosition(tcp: Vec3): Vec3 {
   const overDropZone = Math.hypot(tcp.x - ROBOT_CELL_WORKPIECE.drop.x, tcp.y - ROBOT_CELL_WORKPIECE.drop.y)
@@ -98,7 +201,7 @@ export function releasedWorkpiecePosition(tcp: Vec3): Vec3 {
     .filter((obstacle) => Math.abs(tcp.x - obstacle.center.x) <= obstacle.halfSize.x
       && Math.abs(tcp.y - obstacle.center.y) <= obstacle.halfSize.y)
     .map((obstacle) => obstacle.center.z + obstacle.halfSize.z + halfPart)
-    .filter((surfaceCentreZ) => surfaceCentreZ <= tcp.z + 0.002);
+    .filter((surfaceCentreZ) => surfaceCentreZ <= tcp.z + RELEASE_SURFACE_SNAP_METRES);
   const landingZ = supportingSurfaces.length > 0 ? Math.max(...supportingSurfaces) : halfPart;
   return { x: tcp.x, y: tcp.y, z: landingZ };
 }
@@ -338,6 +441,37 @@ export function preflightRobotCellProgram(
     firstIssue,
     estimatedDurationSeconds,
   };
+}
+
+/**
+ * Kullanıcının açıkça istediği bakım işleminde yinelenen ve ön kontrolü
+ * durduran satırları ayıklar. Her silmeden sonra program baştan doğrulanır;
+ * böylece ilk kırmızı satırın arkasında saklanan hatalar da bulunur.
+ */
+export function repairRobotCellProgram(
+  robot: RobotSpec,
+  startAngles: readonly number[],
+  commands: readonly RobotCellProgramCommand[],
+): RobotCellProgramRepairResult {
+  let repaired: RobotCellProgramCommand[] = [];
+  const removedCommandIds: string[] = [];
+
+  for (const command of commands) {
+    const result = recordRobotCellCommandSmart(repaired, command);
+    repaired = result.commands;
+    if (result.change !== "added") removedCommandIds.push(command.id);
+  }
+
+  let preflight = preflightRobotCellProgram(robot, startAngles, repaired);
+  while (preflight.status === "blocked" && preflight.firstIssue) {
+    const rejectedId = repaired[preflight.firstIssue.commandIndex]?.id;
+    if (!rejectedId) break;
+    removedCommandIds.push(rejectedId);
+    repaired = repaired.filter((command) => command.id !== rejectedId);
+    preflight = preflightRobotCellProgram(robot, startAngles, repaired);
+  }
+
+  return { commands: repaired, removedCommandIds, preflight };
 }
 
 export function createRobotCellSampleJob(robot: RobotSpec): RobotCellProgramCommand[] {

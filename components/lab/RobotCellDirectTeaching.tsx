@@ -28,6 +28,7 @@ export function RobotCellDirectTeaching({
   onRelease,
   onSavePose,
   onJog,
+  onRepair,
   onReset,
   onClear,
 }: {
@@ -45,6 +46,7 @@ export function RobotCellDirectTeaching({
   onRelease: () => void;
   onSavePose: () => void;
   onJog: (axis: "x" | "y" | "z", delta: number) => void;
+  onRepair: () => void;
   onReset: () => void;
   onClear: () => void;
 }) {
@@ -116,7 +118,9 @@ export function RobotCellDirectTeaching({
       <button type="button" onClick={gripperClosed ? onRelease : onGrip} disabled={taskFinished || playing || (!gripperClosed && !grip.canGrip)} className="mt-3 min-h-14 w-full rounded-xl bg-site-accent px-3 text-sm font-bold text-site-on-accent disabled:opacity-40">{taskFinished ? "Al-bırak tamamlandı" : gripperClosed ? "Gripper’ı aç · bırak" : "Gripper’ı kapat · kavra"}</button>
 
       <button type="button" onClick={onSavePose} disabled={playing} className="mt-2 min-h-12 w-full rounded-xl border border-site-accent bg-site-accent/10 px-3 text-sm font-bold text-site-accent-text disabled:opacity-40">Bu pozu programa kaydet</button>
-      <p className="mt-1 text-xs leading-5 text-site-subtle">Jog hareketleri robotu sürer; bu düğme bulunduğun konumu program satırı yapar. Kavrama ve bırakma konumları otomatik kaydedilir.</p>
+      <p className="mt-1 text-xs leading-5 text-site-subtle">Jog hareketleri robotu sürer; bu düğme bulunduğun konumu program satırı yapar. Akıllı kayıt aynı/çok yakın pozları çoğaltmaz; kavrama, güvenli kaldırma ve bırakma anlarını kendisi ekler.</p>
+
+      <button type="button" onClick={onRepair} disabled={commands.length === 0 || playing} className="mt-2 min-h-11 w-full rounded-xl border border-site-border bg-site-soft px-3 text-sm font-semibold text-site-ink disabled:opacity-35">Kaydı denetle ve sadeleştir</button>
 
       <div className="mt-2 grid grid-cols-2 gap-2">
         <button type="button" onClick={onReset} disabled={playing} className="min-h-11 rounded-xl border border-site-border px-3 text-sm font-semibold text-site-ink disabled:opacity-40">Robotu başa al</button>

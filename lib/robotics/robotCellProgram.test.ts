@@ -9,6 +9,8 @@ import {
   solveRobotCellDragTarget,
   solveRobotCellDirectTarget,
   releasedWorkpiecePosition,
+  recordRobotCellCommandSmart,
+  repairRobotCellProgram,
   ROBOT_CELL_SAMPLE_JOB,
   ROBOT_CELL_WORKPIECE,
   preflightRobotCellProgram,
@@ -44,6 +46,118 @@ describe("3B robot hücresi öğretim programı", () => {
       y: -0.1,
       z: expect.closeTo(0.65, 8),
     }));
+  });
+
+  it("5 cm jog ile tabla yüzeyine hafif giren parçayı zemine düşürmez", () => {
+    expect(releasedWorkpiecePosition({ x: 0.645, y: 0.251, z: 0.35 })).toEqual({
+      x: 0.645,
+      y: 0.251,
+      z: 0.36,
+    });
+  });
+
+  it("akıllı kayıt aynı veya milimetrik yakın pozu programda çoğaltmaz", () => {
+    const firstPose = createTaughtPose(genericSixDofRobot, "P1", "Kaydedilen ara konum", HOME);
+    const nearbyAngles = [...HOME];
+    nearbyAngles[5] += 0.001;
+    const nearbyPose = createTaughtPose(genericSixDofRobot, "P2", "Kaydedilen ara konum", nearbyAngles);
+    const first: RobotCellProgramCommand = { id: "C1", type: "move", motion: "movej", pose: firstPose };
+    const duplicate: RobotCellProgramCommand = { id: "C2", type: "move", motion: "movej", pose: nearbyPose };
+
+    const result = recordRobotCellCommandSmart([first], duplicate);
+
+    expect(result.change).toBe("ignored");
+    expect(result.commands).toEqual([first]);
+  });
+
+  it("aynı poz kritik kavrama veya bırakma anıysa önceki jog satırının anlamını günceller", () => {
+    const jog: RobotCellProgramCommand = {
+      id: "C7",
+      type: "move",
+      motion: "movej",
+      pose: createTaughtPose(genericSixDofRobot, "P7", "Z jog", HOME),
+    };
+    const release: RobotCellProgramCommand = {
+      id: "C8",
+      type: "move",
+      motion: "movej",
+      pose: createTaughtPose(genericSixDofRobot, "P8", "Elle bırakma konumu", HOME),
+    };
+
+    const result = recordRobotCellCommandSmart([jog], release);
+
+    expect(result.change).toBe("replaced");
+    expect(result.commands).toHaveLength(1);
+    expect(result.commands[0]).toEqual(expect.objectContaining({
+      id: "C7",
+      pose: expect.objectContaining({ id: "P7", label: "Elle bırakma konumu" }),
+    }));
+  });
+
+  it("akıllı kayıt aynı iş evresindeki otomatik güvenli kaldırma pozunu günceller", () => {
+    const firstAngles = toRadians([-10, 55, 20, 0, -80, -10]);
+    const correctedAngles = toRadians([-12, 58, 18, 0, -82, -12]);
+    const first: RobotCellProgramCommand = {
+      id: "C4",
+      type: "move",
+      motion: "movej",
+      pose: createTaughtPose(genericSixDofRobot, "P4", "Güvenli kaldırma", firstAngles),
+    };
+    const corrected: RobotCellProgramCommand = {
+      id: "C5",
+      type: "move",
+      motion: "movej",
+      pose: createTaughtPose(genericSixDofRobot, "P5", "Güvenli kaldırma", correctedAngles),
+    };
+
+    const result = recordRobotCellCommandSmart([first], corrected);
+
+    expect(result.change).toBe("replaced");
+    expect(result.commands).toHaveLength(1);
+    expect(result.commands[0]).toEqual(expect.objectContaining({
+      id: "C4",
+      type: "move",
+      pose: expect.objectContaining({ id: "P4", jointAngles: correctedAngles }),
+    }));
+  });
+
+  it("aynı eksendeki peş peşe jogları tek hareket segmentinin son noktasında toplar", () => {
+    const first: RobotCellProgramCommand = {
+      id: "C1",
+      type: "move",
+      motion: "movej",
+      pose: createTaughtPose(genericSixDofRobot, "P1", "X jog", HOME),
+    };
+    const laterAngles = [...HOME];
+    laterAngles[0] += 0.2;
+    const later: RobotCellProgramCommand = {
+      id: "C2",
+      type: "move",
+      motion: "movej",
+      pose: createTaughtPose(genericSixDofRobot, "P2", "X jog", laterAngles),
+    };
+
+    const result = recordRobotCellCommandSmart([first], later);
+
+    expect(result.change).toBe("replaced");
+    expect(result.commands).toHaveLength(1);
+    expect(result.commands[0]).toEqual(expect.objectContaining({
+      id: "C1",
+      pose: expect.objectContaining({ id: "P1", jointAngles: laterAngles }),
+    }));
+  });
+
+  it("akıllı onarım yolu engelleyen kırmızı satırı ayıklayıp kalan programı yeniden doğrular", () => {
+    const commands: RobotCellProgramCommand[] = [
+      { id: "C1", type: "move", motion: "movej", pose: createTaughtPose(genericSixDofRobot, "P1", "Kontrol", INSPECTION) },
+      { id: "C2", type: "move", motion: "movej", pose: createTaughtPose(genericSixDofRobot, "P2", "Hatalı geçiş", NARROW) },
+    ];
+
+    const result = repairRobotCellProgram(genericSixDofRobot, HOME, commands);
+
+    expect(result.removedCommandIds).toEqual(["C2"]);
+    expect(result.commands.map((command) => command.id)).toEqual(["C1"]);
+    expect(result.preflight.status).toBe("ready");
   });
 
   it("mavi bırakma alanında açılan parçayı tabla merkezine oturtur", () => {

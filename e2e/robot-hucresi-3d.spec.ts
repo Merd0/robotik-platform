@@ -131,7 +131,9 @@ test("basit al ve bırak akışında gripper parçayı kavrar ve bırakma alanı
   await expect(direct.getByText("Bırakma noktasında", { exact: true })).toBeVisible();
   await direct.getByRole("button", { name: "Gripper’ı aç · bırak" }).click();
   await expect(direct.getByText("Parça mavi alana bırakıldı", { exact: false })).toBeVisible();
-  await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem")).toHaveCount(6);
+  const recordedSteps = direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem");
+  await expect(recordedSteps).toHaveCount(11);
+  await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByText("Bırakma konumu")).toBeVisible();
   await expect(focusView.getByRole("button", { name: "Programı oynat" })).toBeEnabled();
   await expect(direct.getByText("çalışmaya hazır", { exact: false })).toBeVisible();
 
