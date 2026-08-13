@@ -213,6 +213,41 @@ test("TCP sahnede sürüklenerek canlı IK ile güvenli bir poza yönlendirilir"
   expect(largestFrameStep).toBeLessThanOrEqual(45);
 });
 
+test("3-DOF robot limit köşesinden sağdaki erişilebilir hedefe takılmadan geçer", async ({ page }) => {
+  await page.goto("/oyun-alani");
+  await page.getByLabel("Eklem sayısı").selectOption("3");
+  await page.getByRole("button", { name: "Tasarımı uygula" }).click();
+
+  const experiment = page.getByRole("region", { name: "Robot deneyi" });
+  await experiment.getByRole("tab", { name: "Eklemleri sür" }).click();
+  for (const [name, value] of [["J1 açısı", "160"], ["J2 açısı", "78"], ["J3 açısı", "-34.4"]]) {
+    const slider = experiment.getByRole("slider", { name });
+    await slider.evaluate((element, nextValue) => {
+      const input = element as HTMLInputElement;
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+      setter?.call(input, nextValue);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    }, value);
+    await expect(slider).toHaveValue(value);
+  }
+
+  await experiment.getByRole("tab", { name: "Hareket öğret" }).click();
+  await experiment.getByRole("button", { name: "TCP’yi elle yönlendir" }).click();
+  const scene = experiment.locator('svg[role="img"]');
+  await scene.scrollIntoViewIfNeeded();
+  const box = await scene.boundingBox();
+  expect(box).not.toBeNull();
+
+  // Varsayılan 3-DOF erişimi 2,31 m: (0,8; 0,5) sahnede bu noktaya dönüşür.
+  await page.mouse.click(
+    box!.x + box!.width * (200 + 0.8 * (168 / 2.31)) / 400,
+    box!.y + box!.height * (200 - 0.5 * (168 / 2.31)) / 400,
+  );
+
+  await expect(experiment.getByText("TCP [0.8, 0.5]", { exact: true })).toBeVisible({ timeout: 8_000 });
+  await expect(experiment.locator("[data-motion-status]")).not.toContainText("Bu ara nokta çözülemedi");
+});
+
 test("öz-çarpışmaya götüren eklem hareketini açıklanabilir biçimde reddeder", async ({ page }) => {
   await page.goto("/oyun-alani");
   await page.getByLabel("Eklem sayısı").selectOption("3");

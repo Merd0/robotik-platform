@@ -17,12 +17,6 @@ export interface IkTargetSolution {
   solver: ResolvedIkSolver;
 }
 
-function wrappedAngularDistance(first: number, second: number): number {
-  const twoPi = 2 * Math.PI;
-  const difference = ((first - second + Math.PI) % twoPi + twoPi) % twoPi - Math.PI;
-  return Math.abs(difference);
-}
-
 /** Canlı sürüşte geçerli adaylar arasından mevcut poza en az eklem hareketi isteyen dalı seçer. */
 export function selectClosestIkSolution(
   currentAngles: readonly number[],
@@ -34,7 +28,7 @@ export function selectClosestIkSolution(
   );
   return valid.sort((first, second) => {
     const distance = (candidate: IkTargetSolution & { angles: number[] }) => Math.hypot(
-      ...candidate.angles.map((angle, index) => wrappedAngularDistance(angle, currentAngles[index])),
+      ...candidate.angles.map((angle, index) => Math.abs(angle - currentAngles[index])),
     );
     return distance(first) - distance(second);
   })[0] ?? null;
@@ -71,6 +65,52 @@ export function solveIkTarget(
     residual: result.finalError,
     solver,
   };
+}
+
+/**
+ * 3+ DOF DLS, tek bir başlangıç pozunda yerel minimuma takılabilir. Canlı
+ * yönlendirme için önce mevcut pozu dener; başarısızsa limitlerin içinde kalan
+ * sabit ve tekrarlanabilir tohumlardan alternatif robot duruşları arar.
+ */
+export function solveIkTargetCandidates(
+  robot: RobotSpec,
+  target: { x: number; y: number },
+  currentAngles: readonly number[],
+  isCandidateAcceptable: (angles: readonly number[]) => boolean = () => true,
+): IkTargetSolution[] {
+  if (robot.joints.length === 2) {
+    const initialGuess = [...currentAngles];
+    return (["up", "down"] as const).map((elbow) =>
+      solveIkTarget(robot, target, "analytical", elbow, initialGuess));
+  }
+
+  const midpoint = robot.joints.map((joint) => (joint.limits.min + joint.limits.max) / 2);
+  const normalizedCurrent = currentAngles.length === robot.joints.length
+    ? [...currentAngles]
+    : midpoint;
+  const primary = solveIkTarget(robot, target, "dls", "up", normalizedCurrent);
+  if (primary.converged && primary.angles && isCandidateAcceptable(primary.angles)) return [primary];
+
+  const offsetSeed = (direction: 1 | -1, alternating: boolean) => robot.joints.map((joint, index) => {
+    const span = joint.limits.max - joint.limits.min;
+    const sign = alternating && index % 2 === 1 ? -direction : direction;
+    return midpoint[index] + sign * span * 0.22;
+  });
+  const seeds = [
+    midpoint,
+    offsetSeed(1, true),
+    offsetSeed(-1, true),
+    offsetSeed(1, false),
+    offsetSeed(-1, false),
+  ];
+  const uniqueSeeds = seeds.filter((seed, index) =>
+    !seeds.slice(0, index).some((previous) =>
+      previous.every((value, jointIndex) => Math.abs(value - seed[jointIndex]) < 1e-9)));
+
+  return [
+    primary,
+    ...uniqueSeeds.map((seed) => solveIkTarget(robot, target, "dls", "up", seed)),
+  ];
 }
 
 function targetResidual(robot: RobotSpec, angles: number[], target: { x: number; y: number }): number {

@@ -17,7 +17,7 @@ import {
   type CustomRobotValidationIssue,
 } from "@/lib/robotics/customRobot";
 import { forwardKinematics, type RobotSpec } from "@/lib/robotics/kinematics";
-import { selectClosestIkSolution, solveIkTarget } from "@/lib/robotics/ikSolver";
+import { selectClosestIkSolution, solveIkTargetCandidates } from "@/lib/robotics/ikSolver";
 import { stepLiveGuidanceAngles } from "@/lib/robotics/liveRobotGuidance";
 import {
   analyzeCustomRobotPose,
@@ -638,15 +638,22 @@ export function CustomRobotPlayground() {
   }
 
   function solveTarget(capturedAtMs: number) {
-    let solution = solveIkTarget(robot, activeState.target, "auto", "up", activeState.jointAngles);
-    if (!solution.converged && robot.joints.length === 2) {
-      solution = solveIkTarget(robot, activeState.target, "auto", "down", activeState.jointAngles);
-    }
-    if (!solution.converged || !solution.angles) {
-      setIkStatus(`IK hedefe yakınsamadı · son hata ${Number.isFinite(solution.residual) ? round(solution.residual, 4) : "∞"} m. Hedefi veya eklem limitlerini değiştir.`);
+    const currentAngles = activeAnglesRef.current;
+    const candidates = solveIkTargetCandidates(
+      robot,
+      activeState.target,
+      currentAngles,
+      (angles) => !describeRejectedPose(robot, [...angles]),
+    );
+    const converged = selectClosestIkSolution(currentAngles, candidates);
+    if (!converged) {
+      const residual = Math.min(...candidates.map((candidate) => candidate.residual));
+      setIkStatus(`IK hedefe yakınsamadı · son hata ${Number.isFinite(residual) ? round(residual, 4) : "∞"} m. Hedefi veya eklem limitlerini değiştir.`);
       return;
     }
-    if (commitSafePose(solution.angles, "IK pozu fiziksel ön kontrolden geçti.", undefined, capturedAtMs)) {
+    const safeCandidates = candidates.filter((candidate) => candidate.angles && !describeRejectedPose(robot, candidate.angles));
+    const solution = selectClosestIkSolution(currentAngles, safeCandidates);
+    if (solution?.angles && commitSafePose(solution.angles, "IK pozu fiziksel ön kontrolden geçti.", undefined, capturedAtMs)) {
       setIkStatus(`IK çözümü bulundu · ${solution.solver === "analytical" ? "analitik" : "DLS"} · ${solution.iterations} iterasyon · hata ${round(solution.residual, 5)} m.`);
     } else {
       setIkStatus("IK matematiksel bir aday buldu ancak hareket öz-çarpışma ön kontrolünden geçmedi.");
@@ -655,9 +662,12 @@ export function CustomRobotPlayground() {
 
   function guideTcp(target: { x: number; y: number }, capturedAtMs: number) {
     const currentAngles = activeAnglesRef.current;
-    const candidates = robot.joints.length === 2
-      ? (["up", "down"] as const).map((elbow) => solveIkTarget(robot, target, "analytical", elbow, currentAngles))
-      : [solveIkTarget(robot, target, "dls", "up", currentAngles)];
+    const candidates = solveIkTargetCandidates(
+      robot,
+      target,
+      currentAngles,
+      (angles) => !describeRejectedPose(robot, [...angles]),
+    );
     const safeCandidates = candidates.filter((candidate) => candidate.angles && !describeRejectedPose(robot, candidate.angles));
     const solution = selectClosestIkSolution(currentAngles, safeCandidates);
     if (!solution?.angles) {
