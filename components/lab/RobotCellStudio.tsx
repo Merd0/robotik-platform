@@ -13,7 +13,7 @@ import {
 } from "@/lib/robotics/robotCellStudio";
 import { computeJacobian, forwardKinematics, isNearSingularity } from "@/lib/robotics/kinematics";
 import { planRobotCellMoveJ, planRobotCellMoveL, ROBOT_CELL_OBSTACLES, sampleRobotCellMotion, type RobotCellMotionKind } from "@/lib/robotics/robotCellMotion";
-import { assessRobotCellGrip, createRobotCellSampleJob, createTaughtPose, preflightRobotCellProgram, recordRobotCellCommandSmart, releasedWorkpiecePosition, repairRobotCellProgram, ROBOT_CELL_WORKPIECE, solveRobotCellDirectTarget, type RobotCellProgramCommand } from "@/lib/robotics/robotCellProgram";
+import { assessRobotCellGrip, assessRobotCellRelease, createRobotCellSampleJob, createTaughtPose, preflightRobotCellProgram, recordRobotCellCommandSmart, releasedWorkpiecePosition, repairRobotCellProgram, ROBOT_CELL_WORKPIECE, solveRobotCellDirectTarget, type RobotCellProgramCommand } from "@/lib/robotics/robotCellProgram";
 import { robotCellAxisTarget } from "@/lib/robotics/robotCellVisual";
 import { genericSixDofRobot } from "@/lib/robotics/robots/genericSixDof";
 import type { Vec3 } from "@/lib/robotics/transform";
@@ -239,6 +239,11 @@ export function RobotCellStudio() {
   function releasePart() {
     const currentAngles = [...directAnglesRef.current];
     const currentTcp = forwardKinematics(genericSixDofRobot, currentAngles).endEffector;
+    const release = assessRobotCellRelease(currentTcp);
+    if (!release.canRelease) {
+      setDirectStatus("Parça havada bırakılamaz. Z− ile masa veya mavi bırakma tablasına 2,5 cm yaklaş; sonra gripper’ı aç.");
+      return;
+    }
     const atDrop = Math.hypot(currentTcp.x - ROBOT_CELL_WORKPIECE.drop.x, currentTcp.y - ROBOT_CELL_WORKPIECE.drop.y) <= 0.012
       && Math.abs(currentTcp.z - ROBOT_CELL_WORKPIECE.drop.z) <= 0.012;
     appendSmartMoveAndGripper(atDrop ? "Bırakma konumu" : "Elle bırakma konumu", currentAngles, "open");

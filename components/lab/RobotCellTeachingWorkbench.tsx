@@ -16,6 +16,7 @@ function issueLabel(preflight: RobotCellProgramPreflight): string {
   if (!issue) return "";
   if (issue.reason === "collision") return `${issue.commandIndex + 1}. satır ${issue.obstacleLabel ?? "hücre elemanı"} ile temas ediyor.`;
   if (issue.reason === "grip-zone") return `${issue.commandIndex + 1}. satırda tutucu parçanın kavrama bölgesinde değil.`;
+  if (issue.reason === "release-surface") return `${issue.commandIndex + 1}. satırda parça bir yüzeye inmeden tutucu açılıyor.`;
   if (issue.reason === "ik-failure") return `${issue.commandIndex + 1}. satırın MoveL ara noktası çözülemedi.`;
   if (issue.reason === "joint-limit") return `${issue.commandIndex + 1}. satır eklem limitini aşıyor.`;
   if (issue.reason === "already-holding") return `${issue.commandIndex + 1}. satırda tutucu zaten parça taşıyor.`;

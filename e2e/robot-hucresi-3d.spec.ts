@@ -146,7 +146,7 @@ test("basit al ve bırak akışında gripper parçayı kavrar ve bırakma alanı
   expect(blocking).toEqual([]);
 });
 
-test("gripper hedef dışında da açılır ve kullanıcı ara pozu açıkça kaydeder", async ({ page }) => {
+test("gripper havada açılmaz ve kullanıcı ara pozu açıkça kaydeder", async ({ page }) => {
   await page.goto("/laboratuvar/robot-hucresi");
   const studio = page.getByRole("region", { name: "3B dijital robot hücresi" });
   await studio.getByRole("button", { name: "Robotu öğret", exact: true }).click();
@@ -166,14 +166,12 @@ test("gripper hedef dışında da açılır ve kullanıcı ara pozu açıkça ka
 
   await expect(direct.getByText("Bırakma noktasında", { exact: true })).toHaveCount(0);
   await direct.getByRole("button", { name: "Gripper’ı aç · bırak" }).click();
-  await expect(focusView.getByText("Tutucu açık", { exact: true })).toBeVisible();
-  await expect(direct.getByText("Parça altındaki yüzeye bırakıldı", { exact: false })).toBeVisible();
+  await expect(focusView.getByText("Tutucu kapalı · parça bağlı", { exact: true })).toBeVisible();
+  await expect(direct.getByText("Parça havada bırakılamaz", { exact: false })).toBeVisible();
   await expect(direct.getByText("Parça bırakma tablasında", { exact: true })).toHaveCount(0);
   await expect(direct.getByRole("button", { name: "Al-bırak tamamlandı" })).toHaveCount(0);
-  await expect(direct.getByText("Kavrama noktasına kalan", { exact: true })).toBeVisible();
+  await expect(direct.getByText("Bırakma noktasına kalan", { exact: true })).toBeVisible();
   const manualReleaseSteps = direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem");
-  await expect(manualReleaseSteps.getByText("Elle bırakma konumu")).toBeVisible();
-  const manualReleaseLabels = await manualReleaseSteps.allTextContents();
-  expect(manualReleaseLabels.findIndex((label) => label.includes("Parçayı bırak")))
-    .toBe(manualReleaseLabels.findIndex((label) => label.includes("Elle bırakma konumu")) + 1);
+  await expect(manualReleaseSteps.getByText("Elle bırakma konumu")).toHaveCount(0);
+  await expect(manualReleaseSteps.getByText("Parçayı bırak")).toHaveCount(0);
 });

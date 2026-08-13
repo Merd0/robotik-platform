@@ -361,6 +361,82 @@ describe("3B robot hücresi öğretim programı", () => {
     expect(result.steps.at(-1)).toEqual(expect.objectContaining({ status: "ready", holdingPartAfter: false }));
   });
 
+  it("masa yüzeyine kontrollü inip hemen açılan parçayı bırakma teması olarak kabul eder", () => {
+    const pick = toRadians(ROBOT_CELL_SAMPLE_JOB.pick);
+    const lowTarget = { x: 0.645, y: 0.251, z: 0.35 };
+    const highSolution = solveRobotCellDirectTarget(genericSixDofRobot, pick, { ...lowTarget, z: 0.75 });
+    const lowSolution = solveRobotCellDirectTarget(genericSixDofRobot, highSolution.angles!, lowTarget);
+    expect(lowSolution.status).toBe("ready");
+    const commands: RobotCellProgramCommand[] = [
+      { id: "C1", type: "move", motion: "movej", pose: createTaughtPose(genericSixDofRobot, "P1", "Kavrama konumu", pick) },
+      { id: "C2", type: "gripper", action: "close" },
+      { id: "C3", type: "move", motion: "movej", pose: createTaughtPose(genericSixDofRobot, "P2", "Güvenli kaldırma", highSolution.angles!) },
+      { id: "C4", type: "move", motion: "movej", pose: createTaughtPose(genericSixDofRobot, "P3", "Elle bırakma konumu", lowSolution.angles!) },
+      { id: "C5", type: "gripper", action: "open" },
+    ];
+
+    const result = preflightRobotCellProgram(genericSixDofRobot, HOME, commands);
+
+    expect(result.status).toBe("ready");
+    expect(result.steps[3]).toEqual(expect.objectContaining({ status: "ready", holdingPartAfter: true }));
+    expect(result.steps[4]).toEqual(expect.objectContaining({ status: "ready", holdingPartAfter: false }));
+    expect(result.steps[4].workpiecePositionAfter.z).toBe(0.36);
+  });
+
+  it("aynı masa temasını ardından bırakma komutu yoksa çarpışma olarak engeller", () => {
+    const pick = toRadians(ROBOT_CELL_SAMPLE_JOB.pick);
+    const target = { x: 0.645, y: 0.251, z: 0.35 };
+    const highSolution = solveRobotCellDirectTarget(genericSixDofRobot, pick, { ...target, z: 0.75 });
+    const lowSolution = solveRobotCellDirectTarget(genericSixDofRobot, highSolution.angles!, target);
+    const commands: RobotCellProgramCommand[] = [
+      { id: "C1", type: "move", motion: "movej", pose: createTaughtPose(genericSixDofRobot, "P1", "Kavrama konumu", pick) },
+      { id: "C2", type: "gripper", action: "close" },
+      { id: "C3", type: "move", motion: "movej", pose: createTaughtPose(genericSixDofRobot, "P2", "Güvenli kaldırma", highSolution.angles!) },
+      { id: "C4", type: "move", motion: "movej", pose: createTaughtPose(genericSixDofRobot, "P3", "Alçak ara konum", lowSolution.angles!) },
+    ];
+
+    const result = preflightRobotCellProgram(genericSixDofRobot, HOME, commands);
+
+    expect(result.status).toBe("blocked");
+    expect(result.firstIssue).toEqual(expect.objectContaining({
+      commandId: "C4",
+      reason: "collision",
+      obstacleLabel: "Çalışma masası (taşınan parça)",
+    }));
+  });
+
+  it("parça taşınırken havadaki tutucu açma komutunu reddeder", () => {
+    const pick = toRadians(ROBOT_CELL_SAMPLE_JOB.pick);
+    const highSolution = solveRobotCellDirectTarget(genericSixDofRobot, pick, { x: 0.8, y: 0.15, z: 0.79 });
+    const commands: RobotCellProgramCommand[] = [
+      { id: "C1", type: "move", motion: "movej", pose: createTaughtPose(genericSixDofRobot, "P1", "Kavrama konumu", pick) },
+      { id: "C2", type: "gripper", action: "close" },
+      { id: "C3", type: "move", motion: "movej", pose: createTaughtPose(genericSixDofRobot, "P2", "Elle bırakma konumu", highSolution.angles!) },
+      { id: "C4", type: "gripper", action: "open" },
+    ];
+
+    const result = preflightRobotCellProgram(genericSixDofRobot, HOME, commands);
+
+    expect(result.status).toBe("blocked");
+    expect(result.firstIssue).toEqual(expect.objectContaining({ commandId: "C4", reason: "release-surface" }));
+  });
+
+  it("akıllı onarım havadaki bırakma işaretiyle açma komutunu birlikte kaldırır", () => {
+    const pick = toRadians(ROBOT_CELL_SAMPLE_JOB.pick);
+    const highSolution = solveRobotCellDirectTarget(genericSixDofRobot, pick, { x: 0.8, y: 0.15, z: 0.79 });
+    const commands: RobotCellProgramCommand[] = [
+      { id: "C1", type: "move", motion: "movej", pose: createTaughtPose(genericSixDofRobot, "P1", "Kavrama konumu", pick) },
+      { id: "C2", type: "gripper", action: "close" },
+      { id: "C3", type: "move", motion: "movej", pose: createTaughtPose(genericSixDofRobot, "P2", "Elle bırakma konumu", highSolution.angles!) },
+      { id: "C4", type: "gripper", action: "open" },
+    ];
+
+    const result = repairRobotCellProgram(genericSixDofRobot, HOME, commands);
+
+    expect(result.removedCommandIds).toEqual(expect.arrayContaining(["C3", "C4"]));
+    expect(result.commands.some((command) => command.type === "gripper" && command.action === "open")).toBe(false);
+  });
+
   it("robot kolu geçse bile taşınan parçanın koruyucu çevre temasını engeller", () => {
     const program = createRobotCellSampleJob(genericSixDofRobot).slice(0, 3);
     program.push({

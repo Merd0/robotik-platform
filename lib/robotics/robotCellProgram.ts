@@ -32,7 +32,7 @@ export interface RobotCellProgramRepairResult {
   preflight: RobotCellProgramPreflight;
 }
 
-export type RobotCellProgramIssueReason = Exclude<RobotCellMotionStatus, "safe"> | "grip-zone" | "already-holding" | "not-holding";
+export type RobotCellProgramIssueReason = Exclude<RobotCellMotionStatus, "safe"> | "grip-zone" | "release-surface" | "already-holding" | "not-holding";
 export type RobotCellProgramStepStatus = "ready" | "blocked" | "not-checked";
 
 export interface RobotCellProgramStep {
@@ -75,6 +75,13 @@ export interface RobotCellDragSolution {
   angles: number[] | null;
   errorMetres: number;
   obstacleLabel?: string;
+}
+
+export interface RobotCellReleaseAssessment {
+  canRelease: boolean;
+  landingPosition: Readonly<Vec3>;
+  surfaceId?: string;
+  surfaceLabel?: string;
 }
 
 export const ROBOT_CELL_WORKPIECE = {
@@ -193,20 +200,57 @@ export function recordRobotCellCommandSmart(
   return { commands: [...commands, command], change: "added" };
 }
 
+function releaseSurfaceCandidates(tcp: Vec3) {
+  const halfPart = ROBOT_CELL_WORKPIECE.sizeMetres / 2;
+  return ROBOT_CELL_OBSTACLES
+    .filter((obstacle) => ["table", "fixture", "bin"].includes(obstacle.id))
+    .filter((obstacle) => Math.abs(tcp.x - obstacle.center.x) <= obstacle.halfSize.x
+      && Math.abs(tcp.y - obstacle.center.y) <= obstacle.halfSize.y)
+    .map((obstacle) => ({
+      obstacle,
+      landingZ: obstacle.center.z + obstacle.halfSize.z + halfPart,
+    }));
+}
+
+/** Parçanın havada değil, algılanan bir hücre yüzeyinde bırakılmaya hazır olduğunu denetler. */
+export function assessRobotCellRelease(tcp: Vec3): RobotCellReleaseAssessment {
+  const overDropZone = Math.hypot(tcp.x - ROBOT_CELL_WORKPIECE.drop.x, tcp.y - ROBOT_CELL_WORKPIECE.drop.y)
+    <= ROBOT_CELL_WORKPIECE.dropZoneRadiusMetres;
+  if (overDropZone && Math.abs(tcp.z - ROBOT_CELL_WORKPIECE.drop.z) <= RELEASE_SURFACE_SNAP_METRES) {
+    return {
+      canRelease: true,
+      landingPosition: { ...ROBOT_CELL_WORKPIECE.drop },
+      surfaceId: "bin",
+      surfaceLabel: "Bırakma tablası",
+    };
+  }
+
+  const halfPart = ROBOT_CELL_WORKPIECE.sizeMetres / 2;
+  const surface = releaseSurfaceCandidates(tcp)
+    .filter(({ landingZ }) => Math.abs(tcp.z - landingZ) <= RELEASE_SURFACE_SNAP_METRES)
+    .sort((first, second) => second.landingZ - first.landingZ)[0];
+  if (!surface) return { canRelease: false, landingPosition: { x: tcp.x, y: tcp.y, z: halfPart } };
+  return {
+    canRelease: true,
+    landingPosition: { x: tcp.x, y: tcp.y, z: surface.landingZ },
+    surfaceId: surface.obstacle.id,
+    surfaceLabel: surface.obstacle.label,
+  };
+}
+
 /** Gripper açıldığında parçayı XY konumunun altındaki en yüksek hücre yüzeyine oturtur. */
 export function releasedWorkpiecePosition(tcp: Vec3): Vec3 {
   const overDropZone = Math.hypot(tcp.x - ROBOT_CELL_WORKPIECE.drop.x, tcp.y - ROBOT_CELL_WORKPIECE.drop.y)
     <= ROBOT_CELL_WORKPIECE.dropZoneRadiusMetres;
   if (overDropZone) return { ...ROBOT_CELL_WORKPIECE.drop };
-
+  const assessed = assessRobotCellRelease(tcp);
+  if (assessed.canRelease) return { ...assessed.landingPosition };
   const halfPart = ROBOT_CELL_WORKPIECE.sizeMetres / 2;
-  const supportingSurfaces = ROBOT_CELL_OBSTACLES
-    .filter((obstacle) => ["table", "fixture", "bin"].includes(obstacle.id))
-    .filter((obstacle) => Math.abs(tcp.x - obstacle.center.x) <= obstacle.halfSize.x
-      && Math.abs(tcp.y - obstacle.center.y) <= obstacle.halfSize.y)
-    .map((obstacle) => obstacle.center.z + obstacle.halfSize.z + halfPart)
-    .filter((surfaceCentreZ) => surfaceCentreZ <= tcp.z + RELEASE_SURFACE_SNAP_METRES);
-  const landingZ = supportingSurfaces.length > 0 ? Math.max(...supportingSurfaces) : halfPart;
+  const supportingSurfaces = releaseSurfaceCandidates(tcp)
+    .filter(({ landingZ }) => landingZ <= tcp.z + RELEASE_SURFACE_SNAP_METRES);
+  const landingZ = supportingSurfaces.length > 0
+    ? Math.max(...supportingSurfaces.map((surface) => surface.landingZ))
+    : halfPart;
   return { x: tcp.x, y: tcp.y, z: landingZ };
 }
 
@@ -335,6 +379,7 @@ function carriedWorkpieceIssue(
   command: RobotCellProgramCommand & { type: "move" },
   commandIndex: number,
   plan: RobotCellMotionPlan,
+  releaseAssessment?: RobotCellReleaseAssessment,
 ): RobotCellProgramIssue | undefined {
   if (plan.status !== "safe") return undefined;
   for (const sample of plan.samples) {
@@ -343,6 +388,12 @@ function carriedWorkpieceIssue(
       // Kavranmış parça, ayrılmakta olduğu fikstürden ilk örneklerde doğal olarak
       // geçer. Bu temas robot linki için zaten denetlenir; taşınan parça testine dahil edilmez.
       if (obstacle.id === "fixture") continue;
+      const controlledSurfaceContact = releaseAssessment?.canRelease
+        && releaseAssessment.surfaceId === obstacle.id
+        && Math.hypot(sample.tcp.x - command.pose.tcp.x, sample.tcp.y - command.pose.tcp.y) <= 0.03
+        && sample.tcp.z >= releaseAssessment.landingPosition.z - RELEASE_SURFACE_SNAP_METRES
+        && sample.tcp.z <= releaseAssessment.landingPosition.z + WORKPIECE_COLLISION_RADIUS + 0.02;
+      if (controlledSurfaceContact) continue;
       const placingOnDropSurface = (obstacle.id === "bin" || obstacle.id === "table")
         && Math.hypot(sample.tcp.x - ROBOT_CELL_WORKPIECE.drop.x, sample.tcp.y - ROBOT_CELL_WORKPIECE.drop.y) <= ROBOT_CELL_WORKPIECE.dropZoneRadiusMetres
         && sample.tcp.z >= ROBOT_CELL_WORKPIECE.drop.z - 0.002;
@@ -387,10 +438,17 @@ export function preflightRobotCellProgram(
     }
 
     if (command.type === "move") {
+      const nextCommand = commands[commandIndex + 1];
+      const releaseAssessment = holdingPart
+        && nextCommand?.type === "gripper"
+        && nextCommand.action === "open"
+        ? assessRobotCellRelease(command.pose.tcp)
+        : undefined;
       const plan = command.motion === "movej"
         ? planRobotCellMoveJ(robot, currentAngles, command.pose.jointAngles, ROBOT_CELL_OBSTACLES)
         : planRobotCellMoveL(robot, currentAngles, command.pose.tcp, ROBOT_CELL_OBSTACLES);
-      const issue = issueFromPlan(command, commandIndex, plan) ?? (holdingPart ? carriedWorkpieceIssue(robot, command, commandIndex, plan) : undefined);
+      const issue = issueFromPlan(command, commandIndex, plan)
+        ?? (holdingPart ? carriedWorkpieceIssue(robot, command, commandIndex, plan, releaseAssessment) : undefined);
       const reachedAngles = plan.samples.at(-1)?.jointAngles ?? currentAngles;
       steps.push({
         commandId: command.id,
@@ -422,8 +480,12 @@ export function preflightRobotCellProgram(
     } else if (command.action === "open" && !holdingPart) {
       // Boş tutucuyu açmak gerçek kontrolörlerde geçerli ve güvenli bir komuttur.
     } else if (command.action === "open" && holdingPart) {
-      workpiecePosition = releasedWorkpiecePosition(tcp);
-      holdingPart = false;
+      const release = assessRobotCellRelease(tcp);
+      if (!release.canRelease) issue = { commandId: command.id, commandIndex, reason: "release-surface" };
+      else {
+        workpiecePosition = { ...release.landingPosition };
+        holdingPart = false;
+      }
     }
 
     steps.push({
@@ -468,10 +530,22 @@ export function repairRobotCellProgram(
 
   let preflight = preflightRobotCellProgram(robot, startAngles, repaired);
   while (preflight.status === "blocked" && preflight.firstIssue) {
-    const rejectedId = repaired[preflight.firstIssue.commandIndex]?.id;
+    const rejectedIndex = preflight.firstIssue.commandIndex;
+    const rejectedId = repaired[rejectedIndex]?.id;
     if (!rejectedId) break;
-    removedCommandIds.push(rejectedId);
-    repaired = repaired.filter((command) => command.id !== rejectedId);
+    const idsToRemove = new Set([rejectedId]);
+    if (preflight.firstIssue.reason === "release-surface") {
+      for (let index = rejectedIndex - 1; index >= 0; index -= 1) {
+        const candidate = repaired[index];
+        if (candidate.type === "gripper") break;
+        if (candidate.type === "move" && SMART_CRITICAL_MOVE_LABELS.has(candidate.pose.label)) {
+          idsToRemove.add(candidate.id);
+          break;
+        }
+      }
+    }
+    removedCommandIds.push(...idsToRemove);
+    repaired = repaired.filter((command) => !idsToRemove.has(command.id));
     preflight = preflightRobotCellProgram(robot, startAngles, repaired);
   }
 
