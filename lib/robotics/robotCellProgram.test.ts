@@ -91,6 +91,20 @@ describe("3B robot hücresi öğretim programı", () => {
     expect(unreachable).toEqual(expect.objectContaining({ status: "ik-failure", angles: null }));
   });
 
+  it("ardışık sürüklemede kavrama yönelimini koruyarak kullanıcının parçaya elle inmesini sağlar", () => {
+    const orientedSeed = toRadians([-13.16, 39.95, 44.79, 15.25, 163.25, 129.53]);
+    const approach = solveRobotCellDragTarget(genericSixDofRobot, HOME, { x: 0.72, y: -0.18, z: 0.86 }, orientedSeed);
+    const pick = solveRobotCellDragTarget(genericSixDofRobot, approach.angles!, { ...ROBOT_CELL_WORKPIECE.start }, orientedSeed);
+
+    expect(approach).toEqual(expect.objectContaining({ status: "ready", angles: expect.any(Array) }));
+    expect(pick).toEqual(expect.objectContaining({ status: "ready", angles: expect.any(Array) }));
+    expect(assessRobotCellGrip(genericSixDofRobot, pick.angles!, { ...ROBOT_CELL_WORKPIECE.start })).toEqual(expect.objectContaining({
+      canGrip: true,
+      positionAligned: true,
+      orientationAligned: true,
+    }));
+  });
+
   it("boş programı oynatılabilir saymaz", () => {
     expect(preflightRobotCellProgram(genericSixDofRobot, HOME, [])).toEqual(expect.objectContaining({
       status: "empty",

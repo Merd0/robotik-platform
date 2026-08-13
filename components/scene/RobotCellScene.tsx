@@ -8,11 +8,12 @@ import { useTheme } from "@/components/ui/ThemeProvider";
 import { cameraPresetOf, type RobotCellCameraPreset } from "@/lib/robotics/robotCellStudio";
 import { ROBOT_CELL_OBSTACLES, type RobotCellMotionPlan, type RobotCellObstacle } from "@/lib/robotics/robotCellMotion";
 import { ROBOT_CELL_WORKPIECE } from "@/lib/robotics/robotCellProgram";
+import { ROBOT_CELL_GRIPPER_VISUAL, robotCellTargetFromScenePlane } from "@/lib/robotics/robotCellVisual";
 import { forwardKinematics, type RobotSpec } from "@/lib/robotics/kinematics";
 import type { Vec3 } from "@/lib/robotics/transform";
 import { SCENE_PALETTES } from "@/lib/theme";
 import { RobotArmModel } from "./RobotArm";
-import { roboticsVectorToScene } from "./robotFrames";
+import { frameAxesOf, roboticsFrameToScene, roboticsVectorToScene } from "./robotFrames";
 import { SceneCanvas } from "./SceneCanvas";
 
 function toSceneTuple(point: Vec3): [number, number, number] {
@@ -108,21 +109,23 @@ export function RobotCellScene({
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
   const tcpTransform = forwardKinematics(robot, jointAngles).jointTransforms.at(-1)!;
-  const gripperQuaternion = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().set(
-    tcpTransform[0][0], tcpTransform[0][2], -tcpTransform[0][1], 0,
-    tcpTransform[2][0], tcpTransform[2][2], -tcpTransform[2][1], 0,
-    -tcpTransform[1][0], -tcpTransform[1][2], tcpTransform[1][1], 0,
-    0, 0, 0, 1,
+  const toolFrame = roboticsFrameToScene(frameAxesOf(tcpTransform));
+  const gripperQuaternion = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(
+    new THREE.Vector3(toolFrame.x.x, toolFrame.x.y, toolFrame.x.z),
+    new THREE.Vector3(toolFrame.y.x, toolFrame.y.y, toolFrame.y.z),
+    new THREE.Vector3(toolFrame.z.x, toolFrame.z.y, toolFrame.z.z),
   ));
   const fixture = requiredObstacle("fixture");
   const bin = requiredObstacle("bin");
   const tcp = forwardKinematics(robot, jointAngles).endEffector;
   const gripperScenePosition = toSceneTuple(tcp);
-  const fingerOffset = gripperClosed ? 0.083 : 0.12;
+  const fingerOffset = gripperClosed
+    ? ROBOT_CELL_GRIPPER_VISUAL.closedFingerOffset
+    : ROBOT_CELL_GRIPPER_VISUAL.openFingerOffset;
   const [draggingGripper, setDraggingGripper] = useState(false);
   const dragTarget = (event: ThreeEvent<PointerEvent>) => {
     event.stopPropagation();
-    onGripperTarget?.({ x: event.point.x, y: -event.point.z, z: event.point.y });
+    onGripperTarget?.(robotCellTargetFromScenePlane(event.point, tcp.z));
   };
 
   return (
@@ -149,21 +152,31 @@ export function RobotCellScene({
       </Cylinder>
       <RobotArmModel robot={robot} jointAngles={jointAngles} activeJointIndex={activeJointIndex} showFrames={showFrames} industrial />
       <group position={gripperScenePosition} quaternion={gripperQuaternion}>
-        <Cylinder args={[0.075, 0.075, 0.1, 24]} position={[0, 0.24, 0]}>
-          <meshStandardMaterial color="#475569" metalness={0.55} roughness={0.32} />
+        <Cylinder args={[0.07, 0.07, 0.07, 24]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.flangeCenterY, 0]}>
+          <meshStandardMaterial color="#334155" metalness={0.5} roughness={0.32} />
         </Cylinder>
-        <Box args={[0.28, 0.07, 0.14]} position={[0, 0.16, 0]}>
-          <meshStandardMaterial color="#0f766e" metalness={0.35} roughness={0.38} />
+        <Cylinder args={[0.09, 0.09, 0.055, 24]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.adapterCenterY, 0]}>
+          <meshStandardMaterial color="#0d9488" metalness={0.25} roughness={0.4} />
+        </Cylinder>
+        <Box args={[0.13, 0.075, 0.34]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.palmCenterY, 0]}>
+          <meshStandardMaterial color="#0f766e" metalness={0.2} roughness={0.42} />
         </Box>
-        <Box args={[0.045, 0.2, 0.055]} position={[-fingerOffset, 0.03, 0]}>
-          <meshStandardMaterial color={gripperClosed ? "#fbbf24" : "#e2e8f0"} metalness={0.55} roughness={0.3} />
+        <Box args={[0.06, ROBOT_CELL_GRIPPER_VISUAL.fingerLength, ROBOT_CELL_GRIPPER_VISUAL.fingerThickness]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.fingerCenterY, -fingerOffset]}>
+          <meshStandardMaterial color={gripperClosed ? "#fbbf24" : "#f1f5f9"} metalness={0.45} roughness={0.3} />
         </Box>
-        <Box args={[0.045, 0.2, 0.055]} position={[fingerOffset, 0.03, 0]}>
-          <meshStandardMaterial color={gripperClosed ? "#fbbf24" : "#e2e8f0"} metalness={0.55} roughness={0.3} />
+        <Box args={[0.06, ROBOT_CELL_GRIPPER_VISUAL.fingerLength, ROBOT_CELL_GRIPPER_VISUAL.fingerThickness]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.fingerCenterY, fingerOffset]}>
+          <meshStandardMaterial color={gripperClosed ? "#fbbf24" : "#f1f5f9"} metalness={0.45} roughness={0.3} />
+        </Box>
+        <Box args={[0.075, 0.045, 0.065]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.jawPadCenterY, -fingerOffset]}>
+          <meshStandardMaterial color="#111827" roughness={0.55} />
+        </Box>
+        <Box args={[0.075, 0.045, 0.065]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.jawPadCenterY, fingerOffset]}>
+          <meshStandardMaterial color="#111827" roughness={0.55} />
         </Box>
         {directControl && (
           <Sphere
-            args={[0.18, 20, 20]}
+            args={[0.2, 20, 20]}
+            position={[0, ROBOT_CELL_GRIPPER_VISUAL.gripCenterY, 0]}
             onPointerDown={(event) => { event.stopPropagation(); setDraggingGripper(true); }}
             onPointerUp={(event) => { event.stopPropagation(); setDraggingGripper(false); }}
           >
@@ -173,7 +186,7 @@ export function RobotCellScene({
       </group>
       {directControl && (
         <mesh
-          position={[0.55, 0.65, 0]}
+          position={[0.55, gripperScenePosition[1], 0]}
           rotation={[-Math.PI / 2, 0, 0]}
           onPointerDown={dragTarget}
           onPointerMove={(event) => { if (draggingGripper || event.buttons === 1) dragTarget(event); }}
@@ -218,13 +231,13 @@ export function RobotCellScene({
       <Box args={obstacleSizeInScene(fixture)} position={toSceneTuple(fixture.center)}>
         <meshStandardMaterial color="#7c2d12" roughness={0.7} />
       </Box>
-      <Box args={[0.12, 0.12, 0.12]} position={toSceneTuple(workpiecePosition ?? ROBOT_CELL_WORKPIECE.start)}>
+      <Box args={[ROBOT_CELL_WORKPIECE.sizeMetres, ROBOT_CELL_WORKPIECE.sizeMetres, ROBOT_CELL_WORKPIECE.sizeMetres]} position={toSceneTuple(workpiecePosition ?? ROBOT_CELL_WORKPIECE.start)}>
         <meshStandardMaterial color="#f59e0b" emissive="#7c2d12" emissiveIntensity={0.16} roughness={0.48} />
       </Box>
       <Box args={obstacleSizeInScene(bin)} position={toSceneTuple(bin.center)}>
         <meshStandardMaterial color="#1d4ed8" roughness={0.68} />
       </Box>
-      <SafetyFence />
+      {motionPlans && <SafetyFence />}
       <CameraRig preset={cameraPreset} directControl={directControl} />
     </SceneCanvas>
   );

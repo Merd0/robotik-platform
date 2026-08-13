@@ -40,8 +40,22 @@ describe("3B robot hücresi durum modeli", () => {
   });
 
   it("hazır kamera görünümlerini kararlı 3B pozlarla tanımlar", () => {
-    expect(cameraPresetOf("cell")).toEqual(expect.objectContaining({ label: "Hücre", position: [2.35, 1.65, 2.55] }));
+    expect(cameraPresetOf("cell")).toEqual(expect.objectContaining({ label: "Hücre", position: [1.75, 1.25, 1.9] }));
     expect(cameraPresetOf("top").position[1]).toBeGreaterThan(3);
-    expect(cameraPresetOf("front").position[2]).toBeGreaterThan(3);
+    expect(cameraPresetOf("front").position[2]).toBeGreaterThan(2);
+  });
+
+  it("öğretim ana pozu gripper'ı masa ve gövdeden uzakta okunur bir pozda açar", () => {
+    const state = createRobotCellStudioState();
+    const pose = forwardKinematics(genericSixDofRobot, jointAnglesRadians(state));
+    const tcp = pose.endEffector;
+    const gripperVerticalAlignment = Math.abs(pose.jointTransforms.at(-1)![2][1]);
+
+    expect(tcp).toEqual(expect.objectContaining({
+      x: expect.closeTo(0.45, 2),
+      y: expect.closeTo(0.12, 2),
+      z: expect.closeTo(0.85, 2),
+    }));
+    expect(gripperVerticalAlignment).toBeGreaterThanOrEqual(0.72);
   });
 });

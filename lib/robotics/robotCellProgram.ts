@@ -69,6 +69,7 @@ export interface RobotCellDragSolution {
 export const ROBOT_CELL_WORKPIECE = {
   start: { x: 0.72, y: -0.18, z: 0.73 },
   drop: { x: 0.8, y: -0.45, z: 0.595 },
+  sizeMetres: 0.12,
   gripRadiusMetres: 0.12,
   dropZoneRadiusMetres: 0.18,
 } as const;
@@ -139,22 +140,30 @@ export function solveRobotCellDragTarget(
   robot: RobotSpec,
   currentAngles: readonly number[],
   target: Vec3,
+  orientationSeed?: readonly number[],
 ): RobotCellDragSolution {
-  const result = inverseKinematicsNumerical(robot, target, {
-    initialGuess: [...currentAngles],
-    maxIterations: 180,
-    tolerance: 0.001,
-    damping: 0.065,
-    maxStep: 0.11,
-  });
-  if (!result.converged || !result.angles) {
-    return { status: "ik-failure", angles: null, errorMetres: result.finalError };
+  const seeds = orientationSeed ? [[...currentAngles], [...orientationSeed]] : [[...currentAngles]];
+  let smallestError = Number.POSITIVE_INFINITY;
+  let collisionLabel: string | undefined;
+  for (const seed of seeds) {
+    const result = inverseKinematicsNumerical(robot, target, {
+      initialGuess: seed,
+      maxIterations: 180,
+      tolerance: 0.001,
+      damping: 0.065,
+      maxStep: 0.11,
+    });
+    smallestError = Math.min(smallestError, result.finalError);
+    if (!result.converged || !result.angles) continue;
+    const collision = detectRobotCellCollisions(robot, result.angles, ROBOT_CELL_OBSTACLES)[0];
+    if (collision) {
+      collisionLabel ??= collision.obstacleLabel;
+      continue;
+    }
+    return { status: "ready", angles: [...result.angles], errorMetres: result.finalError };
   }
-  const collision = detectRobotCellCollisions(robot, result.angles, ROBOT_CELL_OBSTACLES)[0];
-  if (collision) {
-    return { status: "collision", angles: null, errorMetres: result.finalError, obstacleLabel: collision.obstacleLabel };
-  }
-  return { status: "ready", angles: [...result.angles], errorMetres: result.finalError };
+  if (collisionLabel) return { status: "collision", angles: null, errorMetres: smallestError, obstacleLabel: collisionLabel };
+  return { status: "ik-failure", angles: null, errorMetres: smallestError };
 }
 
 function carriedWorkpieceIssue(

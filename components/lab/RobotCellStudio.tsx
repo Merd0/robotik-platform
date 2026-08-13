@@ -14,6 +14,7 @@ import {
 import { computeJacobian, forwardKinematics, isNearSingularity } from "@/lib/robotics/kinematics";
 import { planRobotCellMoveJ, planRobotCellMoveL, ROBOT_CELL_OBSTACLES, sampleRobotCellMotion, type RobotCellMotionKind } from "@/lib/robotics/robotCellMotion";
 import { assessRobotCellGrip, createRobotCellSampleJob, createTaughtPose, preflightRobotCellProgram, ROBOT_CELL_SAMPLE_JOB, ROBOT_CELL_WORKPIECE, solveRobotCellDragTarget, type RobotCellProgramCommand } from "@/lib/robotics/robotCellProgram";
+import { robotCellAxisTarget } from "@/lib/robotics/robotCellVisual";
 import { genericSixDofRobot } from "@/lib/robotics/robots/genericSixDof";
 import type { Vec3 } from "@/lib/robotics/transform";
 import {
@@ -66,11 +67,12 @@ export function RobotCellStudio() {
   const [workpiecePosition, setWorkpiecePosition] = useState<Vec3>(() => ({ ...ROBOT_CELL_WORKPIECE.start }));
   const [gripperClosed, setGripperClosed] = useState(false);
   const [holdingPart, setHoldingPart] = useState(false);
-  const [directStatus, setDirectStatus] = useState("Önce turuncu parçaya yaklaş. Hazır düğmeleriyle başlayabilir veya sahnede sürükleyebilirsin.");
+  const [directStatus, setDirectStatus] = useState("Önce Z ile güvenli yüksekliğe çık; sonra X ve Y ile turuncu parçanın üstüne ilerle.");
   const playbackFrame = useRef<number | null>(null);
   const programPlaybackFrame = useRef<number | null>(null);
   const directDragFrame = useRef<number | null>(null);
   const pendingDirectTarget = useRef<Vec3 | null>(null);
+  const directAnglesRef = useRef<number[]>([]);
   const programCommandProgress = useRef(0);
   const motionProgressRef = useRef(0);
   const focusCloseButton = useRef<HTMLButtonElement | null>(null);
@@ -99,6 +101,7 @@ export function RobotCellStudio() {
     [motionStartAngles, programCommands],
   );
   const displayedAngles = previewAngles ?? jointAngles;
+  directAnglesRef.current = [...displayedAngles];
   const kinematics = useMemo(() => forwardKinematics(genericSixDofRobot, displayedAngles), [displayedAngles]);
   const orientation = useMemo(
     () => toolOrientationOf(kinematics.jointTransforms.at(-1)!),
@@ -112,6 +115,10 @@ export function RobotCellStudio() {
   const gripAssessment = useMemo(
     () => assessRobotCellGrip(genericSixDofRobot, displayedAngles, workpiecePosition),
     [displayedAngles, workpiecePosition],
+  );
+  const directOrientationSeed = useMemo(
+    () => ROBOT_CELL_SAMPLE_JOB.pick.map((degrees) => degrees * Math.PI / 180),
+    [],
   );
 
   function selectCamera(cameraPreset: RobotCellCameraPreset) {
@@ -164,15 +171,21 @@ export function RobotCellStudio() {
   }
 
   function moveGripperTo(target: Vec3, label: string, save = true) {
-    const solution = solveRobotCellDragTarget(genericSixDofRobot, displayedAngles, target);
+    const solution = solveRobotCellDragTarget(genericSixDofRobot, directAnglesRef.current, target, directOrientationSeed);
     if (solution.status !== "ready" || !solution.angles) {
       setDirectStatus(solution.status === "collision" ? `Bu poz ${solution.obstacleLabel ?? "hücre elemanı"} ile çarpışıyor.` : "Robot bu noktaya eklem limitleri içinde ulaşamıyor.");
       return;
     }
+    directAnglesRef.current = [...solution.angles];
     setPreviewAngles(solution.angles);
     if (holdingPart) setWorkpiecePosition({ ...forwardKinematics(genericSixDofRobot, solution.angles).endEffector });
     setDirectStatus(`${label} konumuna ulaşıldı${save ? " ve programa eklendi" : ""}.`);
     if (save) appendMove(label, solution.angles, "movej");
+  }
+
+  function saveDirectMove(label: string) {
+    appendMove(label, displayedAngles, "movej");
+    setDirectStatus(`${label} programa eklendi. Şimdi bir sonraki konumu kendin öğret.`);
   }
 
   function queueGripperTarget(target: Vec3) {
@@ -185,33 +198,13 @@ export function RobotCellStudio() {
     });
   }
 
-  function moveGripperToAngles(jointDegrees: readonly number[], label: string, save = true) {
-    const angles = jointDegrees.map((degrees) => degrees * Math.PI / 180);
-    setPreviewAngles(angles);
-    if (holdingPart) setWorkpiecePosition({ ...forwardKinematics(genericSixDofRobot, angles).endEffector });
-    if (save) appendMove(label, angles, "movej");
-    setDirectStatus(`${label} konumuna ulaşıldı${save ? " ve programa eklendi" : ""}.`);
-  }
-
-  function moveHeldPartToBin() {
-    const route: Array<[readonly number[], string]> = [
-      [ROBOT_CELL_SAMPLE_JOB.approach, "Parçayı yukarı kaldır"],
-      [ROBOT_CELL_SAMPLE_JOB.inspect, "Güvenli ara noktadan geç"],
-      [ROBOT_CELL_SAMPLE_JOB.drop, "Bırakma alanının üstü"],
-    ];
-    route.forEach(([degrees, label]) => appendMove(label, degrees.map((value) => value * Math.PI / 180), "movej"));
-    const finalAngles = ROBOT_CELL_SAMPLE_JOB.drop.map((value) => value * Math.PI / 180);
-    setPreviewAngles(finalAngles);
-    setWorkpiecePosition({ ...forwardKinematics(genericSixDofRobot, finalAngles).endEffector });
-    setDirectStatus("Parça mavi bırakma alanının üstüne taşındı. Şimdi gripper’ı aç.");
-  }
-
   function gripPart() {
     const assessment = assessRobotCellGrip(genericSixDofRobot, displayedAngles, workpiecePosition);
     if (!assessment.canGrip) {
       setDirectStatus(assessment.reason === "orientation" ? "Bilek açısı uygun değil. Gripper parçaya üstten ve paralel gelmeli." : "Gripper parçanın merkezinde değil. Biraz daha yaklaştır.");
       return;
     }
+    saveDirectMove("Kavrama konumu");
     addGripperCommand("close");
     setGripperClosed(true);
     setHoldingPart(true);
@@ -219,6 +212,7 @@ export function RobotCellStudio() {
   }
 
   function releasePart() {
+    saveDirectMove("Bırakma konumu");
     addGripperCommand("open");
     setGripperClosed(false);
     setHoldingPart(false);
@@ -626,16 +620,17 @@ export function RobotCellStudio() {
                   gripperClosed={gripperClosed}
                   holdingPart={holdingPart}
                   directStatus={directStatus}
+                  tcpX={kinematics.endEffector.x}
+                  tcpY={kinematics.endEffector.y}
                   tcpHeight={kinematics.endEffector.z}
                   toolAngleDegrees={displayedAngles[5] * RAD_TO_DEG}
                   playing={programPlaying}
-                  onGoAbovePart={() => moveGripperToAngles(ROBOT_CELL_SAMPLE_JOB.approach, "Parçaya yaklaş")}
-                  onGoToPart={() => moveGripperToAngles(ROBOT_CELL_SAMPLE_JOB.pick, "Parçanın kavrama konumu")}
-                  onGoAboveBin={moveHeldPartToBin}
                   onGrip={gripPart}
                   onRelease={releasePart}
                   onSaveMove={() => appendMove("Elle seçilen konum")}
-                  onHeightChange={(height) => moveGripperTo({ ...kinematics.endEffector, z: height }, "Elle ayarlanan yükseklik", false)}
+                  onXChange={(x) => moveGripperTo(robotCellAxisTarget(forwardKinematics(genericSixDofRobot, directAnglesRef.current).endEffector, "x", x), "X konumu", false)}
+                  onYChange={(y) => moveGripperTo(robotCellAxisTarget(forwardKinematics(genericSixDofRobot, directAnglesRef.current).endEffector, "y", y), "Y konumu", false)}
+                  onHeightChange={(height) => moveGripperTo(robotCellAxisTarget(forwardKinematics(genericSixDofRobot, directAnglesRef.current).endEffector, "z", height), "Elle ayarlanan yükseklik", false)}
                   onToolAngleChange={(degrees) => {
                     const angles = [...displayedAngles];
                     angles[5] = degrees * Math.PI / 180;

@@ -1,3 +1,4 @@
+import type { RobotSpec } from "@/lib/robotics/kinematics";
 import type { Mat4, Vec3 } from "@/lib/robotics/transform";
 
 export interface FrameAxes {
@@ -11,6 +12,12 @@ export interface ToolOrientation {
   roll: number;
   pitch: number;
   yaw: number;
+}
+
+export interface IndustrialRobotVisualLayout {
+  links: Array<{ start: Vec3; end: Vec3 }>;
+  joints: Array<{ kind: "shoulder" | "elbow" | "wrist"; position: Vec3; direction: Vec3 }>;
+  flange: { position: Vec3; direction: Vec3 };
 }
 
 const WORLD_ORIGIN: Vec3 = { x: 0, y: 0, z: 0 };
@@ -50,6 +57,47 @@ export function jointAxisOf(jointTransforms: Mat4[], jointIndex: number): { orig
 
   const previousFrame = frameAxesOf(jointTransforms[jointIndex - 1]);
   return { origin: previousFrame.origin, direction: previousFrame.z };
+}
+
+/**
+ * DH çerçeveleri fiziksel motor gövdeleri değildir. Generic 6R zincirindeki
+ * sıfır uzunluklu J3/J5 adımları aynı noktaya düştüğü için görsel model bunları
+ * tek dirsek ve tek küresel bilek gövdesinde toplar; TCP ise ayrı flanş kalır.
+ */
+export function industrialRobotVisualLayout(
+  robot: RobotSpec,
+  jointPositions: readonly Vec3[],
+  jointTransforms: Mat4[],
+): IndustrialRobotVisualLayout {
+  if (robot.joints.length !== 6 || jointPositions.length !== 7) {
+    return {
+      links: jointPositions.slice(0, -1).map((start, index) => ({ start, end: jointPositions[index + 1] })),
+      joints: [],
+      flange: {
+        position: jointPositions.at(-1) ?? WORLD_ORIGIN,
+        direction: frameAxesOf(jointTransforms.at(-1) ?? identityMatrix()).z,
+      },
+    };
+  }
+
+  return {
+    links: [
+      { start: jointPositions[0], end: jointPositions[1] },
+      { start: jointPositions[1], end: jointPositions[2] },
+      { start: jointPositions[2], end: jointPositions[4] },
+      { start: jointPositions[4], end: jointPositions[6] },
+    ],
+    joints: [
+      { kind: "shoulder", position: jointPositions[1], direction: jointAxisOf(jointTransforms, 1).direction },
+      { kind: "elbow", position: jointPositions[2], direction: jointAxisOf(jointTransforms, 2).direction },
+      { kind: "wrist", position: jointPositions[4], direction: jointAxisOf(jointTransforms, 4).direction },
+    ],
+    flange: { position: jointPositions[6], direction: frameAxesOf(jointTransforms[5]).z },
+  };
+}
+
+function identityMatrix(): Mat4 {
+  return [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
 }
 
 /**

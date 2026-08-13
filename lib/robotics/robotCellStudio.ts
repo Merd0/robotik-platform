@@ -14,12 +14,12 @@ export interface RobotCellCameraDefinition {
   target: [number, number, number];
 }
 
-export const ROBOT_CELL_HOME_DEGREES = [20, 50, -20, 0, 120, 0] as const;
+export const ROBOT_CELL_HOME_DEGREES = [14.44, 76.52, 9.64, 15.63, -174.91, 129.53] as const;
 
 const CAMERA_PRESETS: Record<RobotCellCameraPreset, RobotCellCameraDefinition> = {
-  cell: { label: "Hücre", position: [2.35, 1.65, 2.55], target: [0.35, 0.45, 0] },
+  cell: { label: "Hücre", position: [1.75, 1.25, 1.9], target: [0.43, 0.5, 0] },
   top: { label: "Üstten", position: [0.35, 3.8, 0.01], target: [0.35, 0, 0] },
-  front: { label: "Önden", position: [0.35, 1.05, 3.6], target: [0.35, 0.4, 0] },
+  front: { label: "Önden", position: [0.42, 0.9, 2.65], target: [0.42, 0.48, 0] },
 };
 
 const RAD_TO_DEG = 180 / Math.PI;

@@ -9,6 +9,7 @@ import { useTheme } from "@/components/ui/ThemeProvider";
 import { SCENE_PALETTES } from "@/lib/theme";
 import {
   frameAxesOf,
+  industrialRobotVisualLayout,
   jointAxisOf,
   roboticsFrameToScene,
   roboticsVectorToScene,
@@ -187,20 +188,17 @@ function ArmModel({
         direction: roboticsVectorToScene(activeAxisRobotics.direction),
       }
     : null;
-  const sceneJointAxes = showsOrientation
-    ? sceneJointPositions.map((position, index) => ({
-        position,
-        direction: roboticsVectorToScene(jointAxisOf(jointTransforms, Math.min(index, robot.joints.length - 1)).direction),
-      }))
-    : [];
+  const industrialLayout = industrial && showsOrientation
+    ? industrialRobotVisualLayout(robot, jointPositions, jointTransforms)
+    : null;
 
   return (
     <group>
-      {sceneJointPositions.slice(0, -1).map((position, index) => (
-        <ArmSegment key={index} start={position} end={sceneJointPositions[index + 1]} color={linkColor} radius={industrial ? 0.052 : LINK_RADIUS} />
+      {(industrialLayout ? industrialLayout.links.map(({ start, end }) => ({ start: roboticsVectorToScene(start), end: roboticsVectorToScene(end) })) : sceneJointPositions.slice(0, -1).map((start, index) => ({ start, end: sceneJointPositions[index + 1] }))).map(({ start, end }, index) => (
+        <ArmSegment key={index} start={start} end={end} color={linkColor} radius={industrial ? 0.045 : LINK_RADIUS} />
       ))}
-      {industrial ? sceneJointAxes.map(({ position, direction }, index) => (
-        <JointHousing key={index} position={position} direction={direction} color={index === 0 ? "#0f766e" : accentColor} active={index === activeJointIndex} />
+      {industrialLayout ? industrialLayout.joints.map(({ kind, position, direction }, index) => (
+        <JointHousing key={kind} position={roboticsVectorToScene(position)} direction={roboticsVectorToScene(direction)} color={index === 0 ? "#0f766e" : accentColor} active={kind === "shoulder" ? activeJointIndex === 1 : kind === "elbow" ? activeJointIndex === 2 || activeJointIndex === 3 : activeJointIndex !== undefined && activeJointIndex >= 4} size={kind === "wrist" ? "small" : "normal"} />
       )) : sceneJointPositions.map((position, index) => (
         <Sphere
           key={index}
@@ -233,18 +231,20 @@ function ArmModel({
   );
 }
 
-function JointHousing({ position, direction, color, active }: { position: Vec3; direction: Vec3; color: string; active: boolean }) {
+function JointHousing({ position, direction, color, active, size }: { position: Vec3; direction: Vec3; color: string; active: boolean; size: "normal" | "small" }) {
+  const radius = size === "small" ? 0.068 : 0.086;
+  const depth = size === "small" ? 0.1 : 0.12;
   const quaternion = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
     new THREE.Vector3(0, 1, 0),
     new THREE.Vector3(direction.x, direction.y, direction.z).normalize(),
   ), [direction]);
   return (
     <group position={toThreeVector(position)} quaternion={quaternion}>
-      <Cylinder args={[active ? 0.105 : 0.09, active ? 0.105 : 0.09, 0.13, 24]}>
-        <meshStandardMaterial color={color} metalness={0.35} roughness={0.36} />
+      <Cylinder args={[active ? radius * 1.12 : radius, active ? radius * 1.12 : radius, depth, 24]}>
+        <meshStandardMaterial color={color} metalness={0.18} roughness={0.48} />
       </Cylinder>
-      <Torus args={[active ? 0.108 : 0.093, 0.012, 10, 36]} rotation={[Math.PI / 2, 0, 0]}>
-        <meshStandardMaterial color={active ? "#fbbf24" : "#334155"} metalness={0.5} roughness={0.3} />
+      <Torus args={[active ? radius * 1.16 : radius * 1.04, 0.008, 8, 32]} rotation={[Math.PI / 2, 0, 0]}>
+        <meshStandardMaterial color={active ? "#fbbf24" : "#0f172a"} metalness={0.35} roughness={0.4} />
       </Torus>
     </group>
   );

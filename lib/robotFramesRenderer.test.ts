@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   frameAxesOf,
+  industrialRobotVisualLayout,
   jointAxisOf,
   roboticsVectorToScene,
   toolOrientationOf,
@@ -45,5 +46,21 @@ describe("robot çerçevesi renderer verisi", () => {
 
     const j6Axis = jointAxisOf(after.jointTransforms, 5);
     expect(dot(j6Axis.direction, afterTool.z)).toBeCloseTo(1, 8);
+  });
+
+  it("6 eksenli hücre robotunda üst üste binen DH noktalarını tek okunur bilek gövdesinde birleştirir", () => {
+    const angles = [-13.16, 39.95, 44.79, 15.25, 163.25, 129.53].map((degrees) => degrees * Math.PI / 180);
+    const { jointPositions, jointTransforms } = forwardKinematics(genericSixDofRobot, angles);
+    const layout = industrialRobotVisualLayout(genericSixDofRobot, jointPositions, jointTransforms);
+
+    expect(layout.links).toHaveLength(4);
+    expect(layout.links.at(-1)).toEqual({ start: jointPositions[4], end: jointPositions[6] });
+    expect(layout.joints.map((joint) => joint.kind)).toEqual(["shoulder", "elbow", "wrist"]);
+    expect(layout.joints.map((joint) => joint.position)).toEqual([
+      jointPositions[1],
+      jointPositions[2],
+      jointPositions[4],
+    ]);
+    expect(layout.flange.position).toEqual(jointPositions.at(-1));
   });
 });
