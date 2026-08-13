@@ -94,6 +94,39 @@ describe("3B robot hücresi öğretim programı", () => {
     }));
   });
 
+  it("kritik bırakma pozu eski bir ara pozla aynıysa komutu geriye taşımayıp sona ekler", () => {
+    const releaseAngles = [...HOME];
+    const detourAngles = [...HOME];
+    detourAngles[0] += 0.35;
+    const earlier: RobotCellProgramCommand = {
+      id: "C1",
+      type: "move",
+      motion: "movej",
+      pose: createTaughtPose(genericSixDofRobot, "P1", "Z jog", releaseAngles),
+    };
+    const detour: RobotCellProgramCommand = {
+      id: "C2",
+      type: "move",
+      motion: "movej",
+      pose: createTaughtPose(genericSixDofRobot, "P2", "Y jog", detourAngles),
+    };
+    const release: RobotCellProgramCommand = {
+      id: "C3",
+      type: "move",
+      motion: "movej",
+      pose: createTaughtPose(genericSixDofRobot, "P3", "Elle bırakma konumu", releaseAngles),
+    };
+
+    const result = recordRobotCellCommandSmart([earlier, detour], release);
+
+    expect(result.change).toBe("added");
+    expect(result.commands.map((command) => command.id)).toEqual(["C1", "C2", "C3"]);
+    expect(result.commands.at(-1)).toEqual(expect.objectContaining({
+      type: "move",
+      pose: expect.objectContaining({ label: "Elle bırakma konumu" }),
+    }));
+  });
+
   it("akıllı kayıt aynı iş evresindeki otomatik güvenli kaldırma pozunu günceller", () => {
     const firstAngles = toRadians([-10, 55, 20, 0, -80, -10]);
     const correctedAngles = toRadians([-12, 58, 18, 0, -82, -12]);

@@ -189,9 +189,21 @@ export function RobotCellStudio() {
     if (save) appendSmartMove(label, solution.angles, "movej");
   }
 
-  function saveDirectMove(label: string) {
-    appendSmartMove(label, displayedAngles, "movej");
+  function saveDirectMove(label: string, angles = directAnglesRef.current) {
+    appendSmartMove(label, angles, "movej");
     setDirectStatus(`${label} akıllı kayda işlendi. Aynı veya çok yakın bir poz varsa yeni satır açılmadı.`);
+  }
+
+  function appendSmartMoveAndGripper(label: string, angles: readonly number[], action: "open" | "close") {
+    setProgramCommands((commands) => {
+      const poseId = nextIndexedId("P", commands.flatMap((command) => command.type === "move" ? [command.pose.id] : []));
+      const moveId = nextIndexedId("C", commands.map((command) => command.id));
+      const pose = createTaughtPose(genericSixDofRobot, poseId, label, angles);
+      const afterMove = recordRobotCellCommandSmart(commands, { id: moveId, type: "move", motion: "movej", pose }).commands;
+      const gripperId = nextIndexedId("C", afterMove.map((command) => command.id));
+      return recordRobotCellCommandSmart(afterMove, { id: gripperId, type: "gripper", action }).commands;
+    });
+    setProgramCompleted(false);
   }
 
   function jogGripper(axis: "x" | "y" | "z", delta: number) {
@@ -211,13 +223,13 @@ export function RobotCellStudio() {
   }
 
   function gripPart() {
-    const assessment = assessRobotCellGrip(genericSixDofRobot, displayedAngles, workpiecePosition);
+    const currentAngles = [...directAnglesRef.current];
+    const assessment = assessRobotCellGrip(genericSixDofRobot, currentAngles, workpiecePosition);
     if (!assessment.canGrip) {
       setDirectStatus(assessment.reason === "orientation" ? "Bilek açısı uygun değil. Gripper parçaya üstten ve paralel gelmeli." : "Gripper parçanın merkezinde değil. Biraz daha yaklaştır.");
       return;
     }
-    saveDirectMove("Kavrama konumu");
-    addSmartGripperCommand("close");
+    appendSmartMoveAndGripper("Kavrama konumu", currentAngles, "close");
     setGripperClosed(true);
     setHoldingPart(true);
     setDirectTaskFinished(false);
@@ -225,11 +237,11 @@ export function RobotCellStudio() {
   }
 
   function releasePart() {
-    const currentTcp = forwardKinematics(genericSixDofRobot, displayedAngles).endEffector;
+    const currentAngles = [...directAnglesRef.current];
+    const currentTcp = forwardKinematics(genericSixDofRobot, currentAngles).endEffector;
     const atDrop = Math.hypot(currentTcp.x - ROBOT_CELL_WORKPIECE.drop.x, currentTcp.y - ROBOT_CELL_WORKPIECE.drop.y) <= 0.012
       && Math.abs(currentTcp.z - ROBOT_CELL_WORKPIECE.drop.z) <= 0.012;
-    saveDirectMove(atDrop ? "Bırakma konumu" : "Elle bırakma konumu");
-    addSmartGripperCommand("open");
+    appendSmartMoveAndGripper(atDrop ? "Bırakma konumu" : "Elle bırakma konumu", currentAngles, "open");
     setGripperClosed(false);
     setHoldingPart(false);
     const landedPosition = releasedWorkpiecePosition(currentTcp);
@@ -248,14 +260,6 @@ export function RobotCellStudio() {
     setProgramCommands((commands) => {
       const commandId = nextIndexedId("C", commands.map((command) => command.id));
       return [...commands, { id: commandId, type: "gripper", action }];
-    });
-    setProgramCompleted(false);
-  }
-
-  function addSmartGripperCommand(action: "open" | "close") {
-    setProgramCommands((commands) => {
-      const commandId = nextIndexedId("C", commands.map((command) => command.id));
-      return recordRobotCellCommandSmart(commands, { id: commandId, type: "gripper", action }).commands;
     });
     setProgramCompleted(false);
   }

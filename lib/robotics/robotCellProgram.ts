@@ -147,6 +147,10 @@ export function recordRobotCellCommandSmart(
     if (!SMART_CRITICAL_MOVE_LABELS.has(command.pose.label) || duplicate.item.pose.label === command.pose.label) {
       return { commands: [...commands], change: "ignored" };
     }
+    const latestMove = phaseMoves.at(-1);
+    if (latestMove?.index !== duplicate.index) {
+      return { commands: [...commands, command], change: "added" };
+    }
     const previous = duplicate.item;
     const replacement: RobotCellProgramCommand = {
       ...command,

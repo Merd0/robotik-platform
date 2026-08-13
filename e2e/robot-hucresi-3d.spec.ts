@@ -134,6 +134,9 @@ test("basit al ve bırak akışında gripper parçayı kavrar ve bırakma alanı
   const recordedSteps = direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem");
   await expect(recordedSteps).toHaveCount(11);
   await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByText("Bırakma konumu")).toBeVisible();
+  const recordedLabels = await recordedSteps.allTextContents();
+  expect(recordedLabels.findIndex((label) => label.includes("Parçayı bırak")))
+    .toBe(recordedLabels.findIndex((label) => label.includes("Bırakma konumu")) + 1);
   await expect(focusView.getByRole("button", { name: "Programı oynat" })).toBeEnabled();
   await expect(direct.getByText("çalışmaya hazır", { exact: false })).toBeVisible();
 
@@ -168,5 +171,9 @@ test("gripper hedef dışında da açılır ve kullanıcı ara pozu açıkça ka
   await expect(direct.getByText("Parça bırakma tablasında", { exact: true })).toHaveCount(0);
   await expect(direct.getByRole("button", { name: "Al-bırak tamamlandı" })).toHaveCount(0);
   await expect(direct.getByText("Kavrama noktasına kalan", { exact: true })).toBeVisible();
-  await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByText("Elle bırakma konumu")).toBeVisible();
+  const manualReleaseSteps = direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem");
+  await expect(manualReleaseSteps.getByText("Elle bırakma konumu")).toBeVisible();
+  const manualReleaseLabels = await manualReleaseSteps.allTextContents();
+  expect(manualReleaseLabels.findIndex((label) => label.includes("Parçayı bırak")))
+    .toBe(manualReleaseLabels.findIndex((label) => label.includes("Elle bırakma konumu")) + 1);
 });
