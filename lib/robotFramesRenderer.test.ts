@@ -54,7 +54,8 @@ describe("robot çerçevesi renderer verisi", () => {
     const layout = industrialRobotVisualLayout(genericSixDofRobot, jointPositions, jointTransforms);
 
     expect(layout.links).toHaveLength(4);
-    expect(layout.links.at(-1)).toEqual({ start: jointPositions[4], end: jointPositions[6] });
+    expect(layout.links.at(-1)).toEqual({ start: jointPositions[4], end: jointPositions[5] });
+    expect(layout.links.at(-1)?.end).not.toEqual(layout.flange.position);
     expect(layout.joints.map((joint) => joint.kind)).toEqual(["shoulder", "elbow", "wrist"]);
     expect(layout.joints.map((joint) => joint.position)).toEqual([
       jointPositions[1],

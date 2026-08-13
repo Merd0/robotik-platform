@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { genericSixDofRobot } from "./robots/genericSixDof";
+import { ROBOT_CELL_WORKPIECE } from "./robotCellProgram";
 import {
   ROBOT_CELL_OBSTACLES,
   detectRobotCellCollisions,
@@ -15,6 +16,18 @@ const HOME = toRadians([20, 50, -20, 0, 120, 0]);
 const BIN_APPROACH = toRadians([-24, 25, 38, 6, 82, 0]);
 
 describe("3B robot hücresi hareket provası", () => {
+  it("iş parçasını fikstür ve bırakma tablası üzerinde boşluksuz taşır", () => {
+    const fixture = ROBOT_CELL_OBSTACLES.find((obstacle) => obstacle.id === "fixture")!;
+    const bin = ROBOT_CELL_OBSTACLES.find((obstacle) => obstacle.id === "bin")!;
+    const halfPart = ROBOT_CELL_WORKPIECE.sizeMetres / 2;
+
+    expect(fixture.center.z + fixture.halfSize.z + halfPart).toBeCloseTo(ROBOT_CELL_WORKPIECE.start.z, 8);
+    expect(bin.center.z + bin.halfSize.z + halfPart).toBeCloseTo(ROBOT_CELL_WORKPIECE.drop.z, 8);
+    expect(Math.hypot(fixture.center.x - bin.center.x, fixture.center.y - bin.center.y)).toBeGreaterThan(
+      fixture.halfSize.y + bin.halfSize.y,
+    );
+  });
+
   it("yarıçaplı bağlantının kutuyu kesmesini ve boşluk payıyla geçmesini ayırır", () => {
     const obstacle: RobotCellObstacle = {
       id: "test-box",

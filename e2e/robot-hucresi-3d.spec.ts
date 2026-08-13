@@ -80,7 +80,7 @@ test("robot pozlarını öğretir, programı ön kontrolden geçirir ve satır s
   await expect(teaching.getByText("Önce robotu prova zaman çizgisinde bir poza getir", { exact: false })).toBeVisible();
 
   await teaching.getByRole("button", { name: "Örnek al-bırak işini yükle" }).click();
-  await expect(teaching.getByText("5 hareket · ön kontrol temiz", { exact: false })).toBeVisible();
+  await expect(teaching.getByText("6 hareket · ön kontrol temiz", { exact: false })).toBeVisible();
   await teaching.getByRole("button", { name: "Programı temizle" }).click();
 
   await teaching.getByRole("button", { name: "Geçerli pozu öğret" }).click();
@@ -110,28 +110,27 @@ test("basit al ve bırak akışında gripper parçayı kavrar ve bırakma alanı
   const focusView = page.getByRole("dialog", { name: "Robot hücresi odak görünümü" });
   const direct = focusView.getByRole("tabpanel", { name: "Al ve bırak" });
 
-  await expect(direct.getByRole("heading", { name: "Gripper’ı götür, kavra, bırak" })).toBeVisible();
+  await expect(direct.getByRole("heading", { name: "Robotu adım adım sür" })).toBeVisible();
   await expect(direct.getByRole("button", { name: "Hazır kavrama" })).toHaveCount(0);
   await expect(direct.getByRole("button", { name: "Parçanın üstüne git" })).toHaveCount(0);
-  const initialOrientation = (await focusView.getByTestId("tcp-orientation-direct").textContent())!;
-  await direct.getByRole("slider", { name: "Gripper dönüş açısı" }).fill("130");
-  await direct.getByRole("slider", { name: "Gripper yüksekliği" }).fill("0.86");
-  await direct.getByRole("slider", { name: "Yatay X konumu" }).fill("0.72");
-  await direct.getByRole("slider", { name: "Yatay Y konumu" }).fill("-0.18");
-  await direct.getByRole("slider", { name: "Gripper yüksekliği" }).fill("0.73");
-  await expect(focusView.getByTestId("tcp-orientation-direct")).toHaveText(initialOrientation);
-  await expect(direct.getByText("Merkez hizalı", { exact: true })).toBeVisible();
-  await expect(direct.getByText("Bilek hizalı", { exact: true })).toBeVisible();
+  await expect(direct.getByRole("slider")).toHaveCount(0);
+  await direct.getByRole("button", { name: "Normal 5 cm" }).click();
+  for (let index = 0; index < 3; index += 1) await direct.getByRole("button", { name: "X artı" }).click();
+  for (let index = 0; index < 4; index += 1) await direct.getByRole("button", { name: "Y eksi" }).click();
+  for (let index = 0; index < 4; index += 1) await direct.getByRole("button", { name: "Z eksi" }).click();
+  await expect(direct.getByText("Kavrama noktasında", { exact: true })).toBeVisible();
   await expect(direct.getByRole("button", { name: "Gripper’ı kapat · kavra" })).toBeEnabled();
   await direct.getByRole("button", { name: "Gripper’ı kapat · kavra" }).click();
   await expect(direct.getByText("Parça kavrandı", { exact: false })).toBeVisible();
 
-  await direct.getByRole("slider", { name: "Gripper yüksekliği" }).fill("0.74");
-  await direct.getByRole("slider", { name: "Yatay X konumu" }).fill("0.72");
-  await direct.getByRole("slider", { name: "Yatay Y konumu" }).fill("-0.36");
+  for (let index = 0; index < 2; index += 1) await direct.getByRole("button", { name: "Z artı" }).click();
+  for (let index = 0; index < 3; index += 1) await direct.getByRole("button", { name: "X eksi" }).click();
+  for (let index = 0; index < 6; index += 1) await direct.getByRole("button", { name: "Y eksi" }).click();
+  for (let index = 0; index < 7; index += 1) await direct.getByRole("button", { name: "Z eksi" }).click();
+  await expect(direct.getByText("Bırakma noktasında", { exact: true })).toBeVisible();
   await direct.getByRole("button", { name: "Gripper’ı aç · bırak" }).click();
   await expect(direct.getByText("Parça mavi alana bırakıldı", { exact: false })).toBeVisible();
-  await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem")).toHaveCount(4);
+  await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem")).toHaveCount(6);
   await expect(focusView.getByRole("button", { name: "Programı oynat" })).toBeEnabled();
   await expect(direct.getByText("çalışmaya hazır", { exact: false })).toBeVisible();
 

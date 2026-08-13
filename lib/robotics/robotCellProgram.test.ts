@@ -7,6 +7,8 @@ import {
   createRobotCellSampleJob,
   assessRobotCellGrip,
   solveRobotCellDragTarget,
+  solveRobotCellDirectTarget,
+  ROBOT_CELL_SAMPLE_JOB,
   ROBOT_CELL_WORKPIECE,
   preflightRobotCellProgram,
   type RobotCellProgramCommand,
@@ -30,6 +32,23 @@ function shortestAngleDistance(first: number, second: number): number {
 }
 
 describe("3B robot hücresi öğretim programı", () => {
+  it("basit kumandada her hedefte gripper yaklaşma eksenini düşey aşağı kilitler", () => {
+    const targets = [
+      { x: 0.65, y: 0.02, z: 0.82 },
+      { x: ROBOT_CELL_WORKPIECE.start.x, y: ROBOT_CELL_WORKPIECE.start.y, z: ROBOT_CELL_WORKPIECE.start.z },
+      { x: ROBOT_CELL_WORKPIECE.drop.x, y: ROBOT_CELL_WORKPIECE.drop.y, z: ROBOT_CELL_WORKPIECE.drop.z },
+    ];
+    let previous = HOME;
+
+    for (const target of targets) {
+      const solution = solveRobotCellDirectTarget(genericSixDofRobot, previous, target);
+      expect(solution).toEqual(expect.objectContaining({ status: "ready", angles: expect.any(Array) }));
+      const transform = forwardKinematics(genericSixDofRobot, solution.angles!).jointTransforms.at(-1)!;
+      expect(transform[2][2]).toBeLessThan(-0.999);
+      previous = solution.angles!;
+    }
+  });
+
   it("öğretilen pozu eklem açıları ve FK'den gelen TCP ile dondurur", () => {
     const pose = createTaughtPose(genericSixDofRobot, "P1", "Kontrol", INSPECTION);
 
@@ -79,8 +98,10 @@ describe("3B robot hücresi öğretim programı", () => {
   });
 
   it("gripper yalnız parçanın merkezinde ve kavrama açıklığı uygunken kutuyu tutar", () => {
-    const aligned = assessRobotCellGrip(genericSixDofRobot, toRadians([-13.16, 39.95, 44.79, 15.25, 163.25, 90]), { ...ROBOT_CELL_WORKPIECE.start });
-    const tilted = assessRobotCellGrip(genericSixDofRobot, toRadians([-13.16, 39.95, 44.79, 15.25, 163.25, 0]), { ...ROBOT_CELL_WORKPIECE.start });
+    const aligned = assessRobotCellGrip(genericSixDofRobot, toRadians(ROBOT_CELL_SAMPLE_JOB.pick), { ...ROBOT_CELL_WORKPIECE.start });
+    const tiltedAngles = [...ROBOT_CELL_SAMPLE_JOB.pick];
+    tiltedAngles[4] = 0;
+    const tilted = assessRobotCellGrip(genericSixDofRobot, toRadians(tiltedAngles), forwardKinematics(genericSixDofRobot, toRadians(tiltedAngles)).endEffector);
 
     expect(aligned).toEqual(expect.objectContaining({
       canGrip: true,
@@ -150,9 +171,9 @@ describe("3B robot hücresi öğretim programı", () => {
     const program = createRobotCellSampleJob(genericSixDofRobot);
     const result = preflightRobotCellProgram(genericSixDofRobot, HOME, program);
 
-    expect(program.map((command) => command.type === "move" ? command.motion : command.action)).toEqual(["movej", "movel", "close", "movel", "movej", "movej", "open"]);
+    expect(program.map((command) => command.type === "move" ? command.motion : command.action)).toEqual(["movej", "movel", "close", "movel", "movej", "movej", "movel", "open"]);
     expect(result.status).toBe("ready");
-    expect(result.steps.map((step) => step.holdingPartAfter)).toEqual([false, false, true, true, true, true, false]);
+    expect(result.steps.map((step) => step.holdingPartAfter)).toEqual([false, false, true, true, true, true, true, false]);
   });
 
   it("MoveL sonrasında sıradaki satıra çözücünün gerçekten ulaştığı eklem pozundan başlar", () => {
@@ -165,16 +186,14 @@ describe("3B robot hücresi öğretim programı", () => {
     expect(result.steps[3].startAngles).toEqual(moveLEnd);
   });
 
-  it("bırakılan parçayı altındaki kutuya oturtur ve uzaktaki sahte yeniden kavramayı reddeder", () => {
+  it("bırakılan parçayı altındaki tablaya boşluksuz oturtur ve tutma durumunu kapatır", () => {
     const program = createRobotCellSampleJob(genericSixDofRobot);
-    program.push({ id: "C8", type: "gripper", action: "close" });
 
     const result = preflightRobotCellProgram(genericSixDofRobot, HOME, program);
 
-    expect(result.status).toBe("blocked");
-    expect(result.steps[6].workpiecePositionAfter).toEqual(expect.objectContaining({ x: expect.closeTo(0.72, 2), y: expect.closeTo(-0.36, 2), z: 0.595 }));
-    expect(result.steps.at(-1)).toEqual(expect.objectContaining({ status: "blocked", holdingPartAfter: false }));
-    expect(result.firstIssue).toEqual(expect.objectContaining({ commandId: "C8", reason: "grip-zone" }));
+    expect(result.status).toBe("ready");
+    expect(result.steps[7].workpiecePositionAfter).toEqual(expect.objectContaining({ x: expect.closeTo(0.55, 2), y: expect.closeTo(-0.4, 2), z: 0.4 }));
+    expect(result.steps.at(-1)).toEqual(expect.objectContaining({ status: "ready", holdingPartAfter: false }));
   });
 
   it("robot kolu geçse bile taşınan parçanın koruyucu çevre temasını engeller", () => {

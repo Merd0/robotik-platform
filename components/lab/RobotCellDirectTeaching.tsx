@@ -1,10 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import type { RobotCellGripAssessment, RobotCellProgramCommand, RobotCellProgramPreflight } from "@/lib/robotics/robotCellProgram";
+import type { Vec3 } from "@/lib/robotics/transform";
 
 function taskLabel(command: RobotCellProgramCommand): string {
   if (command.type === "gripper") return command.action === "close" ? "Parçayı kavra" : "Parçayı bırak";
   return command.pose.label;
+}
+
+function formatCoordinate(value: number): string {
+  return value.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export function RobotCellDirectTeaching({
@@ -14,18 +20,13 @@ export function RobotCellDirectTeaching({
   gripperClosed,
   holdingPart,
   directStatus,
-  tcpX,
-  tcpY,
-  tcpHeight,
-  toolAngleDegrees,
+  tcp,
+  activeTarget,
   playing,
   onGrip,
   onRelease,
-  onSaveMove,
-  onXChange,
-  onYChange,
-  onHeightChange,
-  onToolAngleChange,
+  onJog,
+  onReset,
   onClear,
 }: {
   commands: readonly RobotCellProgramCommand[];
@@ -34,29 +35,52 @@ export function RobotCellDirectTeaching({
   gripperClosed: boolean;
   holdingPart: boolean;
   directStatus: string;
-  tcpX: number;
-  tcpY: number;
-  tcpHeight: number;
-  toolAngleDegrees: number;
+  tcp: Vec3;
+  activeTarget: Vec3;
   playing: boolean;
   onGrip: () => void;
   onRelease: () => void;
-  onSaveMove: () => void;
-  onXChange: (x: number) => void;
-  onYChange: (y: number) => void;
-  onHeightChange: (height: number) => void;
-  onToolAngleChange: (angle: number) => void;
+  onJog: (axis: "x" | "y" | "z", delta: number) => void;
+  onReset: () => void;
   onClear: () => void;
 }) {
+  const [stepMetres, setStepMetres] = useState(0.05);
   const lastCommand = commands.at(-1);
   const taskFinished = lastCommand?.type === "gripper" && lastCommand.action === "open";
-  const nextStep = taskFinished ? "İş hazır. Aşağıdan programı oynat ve tamamını izle." : holdingPart ? "Gripper’ı mavi bırakma alanına götür." : gripperClosed ? "Tutucuyu aç veya programı çalıştır." : grip.canGrip ? "Konum doğru. Şimdi parçayı kavra." : "Gripper’ı turuncu parçanın üstüne getir.";
-  const sliderValue = (value: number, minimum: number, maximum: number) => Math.min(maximum, Math.max(minimum, Number(value.toFixed(2))));
+  const targetDistance = Math.hypot(tcp.x - activeTarget.x, tcp.y - activeTarget.y, tcp.z - activeTarget.z);
+  const atTarget = targetDistance <= 0.012;
+  const mustLift = holdingPart && tcp.z < 0.74;
+  const targetLabel = holdingPart ? "Bırakma noktası" : "Kavrama noktası";
+  const nextStep = taskFinished
+    ? "İş tamam. Programı oynatıp hareketi yeniden izle."
+    : holdingPart
+      ? mustLift ? "Önce Z+ ile parçayı güvenli yüksekliğe kaldır." : "Parçayı mavi tablaya taşı, sonra Z− ile indir."
+      : atTarget
+        ? "Parça merkezindesin. Gripper’ı kapat."
+        : "X, Y ve Z tuşlarıyla turuncu parçaya ilerle.";
+  const remaining = {
+    x: activeTarget.x - tcp.x,
+    y: activeTarget.y - tcp.y,
+    z: activeTarget.z - tcp.z,
+  };
+  const jogButton = (axis: "x" | "y" | "z", direction: -1 | 1, label: string) => (
+    <button
+      type="button"
+      aria-label={`${axis.toUpperCase()} ${direction > 0 ? "artı" : "eksi"}`}
+      onClick={() => onJog(axis, direction * stepMetres)}
+      disabled={playing || (mustLift && axis !== "z")}
+      className="min-h-12 rounded-xl border border-site-border bg-site-surface px-3 text-sm font-bold text-site-ink transition hover:border-site-accent hover:bg-site-accent/10 disabled:opacity-40"
+    >
+      <span className="font-mono text-site-accent-text">{axis.toUpperCase()}{direction > 0 ? "+" : "−"}</span>
+      <span className="ml-2 text-xs font-medium text-site-muted">{label}</span>
+    </button>
+  );
+
   return (
     <div role="tabpanel" aria-label="Al ve bırak">
-      <p className="font-mono text-xs font-semibold uppercase tracking-[.16em] text-site-accent-text">Doğrudan öğretim</p>
-      <h3 className="mt-2 font-heading text-3xl font-semibold text-site-ink">Gripper’ı götür, kavra, bırak</h3>
-      <p className="mt-2 text-sm leading-6 text-site-muted">Gripper’ı sahnede tutup sürükle veya X/Y/Z kumandalarıyla kendin götür. Parçanın merkezine in, iki hizayı da yeşil yap, sonra kavra. Hazır taşıma ya da otomatik kavrama yok.</p>
+      <p className="font-mono text-xs font-semibold uppercase tracking-[.16em] text-site-accent-text">Basit robot kumandası</p>
+      <h3 className="mt-2 font-heading text-3xl font-semibold text-site-ink">Robotu adım adım sür</h3>
+      <p className="mt-2 text-sm leading-6 text-site-muted">Uçtaki gripper her zaman aşağı bakar. Önce yatayda X/Y ile hizala, sonra Z− ile alçal. Böylece bilek açısı veya IK dalı seçmek zorunda kalmazsın.</p>
 
       <div className="mt-4 rounded-2xl border border-site-accent bg-site-accent/10 p-4" aria-live="polite">
         <span className="block text-xs font-semibold uppercase tracking-[.14em] text-site-accent-text">Sıradaki iş</span>
@@ -64,50 +88,37 @@ export function RobotCellDirectTeaching({
         <span className="mt-1 block text-xs leading-5 text-site-muted">{directStatus}</span>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs" aria-label="Hedef koordinat rehberi">
-        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-site-ink">
-          <strong className="block">Turuncu parça</strong>
-          <span className="mt-1 block font-mono text-site-muted">X 0.72 · Y −0.18 · Z 0.73</span>
-        </div>
-        <div className="rounded-xl border border-blue-500/40 bg-blue-500/10 p-3 text-site-ink">
-          <strong className="block">Mavi bırakma alanı</strong>
-          <span className="mt-1 block font-mono text-site-muted">X 0.72 · Y −0.36 · taşıma Z 0.74</span>
-        </div>
+      <div className="mt-3 grid grid-cols-2 gap-2" aria-label="Jog hassasiyeti">
+        <button type="button" aria-pressed={stepMetres === 0.05} onClick={() => setStepMetres(0.05)} className={`min-h-11 rounded-xl border px-3 text-sm font-semibold ${stepMetres === 0.05 ? "border-site-accent bg-site-accent text-site-on-accent" : "border-site-border text-site-muted"}`}>Normal 5 cm</button>
+        <button type="button" aria-pressed={stepMetres === 0.01} onClick={() => setStepMetres(0.01)} className={`min-h-11 rounded-xl border px-3 text-sm font-semibold ${stepMetres === 0.01 ? "border-site-accent bg-site-accent text-site-on-accent" : "border-site-border text-site-muted"}`}>Hassas 1 cm</button>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2" role="group" aria-label="Kavrama hizası">
-        <div className={`min-h-11 rounded-xl border px-3 py-2 text-xs font-semibold ${grip.positionAligned ? "border-site-accent bg-site-accent/10 text-site-accent-text" : "border-site-border bg-site-soft text-site-muted"}`}>
-          {grip.positionAligned ? "Merkez hizalı" : "Merkezi yaklaştır"}
+      <div className="mt-3 rounded-2xl border border-site-border bg-site-soft p-4">
+        <div className="grid grid-cols-3 gap-2 text-center font-mono text-xs" aria-label="Gripper koordinatları">
+          {(["x", "y", "z"] as const).map((axis) => (
+            <div key={axis} className="rounded-xl bg-site-surface p-2 text-site-muted"><strong className="block text-site-ink">{axis.toUpperCase()}</strong>{formatCoordinate(tcp[axis])} m</div>
+          ))}
         </div>
-        <div className={`min-h-11 rounded-xl border px-3 py-2 text-xs font-semibold ${grip.orientationAligned ? "border-site-accent bg-site-accent/10 text-site-accent-text" : "border-site-border bg-site-soft text-site-muted"}`}>
-          {grip.orientationAligned ? "Bilek hizalı" : "Bileği döndür"}
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {jogButton("x", -1, "sol")}{jogButton("x", 1, "sağ")}
+          {jogButton("y", -1, "geri")}{jogButton("y", 1, "ileri")}
+          {jogButton("z", -1, "aşağı")}{jogButton("z", 1, "yukarı")}
         </div>
       </div>
 
-      <div className="mt-3 grid gap-3 rounded-2xl border border-site-border bg-site-soft p-4">
-        <label className="text-sm font-semibold text-site-ink">Yatay X konumu · <span className="font-mono">{tcpX.toFixed(2)} m</span>
-          <input aria-label="Yatay X konumu" type="range" min="0.18" max="1.12" step="0.01" value={sliderValue(tcpX, 0.18, 1.12)} onChange={(event) => onXChange(Number(event.target.value))} className="mt-1 h-11 w-full touch-pan-y accent-teal-600" />
-        </label>
-        <label className="text-sm font-semibold text-site-ink">Yatay Y konumu · <span className="font-mono">{tcpY.toFixed(2)} m</span>
-          <input aria-label="Yatay Y konumu" type="range" min="-0.62" max="0.42" step="0.01" value={sliderValue(tcpY, -0.62, 0.42)} onChange={(event) => onYChange(Number(event.target.value))} className="mt-1 h-11 w-full touch-pan-y accent-teal-600" />
-        </label>
-        <label className="text-sm font-semibold text-site-ink">Gripper yüksekliği · <span className="font-mono">{tcpHeight.toFixed(2)} m</span>
-          <input aria-label="Gripper yüksekliği" type="range" min="0.58" max="1.15" step="0.01" value={sliderValue(tcpHeight, 0.58, 1.15)} onChange={(event) => onHeightChange(Number(event.target.value))} className="mt-1 h-11 w-full touch-pan-y accent-teal-600" />
-        </label>
-        <label className="text-sm font-semibold text-site-ink">Parmakların dönüşü · <span className="font-mono">{Math.round(toolAngleDegrees)}°</span>
-          <input aria-label="Gripper dönüş açısı" type="range" min="-180" max="180" step="1" value={Math.round(toolAngleDegrees)} onChange={(event) => onToolAngleChange(Number(event.target.value))} className="mt-1 h-11 w-full touch-pan-y accent-teal-600" />
-        </label>
+      <div className={`mt-3 rounded-xl border p-3 ${atTarget || taskFinished ? "border-site-accent bg-site-accent/10" : "border-site-border bg-site-soft"}`} aria-live="polite">
+        <strong className="block text-sm text-site-ink">{taskFinished ? "Parça bırakma tablasında" : atTarget ? `${targetLabel}nda` : `${targetLabel}na kalan`}</strong>
+        {!taskFinished && <span className="mt-1 block font-mono text-xs text-site-muted">X {remaining.x >= 0 ? "+" : ""}{formatCoordinate(remaining.x)} · Y {remaining.y >= 0 ? "+" : ""}{formatCoordinate(remaining.y)} · Z {remaining.z >= 0 ? "+" : ""}{formatCoordinate(remaining.z)} m</span>}
       </div>
 
-      <button type="button" onClick={gripperClosed ? onRelease : onGrip} disabled={playing || (!gripperClosed && !grip.canGrip)} className="mt-3 min-h-14 w-full rounded-xl bg-site-accent px-3 text-sm font-bold text-site-on-accent disabled:opacity-40">{gripperClosed ? "Gripper’ı aç · bırak" : "Gripper’ı kapat · kavra"}</button>
+      <button type="button" onClick={gripperClosed ? onRelease : onGrip} disabled={taskFinished || playing || (!gripperClosed && !grip.canGrip)} className="mt-3 min-h-14 w-full rounded-xl bg-site-accent px-3 text-sm font-bold text-site-on-accent disabled:opacity-40">{taskFinished ? "Al-bırak tamamlandı" : gripperClosed ? "Gripper’ı aç · bırak" : "Gripper’ı kapat · kavra"}</button>
 
-      <button type="button" onClick={onSaveMove} disabled={playing} className="mt-2 min-h-11 w-full rounded-xl border border-site-border px-4 text-sm font-semibold text-site-ink disabled:opacity-40">Güvenli ara konumu kaydet</button>
-      <p className="mt-1 text-xs leading-5 text-site-subtle">Yukarı kaldırdıktan ve yatay taşıdıktan sonra ara konum kaydetmek, program provasının güvenli yolu izlemesini sağlar.</p>
-
-      <div className="mt-5 flex items-center justify-between gap-3">
-        <div><p className="text-xs font-semibold uppercase tracking-[.14em] text-site-subtle">Öğretilen iş</p><p className="mt-1 text-xs text-site-muted">{commands.length === 0 ? "Henüz adım yok" : `${commands.length} adım · ${preflight.status === "ready" ? "çalışmaya hazır" : "kontrol gerekli"}`}</p></div>
-        <button type="button" onClick={onClear} disabled={commands.length === 0 || playing} className="min-h-11 px-3 text-xs font-semibold text-site-muted disabled:opacity-35">Temizle</button>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <button type="button" onClick={onReset} disabled={playing} className="min-h-11 rounded-xl border border-site-border px-3 text-sm font-semibold text-site-ink disabled:opacity-40">Robotu başa al</button>
+        <button type="button" onClick={onClear} disabled={commands.length === 0 || playing} className="min-h-11 rounded-xl border border-site-border px-3 text-sm font-semibold text-site-muted disabled:opacity-35">Programı temizle</button>
       </div>
+
+      <div className="mt-5"><p className="text-xs font-semibold uppercase tracking-[.14em] text-site-subtle">Öğretilen iş</p><p className="mt-1 text-xs text-site-muted">{commands.length === 0 ? "Henüz adım yok" : `${commands.length} adım · ${preflight.status === "ready" ? "çalışmaya hazır" : "kontrol gerekli"}`}</p></div>
       <ol aria-label="Basit al ve bırak programı" className="mt-3 grid gap-2">
         {commands.map((command, index) => (
           <li key={command.id} className="flex min-h-12 items-center gap-3 rounded-xl border border-site-border bg-site-surface px-3 py-2">

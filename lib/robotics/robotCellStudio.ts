@@ -14,7 +14,8 @@ export interface RobotCellCameraDefinition {
   target: [number, number, number];
 }
 
-export const ROBOT_CELL_HOME_DEGREES = [14.44, 76.52, 9.64, 15.63, -174.91, 129.53] as const;
+/** Basit öğretimde takım Z ekseni düşey aşağı bakacak şekilde açık bir başlangıç pozu. */
+export const ROBOT_CELL_HOME_DEGREES = [10.30477, 81.93367, 20.18258, 0, -102.11624, 10.30476] as const;
 
 const CAMERA_PRESETS: Record<RobotCellCameraPreset, RobotCellCameraDefinition> = {
   cell: { label: "Hücre", position: [1.75, 1.25, 1.9], target: [0.43, 0.5, 0] },

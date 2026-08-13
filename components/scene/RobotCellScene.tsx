@@ -1,14 +1,14 @@
 "use client";
 
 import { Box, Cylinder, Grid, Line, OrbitControls, Sphere, Torus } from "@react-three/drei";
-import { useThree, type ThreeEvent } from "@react-three/fiber";
-import { useEffect, useState } from "react";
+import { useThree } from "@react-three/fiber";
+import { useEffect } from "react";
 import * as THREE from "three";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { cameraPresetOf, type RobotCellCameraPreset } from "@/lib/robotics/robotCellStudio";
 import { ROBOT_CELL_OBSTACLES, type RobotCellMotionPlan, type RobotCellObstacle } from "@/lib/robotics/robotCellMotion";
 import { ROBOT_CELL_WORKPIECE } from "@/lib/robotics/robotCellProgram";
-import { ROBOT_CELL_GRIPPER_VISUAL, robotCellTargetFromScenePlane } from "@/lib/robotics/robotCellVisual";
+import { ROBOT_CELL_GRIPPER_VISUAL } from "@/lib/robotics/robotCellVisual";
 import { forwardKinematics, type RobotSpec } from "@/lib/robotics/kinematics";
 import type { Vec3 } from "@/lib/robotics/transform";
 import { SCENE_PALETTES } from "@/lib/theme";
@@ -91,7 +91,6 @@ export function RobotCellScene({
   workpiecePosition,
   gripperClosed = false,
   directControl = false,
-  onGripperTarget,
 }: {
   robot: RobotSpec;
   jointAngles: number[];
@@ -104,7 +103,6 @@ export function RobotCellScene({
   workpiecePosition?: Vec3;
   gripperClosed?: boolean;
   directControl?: boolean;
-  onGripperTarget?: (target: Vec3) => void;
 }) {
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
@@ -122,11 +120,6 @@ export function RobotCellScene({
   const fingerOffset = gripperClosed
     ? ROBOT_CELL_GRIPPER_VISUAL.closedFingerOffset
     : ROBOT_CELL_GRIPPER_VISUAL.openFingerOffset;
-  const [draggingGripper, setDraggingGripper] = useState(false);
-  const dragTarget = (event: ThreeEvent<PointerEvent>) => {
-    event.stopPropagation();
-    onGripperTarget?.(robotCellTargetFromScenePlane(event.point, tcp.z));
-  };
 
   return (
     <SceneCanvas
@@ -152,54 +145,31 @@ export function RobotCellScene({
       </Cylinder>
       <RobotArmModel robot={robot} jointAngles={jointAngles} activeJointIndex={activeJointIndex} showFrames={showFrames} industrial />
       <group position={gripperScenePosition} quaternion={gripperQuaternion}>
-        <Cylinder args={[0.052, 0.052, 0.07, 24]} position={[0, 0, -0.035]} rotation={[Math.PI / 2, 0, 0]}>
+        <Cylinder args={[0.047, 0.055, 0.15, 24]} position={[0, 0, -0.075]} rotation={[Math.PI / 2, 0, 0]}>
+          <meshStandardMaterial color="#e2e8f0" metalness={0.24} roughness={0.42} />
+        </Cylinder>
+        <Cylinder args={[0.055, 0.055, 0.08, 24]} position={[0, 0, ROBOT_CELL_GRIPPER_VISUAL.mountCenterZ]} rotation={[Math.PI / 2, 0, 0]}>
           <meshStandardMaterial color="#334155" metalness={0.5} roughness={0.32} />
         </Cylinder>
-        <Sphere args={[0.06, 20, 20]} position={[0, -0.03, 0]}>
-          <meshStandardMaterial color="#0d9488" metalness={0.25} roughness={0.4} />
-        </Sphere>
-        <Cylinder args={[0.052, 0.052, 0.09, 24]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.flangeCenterY, 0]}>
-          <meshStandardMaterial color="#0d9488" metalness={0.25} roughness={0.4} />
-        </Cylinder>
-        <Box args={[0.1, 0.055, 0.22]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.palmCenterY, 0]}>
+        <Box args={[0.26, 0.12, 0.07]} position={[0, 0, ROBOT_CELL_GRIPPER_VISUAL.palmCenterZ]}>
           <meshStandardMaterial color="#0f766e" metalness={0.2} roughness={0.42} />
         </Box>
-        <Box args={[0.045, ROBOT_CELL_GRIPPER_VISUAL.fingerLength, ROBOT_CELL_GRIPPER_VISUAL.fingerThickness]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.fingerCenterY, -fingerOffset]}>
+        <Box args={[ROBOT_CELL_GRIPPER_VISUAL.fingerThickness, 0.055, ROBOT_CELL_GRIPPER_VISUAL.fingerLength]} position={[-fingerOffset, 0, ROBOT_CELL_GRIPPER_VISUAL.fingerCenterZ]}>
           <meshStandardMaterial color={gripperClosed ? "#fbbf24" : "#f1f5f9"} metalness={0.45} roughness={0.3} />
         </Box>
-        <Box args={[0.045, ROBOT_CELL_GRIPPER_VISUAL.fingerLength, ROBOT_CELL_GRIPPER_VISUAL.fingerThickness]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.fingerCenterY, fingerOffset]}>
+        <Box args={[ROBOT_CELL_GRIPPER_VISUAL.fingerThickness, 0.055, ROBOT_CELL_GRIPPER_VISUAL.fingerLength]} position={[fingerOffset, 0, ROBOT_CELL_GRIPPER_VISUAL.fingerCenterZ]}>
           <meshStandardMaterial color={gripperClosed ? "#fbbf24" : "#f1f5f9"} metalness={0.45} roughness={0.3} />
         </Box>
-        <Box args={[0.052, 0.026, 0.045]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.jawPadCenterY, -fingerOffset]}>
+        <Box args={[0.045, 0.07, 0.03]} position={[-fingerOffset, 0, ROBOT_CELL_GRIPPER_VISUAL.jawPadCenterZ]}>
           <meshStandardMaterial color="#111827" roughness={0.55} />
         </Box>
-        <Box args={[0.052, 0.026, 0.045]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.jawPadCenterY, fingerOffset]}>
+        <Box args={[0.045, 0.07, 0.03]} position={[fingerOffset, 0, ROBOT_CELL_GRIPPER_VISUAL.jawPadCenterZ]}>
           <meshStandardMaterial color="#111827" roughness={0.55} />
         </Box>
-        {directControl && (
-          <Sphere
-            args={[0.2, 20, 20]}
-            position={[0, ROBOT_CELL_GRIPPER_VISUAL.gripCenterY, 0]}
-            onPointerDown={(event) => { event.stopPropagation(); setDraggingGripper(true); }}
-            onPointerUp={(event) => { event.stopPropagation(); setDraggingGripper(false); }}
-          >
-            <meshBasicMaterial transparent opacity={0.001} depthWrite={false} />
-          </Sphere>
-        )}
+        <Sphere args={[0.018, 16, 16]} position={[0, 0, ROBOT_CELL_GRIPPER_VISUAL.gripCenterZ]}>
+          <meshStandardMaterial color="#fbbf24" emissive="#b45309" emissiveIntensity={0.5} />
+        </Sphere>
       </group>
-      {directControl && (
-        <mesh
-          position={[0.55, gripperScenePosition[1], 0]}
-          rotation={[-Math.PI / 2, 0, 0]}
-          onPointerDown={dragTarget}
-          onPointerMove={(event) => { if (draggingGripper || event.buttons === 1) dragTarget(event); }}
-          onPointerUp={() => setDraggingGripper(false)}
-          onPointerLeave={() => setDraggingGripper(false)}
-        >
-          <planeGeometry args={[3.8, 3.8]} />
-          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-        </mesh>
-      )}
       {motionPlans?.map((plan) => {
         if (plan.tcpPath.length < 2) return null;
         const selected = plan.kind === selectedMotion;

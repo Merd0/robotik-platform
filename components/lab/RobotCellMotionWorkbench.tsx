@@ -12,7 +12,7 @@ export const ROBOT_CELL_MOTION_TARGETS = {
   },
   narrow: {
     label: "Dar geçiş",
-    jointDegrees: [-24, 36, 25, 7, 95, 0],
+    jointDegrees: [-60, 0, 0, 7, 95, 0],
     purpose: "Hedef erişilebilir; fakat yaklaşım fikstür hacmini kesiyor. Geçerli bir hedef, güvenli bir yol demek değildir.",
   },
 } as const;

@@ -58,8 +58,8 @@ export interface RobotCellMotionOptions {
  */
 export const ROBOT_CELL_OBSTACLES: RobotCellObstacle[] = [
   { id: "table", label: "Çalışma masası", center: { x: 0.78, y: -0.02, z: 0.26 }, halfSize: { x: 0.45, y: 0.59, z: 0.04 } },
-  { id: "fixture", label: "Fikstür", center: { x: 0.72, y: -0.18, z: 0.44 }, halfSize: { x: 0.14, y: 0.14, z: 0.14 } },
-  { id: "bin", label: "Çıkış kutusu", center: { x: 0.72, y: -0.36, z: 0.41 }, halfSize: { x: 0.14, y: 0.13, z: 0.11 } },
+  { id: "fixture", label: "Fikstür", center: { x: 0.7, y: -0.1, z: 0.45 }, halfSize: { x: 0.09, y: 0.09, z: 0.14 } },
+  { id: "bin", label: "Bırakma tablası", center: { x: 0.55, y: -0.4, z: 0.325 }, halfSize: { x: 0.1, y: 0.1, z: 0.015 } },
   { id: "fence-nw", label: "Koruyucu çevre", center: { x: -0.45, y: 0.85, z: 0.58 }, halfSize: { x: 0.025, y: 0.025, z: 0.58 } },
   { id: "fence-sw", label: "Koruyucu çevre", center: { x: -0.45, y: -0.85, z: 0.58 }, halfSize: { x: 0.025, y: 0.025, z: 0.58 } },
   { id: "fence-ne", label: "Koruyucu çevre", center: { x: 1.55, y: 0.85, z: 0.58 }, halfSize: { x: 0.025, y: 0.025, z: 0.58 } },

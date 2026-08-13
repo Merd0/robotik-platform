@@ -49,11 +49,11 @@ describe("3B robot hücresi durum modeli", () => {
     const state = createRobotCellStudioState();
     const pose = forwardKinematics(genericSixDofRobot, jointAnglesRadians(state));
     const tcp = pose.endEffector;
-    const gripperVerticalAlignment = Math.abs(pose.jointTransforms.at(-1)![2][1]);
+    const gripperVerticalAlignment = Math.abs(pose.jointTransforms.at(-1)![2][2]);
 
     expect(tcp).toEqual(expect.objectContaining({
-      x: expect.closeTo(0.45, 2),
-      y: expect.closeTo(0.12, 2),
+      x: expect.closeTo(0.55, 2),
+      y: expect.closeTo(0.1, 2),
       z: expect.closeTo(0.85, 2),
     }));
     expect(gripperVerticalAlignment).toBeGreaterThanOrEqual(0.72);

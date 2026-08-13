@@ -13,7 +13,7 @@ import {
 } from "@/lib/robotics/robotCellStudio";
 import { computeJacobian, forwardKinematics, isNearSingularity } from "@/lib/robotics/kinematics";
 import { planRobotCellMoveJ, planRobotCellMoveL, ROBOT_CELL_OBSTACLES, sampleRobotCellMotion, type RobotCellMotionKind } from "@/lib/robotics/robotCellMotion";
-import { assessRobotCellGrip, createRobotCellSampleJob, createTaughtPose, preflightRobotCellProgram, ROBOT_CELL_SAMPLE_JOB, ROBOT_CELL_WORKPIECE, solveRobotCellDragTarget, type RobotCellProgramCommand } from "@/lib/robotics/robotCellProgram";
+import { assessRobotCellGrip, createRobotCellSampleJob, createTaughtPose, preflightRobotCellProgram, ROBOT_CELL_WORKPIECE, solveRobotCellDirectTarget, type RobotCellProgramCommand } from "@/lib/robotics/robotCellProgram";
 import { robotCellAxisTarget } from "@/lib/robotics/robotCellVisual";
 import { genericSixDofRobot } from "@/lib/robotics/robots/genericSixDof";
 import type { Vec3 } from "@/lib/robotics/transform";
@@ -70,8 +70,6 @@ export function RobotCellStudio() {
   const [directStatus, setDirectStatus] = useState("Önce Z ile güvenli yüksekliğe çık; sonra X ve Y ile turuncu parçanın üstüne ilerle.");
   const playbackFrame = useRef<number | null>(null);
   const programPlaybackFrame = useRef<number | null>(null);
-  const directDragFrame = useRef<number | null>(null);
-  const pendingDirectTarget = useRef<Vec3 | null>(null);
   const directAnglesRef = useRef<number[]>([]);
   const programCommandProgress = useRef(0);
   const motionProgressRef = useRef(0);
@@ -116,11 +114,6 @@ export function RobotCellStudio() {
     () => assessRobotCellGrip(genericSixDofRobot, displayedAngles, workpiecePosition),
     [displayedAngles, workpiecePosition],
   );
-  const directOrientationSeed = useMemo(
-    () => ROBOT_CELL_SAMPLE_JOB.pick.map((degrees) => degrees * Math.PI / 180),
-    [],
-  );
-
   function selectCamera(cameraPreset: RobotCellCameraPreset) {
     setStudio((current) => ({ ...current, cameraPreset }));
   }
@@ -171,7 +164,7 @@ export function RobotCellStudio() {
   }
 
   function moveGripperTo(target: Vec3, label: string, save = true) {
-    const solution = solveRobotCellDragTarget(genericSixDofRobot, directAnglesRef.current, target, directOrientationSeed);
+    const solution = solveRobotCellDirectTarget(genericSixDofRobot, directAnglesRef.current, target);
     if (solution.status !== "ready" || !solution.angles) {
       setDirectStatus(solution.status === "collision" ? `Bu poz ${solution.obstacleLabel ?? "hücre elemanı"} ile çarpışıyor.` : "Robot bu noktaya eklem limitleri içinde ulaşamıyor.");
       return;
@@ -188,14 +181,20 @@ export function RobotCellStudio() {
     setDirectStatus(`${label} programa eklendi. Şimdi bir sonraki konumu kendin öğret.`);
   }
 
-  function queueGripperTarget(target: Vec3) {
-    pendingDirectTarget.current = target;
-    if (directDragFrame.current !== null) return;
-    directDragFrame.current = window.requestAnimationFrame(() => {
-      directDragFrame.current = null;
-      const pending = pendingDirectTarget.current;
-      if (pending) moveGripperTo(pending, "Elle seçilen konum", false);
-    });
+  function jogGripper(axis: "x" | "y" | "z", delta: number) {
+    const current = forwardKinematics(genericSixDofRobot, directAnglesRef.current).endEffector;
+    const mustLiftBeforeTravel = holdingPart && (axis === "x" || axis === "y") && current.z < 0.74;
+    if (mustLiftBeforeTravel) {
+      setDirectStatus("Parçayı yatay taşımadan önce Z+ ile en az 0,75 m güvenli yüksekliğe kaldır.");
+      return;
+    }
+    const target = robotCellAxisTarget(current, axis, current[axis] + delta);
+    const reachesSafeLift = holdingPart && axis === "z" && current.z < 0.74 && target.z >= 0.74;
+    const reachesDropApproach = holdingPart
+      && axis !== "z"
+      && target.z >= 0.74
+      && Math.hypot(target.x - ROBOT_CELL_WORKPIECE.drop.x, target.y - ROBOT_CELL_WORKPIECE.drop.y) <= 0.012;
+    moveGripperTo(target, reachesSafeLift ? "Güvenli kaldırma" : reachesDropApproach ? "Bırakma üstü" : `${axis.toUpperCase()} jog`, reachesSafeLift || reachesDropApproach);
   }
 
   function gripPart() {
@@ -212,6 +211,13 @@ export function RobotCellStudio() {
   }
 
   function releasePart() {
+    const currentTcp = forwardKinematics(genericSixDofRobot, displayedAngles).endEffector;
+    const atDrop = Math.hypot(currentTcp.x - ROBOT_CELL_WORKPIECE.drop.x, currentTcp.y - ROBOT_CELL_WORKPIECE.drop.y) <= 0.012
+      && Math.abs(currentTcp.z - ROBOT_CELL_WORKPIECE.drop.z) <= 0.012;
+    if (!atDrop) {
+      setDirectStatus("Parçayı bırakmadan önce X/Y/Z farklarını sıfırla ve mavi tablanın merkezine in.");
+      return;
+    }
     saveDirectMove("Bırakma konumu");
     addGripperCommand("open");
     setGripperClosed(false);
@@ -258,10 +264,6 @@ export function RobotCellStudio() {
       if (playbackFrame.current !== null) window.cancelAnimationFrame(playbackFrame.current);
     };
   }, [playing, selectedPlan, showMotionProgress]);
-
-  useEffect(() => () => {
-    if (directDragFrame.current !== null) window.cancelAnimationFrame(directDragFrame.current);
-  }, []);
 
   useEffect(() => {
     if (!programPlaying || programPreflight.status !== "ready") return;
@@ -445,7 +447,7 @@ export function RobotCellStudio() {
           </div>
           <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-site-muted" aria-label="3B hücre renk anahtarı">
             <li className="inline-flex items-center gap-2"><span className="size-2.5 rounded-full bg-amber-500" aria-hidden="true" />İş parçası</li>
-            <li className="inline-flex items-center gap-2"><span className="size-2.5 rounded-full bg-blue-700" aria-hidden="true" />Çıkış kutusu</li>
+            <li className="inline-flex items-center gap-2"><span className="size-2.5 rounded-full bg-blue-700" aria-hidden="true" />Bırakma tablası</li>
             <li className="inline-flex items-center gap-2"><span className="size-2.5 rounded-full bg-orange-800" aria-hidden="true" />Fikstür</li>
             <li className="inline-flex items-center gap-2"><span className="size-2.5 rounded-full bg-slate-500" aria-hidden="true" />Koruyucu çevre</li>
           </ul>
@@ -558,8 +560,7 @@ export function RobotCellStudio() {
                     targetTcp={focusPanel === "motion" ? targetTcp : undefined}
                     workpiecePosition={workpiecePosition}
                     gripperClosed={gripperClosed}
-                    directControl={focusPanel === "direct" && !programPlaying}
-                    onGripperTarget={(target) => queueGripperTarget({ ...target, z: kinematics.endEffector.z })}
+                    directControl={false}
                   />
                 </SahneAlani>
               </div>
@@ -621,22 +622,16 @@ export function RobotCellStudio() {
                   gripperClosed={gripperClosed}
                   holdingPart={holdingPart}
                   directStatus={directStatus}
-                  tcpX={kinematics.endEffector.x}
-                  tcpY={kinematics.endEffector.y}
-                  tcpHeight={kinematics.endEffector.z}
-                  toolAngleDegrees={displayedAngles[5] * RAD_TO_DEG}
+                  tcp={kinematics.endEffector}
+                  activeTarget={holdingPart ? ROBOT_CELL_WORKPIECE.drop : ROBOT_CELL_WORKPIECE.start}
                   playing={programPlaying}
                   onGrip={gripPart}
                   onRelease={releasePart}
-                  onSaveMove={() => appendMove("Elle seçilen konum")}
-                  onXChange={(x) => moveGripperTo(robotCellAxisTarget(forwardKinematics(genericSixDofRobot, directAnglesRef.current).endEffector, "x", x), "X konumu", false)}
-                  onYChange={(y) => moveGripperTo(robotCellAxisTarget(forwardKinematics(genericSixDofRobot, directAnglesRef.current).endEffector, "y", y), "Y konumu", false)}
-                  onHeightChange={(height) => moveGripperTo(robotCellAxisTarget(forwardKinematics(genericSixDofRobot, directAnglesRef.current).endEffector, "z", height), "Elle ayarlanan yükseklik", false)}
-                  onToolAngleChange={(degrees) => {
-                    const angles = [...displayedAngles];
-                    angles[5] = degrees * Math.PI / 180;
-                    setPreviewAngles(angles);
-                    setDirectStatus("Gripper dönüş açısı ayarlandı. Kavrama uygunluğu yeniden kontrol edildi.");
+                  onJog={jogGripper}
+                  onReset={() => {
+                    setPreviewAngles(null);
+                    directAnglesRef.current = [...jointAngles];
+                    setDirectStatus("Robot başlangıç pozuna döndü. X/Y ile hizala, Z ile alçal.");
                   }}
                   onClear={() => {
                     setProgramCommands([]);

@@ -8,11 +8,13 @@ describe("3B hücre gripper geometrisi", () => {
     const innerJawFace = ROBOT_CELL_GRIPPER_VISUAL.closedFingerOffset
       - ROBOT_CELL_GRIPPER_VISUAL.fingerThickness / 2;
 
-    expect(ROBOT_CELL_GRIPPER_VISUAL.gripCenterY).toBe(0);
+    expect(ROBOT_CELL_GRIPPER_VISUAL.gripCenterZ).toBe(0);
     expect(innerJawFace).toBeGreaterThanOrEqual(halfWorkpiece);
     expect(innerJawFace).toBeLessThanOrEqual(halfWorkpiece + 0.01);
-    expect(ROBOT_CELL_GRIPPER_VISUAL.fingerCenterY - ROBOT_CELL_GRIPPER_VISUAL.fingerLength / 2).toBeLessThan(0);
-    expect(ROBOT_CELL_GRIPPER_VISUAL.fingerCenterY + ROBOT_CELL_GRIPPER_VISUAL.fingerLength / 2).toBeGreaterThan(0);
+    expect(ROBOT_CELL_GRIPPER_VISUAL.fingerCenterZ - ROBOT_CELL_GRIPPER_VISUAL.fingerLength / 2).toBeLessThan(0);
+    expect(ROBOT_CELL_GRIPPER_VISUAL.fingerCenterZ + ROBOT_CELL_GRIPPER_VISUAL.fingerLength / 2).toBeGreaterThan(0);
+    expect(ROBOT_CELL_GRIPPER_VISUAL.mountCenterZ).toBeLessThan(ROBOT_CELL_GRIPPER_VISUAL.palmCenterZ);
+    expect(ROBOT_CELL_GRIPPER_VISUAL.palmCenterZ).toBeLessThan(ROBOT_CELL_GRIPPER_VISUAL.gripCenterZ);
   });
 
   it("açık çeneleri parça genişliğinden belirgin biçimde daha geniş tutar", () => {

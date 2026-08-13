@@ -85,7 +85,9 @@ export function industrialRobotVisualLayout(
       { start: jointPositions[0], end: jointPositions[1] },
       { start: jointPositions[1], end: jointPositions[2] },
       { start: jointPositions[2], end: jointPositions[4] },
-      { start: jointPositions[4], end: jointPositions[6] },
+      // J6'nin d mesafesi kol değil, son bilek ile takım flanşı arasındaki gövdedir.
+      // Bu son parça RobotCellScene'deki gripper montajı tarafından çizilir.
+      { start: jointPositions[4], end: jointPositions[5] },
     ],
     joints: [
       { kind: "shoulder", position: jointPositions[1], direction: jointAxisOf(jointTransforms, 1).direction },

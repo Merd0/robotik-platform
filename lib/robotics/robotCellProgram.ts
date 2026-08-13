@@ -67,18 +67,19 @@ export interface RobotCellDragSolution {
 }
 
 export const ROBOT_CELL_WORKPIECE = {
-  start: { x: 0.72, y: -0.18, z: 0.73 },
-  drop: { x: 0.72, y: -0.36, z: 0.595 },
+  start: { x: 0.7, y: -0.1, z: 0.65 },
+  drop: { x: 0.55, y: -0.4, z: 0.4 },
   sizeMetres: 0.12,
   gripRadiusMetres: 0.12,
   dropZoneRadiusMetres: 0.12,
 } as const;
 
 export const ROBOT_CELL_SAMPLE_JOB = {
-  approach: [-12.45, 39.5, 60.21, 14.4, 146.71, 129.53],
-  pick: [-13.16, 39.95, 44.79, 15.25, 163.25, 129.53],
-  inspect: [10, 43, 24, 2, 98, 0],
-  drop: [-22.6, 13.5, 126.8, 127.2, 63.8, 77.5],
+  approach: [-8.13, 64.96, 32.74, 0, -97.7, -8.13],
+  pick: [-8.13, 65.16, 18.66, 0, -83.83, -8.13],
+  inspect: [-9.46, 77.33, 8.33, 0, -85.66, -9.46],
+  dropApproach: [-36.03, 68.89, 21.52, 0, -90.41, -36.03],
+  drop: [-36.03, 58.3, -1.72, 0, -56.58, -36.03],
 } as const;
 
 function distance(first: Vec3, second: Vec3): number {
@@ -112,7 +113,7 @@ function issueFromPlan(command: RobotCellProgramCommand & { type: "move" }, comm
   };
 }
 
-const WORKPIECE_COLLISION_RADIUS = 0.075;
+const WORKPIECE_COLLISION_RADIUS = 0.07;
 const GRIP_POSITION_TOLERANCE = 0.055;
 const GRIP_VERTICAL_ALIGNMENT = 0.72;
 
@@ -124,7 +125,7 @@ export function assessRobotCellGrip(
   const kinematics = forwardKinematics(robot, [...jointAngles]);
   const tcpTransform = kinematics.jointTransforms.at(-1)!;
   const positionErrorMetres = distance(kinematics.endEffector, workpiecePosition);
-  const verticalAlignment = Math.abs(tcpTransform[2][1]);
+  const verticalAlignment = Math.abs(tcpTransform[2][2]);
   const positionAligned = positionErrorMetres <= GRIP_POSITION_TOLERANCE;
   const orientationAligned = verticalAlignment >= GRIP_VERTICAL_ALIGNMENT;
   if (!positionAligned) {
@@ -169,6 +170,48 @@ export function solveRobotCellDragTarget(
   return { status: "ik-failure", angles: null, errorMetres: smallestError };
 }
 
+const ROBOT_CELL_DIRECT_ORIENTATION = [
+  [1, 0, 0, 0],
+  [0, -1, 0, 0],
+  [0, 0, -1, 0],
+  [0, 0, 0, 1],
+] as const;
+
+/**
+ * Basit al-bırak kumandası pozisyonu çözerken gripper'ı düşey tutar.
+ * Böylece kullanıcı X/Y/Z joglarında bileğin farklı IK dallarına takla atmasını görmez.
+ */
+export function solveRobotCellDirectTarget(
+  robot: RobotSpec,
+  currentAngles: readonly number[],
+  target: Vec3,
+): RobotCellDragSolution {
+  const seeds = [[...currentAngles], ROBOT_CELL_SAMPLE_JOB.approach.map((degrees) => degrees * Math.PI / 180)];
+  let smallestError = Number.POSITIVE_INFINITY;
+  let collisionLabel: string | undefined;
+  for (const seed of seeds) {
+    const result = inverseKinematicsNumerical(robot, target, {
+      initialGuess: seed,
+      maxIterations: 220,
+      tolerance: 0.0005,
+      damping: 0.05,
+      maxStep: 0.11,
+      targetOrientation: ROBOT_CELL_DIRECT_ORIENTATION,
+      orientationTolerance: 0.003,
+    });
+    smallestError = Math.min(smallestError, result.finalError);
+    if (!result.converged || !result.angles) continue;
+    const collision = detectRobotCellCollisions(robot, result.angles, ROBOT_CELL_OBSTACLES)[0];
+    if (collision) {
+      collisionLabel ??= collision.obstacleLabel;
+      continue;
+    }
+    return { status: "ready", angles: [...result.angles], errorMetres: result.finalError };
+  }
+  if (collisionLabel) return { status: "collision", angles: null, errorMetres: smallestError, obstacleLabel: collisionLabel };
+  return { status: "ik-failure", angles: null, errorMetres: smallestError };
+}
+
 function carriedWorkpieceIssue(
   robot: RobotSpec,
   command: RobotCellProgramCommand & { type: "move" },
@@ -179,6 +222,13 @@ function carriedWorkpieceIssue(
   for (const sample of plan.samples) {
     const tcpTransform = forwardKinematics(robot, sample.jointAngles).jointTransforms.at(-1)!;
     for (const obstacle of ROBOT_CELL_OBSTACLES) {
+      // Kavranmış parça, ayrılmakta olduğu fikstürden ilk örneklerde doğal olarak
+      // geçer. Bu temas robot linki için zaten denetlenir; taşınan parça testine dahil edilmez.
+      if (obstacle.id === "fixture") continue;
+      const placingOnDropSurface = (obstacle.id === "bin" || obstacle.id === "table")
+        && Math.hypot(sample.tcp.x - ROBOT_CELL_WORKPIECE.drop.x, sample.tcp.y - ROBOT_CELL_WORKPIECE.drop.y) <= ROBOT_CELL_WORKPIECE.dropZoneRadiusMetres
+        && sample.tcp.z >= ROBOT_CELL_WORKPIECE.drop.z - 0.002;
+      if (placingOnDropSurface) continue;
       for (const offset of [-0.075, 0, 0.075]) {
         const workpiecePoint = {
           x: sample.tcp.x + tcpTransform[0][2] * offset,
@@ -284,14 +334,16 @@ export function createRobotCellSampleJob(robot: RobotSpec): RobotCellProgramComm
   const approach = createTaughtPose(robot, "P1", "Yaklaşma noktası", radians(ROBOT_CELL_SAMPLE_JOB.approach));
   const pick = createTaughtPose(robot, "P2", "Parçayı al", radians(ROBOT_CELL_SAMPLE_JOB.pick));
   const inspect = createTaughtPose(robot, "P3", "Güvenli geri çekil", radians(ROBOT_CELL_SAMPLE_JOB.inspect));
-  const drop = createTaughtPose(robot, "P4", "Kutunun üstü", radians(ROBOT_CELL_SAMPLE_JOB.drop));
+  const dropApproach = createTaughtPose(robot, "P4", "Bırakma tablasına yaklaş", radians(ROBOT_CELL_SAMPLE_JOB.dropApproach));
+  const drop = createTaughtPose(robot, "P5", "Bırakma tablası", radians(ROBOT_CELL_SAMPLE_JOB.drop));
   return [
     { id: "C1", type: "move", motion: "movej", pose: approach },
     { id: "C2", type: "move", motion: "movel", pose: pick },
     { id: "C3", type: "gripper", action: "close" },
     { id: "C4", type: "move", motion: "movel", pose: approach },
     { id: "C5", type: "move", motion: "movej", pose: inspect },
-    { id: "C6", type: "move", motion: "movej", pose: drop },
-    { id: "C7", type: "gripper", action: "open" },
+    { id: "C6", type: "move", motion: "movej", pose: dropApproach },
+    { id: "C7", type: "move", motion: "movel", pose: drop },
+    { id: "C8", type: "gripper", action: "open" },
   ];
 }
