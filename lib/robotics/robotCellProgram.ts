@@ -68,10 +68,10 @@ export interface RobotCellDragSolution {
 
 export const ROBOT_CELL_WORKPIECE = {
   start: { x: 0.72, y: -0.18, z: 0.73 },
-  drop: { x: 0.8, y: -0.45, z: 0.595 },
+  drop: { x: 0.72, y: -0.36, z: 0.595 },
   sizeMetres: 0.12,
   gripRadiusMetres: 0.12,
-  dropZoneRadiusMetres: 0.18,
+  dropZoneRadiusMetres: 0.12,
 } as const;
 
 export const ROBOT_CELL_SAMPLE_JOB = {
@@ -142,6 +142,7 @@ export function solveRobotCellDragTarget(
   target: Vec3,
   orientationSeed?: readonly number[],
 ): RobotCellDragSolution {
+  const targetOrientation = forwardKinematics(robot, [...currentAngles]).jointTransforms.at(-1)!;
   const seeds = orientationSeed ? [[...currentAngles], [...orientationSeed]] : [[...currentAngles]];
   let smallestError = Number.POSITIVE_INFINITY;
   let collisionLabel: string | undefined;
@@ -152,6 +153,8 @@ export function solveRobotCellDragTarget(
       tolerance: 0.001,
       damping: 0.065,
       maxStep: 0.11,
+      targetOrientation,
+      orientationTolerance: 0.006,
     });
     smallestError = Math.min(smallestError, result.finalError);
     if (!result.converged || !result.angles) continue;

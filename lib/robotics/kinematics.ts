@@ -244,6 +244,9 @@ export interface NumericalIkOptions {
   /** Tek iterasyonda izin verilen en büyük açı adımı (radyan). */
   maxStep?: number;
   initialGuess?: number[];
+  /** Verildiğinde TCP konumuyla birlikte takım yönelimini de bu çerçeveye kilitler. */
+  targetOrientation?: Mat4;
+  orientationTolerance?: number;
 }
 
 export interface NumericalIkResult {
@@ -270,6 +273,63 @@ function projectRevoluteAngleToLimits(angle: number, min: number, max: number): 
   return Math.min(max, Math.max(min, normalized));
 }
 
+function rotationAxis(transform: Mat4, column: number): Vec3 {
+  return { x: transform[0][column], y: transform[1][column], z: transform[2][column] };
+}
+
+function orientationError(current: Mat4, target: Mat4): Vec3 {
+  const errors = [0, 1, 2].map((column) => crossProduct(
+    rotationAxis(current, column),
+    rotationAxis(target, column),
+  ));
+  return {
+    x: 0.5 * errors.reduce((sum, error) => sum + error.x, 0),
+    y: 0.5 * errors.reduce((sum, error) => sum + error.y, 0),
+    z: 0.5 * errors.reduce((sum, error) => sum + error.z, 0),
+  };
+}
+
+function inverseMatrix(matrix: number[][]): number[][] {
+  const size = matrix.length;
+  const augmented = matrix.map((row, rowIndex) => [
+    ...row,
+    ...Array.from({ length: size }, (_, columnIndex) => rowIndex === columnIndex ? 1 : 0),
+  ]);
+
+  for (let column = 0; column < size; column += 1) {
+    let pivotRow = column;
+    for (let row = column + 1; row < size; row += 1) {
+      if (Math.abs(augmented[row][column]) > Math.abs(augmented[pivotRow][column])) pivotRow = row;
+    }
+    [augmented[column], augmented[pivotRow]] = [augmented[pivotRow], augmented[column]];
+    const pivot = augmented[column][column];
+    if (Math.abs(pivot) < 1e-12) throw new Error("Sönümlü IK matrisi terslenemedi.");
+    augmented[column] = augmented[column].map((value) => value / pivot);
+    for (let row = 0; row < size; row += 1) {
+      if (row === column) continue;
+      const factor = augmented[row][column];
+      augmented[row] = augmented[row].map((value, index) => value - factor * augmented[column][index]);
+    }
+  }
+  return augmented.map((row) => row.slice(size));
+}
+
+function dampedLeastSquares(jacobianRows: number[][], error: number[], damping: number): number[] {
+  const rowCount = jacobianRows.length;
+  const columnCount = jacobianRows[0]?.length ?? 0;
+  const jjt = Array.from({ length: rowCount }, (_, row) =>
+    Array.from({ length: rowCount }, (_, column) =>
+      jacobianRows[row].reduce((sum, value, index) => sum + value * jacobianRows[column][index], 0)
+      + (row === column ? damping * damping : 0),
+    ),
+  );
+  const inverse = inverseMatrix(jjt);
+  const intermediate = inverse.map((row) => row.reduce((sum, value, index) => sum + value * error[index], 0));
+  return Array.from({ length: columnCount }, (_, column) =>
+    jacobianRows.reduce((sum, row, index) => sum + row[column] * intermediate[index], 0),
+  );
+}
+
 /**
  * Sönümlü en küçük kareler (damped least squares) ile sayısal ters kinematik.
  * dtheta = J^T (J J^T + lambda^2 I)^-1 * hata. Tekillik yakınında da kararlı
@@ -283,6 +343,7 @@ export function inverseKinematicsNumerical(
 ): NumericalIkResult {
   const maxIterations = options.maxIterations ?? 100;
   const tolerance = options.tolerance ?? 1e-4;
+  const orientationTolerance = options.orientationTolerance ?? 0.01;
   const damping = options.damping ?? 0.05;
 
   const projectToLimits = (angle: number, index: number) => {
@@ -297,21 +358,42 @@ export function inverseKinematicsNumerical(
   const trace: NumericalIkIteration[] = [];
 
   for (let iteration = 0; iteration < maxIterations; iteration++) {
-    const { jointPositions } = forwardKinematics(robot, angles);
+    const { jointPositions, jointTransforms } = forwardKinematics(robot, angles);
     const current = jointPositions[jointPositions.length - 1];
     const error = subtractVec(target, current);
     const errorNorm = Math.hypot(error.x, error.y, error.z);
+    const rotationError = options.targetOrientation
+      ? orientationError(jointTransforms.at(-1)!, options.targetOrientation)
+      : { x: 0, y: 0, z: 0 };
+    const rotationErrorNorm = Math.hypot(rotationError.x, rotationError.y, rotationError.z);
     trace.push({ iteration, errorNorm, angles: [...angles] });
 
-    if (errorNorm < tolerance) {
+    if (errorNorm < tolerance && rotationErrorNorm < orientationTolerance) {
       if (!withinLimits(robot, angles)) return { angles: null, converged: false, iterations: iteration, finalError: errorNorm, trace };
       return { angles, converged: true, iterations: iteration, finalError: errorNorm, trace };
     }
 
     const { columns } = computeJacobian(robot, angles);
-    const damped = mat3AddDiagonal(jjtMatrix(columns), damping * damping);
-    const y = mat3TimesVec3(mat3Inverse(damped), error);
-    const dtheta = columns.map((col) => col.x * y.x + col.y * y.y + col.z * y.z);
+    const dtheta = options.targetOrientation
+      ? (() => {
+        const angularColumns = robot.joints.map((joint, index) => {
+          if (joint.type === "prismatic") return { x: 0, y: 0, z: 0 };
+          return index === 0 ? WORLD_Z : zAxisOf(jointTransforms[index - 1]);
+        });
+        return dampedLeastSquares([
+          columns.map((column) => column.x),
+          columns.map((column) => column.y),
+          columns.map((column) => column.z),
+          angularColumns.map((column) => column.x),
+          angularColumns.map((column) => column.y),
+          angularColumns.map((column) => column.z),
+        ], [error.x, error.y, error.z, rotationError.x, rotationError.y, rotationError.z], damping);
+      })()
+      : (() => {
+        const damped = mat3AddDiagonal(jjtMatrix(columns), damping * damping);
+        const y = mat3TimesVec3(mat3Inverse(damped), error);
+        return columns.map((col) => col.x * y.x + col.y * y.y + col.z * y.z);
+      })();
 
     // Adım boyu kırpma: büyük başlangıç hatalarında tek adımda aşırı sıçrama
     // olmasın diye (aksi halde iki nokta arasında sonsuz salınabilir).

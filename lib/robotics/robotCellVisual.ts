@@ -1,18 +1,18 @@
 /**
- * Gripper'ın yerel Y ekseni takım çerçevesinin Y eksenidir ve TCP (Y=0)
+ * Gripper'ın yerel Y ekseni takım yaklaşma eksenidir ve TCP (Y=0)
  * iki çenenin kavrama merkezidir. Ölçüler metre cinsindedir.
  */
 export const ROBOT_CELL_GRIPPER_VISUAL = {
   gripCenterY: 0,
-  flangeCenterY: -0.155,
-  adapterCenterY: -0.112,
-  palmCenterY: -0.075,
-  fingerCenterY: 0.015,
-  fingerLength: 0.22,
-  fingerThickness: 0.04,
-  jawPadCenterY: 0.095,
-  openFingerOffset: 0.14,
-  closedFingerOffset: 0.085,
+  flangeCenterY: -0.105,
+  adapterCenterY: -0.075,
+  palmCenterY: -0.052,
+  fingerCenterY: 0.01,
+  fingerLength: 0.13,
+  fingerThickness: 0.03,
+  jawPadCenterY: 0.055,
+  openFingerOffset: 0.105,
+  closedFingerOffset: 0.075,
 } as const;
 
 export function robotCellTargetFromScenePlane(

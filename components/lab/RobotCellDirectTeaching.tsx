@@ -71,7 +71,7 @@ export function RobotCellDirectTeaching({
         </div>
         <div className="rounded-xl border border-blue-500/40 bg-blue-500/10 p-3 text-site-ink">
           <strong className="block">Mavi bırakma alanı</strong>
-          <span className="mt-1 block font-mono text-site-muted">X 0.80 · Y −0.45 · taşıma Z 0.90</span>
+          <span className="mt-1 block font-mono text-site-muted">X 0.72 · Y −0.36 · taşıma Z 0.74</span>
         </div>
       </div>
 

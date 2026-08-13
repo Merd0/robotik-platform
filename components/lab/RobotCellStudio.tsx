@@ -542,6 +542,7 @@ export function RobotCellStudio() {
                   ))}
                 </div>
                 <div className="font-mono text-xs text-slate-300">TCP · X {formatMetres(kinematics.endEffector.x)} · Y {formatMetres(kinematics.endEffector.y)} · Z {formatMetres(kinematics.endEffector.z)}</div>
+                <span className="sr-only" data-testid="tcp-orientation-direct">R {orientation.roll.toFixed(1)} P {orientation.pitch.toFixed(1)} Y {orientation.yaw.toFixed(1)}</span>
               </div>
 
               <div data-testid="robot-cell-stage" className="min-h-0 min-w-0 flex-1 overflow-hidden">

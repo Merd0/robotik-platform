@@ -113,20 +113,22 @@ test("basit al ve bırak akışında gripper parçayı kavrar ve bırakma alanı
   await expect(direct.getByRole("heading", { name: "Gripper’ı götür, kavra, bırak" })).toBeVisible();
   await expect(direct.getByRole("button", { name: "Hazır kavrama" })).toHaveCount(0);
   await expect(direct.getByRole("button", { name: "Parçanın üstüne git" })).toHaveCount(0);
+  const initialOrientation = (await focusView.getByTestId("tcp-orientation-direct").textContent())!;
   await direct.getByRole("slider", { name: "Gripper dönüş açısı" }).fill("130");
   await direct.getByRole("slider", { name: "Gripper yüksekliği" }).fill("0.86");
   await direct.getByRole("slider", { name: "Yatay X konumu" }).fill("0.72");
   await direct.getByRole("slider", { name: "Yatay Y konumu" }).fill("-0.18");
   await direct.getByRole("slider", { name: "Gripper yüksekliği" }).fill("0.73");
+  await expect(focusView.getByTestId("tcp-orientation-direct")).toHaveText(initialOrientation);
   await expect(direct.getByText("Merkez hizalı", { exact: true })).toBeVisible();
   await expect(direct.getByText("Bilek hizalı", { exact: true })).toBeVisible();
   await expect(direct.getByRole("button", { name: "Gripper’ı kapat · kavra" })).toBeEnabled();
   await direct.getByRole("button", { name: "Gripper’ı kapat · kavra" }).click();
   await expect(direct.getByText("Parça kavrandı", { exact: false })).toBeVisible();
 
-  await direct.getByRole("slider", { name: "Gripper yüksekliği" }).fill("0.9");
-  await direct.getByRole("slider", { name: "Yatay X konumu" }).fill("0.8");
-  await direct.getByRole("slider", { name: "Yatay Y konumu" }).fill("-0.45");
+  await direct.getByRole("slider", { name: "Gripper yüksekliği" }).fill("0.74");
+  await direct.getByRole("slider", { name: "Yatay X konumu" }).fill("0.72");
+  await direct.getByRole("slider", { name: "Yatay Y konumu" }).fill("-0.36");
   await direct.getByRole("button", { name: "Gripper’ı aç · bırak" }).click();
   await expect(direct.getByText("Parça mavi alana bırakıldı", { exact: false })).toBeVisible();
   await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem")).toHaveCount(4);

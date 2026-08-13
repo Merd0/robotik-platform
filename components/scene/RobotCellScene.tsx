@@ -152,25 +152,28 @@ export function RobotCellScene({
       </Cylinder>
       <RobotArmModel robot={robot} jointAngles={jointAngles} activeJointIndex={activeJointIndex} showFrames={showFrames} industrial />
       <group position={gripperScenePosition} quaternion={gripperQuaternion}>
-        <Cylinder args={[0.07, 0.07, 0.07, 24]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.flangeCenterY, 0]}>
+        <Cylinder args={[0.052, 0.052, 0.07, 24]} position={[0, 0, -0.035]} rotation={[Math.PI / 2, 0, 0]}>
           <meshStandardMaterial color="#334155" metalness={0.5} roughness={0.32} />
         </Cylinder>
-        <Cylinder args={[0.09, 0.09, 0.055, 24]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.adapterCenterY, 0]}>
+        <Sphere args={[0.06, 20, 20]} position={[0, -0.03, 0]}>
+          <meshStandardMaterial color="#0d9488" metalness={0.25} roughness={0.4} />
+        </Sphere>
+        <Cylinder args={[0.052, 0.052, 0.09, 24]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.flangeCenterY, 0]}>
           <meshStandardMaterial color="#0d9488" metalness={0.25} roughness={0.4} />
         </Cylinder>
-        <Box args={[0.13, 0.075, 0.34]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.palmCenterY, 0]}>
+        <Box args={[0.1, 0.055, 0.22]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.palmCenterY, 0]}>
           <meshStandardMaterial color="#0f766e" metalness={0.2} roughness={0.42} />
         </Box>
-        <Box args={[0.06, ROBOT_CELL_GRIPPER_VISUAL.fingerLength, ROBOT_CELL_GRIPPER_VISUAL.fingerThickness]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.fingerCenterY, -fingerOffset]}>
+        <Box args={[0.045, ROBOT_CELL_GRIPPER_VISUAL.fingerLength, ROBOT_CELL_GRIPPER_VISUAL.fingerThickness]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.fingerCenterY, -fingerOffset]}>
           <meshStandardMaterial color={gripperClosed ? "#fbbf24" : "#f1f5f9"} metalness={0.45} roughness={0.3} />
         </Box>
-        <Box args={[0.06, ROBOT_CELL_GRIPPER_VISUAL.fingerLength, ROBOT_CELL_GRIPPER_VISUAL.fingerThickness]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.fingerCenterY, fingerOffset]}>
+        <Box args={[0.045, ROBOT_CELL_GRIPPER_VISUAL.fingerLength, ROBOT_CELL_GRIPPER_VISUAL.fingerThickness]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.fingerCenterY, fingerOffset]}>
           <meshStandardMaterial color={gripperClosed ? "#fbbf24" : "#f1f5f9"} metalness={0.45} roughness={0.3} />
         </Box>
-        <Box args={[0.075, 0.045, 0.065]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.jawPadCenterY, -fingerOffset]}>
+        <Box args={[0.052, 0.026, 0.045]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.jawPadCenterY, -fingerOffset]}>
           <meshStandardMaterial color="#111827" roughness={0.55} />
         </Box>
-        <Box args={[0.075, 0.045, 0.065]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.jawPadCenterY, fingerOffset]}>
+        <Box args={[0.052, 0.026, 0.045]} position={[0, ROBOT_CELL_GRIPPER_VISUAL.jawPadCenterY, fingerOffset]}>
           <meshStandardMaterial color="#111827" roughness={0.55} />
         </Box>
         {directControl && (

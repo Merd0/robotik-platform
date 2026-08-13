@@ -20,8 +20,13 @@ describe("3B hücre gripper geometrisi", () => {
       ROBOT_CELL_GRIPPER_VISUAL.openFingerOffset
       - ROBOT_CELL_GRIPPER_VISUAL.fingerThickness / 2
     );
+    const totalOpenWidth = 2 * ROBOT_CELL_GRIPPER_VISUAL.openFingerOffset
+      + ROBOT_CELL_GRIPPER_VISUAL.fingerThickness;
 
-    expect(openInnerGap).toBeGreaterThan(ROBOT_CELL_WORKPIECE.sizeMetres + 0.08);
+    expect(openInnerGap).toBeGreaterThan(ROBOT_CELL_WORKPIECE.sizeMetres * 1.35);
+    expect(openInnerGap).toBeLessThan(ROBOT_CELL_WORKPIECE.sizeMetres * 1.7);
+    expect(totalOpenWidth).toBeLessThanOrEqual(ROBOT_CELL_WORKPIECE.sizeMetres * 2);
+    expect(ROBOT_CELL_GRIPPER_VISUAL.fingerLength).toBeLessThanOrEqual(ROBOT_CELL_WORKPIECE.sizeMetres * 1.15);
   });
 
   it("sahne sürüklemesini TCP yüksekliğini bozmadan robotik X/Y hedefine çevirir", () => {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { forwardKinematics } from "./kinematics";
 import { genericSixDofRobot } from "./robots/genericSixDof";
+import { ROBOT_CELL_HOME_DEGREES } from "./robotCellStudio";
 import {
   createTaughtPose,
   createRobotCellSampleJob,
@@ -11,9 +13,21 @@ import {
 } from "./robotCellProgram";
 
 const toRadians = (degrees: readonly number[]) => degrees.map((value) => value * Math.PI / 180);
-const HOME = toRadians([20, 50, -20, 0, 120, 0]);
+const HOME = toRadians(ROBOT_CELL_HOME_DEGREES);
 const INSPECTION = toRadians([10, 43, 24, 2, 98, 0]);
 const NARROW = toRadians([-24, 36, 25, 7, 95, 0]);
+
+function toolOrientationDistance(firstAngles: readonly number[], secondAngles: readonly number[]): number {
+  const first = forwardKinematics(genericSixDofRobot, [...firstAngles]).jointTransforms.at(-1)!;
+  const second = forwardKinematics(genericSixDofRobot, [...secondAngles]).jointTransforms.at(-1)!;
+  const trace = [0, 1, 2].reduce((sum, row) => sum
+    + [0, 1, 2].reduce((cellSum, column) => cellSum + first[row][column] * second[row][column], 0), 0);
+  return Math.acos(Math.max(-1, Math.min(1, (trace - 1) / 2)));
+}
+
+function shortestAngleDistance(first: number, second: number): number {
+  return Math.abs(Math.atan2(Math.sin(second - first), Math.cos(second - first)));
+}
 
 describe("3B robot hücresi öğretim programı", () => {
   it("öğretilen pozu eklem açıları ve FK'den gelen TCP ile dondurur", () => {
@@ -105,6 +119,25 @@ describe("3B robot hücresi öğretim programı", () => {
     }));
   });
 
+  it("TCP eksen kumandasında takım yönünü kilitler ve bileği çözüm dalları arasında takla attırmaz", () => {
+    const home = toRadians(ROBOT_CELL_HOME_DEGREES);
+    const targets = [
+      { x: 0.72, y: 0.12, z: 0.85 },
+      { x: 0.72, y: -0.18, z: 0.85 },
+      { x: 0.72, y: -0.18, z: 0.73 },
+    ];
+    let previous = home;
+
+    for (const target of targets) {
+      const solution = solveRobotCellDragTarget(genericSixDofRobot, previous, target);
+
+      expect(solution).toEqual(expect.objectContaining({ status: "ready", angles: expect.any(Array) }));
+      expect(toolOrientationDistance(home, solution.angles!)).toBeLessThan(0.02);
+      expect(Math.max(...solution.angles!.map((angle, index) => shortestAngleDistance(previous[index], angle)))).toBeLessThan(Math.PI / 2);
+      previous = solution.angles!;
+    }
+  });
+
   it("boş programı oynatılabilir saymaz", () => {
     expect(preflightRobotCellProgram(genericSixDofRobot, HOME, [])).toEqual(expect.objectContaining({
       status: "empty",
@@ -139,7 +172,7 @@ describe("3B robot hücresi öğretim programı", () => {
     const result = preflightRobotCellProgram(genericSixDofRobot, HOME, program);
 
     expect(result.status).toBe("blocked");
-    expect(result.steps[6].workpiecePositionAfter).toEqual(expect.objectContaining({ x: expect.closeTo(0.8, 2), y: expect.closeTo(-0.45, 2), z: 0.595 }));
+    expect(result.steps[6].workpiecePositionAfter).toEqual(expect.objectContaining({ x: expect.closeTo(0.72, 2), y: expect.closeTo(-0.36, 2), z: 0.595 }));
     expect(result.steps.at(-1)).toEqual(expect.objectContaining({ status: "blocked", holdingPartAfter: false }));
     expect(result.firstIssue).toEqual(expect.objectContaining({ commandId: "C8", reason: "grip-zone" }));
   });
