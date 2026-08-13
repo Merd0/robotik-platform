@@ -106,6 +106,46 @@ test("deney kumandaları sahnenin yanında tek dokunuşla değiştirilir", async
   await expect(experiment.getByRole("button", { name: "Hedefe çöz" })).toBeVisible();
 });
 
+test("masaüstü çalışma tezgâhında iki panel bağımsız kayar ve durumlar sayfayı zıplatmaz", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "Bağımsız panel kaydırması geniş ekran davranışıdır.");
+  await page.goto("/oyun-alani");
+  await page.getByLabel("Eklem sayısı").selectOption("6");
+  await page.getByRole("button", { name: "Tasarımı uygula" }).click();
+
+  const designPane = page.locator('[data-workbench-pane="design"]');
+  const experimentPane = page.locator('[data-workbench-pane="experiment"]');
+  await expect(designPane).toHaveCSS("overflow-y", "auto");
+  await expect(experimentPane).toHaveCSS("overflow-y", "auto");
+  await expect(designPane).toHaveCSS("scrollbar-width", "none");
+  await expect(experimentPane).toHaveCSS("scrollbar-width", "none");
+  await expect(page.locator("html")).toHaveCSS("scrollbar-width", "thin");
+
+  await designPane.evaluate((element) => element.scrollIntoView({ block: "start" }));
+  const initialWindowScroll = await page.evaluate(() => window.scrollY);
+  await designPane.evaluate((element) => { element.scrollTop = 320; });
+  const afterDesignScroll = await page.evaluate(() => window.scrollY);
+  expect(await designPane.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  expect(await experimentPane.evaluate((element) => element.scrollTop)).toBe(0);
+  expect(afterDesignScroll).toBe(initialWindowScroll);
+
+  const designScrollTop = await designPane.evaluate((element) => element.scrollTop);
+  await experimentPane.evaluate((element) => { element.scrollTop = 180; });
+  expect(await designPane.evaluate((element) => element.scrollTop)).toBe(designScrollTop);
+  expect(await page.evaluate(() => window.scrollY)).toBe(initialWindowScroll);
+
+  await experimentPane.evaluate((element) => { element.scrollTop = 0; });
+  const status = experimentPane.locator("[data-motion-status]");
+  const initialStatusHeight = (await status.boundingBox())!.height;
+  const scrollBeforeTabs = await page.evaluate(() => window.scrollY);
+  await experimentPane.getByRole("tab", { name: "Hareket öğret" }).click();
+  await experimentPane.getByRole("button", { name: "TCP’yi elle yönlendir" }).click();
+  await experimentPane.getByRole("tab", { name: "Hedefe git" }).click();
+  await experimentPane.getByRole("tab", { name: "Hareket öğret" }).click();
+
+  expect(Math.abs((await status.boundingBox())!.height - initialStatusHeight)).toBeLessThanOrEqual(1);
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollBeforeTabs);
+});
+
 test("hızlı hareket olayları kayıt hakkını tüketmez", async ({ page }) => {
   await page.goto("/oyun-alani");
   const experiment = page.getByRole("region", { name: "Robot deneyi" });
@@ -140,6 +180,7 @@ test("TCP sahnede sürüklenerek canlı IK ile güvenli bir poza yönlendirilir"
   await scene.scrollIntoViewIfNeeded();
   const box = await scene.boundingBox();
   expect(box).not.toBeNull();
+  const scrollBeforeDrag = await page.evaluate(() => window.scrollY);
   await page.mouse.move(box!.x + box!.width * 0.92, box!.y + box!.height * 0.5);
   await page.mouse.down();
   await page.mouse.move(box!.x + box!.width * 0.74, box!.y + box!.height * 0.35, { steps: 8 });
@@ -147,6 +188,7 @@ test("TCP sahnede sürüklenerek canlı IK ile güvenli bir poza yönlendirilir"
 
   await expect(experiment.locator('p[role="status"]').filter({ hasText: "TCP elle yönlendirildi" })).toBeVisible();
   await expect(experiment.getByText("TCP [1.62, 0]", { exact: true })).toHaveCount(0);
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollBeforeDrag);
 });
 
 test("öz-çarpışmaya götüren eklem hareketini açıklanabilir biçimde reddeder", async ({ page }) => {

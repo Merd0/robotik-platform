@@ -133,6 +133,12 @@ sekme grubu ok tuşlarıyla da çalışır ve tüm hedefler en az 44 pikseldir. 
 kaydı olay sayısına göre kota tüketmez. Yavaş/mikro hareket geometrik farka göre
 daha ayrıntılı, hızlı hareket yaklaşık saniyelik aralıklarla örneklenir; iç
 temsil bütçesi dolduğunda eski düz ara örnekler seyreltilerek kayıt sürer.
+Geniş ekranda tasarım ve deney, imlecin bulunduğu sütunda bağımsız kaydırılan
+bir çalışma tezgâhıdır; uzun sütunlar belgeyi sürükleyen `sticky` davranışına
+ihtiyaç duymaz. İç panel rayları görünmez; ince, site renkli kaydırma göstergesi
+yalnız sayfanın dış kenarında kalır.
+Canlı TCP sürüklemesi en son işaretçi konumunu ekran yenileme karesinde bir kez
+çözer; durum şeritleri sabit yükseklikte kaldığı için yeni metin sahneyi itmez.
 
 Bu genişleme tam fizik iddiasında bulunmaz. Tork, yerçekimi, yük, ivme/jerk,
 denetleyici gecikmesi, gerçek bağlantı kalınlığı, motor gövdesi ve çevre

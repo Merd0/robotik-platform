@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function OyunAlaniPage() {
   return (
-    <main id="ana-icerik" data-seviye="universite" className="min-h-screen bg-universite-bg text-universite-ink">
+    <main id="ana-icerik" data-seviye="universite" data-playground-page className="min-h-screen bg-universite-bg text-universite-ink">
       <header className="relative overflow-hidden border-b border-slate-800 bg-slate-950 text-slate-50">
         <div aria-hidden="true" className="lab-grid absolute inset-0 opacity-80" />
         <svg aria-hidden="true" viewBox="0 0 900 280" className="absolute -right-24 bottom-0 h-full w-[48rem] max-w-none opacity-35">

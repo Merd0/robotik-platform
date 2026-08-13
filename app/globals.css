@@ -507,6 +507,39 @@ select {
   line-height: 1.7;
 }
 
+/*
+ * Oyun alanının iki bağımsız masaüstü paneli native Windows rayını göstermez.
+ * Kaydırma fare, dokunmatik yüzey ve klavyeyle sürer; yalnız sayfanın dış
+ * kenarında ince bir konum göstergesi kalır.
+ */
+@media (min-width: 80rem) {
+  html:has([data-playground-page]) {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--color-site-accent) 38%, transparent) transparent;
+  }
+
+  html:has([data-playground-page])::-webkit-scrollbar {
+    width: 7px;
+  }
+
+  html:has([data-playground-page])::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  html:has([data-playground-page])::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-site-accent) 38%, transparent);
+  }
+
+  .workbench-pane {
+    scrollbar-width: none;
+  }
+
+  .workbench-pane::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 .ders-icerik th,
 .ders-icerik td {
   border: 1px solid color-mix(in srgb, currentColor 15%, transparent);

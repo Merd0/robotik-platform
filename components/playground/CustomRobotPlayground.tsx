@@ -133,6 +133,8 @@ function PlanarRobotDiagram({
   onGuideTarget: (target: { x: number; y: number }, capturedAtMs: number) => void;
 }) {
   const dragging = useRef(false);
+  const pendingGuide = useRef<{ target: { x: number; y: number }; capturedAtMs: number } | null>(null);
+  const guideFrame = useRef<number | null>(null);
   const { jointPositions, endEffector } = useMemo(
     () => forwardKinematics(robot, angles),
     [angles, robot],
@@ -153,12 +155,27 @@ function PlanarRobotDiagram({
   const sceneTaughtPoints = taughtPoints.map(toSvg);
   const grid = Array.from({ length: 9 }, (_, index) => 32 + index * 42);
 
+  useEffect(() => () => {
+    if (guideFrame.current !== null) window.cancelAnimationFrame(guideFrame.current);
+  }, []);
+
+  function scheduleGuide(target: { x: number; y: number }, capturedAtMs: number) {
+    pendingGuide.current = { target, capturedAtMs };
+    if (guideFrame.current !== null) return;
+    guideFrame.current = window.requestAnimationFrame(() => {
+      guideFrame.current = null;
+      const pending = pendingGuide.current;
+      pendingGuide.current = null;
+      if (pending) onGuideTarget(pending.target, pending.capturedAtMs);
+    });
+  }
+
   function guideFromPointer(event: React.PointerEvent<SVGSVGElement>) {
     const bounds = event.currentTarget.getBoundingClientRect();
     if (bounds.width <= 0 || bounds.height <= 0) return;
     const sceneX = ((event.clientX - bounds.left) / bounds.width) * 400;
     const sceneY = ((event.clientY - bounds.top) / bounds.height) * 400;
-    onGuideTarget({ x: (sceneX - 200) / scale, y: (200 - sceneY) / scale }, event.timeStamp);
+    scheduleGuide({ x: (sceneX - 200) / scale, y: (200 - sceneY) / scale }, event.timeStamp);
   }
 
   return (
@@ -170,14 +187,19 @@ function PlanarRobotDiagram({
         aria-label={`${robot.displayName}: ${robot.joints.length} dönel eklemli düzlemsel robot. Uç nokta x ${round(endEffector.x)} metre, y ${round(endEffector.y)} metre.`}
         onPointerDown={(event) => {
           if (!guideEnabled) return;
+          event.preventDefault();
           dragging.current = true;
           event.currentTarget.setPointerCapture(event.pointerId);
           guideFromPointer(event);
         }}
         onPointerMove={(event) => {
-          if (guideEnabled && dragging.current) guideFromPointer(event);
+          if (guideEnabled && dragging.current) {
+            event.preventDefault();
+            guideFromPointer(event);
+          }
         }}
         onPointerUp={(event) => {
+          if (guideEnabled) event.preventDefault();
           dragging.current = false;
           if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
         }}
@@ -687,6 +709,9 @@ export function CustomRobotPlayground() {
   function selectConsolePanelFromKeyboard(event: React.KeyboardEvent<HTMLButtonElement>, panelIndex: number) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
+    const documentScrollY = window.scrollY;
+    const pane = event.currentTarget.closest<HTMLElement>('[data-workbench-pane="experiment"]');
+    const paneScrollTop = pane?.scrollTop ?? 0;
     const nextIndex = event.key === "Home"
       ? 0
       : event.key === "End"
@@ -694,7 +719,22 @@ export function CustomRobotPlayground() {
         : (panelIndex + (event.key === "ArrowRight" ? 1 : -1) + CONSOLE_PANELS.length) % CONSOLE_PANELS.length;
     const nextPanel = CONSOLE_PANELS[nextIndex].id;
     setConsolePanel(nextPanel);
-    window.requestAnimationFrame(() => consoleTabRefs.current[nextPanel]?.focus());
+    window.requestAnimationFrame(() => {
+      consoleTabRefs.current[nextPanel]?.focus({ preventScroll: true });
+      if (pane) pane.scrollTop = paneScrollTop;
+      window.scrollTo({ top: documentScrollY, behavior: "instant" });
+    });
+  }
+
+  function selectConsolePanel(panel: ConsolePanel, button: HTMLButtonElement) {
+    const documentScrollY = window.scrollY;
+    const pane = button.closest<HTMLElement>('[data-workbench-pane="experiment"]');
+    const paneScrollTop = pane?.scrollTop ?? 0;
+    setConsolePanel(panel);
+    window.requestAnimationFrame(() => {
+      if (pane) pane.scrollTop = paneScrollTop;
+      window.scrollTo({ top: documentScrollY, behavior: "instant" });
+    });
   }
 
   return (
@@ -705,9 +745,10 @@ export function CustomRobotPlayground() {
         </div>
       )}
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(20rem,0.78fr)_minmax(0,1.42fr)]">
+      <div className="grid items-start gap-6 xl:h-[calc(100dvh-5rem)] xl:grid-cols-[minmax(20rem,0.78fr)_minmax(0,1.42fr)] xl:overflow-hidden">
         <form
-          className="lab-panel p-5 sm:p-6"
+          data-workbench-pane="design"
+          className="workbench-pane lab-panel p-5 [overflow-anchor:none] sm:p-6 xl:h-full xl:overflow-y-auto xl:overscroll-contain"
           onSubmit={(event) => {
             event.preventDefault();
             applyDesign();
@@ -816,7 +857,11 @@ export function CustomRobotPlayground() {
           </p>
         </form>
 
-        <section aria-label="Robot deneyi" className="lab-panel overflow-hidden p-4 sm:p-6 xl:sticky xl:top-16">
+        <section
+          aria-label="Robot deneyi"
+          data-workbench-pane="experiment"
+          className="workbench-pane lab-panel overflow-hidden p-4 [overflow-anchor:none] sm:p-6 xl:h-full xl:overflow-y-auto xl:overscroll-contain"
+        >
           <div className="flex flex-col gap-4 border-b border-site-border pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-site-accent-text">FK / IK / TCP izi</p>
@@ -870,7 +915,7 @@ export function CustomRobotPlayground() {
                     aria-selected={consolePanel === panel.id}
                     aria-controls={`console-panel-${panel.id}`}
                     tabIndex={consolePanel === panel.id ? 0 : -1}
-                    onClick={() => setConsolePanel(panel.id)}
+                    onClick={(event) => selectConsolePanel(panel.id, event.currentTarget)}
                     onKeyDown={(event) => selectConsolePanelFromKeyboard(event, panelIndex)}
                     className={`relative min-h-12 rounded-xl px-2 py-2 text-xs font-bold transition-colors sm:px-3 ${
                       consolePanel === panel.id
@@ -961,7 +1006,7 @@ export function CustomRobotPlayground() {
                       Hedefe çöz
                     </button>
                   </fieldset>
-                  <p role="status" aria-live="polite" className="mt-3 min-h-10 rounded-xl border border-site-border bg-site-soft p-3 text-xs leading-5 text-site-muted">{ikStatus}</p>
+                  <p role="status" aria-live="polite" className="mt-3 h-20 overflow-y-auto rounded-xl border border-site-border bg-site-soft p-3 text-xs leading-5 text-site-muted [overflow-anchor:none]">{ikStatus}</p>
                 </div>
               )}
 
@@ -1026,7 +1071,7 @@ export function CustomRobotPlayground() {
                 </div>
               )}
 
-              <p role="status" aria-live="polite" className="min-h-12 rounded-xl border border-poster-purple/35 bg-poster-purple/5 p-3 text-xs leading-5 text-site-ink">{motionStatus}</p>
+              <p data-motion-status role="status" aria-live="polite" className="h-24 overflow-y-auto rounded-xl border border-poster-purple/35 bg-poster-purple/5 p-3 text-xs leading-5 text-site-ink [overflow-anchor:none]">{motionStatus}</p>
 
               <div className="grid grid-cols-2 gap-3">
                 <button type="button" onClick={() => setTrace([tracePoint(robot, activeState.jointAngles)])} className="min-h-11 rounded-xl border border-site-border bg-site-surface px-3 text-xs font-bold text-site-ink hover:bg-site-soft">İzi temizle</button>
