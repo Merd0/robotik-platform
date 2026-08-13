@@ -14,7 +14,7 @@ export function SiteHeader() {
           <Link href="/sozluk" className="hidden min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft md:inline-flex">Sözlük</Link>
           <Link href="/ogretmen" className="hidden min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft lg:inline-flex">Öğretmen</Link>
           <Link href="/laboratuvar/robot-hucresi" className="hidden min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft xl:inline-flex">Canlı lab</Link>
-          <Link href="/oyun-alani" className="inline-flex min-h-11 items-center rounded-lg bg-site-soft px-3 font-medium text-site-accent-text hover:bg-site-border">Oyun alanı</Link>
+          <Link href="/oyun-alani" className="inline-flex min-h-11 items-center rounded-lg bg-site-soft px-3 font-semibold text-site-ink hover:bg-site-border">Oyun alanı</Link>
           <ThemeToggle />
         </nav>
       </div>

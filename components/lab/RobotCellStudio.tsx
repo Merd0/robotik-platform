@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { RobotCellScene, SahneAlani } from "@/components/scene/LazyScene";
 import { toolOrientationOf } from "@/components/scene/robotFrames";
 import {
@@ -11,15 +12,14 @@ import {
   updateRobotCellJoint,
 } from "@/lib/robotics/robotCellStudio";
 import { computeJacobian, forwardKinematics, isNearSingularity } from "@/lib/robotics/kinematics";
-import {
-  planRobotCellMoveJ,
-  planRobotCellMoveL,
-  ROBOT_CELL_OBSTACLES,
-  sampleRobotCellMotion,
-  type RobotCellMotionKind,
-  type RobotCellMotionPlan,
-} from "@/lib/robotics/robotCellMotion";
+import { planRobotCellMoveJ, planRobotCellMoveL, ROBOT_CELL_OBSTACLES, sampleRobotCellMotion, type RobotCellMotionKind } from "@/lib/robotics/robotCellMotion";
 import { genericSixDofRobot } from "@/lib/robotics/robots/genericSixDof";
+import {
+  ROBOT_CELL_MOTION_TARGETS,
+  RobotCellMotionSettings,
+  RobotCellMotionTransport,
+  type RobotCellMotionTargetId,
+} from "./RobotCellMotionWorkbench";
 
 const RAD_TO_DEG = 180 / Math.PI;
 const CAMERA_BUTTONS: Array<{ preset: RobotCellCameraPreset; label: string }> = [
@@ -27,11 +27,6 @@ const CAMERA_BUTTONS: Array<{ preset: RobotCellCameraPreset; label: string }> = 
   { preset: "top", label: "Üstten gör" },
   { preset: "front", label: "Önden gör" },
 ];
-const MOTION_TARGETS = {
-  inspection: { label: "Kontrol noktası", jointDegrees: [10, 43, 24, 2, 98, 0] },
-  narrow: { label: "Dar geçiş", jointDegrees: [-24, 36, 25, 7, 95, 0] },
-} as const;
-type MotionTargetId = keyof typeof MOTION_TARGETS;
 
 function formatMetres(value: number): string {
   return value.toLocaleString("tr-TR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
@@ -45,16 +40,21 @@ export function RobotCellStudio() {
   const [studio, setStudio] = useState(createRobotCellStudioState);
   const [showFrames, setShowFrames] = useState(false);
   const [controlMode, setControlMode] = useState<"joints" | "motion">("joints");
-  const [motionTargetId, setMotionTargetId] = useState<MotionTargetId>("inspection");
+  const [focusMode, setFocusMode] = useState(false);
+  const [motionTargetId, setMotionTargetId] = useState<RobotCellMotionTargetId>("inspection");
   const [selectedMotion, setSelectedMotion] = useState<RobotCellMotionKind>("movej");
   const [motionProgress, setMotionProgress] = useState(0);
   const [previewAngles, setPreviewAngles] = useState<number[] | null>(null);
   const [playing, setPlaying] = useState(false);
   const playbackFrame = useRef<number | null>(null);
+  const motionProgressRef = useRef(0);
+  const focusCloseButton = useRef<HTMLButtonElement | null>(null);
+  const focusDialog = useRef<HTMLDivElement | null>(null);
+  const focusLaunchButton = useRef<HTMLButtonElement | null>(null);
   const jointAngles = useMemo(() => jointAnglesRadians(studio), [studio]);
   const [motionStartAngles, setMotionStartAngles] = useState(() => [...jointAngles]);
   const targetAngles = useMemo(
-    () => MOTION_TARGETS[motionTargetId].jointDegrees.map((degrees) => degrees * Math.PI / 180),
+    () => ROBOT_CELL_MOTION_TARGETS[motionTargetId].jointDegrees.map((degrees) => degrees * Math.PI / 180),
     [motionTargetId],
   );
   const targetTcp = useMemo(() => forwardKinematics(genericSixDofRobot, targetAngles).endEffector, [targetAngles]);
@@ -93,13 +93,15 @@ export function RobotCellStudio() {
 
   const showMotionProgress = useCallback((progress: number, plan = selectedPlan) => {
     const clamped = Math.min(1, Math.max(0, progress));
+    motionProgressRef.current = clamped;
     setMotionProgress(clamped);
     setPreviewAngles([...sampleRobotCellMotion(plan, clamped).jointAngles]);
   }, [selectedPlan]);
 
-  function selectMotionTarget(targetId: MotionTargetId) {
+  function selectMotionTarget(targetId: RobotCellMotionTargetId) {
     setMotionTargetId(targetId);
     setMotionProgress(0);
+    motionProgressRef.current = 0;
     setPreviewAngles(null);
     setPlaying(false);
   }
@@ -107,6 +109,7 @@ export function RobotCellStudio() {
   function selectMotion(kind: RobotCellMotionKind) {
     setSelectedMotion(kind);
     setMotionProgress(0);
+    motionProgressRef.current = 0;
     setPreviewAngles(null);
     setPlaying(false);
   }
@@ -115,10 +118,12 @@ export function RobotCellStudio() {
     if (!playing) return;
     const startedAt = performance.now();
     const terminalProgress = selectedPlan.firstIssue?.progress ?? 1;
-    const durationMilliseconds = Math.max(1.2, selectedPlan.estimatedDurationSeconds * terminalProgress) * 1_000;
+    const initialProgress = motionProgressRef.current >= terminalProgress - 0.001 ? 0 : motionProgressRef.current;
+    if (initialProgress === 0) showMotionProgress(0, selectedPlan);
+    const durationMilliseconds = Math.max(1.2, selectedPlan.estimatedDurationSeconds * (terminalProgress - initialProgress)) * 1_000;
     const animate = (now: number) => {
       const progress = Math.min(1, (now - startedAt) / durationMilliseconds);
-      showMotionProgress(progress * terminalProgress, selectedPlan);
+      showMotionProgress(initialProgress + progress * (terminalProgress - initialProgress), selectedPlan);
       if (progress < 1) playbackFrame.current = window.requestAnimationFrame(animate);
       else setPlaying(false);
     };
@@ -127,6 +132,59 @@ export function RobotCellStudio() {
       if (playbackFrame.current !== null) window.cancelAnimationFrame(playbackFrame.current);
     };
   }, [playing, selectedPlan, showMotionProgress]);
+
+  useEffect(() => {
+    if (!focusMode) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    focusCloseButton.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        focusCloseButton.current?.click();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const controls = Array.from(focusDialog.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), summary, [href], [tabindex]:not([tabindex="-1"])',
+      ) ?? []);
+      if (controls.length === 0) return;
+      const first = controls[0];
+      const last = controls.at(-1)!;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [focusMode]);
+
+  function enterMotionFocus() {
+    setMotionStartAngles([...jointAngles]);
+    setControlMode("motion");
+    setPreviewAngles(null);
+    setMotionProgress(0);
+    motionProgressRef.current = 0;
+    setPlaying(false);
+    setFocusMode(true);
+  }
+
+  function leaveMotionFocus() {
+    setPlaying(false);
+    setFocusMode(false);
+    setControlMode("joints");
+    setPreviewAngles(null);
+    setMotionProgress(0);
+    motionProgressRef.current = 0;
+    window.requestAnimationFrame(() => focusLaunchButton.current?.focus());
+  }
 
   return (
     <section
@@ -176,17 +234,19 @@ export function RobotCellStudio() {
             </button>
           </div>
 
-          <SahneAlani className="h-[430px] overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 sm:h-[520px] lg:h-[600px]">
-            <RobotCellScene
-              robot={genericSixDofRobot}
-              jointAngles={displayedAngles}
-              activeJointIndex={studio.activeJointIndex}
-              cameraPreset={studio.cameraPreset}
-              showFrames={showFrames}
-              motionPlans={controlMode === "motion" ? motionPlans : undefined}
-              selectedMotion={selectedMotion}
-            />
-          </SahneAlani>
+          {focusMode ? (
+            <div aria-hidden="true" className="h-[430px] rounded-2xl border border-slate-700 bg-slate-950 sm:h-[520px] lg:h-[600px]" />
+          ) : (
+            <SahneAlani className="h-[430px] overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 sm:h-[520px] lg:h-[600px]">
+              <RobotCellScene
+                robot={genericSixDofRobot}
+                jointAngles={displayedAngles}
+                activeJointIndex={studio.activeJointIndex}
+                cameraPreset={studio.cameraPreset}
+                showFrames={showFrames}
+              />
+            </SahneAlani>
+          )}
 
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-label="Takım merkezi noktası ölçümleri">
             <div data-testid="tcp-position-3d" className="rounded-xl border border-site-border bg-site-soft px-4 py-3 font-mono text-sm leading-6 text-site-ink sm:col-span-2 lg:col-span-1">
@@ -217,7 +277,7 @@ export function RobotCellStudio() {
         <aside className="min-w-0 p-5 sm:p-6" aria-label="Robot kumandası">
           <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl border border-site-border bg-site-soft p-1" role="group" aria-label="Kumanda modu">
             <button type="button" aria-pressed={controlMode === "joints"} onClick={() => { setControlMode("joints"); setPreviewAngles(null); setMotionProgress(0); setPlaying(false); }} className={`min-h-11 rounded-xl px-3 text-sm font-semibold ${controlMode === "joints" ? "bg-site-accent text-site-on-accent" : "text-site-muted"}`}>Eksenleri sür</button>
-            <button type="button" aria-pressed={controlMode === "motion"} onClick={() => { setMotionStartAngles([...jointAngles]); setControlMode("motion"); setPreviewAngles(null); setMotionProgress(0); setPlaying(false); }} className={`min-h-11 rounded-xl px-3 text-sm font-semibold ${controlMode === "motion" ? "bg-site-accent text-site-on-accent" : "text-site-muted"}`}>Hareket provası</button>
+            <button ref={focusLaunchButton} type="button" aria-pressed={controlMode === "motion"} onClick={enterMotionFocus} className={`min-h-11 rounded-xl px-3 text-sm font-semibold ${controlMode === "motion" ? "bg-site-accent text-site-on-accent" : "text-site-muted"}`}>Hareket provası</button>
           </div>
 
           {controlMode === "joints" ? <>
@@ -274,119 +334,81 @@ export function RobotCellStudio() {
             </ul>
             <p className="mt-3 text-xs leading-5 text-site-subtle">Bu, marka bağımsız bir eğitim robotudur. Öz-çarpışma, tork, esneme, motor dinamiği ve güvenlik PLC davranışı henüz modellenmez; gerçek robot komutu üretmez.</p>
             </div>
-          </> : (
-            <MotionComparisonLab
-              targetId={motionTargetId}
-              selectedMotion={selectedMotion}
-              selectedPlan={selectedPlan}
-              moveJPlan={moveJPlan}
-              moveLPlan={moveLPlan}
-              motionProgress={motionProgress}
-              playing={playing}
-              onSelectTarget={selectMotionTarget}
-              onSelectMotion={selectMotion}
-              onProgress={(progress) => showMotionProgress(progress)}
-              onPlay={() => {
-                setMotionProgress(0);
-                setPreviewAngles(null);
-                setPlaying(true);
-              }}
-              onShowCollision={() => {
-                if (!selectedPlan.firstIssue) return;
-                showMotionProgress(selectedPlan.firstIssue.progress, selectedPlan);
-              }}
-            />
+          </> : null}
+          {controlMode === "motion" && (
+            <div className="rounded-2xl border border-site-border bg-site-soft p-5 text-sm leading-6 text-site-muted">
+              <strong className="block text-site-ink">Hareket provası odak görünümünde açık.</strong>
+              Robot, zaman çizgisi ve hareket seçimi aynı kadrajda tutuluyor.
+            </div>
           )}
         </aside>
       </div>
-    </section>
-  );
-}
-
-function motionStatus(plan: RobotCellMotionPlan): string {
-  if (plan.status === "safe") return "Geçiş temiz";
-  if (plan.status === "collision") return `${plan.firstIssue?.obstacleLabel ?? "Hücre elemanı"} · L${(plan.firstIssue?.linkIndex ?? 0) + 1} teması`;
-  if (plan.status === "ik-failure") return "IK ara noktayı çözemedi";
-  return "Eklem limiti aşıldı";
-}
-
-function MotionResultCard({ plan }: { plan: RobotCellMotionPlan }) {
-  const safe = plan.status === "safe";
-  return (
-    <div data-testid={`${plan.kind}-result`} className={`rounded-2xl border p-4 ${safe ? "border-success-border bg-success-surface" : "border-rose-400/50 bg-rose-950/10"}`}>
-      <div className="flex items-center justify-between gap-3">
-        <strong className={safe ? "text-success-ink" : "text-rose-700 dark:text-rose-300"}>{safe ? "✓" : "!"} {motionStatus(plan)}</strong>
-        <span className="font-mono text-xs uppercase text-site-subtle">{plan.samples.length} örnek</span>
-      </div>
-      <dl className="mt-3 grid grid-cols-3 gap-2 text-xs text-site-muted">
-        <div><dt>TCP yolu</dt><dd className="mt-1 font-mono font-semibold text-site-ink">{plan.tcpDistanceMetres.toFixed(3)} m</dd></div>
-        <div><dt>Eklem yolu</dt><dd className="mt-1 font-mono font-semibold text-site-ink">{(plan.jointTravelRadians * RAD_TO_DEG).toFixed(0)}°</dd></div>
-        <div><dt>Alt süre</dt><dd className="mt-1 font-mono font-semibold text-site-ink">{plan.estimatedDurationSeconds.toFixed(2)} s</dd></div>
-      </dl>
-    </div>
-  );
-}
-
-function MotionComparisonLab({
-  targetId,
-  selectedMotion,
-  selectedPlan,
-  moveJPlan,
-  moveLPlan,
-  motionProgress,
-  playing,
-  onSelectTarget,
-  onSelectMotion,
-  onProgress,
-  onPlay,
-  onShowCollision,
-}: {
-  targetId: MotionTargetId;
-  selectedMotion: RobotCellMotionKind;
-  selectedPlan: RobotCellMotionPlan;
-  moveJPlan: RobotCellMotionPlan;
-  moveLPlan: RobotCellMotionPlan;
-  motionProgress: number;
-  playing: boolean;
-  onSelectTarget: (target: MotionTargetId) => void;
-  onSelectMotion: (kind: RobotCellMotionKind) => void;
-  onProgress: (progress: number) => void;
-  onPlay: () => void;
-  onShowCollision: () => void;
-}) {
-  return (
-    <section aria-label="Hareket prova laboratuvarı">
-      <div>
-        <div>
-          <p className="font-mono text-xs font-semibold uppercase tracking-[.18em] text-site-accent-text">Motion lab · yol ön kontrolü</p>
-          <h3 className="mt-2 font-heading text-2xl font-semibold tracking-tight text-site-ink">Aynı hedefe iki farklı hareket</h3>
-          <p className="mt-3 text-sm leading-6 text-site-muted">MoveJ bütün eklemleri birlikte ilerletir; TCP çoğu zaman eğri çizer. MoveL ise her Kartezyen ara noktayı IK ile çözmeye çalışır. İki yol da bağlantı kalınlığı hesaba katılarak masa, fikstür, kutu ve çevreye karşı örneklenir.</p>
-          <div className="mt-5 flex flex-wrap gap-2" role="group" aria-label="Prova hedefi">
-            {(Object.entries(MOTION_TARGETS) as Array<[MotionTargetId, (typeof MOTION_TARGETS)[MotionTargetId]]>).map(([id, target]) => (
-              <button key={id} type="button" aria-pressed={targetId === id} onClick={() => onSelectTarget(id)} className={`min-h-11 rounded-xl border px-4 text-sm font-semibold ${targetId === id ? "border-site-accent bg-site-accent text-site-on-accent" : "border-site-border bg-site-surface text-site-muted"}`}>{target.label} hedefi</button>
-            ))}
+      {focusMode && typeof document !== "undefined" && createPortal(
+        <div ref={focusDialog} role="dialog" aria-modal="true" aria-label="Robot hücresi odak görünümü" className="fixed inset-0 z-[70] flex flex-col overflow-hidden bg-site-bg text-site-ink">
+          <div className="relative min-h-[72px] shrink-0 border-b border-site-border bg-site-surface px-3 py-2 pr-24 sm:min-h-16 sm:px-6 sm:py-2 sm:pr-36">
+            <div className="min-w-0">
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[.16em] text-site-accent-text">Odak görünümü · hareket provası</p>
+              <p className="truncate font-heading text-lg font-semibold">Robot ve kumanda aynı kadrajda</p>
+            </div>
+            <button ref={focusCloseButton} type="button" aria-label="Sayfaya dön" onClick={leaveMotionFocus} className="absolute right-3 top-2.5 min-h-11 rounded-xl border border-site-border bg-site-surface px-3 text-sm font-semibold hover:bg-site-soft sm:right-6 sm:px-4"><span className="sm:hidden">Geri</span><span className="hidden sm:inline">Sayfaya dön</span></button>
           </div>
-          <p className="mt-4 rounded-xl border border-site-border bg-site-surface p-3 text-xs leading-5 text-site-muted"><strong className="text-site-ink">Gerçeklik sınırı:</strong> Buradaki MoveL TCP konumunu doğrusal izler; takım yönelimini sabit tutma ve robotun kendi gövdesiyle çarpışması henüz çözülmez. Süre yalnız RobotSpec hız limitinden hesaplanan teorik alt sınırdır; ivme ve jerk profili değildir.</p>
-        </div>
 
-        <div className="mt-5 min-w-0">
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-            <button type="button" aria-pressed={selectedMotion === "movej"} onClick={() => onSelectMotion("movej")} className={`min-h-14 rounded-2xl border px-4 text-left ${selectedMotion === "movej" ? "border-violet-500 bg-violet-500/10" : "border-site-border bg-site-surface"}`}><strong className="block text-site-ink">MoveJ yolunu seç</strong><span className="mt-1 block text-xs text-site-muted">Eklemler doğrusal · TCP eğrisel</span></button>
-            <button type="button" aria-pressed={selectedMotion === "movel"} onClick={() => onSelectMotion("movel")} className={`min-h-14 rounded-2xl border px-4 text-left ${selectedMotion === "movel" ? "border-teal-500 bg-teal-500/10" : "border-site-border bg-site-surface"}`}><strong className="block text-site-ink">MoveL yolunu seç</strong><span className="mt-1 block text-xs text-site-muted">TCP doğrusal · IK ardışık</span></button>
-          </div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2"><MotionResultCard plan={moveJPlan} /><MotionResultCard plan={moveLPlan} /></div>
+          <div role="region" aria-label="Hareket prova laboratuvarı" className="grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(500px,65dvh)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_430px] xl:grid-rows-1">
+            <div className="flex min-h-0 min-w-0 flex-col overflow-hidden border-b border-site-border bg-slate-950 xl:border-b-0 xl:border-r">
+              <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2 sm:px-4">
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Odak görünümü kamerası">
+                  {CAMERA_BUTTONS.map(({ preset, label }) => (
+                    <button key={preset} type="button" aria-pressed={studio.cameraPreset === preset} onClick={() => selectCamera(preset)} className={`min-h-11 rounded-xl border px-3 text-xs font-semibold ${studio.cameraPreset === preset ? "border-teal-300 bg-teal-300 text-slate-950" : "border-slate-600 bg-slate-900 text-slate-200"}`}>{label}</button>
+                  ))}
+                </div>
+                <div className="font-mono text-xs text-slate-300">TCP · X {formatMetres(kinematics.endEffector.x)} · Y {formatMetres(kinematics.endEffector.y)} · Z {formatMetres(kinematics.endEffector.z)}</div>
+              </div>
 
-          <label className="mt-4 block rounded-2xl border border-site-border bg-site-surface p-4">
-            <span className="flex items-center justify-between gap-3 text-sm font-semibold text-site-ink"><span>Hareket provası ilerlemesi</span><output className="font-mono">%{Math.round(motionProgress * 100)}</output></span>
-            <input aria-label="Hareket provası ilerlemesi" type="range" min="0" max="100" step="1" value={Math.round(motionProgress * 100)} onChange={(event) => onProgress(Number(event.target.value) / 100)} className="mt-2 h-11 w-full touch-pan-y accent-teal-600" />
-          </label>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <button type="button" onClick={onPlay} disabled={playing || selectedPlan.samples.length < 2} className="min-h-11 rounded-xl bg-site-strong px-4 text-sm font-semibold text-site-on-strong disabled:cursor-not-allowed disabled:opacity-45">{playing ? "Prova oynatılıyor…" : "Seçili provayı oynat"}</button>
-            <button type="button" onClick={onShowCollision} disabled={!selectedPlan.firstIssue} className="min-h-11 rounded-xl border border-site-border bg-site-surface px-4 text-sm font-semibold text-site-ink disabled:cursor-not-allowed disabled:opacity-45">Çarpışmaya kadar göster</button>
+              <div data-testid="robot-cell-stage" className="min-h-0 min-w-0 flex-1 overflow-hidden">
+                <SahneAlani className="h-full">
+                  <RobotCellScene
+                    robot={genericSixDofRobot}
+                    jointAngles={displayedAngles}
+                    activeJointIndex={studio.activeJointIndex}
+                    cameraPreset={studio.cameraPreset}
+                    showFrames={showFrames}
+                    motionPlans={motionPlans}
+                    selectedMotion={selectedMotion}
+                    targetTcp={targetTcp}
+                  />
+                </SahneAlani>
+              </div>
+
+              <div className="shrink-0 border-t border-white/10 bg-slate-950 px-3 py-3 text-white sm:px-4">
+                <RobotCellMotionTransport
+                  selectedPlan={selectedPlan}
+                  selectedMotion={selectedMotion}
+                  motionProgress={motionProgress}
+                  playing={playing}
+                  onProgress={(progress) => showMotionProgress(progress)}
+                  onPlay={() => setPlaying((current) => !current)}
+                  onShowCollision={() => {
+                    if (!selectedPlan.firstIssue) return;
+                    showMotionProgress(selectedPlan.firstIssue.progress, selectedPlan);
+                  }}
+                />
+              </div>
+            </div>
+
+            <aside className="min-h-0 overflow-y-auto bg-site-surface p-4 sm:p-5" aria-label="Odak görünümü hareket ayarları">
+              <RobotCellMotionSettings
+                targetId={motionTargetId}
+                selectedMotion={selectedMotion}
+                moveJPlan={moveJPlan}
+                moveLPlan={moveLPlan}
+                onSelectTarget={selectMotionTarget}
+                onSelectMotion={selectMotion}
+              />
+            </aside>
           </div>
-          <p className="mt-3 min-h-11 text-xs leading-5 text-site-muted" aria-live="polite">{selectedPlan.status === "safe" ? `${selectedMotion === "movej" ? "MoveJ" : "MoveL"} yolu bütün örneklerde temiz. Mor/yeşil TCP izlerini sahnede karşılaştır.` : `${selectedMotion === "movej" ? "MoveJ" : "MoveL"} provası durduruldu: ${motionStatus(selectedPlan)}. Pembe işaret ilk problemli örneği gösteriyor.`}</p>
-        </div>
-      </div>
+        </div>,
+        document.body,
+      )}
     </section>
   );
 }

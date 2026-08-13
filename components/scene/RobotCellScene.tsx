@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Cylinder, Grid, Line, OrbitControls, Sphere } from "@react-three/drei";
+import { Box, Cylinder, Grid, Line, OrbitControls, Sphere, Torus } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { useEffect } from "react";
 import { useTheme } from "@/components/ui/ThemeProvider";
@@ -84,6 +84,7 @@ export function RobotCellScene({
   showFrames,
   motionPlans,
   selectedMotion,
+  targetTcp,
 }: {
   robot: RobotSpec;
   jointAngles: number[];
@@ -92,6 +93,7 @@ export function RobotCellScene({
   showFrames: boolean;
   motionPlans?: RobotCellMotionPlan[];
   selectedMotion?: "movej" | "movel";
+  targetTcp?: Vec3;
 }) {
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
@@ -142,6 +144,15 @@ export function RobotCellScene({
           </group>
         );
       })}
+      {targetTcp && (
+        <group position={toSceneTuple(targetTcp)}>
+          <Torus args={[0.1, 0.012, 10, 32]} rotation={[Math.PI / 2, 0, 0]}>
+            <meshStandardMaterial color="#fbbf24" emissive="#92400e" emissiveIntensity={0.45} />
+          </Torus>
+          <Line points={[[-0.14, 0, 0], [0.14, 0, 0]]} color="#fbbf24" lineWidth={2.5} />
+          <Line points={[[0, -0.14, 0], [0, 0.14, 0]]} color="#fbbf24" lineWidth={2.5} />
+        </group>
+      )}
       <Table />
       <Box args={obstacleSizeInScene(fixture)} position={toSceneTuple(fixture.center)}>
         <meshStandardMaterial color="#7c2d12" roughness={0.7} />
