@@ -88,6 +88,7 @@ export function RobotCellScene({
   motionPlans,
   selectedMotion,
   targetTcp,
+  previewJointAngles,
   workpiecePosition,
   gripperClosed = false,
   directControl = false,
@@ -100,6 +101,7 @@ export function RobotCellScene({
   motionPlans?: RobotCellMotionPlan[];
   selectedMotion?: "movej" | "movel";
   targetTcp?: Vec3;
+  previewJointAngles?: readonly number[];
   workpiecePosition?: Vec3;
   gripperClosed?: boolean;
   directControl?: boolean;
@@ -144,6 +146,7 @@ export function RobotCellScene({
         <meshStandardMaterial color="#0f766e" metalness={0.18} roughness={0.55} />
       </Cylinder>
       <RobotArmModel robot={robot} jointAngles={jointAngles} activeJointIndex={activeJointIndex} showFrames={showFrames} industrial />
+      {previewJointAngles && <RobotArmModel robot={robot} jointAngles={[...previewJointAngles]} showFrames={false} industrial ghost />}
       <group position={gripperScenePosition} quaternion={gripperQuaternion}>
         <Cylinder args={[0.047, 0.055, 0.15, 24]} position={[0, 0, -0.075]} rotation={[Math.PI / 2, 0, 0]}>
           <meshStandardMaterial color="#e2e8f0" metalness={0.24} roughness={0.42} />

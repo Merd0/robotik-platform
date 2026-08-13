@@ -121,7 +121,12 @@ export function RobotCellProgramTransport({
   activeCommandIndex,
   completed,
   gripperClosed,
+  playbackSpeed,
+  stepMode,
   onPlay,
+  onStep,
+  onReset,
+  onSpeedChange,
 }: {
   commandCount: number;
   preflight: RobotCellProgramPreflight;
@@ -129,17 +134,31 @@ export function RobotCellProgramTransport({
   activeCommandIndex: number | null;
   completed: boolean;
   gripperClosed: boolean;
+  playbackSpeed: number;
+  stepMode: boolean;
   onPlay: () => void;
+  onStep: () => void;
+  onReset: () => void;
+  onSpeedChange: (speed: number) => void;
 }) {
   const status = activeCommandIndex === null
     ? completed ? `Program tamamlandı · ${commandCount} satır` : "Program bekliyor"
-    : `Satır ${activeCommandIndex + 1}/${commandCount} yürütülüyor`;
+    : playing ? `Satır ${activeCommandIndex + 1}/${commandCount} yürütülüyor` : `Sıradaki satır ${activeCommandIndex + 1}/${commandCount}`;
   return (
-    <div className="grid items-center gap-3 sm:grid-cols-[auto_minmax(0,1fr)]">
-      <button type="button" onClick={onPlay} disabled={preflight.status !== "ready"} className="min-h-11 min-w-44 rounded-xl bg-teal-300 px-4 text-sm font-bold text-slate-950 disabled:opacity-40">{playing ? "Programı duraklat" : "Programı oynat"}</button>
+    <div className="grid items-center gap-3 lg:grid-cols-[auto_minmax(0,1fr)]">
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={onPlay} disabled={preflight.status !== "ready" || stepMode} className="min-h-11 min-w-40 rounded-xl bg-teal-300 px-4 text-sm font-bold text-slate-950 disabled:opacity-40">{stepMode ? "Adım çalışıyor" : playing ? "Programı duraklat" : "Programı oynat"}</button>
+        <button type="button" onClick={onStep} disabled={preflight.status !== "ready" || playing} className="min-h-11 rounded-xl border border-slate-600 px-3 text-xs font-bold text-slate-100 disabled:opacity-40">Sonraki adımı çalıştır</button>
+        <button type="button" onClick={onReset} disabled={playing && !stepMode} className="min-h-11 rounded-xl border border-slate-600 px-3 text-xs font-bold text-slate-100 disabled:opacity-40">Provayı başa al</button>
+      </div>
       <div className="min-w-0">
         <div className="flex items-center justify-between gap-3 text-xs text-slate-200"><strong>{status}</strong><span className="font-mono">Tutucu {gripperClosed ? "kapalı · parça bağlı" : "açık"}</span></div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-700" aria-hidden="true"><div className="h-full bg-teal-300 transition-[width]" style={{ width: commandCount === 0 ? "0%" : `${((activeCommandIndex ?? (completed ? commandCount : 0)) / commandCount) * 100}%` }} /></div>
+        <div className="mt-2 flex flex-wrap items-center gap-1" role="group" aria-label="Prova hızı">
+          {[{ value: 0.5, label: "Yavaş 0,5×" }, { value: 1, label: "Normal 1×" }, { value: 2, label: "Hızlı 2×" }].map((option) => (
+            <button key={option.value} type="button" aria-pressed={playbackSpeed === option.value} onClick={() => onSpeedChange(option.value)} disabled={playing} className={`min-h-9 rounded-lg px-3 text-[11px] font-semibold ${playbackSpeed === option.value ? "bg-teal-300 text-slate-950" : "text-slate-300"} disabled:opacity-40`}>{option.label}</button>
+          ))}
+        </div>
       </div>
     </div>
   );

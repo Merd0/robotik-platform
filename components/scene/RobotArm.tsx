@@ -30,6 +30,8 @@ export interface RobotArmModelProps extends RobotArmProps {
   /** Koordinat çerçeveleri ile etkin eklem eksenini gösterir. */
   showFrames?: boolean;
   industrial?: boolean;
+  /** Seçili program hedefini yarı saydam bir robot silueti olarak gösterir. */
+  ghost?: boolean;
 }
 
 const LINK_RADIUS = 0.04;
@@ -41,7 +43,7 @@ function toThreeVector(p: Vec3): [number, number, number] {
   return [p.x, p.y, p.z];
 }
 
-function ArmSegment({ start, end, color, radius = LINK_RADIUS }: { start: Vec3; end: Vec3; color: string; radius?: number }) {
+function ArmSegment({ start, end, color, radius = LINK_RADIUS, ghost = false }: { start: Vec3; end: Vec3; color: string; radius?: number; ghost?: boolean }) {
   const { position, quaternion, length } = useMemo(() => {
     const startVec = new THREE.Vector3(start.x, start.y, start.z);
     const endVec = new THREE.Vector3(end.x, end.y, end.z);
@@ -63,7 +65,7 @@ function ArmSegment({ start, end, color, radius = LINK_RADIUS }: { start: Vec3; 
       position={position}
       quaternion={quaternion}
     >
-      <meshStandardMaterial color={color} />
+      <meshStandardMaterial color={color} transparent={ghost} opacity={ghost ? 0.2 : 1} depthWrite={!ghost} />
     </Cylinder>
   );
 }
@@ -162,6 +164,7 @@ function ArmModel({
   palette,
   showFrames = true,
   industrial = false,
+  ghost = false,
 }: RobotArmModelProps & {
   linkColor: string;
   accentColor: string;
@@ -195,10 +198,10 @@ function ArmModel({
   return (
     <group>
       {(industrialLayout ? industrialLayout.links.map(({ start, end }) => ({ start: roboticsVectorToScene(start), end: roboticsVectorToScene(end) })) : sceneJointPositions.slice(0, -1).map((start, index) => ({ start, end: sceneJointPositions[index + 1] }))).map(({ start, end }, index) => (
-        <ArmSegment key={index} start={start} end={end} color={linkColor} radius={industrial ? 0.045 : LINK_RADIUS} />
+        <ArmSegment key={index} start={start} end={end} color={ghost ? "#fbbf24" : linkColor} radius={industrial ? 0.045 : LINK_RADIUS} ghost={ghost} />
       ))}
       {industrialLayout ? industrialLayout.joints.map(({ kind, position, direction }, index) => (
-        <JointHousing key={kind} position={roboticsVectorToScene(position)} direction={roboticsVectorToScene(direction)} color={index === 0 ? "#0f766e" : accentColor} active={kind === "shoulder" ? activeJointIndex === 1 : kind === "elbow" ? activeJointIndex === 2 || activeJointIndex === 3 : activeJointIndex !== undefined && activeJointIndex >= 4} size={kind === "wrist" ? "small" : "normal"} />
+        <JointHousing key={kind} position={roboticsVectorToScene(position)} direction={roboticsVectorToScene(direction)} color={ghost ? "#fbbf24" : index === 0 ? "#0f766e" : accentColor} active={kind === "shoulder" ? activeJointIndex === 1 : kind === "elbow" ? activeJointIndex === 2 || activeJointIndex === 3 : activeJointIndex !== undefined && activeJointIndex >= 4} size={kind === "wrist" ? "small" : "normal"} ghost={ghost} />
       )) : sceneJointPositions.map((position, index) => (
         <Sphere
           key={index}
@@ -206,7 +209,10 @@ function ArmModel({
           position={toThreeVector(position)}
         >
           <meshStandardMaterial
-            color={index === activeJointIndex ? palette.activeAxis : index === 0 ? linkColor : accentColor}
+            color={ghost ? "#fbbf24" : index === activeJointIndex ? palette.activeAxis : index === 0 ? linkColor : accentColor}
+            transparent={ghost}
+            opacity={ghost ? 0.2 : 1}
+            depthWrite={!ghost}
           />
         </Sphere>
       ))}
@@ -231,7 +237,7 @@ function ArmModel({
   );
 }
 
-function JointHousing({ position, direction, color, active, size }: { position: Vec3; direction: Vec3; color: string; active: boolean; size: "normal" | "small" }) {
+function JointHousing({ position, direction, color, active, size, ghost }: { position: Vec3; direction: Vec3; color: string; active: boolean; size: "normal" | "small"; ghost: boolean }) {
   const radius = size === "small" ? 0.068 : 0.086;
   const depth = size === "small" ? 0.1 : 0.12;
   const quaternion = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
@@ -241,10 +247,10 @@ function JointHousing({ position, direction, color, active, size }: { position: 
   return (
     <group position={toThreeVector(position)} quaternion={quaternion}>
       <Cylinder args={[active ? radius * 1.12 : radius, active ? radius * 1.12 : radius, depth, 24]}>
-        <meshStandardMaterial color={color} metalness={0.18} roughness={0.48} />
+        <meshStandardMaterial color={color} metalness={0.18} roughness={0.48} transparent={ghost} opacity={ghost ? 0.2 : 1} depthWrite={!ghost} />
       </Cylinder>
       <Torus args={[active ? radius * 1.16 : radius * 1.04, 0.008, 8, 32]} rotation={[Math.PI / 2, 0, 0]}>
-        <meshStandardMaterial color={active ? "#fbbf24" : "#0f172a"} metalness={0.35} roughness={0.4} />
+        <meshStandardMaterial color={ghost ? "#fbbf24" : active ? "#fbbf24" : "#0f172a"} metalness={0.35} roughness={0.4} transparent={ghost} opacity={ghost ? 0.2 : 1} depthWrite={!ghost} />
       </Torus>
     </group>
   );
@@ -257,6 +263,7 @@ export function RobotArmModel({
   activeJointIndex,
   showFrames = true,
   industrial = false,
+  ghost = false,
 }: RobotArmModelProps) {
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
@@ -268,6 +275,7 @@ export function RobotArmModel({
       activeJointIndex={activeJointIndex}
       showFrames={showFrames}
       industrial={industrial}
+      ghost={ghost}
       linkColor={palette.link}
       accentColor={palette.accent}
       palette={palette}

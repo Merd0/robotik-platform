@@ -14,6 +14,13 @@ import {
 import { computeJacobian, forwardKinematics, isNearSingularity } from "@/lib/robotics/kinematics";
 import { planRobotCellMoveJ, planRobotCellMoveL, ROBOT_CELL_OBSTACLES, sampleRobotCellMotion, type RobotCellMotionKind } from "@/lib/robotics/robotCellMotion";
 import { assessRobotCellGrip, assessRobotCellRelease, createRobotCellSampleJob, createTaughtPose, preflightRobotCellProgram, recordRobotCellCommandSmart, releasedWorkpiecePosition, repairRobotCellProgram, ROBOT_CELL_WORKPIECE, solveRobotCellDirectTarget, type RobotCellProgramCommand } from "@/lib/robotics/robotCellProgram";
+import {
+  decodeRobotCellProgramDraft,
+  encodeRobotCellProgramDraft,
+  moveRobotCellProgramCommand,
+  replaceRobotCellProgramCommand,
+  ROBOT_CELL_PROGRAM_STORAGE_KEY,
+} from "@/lib/robotics/robotCellProgramEditor";
 import { robotCellAxisTarget } from "@/lib/robotics/robotCellVisual";
 import { genericSixDofRobot } from "@/lib/robotics/robots/genericSixDof";
 import type { Vec3 } from "@/lib/robotics/transform";
@@ -61,7 +68,13 @@ export function RobotCellStudio() {
   const [previewAngles, setPreviewAngles] = useState<number[] | null>(null);
   const [playing, setPlaying] = useState(false);
   const [programCommands, setProgramCommands] = useState<RobotCellProgramCommand[]>([]);
+  const [programName, setProgramName] = useState("Benim al-bırak programım");
+  const [programStorageReady, setProgramStorageReady] = useState(false);
+  const [programStorageStatus, setProgramStorageStatus] = useState("Bu tarayıcıda otomatik saklanır.");
+  const [selectedProgramCommandId, setSelectedProgramCommandId] = useState<string | null>(null);
   const [programPlaying, setProgramPlaying] = useState(false);
+  const [programPlaybackSpeed, setProgramPlaybackSpeed] = useState(1);
+  const [programStepMode, setProgramStepMode] = useState(false);
   const [activeProgramCommandIndex, setActiveProgramCommandIndex] = useState<number | null>(null);
   const [programCompleted, setProgramCompleted] = useState(false);
   const [workpiecePosition, setWorkpiecePosition] = useState<Vec3>(() => ({ ...ROBOT_CELL_WORKPIECE.start }));
@@ -99,10 +112,52 @@ export function RobotCellStudio() {
     () => preflightRobotCellProgram(genericSixDofRobot, motionStartAngles, programCommands),
     [motionStartAngles, programCommands],
   );
+  const selectedProgramCommand = useMemo(
+    () => programCommands.find((command) => command.id === selectedProgramCommandId),
+    [programCommands, selectedProgramCommandId],
+  );
+  const selectedProgramTarget = selectedProgramCommand?.type === "move" ? selectedProgramCommand.pose.tcp : undefined;
   const displayedAngles = previewAngles ?? jointAngles;
   useEffect(() => {
     directAnglesRef.current = [...displayedAngles];
   }, [displayedAngles]);
+  useEffect(() => {
+    const restore = window.setTimeout(() => {
+      try {
+        const stored = window.localStorage.getItem(ROBOT_CELL_PROGRAM_STORAGE_KEY);
+        if (stored) {
+          const decoded = decodeRobotCellProgramDraft(stored, genericSixDofRobot);
+          if (decoded.ok) {
+            setProgramName(decoded.value.name);
+            setProgramCommands(decoded.value.commands);
+            setProgramStorageStatus("Tarayıcıdaki program geri yüklendi.");
+          } else {
+            setProgramStorageStatus("Eski kayıt güvenlik kontrolünden geçmedi; boş programla başlandı.");
+          }
+        }
+      } catch {
+        setProgramStorageStatus("Tarayıcı kaydı kullanılamıyor; program bu oturumda kalacak.");
+      } finally {
+        setProgramStorageReady(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(restore);
+  }, []);
+  useEffect(() => {
+    if (!programStorageReady) return;
+    const persist = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(ROBOT_CELL_PROGRAM_STORAGE_KEY, encodeRobotCellProgramDraft({
+          name: programName.trim() || "Adsız robot programı",
+          commands: programCommands,
+        }));
+        setProgramStorageStatus("Tarayıcıya kaydedildi · hesap gerekmez.");
+      } catch {
+        setProgramStorageStatus("Tarayıcı kaydı kullanılamıyor; program bu oturumda kalacak.");
+      }
+    }, 120);
+    return () => window.clearTimeout(persist);
+  }, [programCommands, programName, programStorageReady]);
   const kinematics = useMemo(() => forwardKinematics(genericSixDofRobot, displayedAngles), [displayedAngles]);
   const orientation = useMemo(
     () => toolOrientationOf(kinematics.jointTransforms.at(-1)!),
@@ -176,7 +231,7 @@ export function RobotCellStudio() {
     setProgramCompleted(false);
   }
 
-  function moveGripperTo(target: Vec3, label: string, save = true) {
+  function moveGripperTo(target: Vec3, label: string) {
     const solution = solveRobotCellDirectTarget(genericSixDofRobot, directAnglesRef.current, target);
     if (solution.status !== "ready" || !solution.angles) {
       setDirectStatus(solution.status === "collision" ? `Bu poz ${solution.obstacleLabel ?? "hücre elemanı"} ile çarpışıyor.` : "Robot bu noktaya eklem limitleri içinde ulaşamıyor.");
@@ -185,13 +240,12 @@ export function RobotCellStudio() {
     directAnglesRef.current = [...solution.angles];
     setPreviewAngles(solution.angles);
     if (holdingPart) setWorkpiecePosition({ ...forwardKinematics(genericSixDofRobot, solution.angles).endEffector });
-    setDirectStatus(`${label} konumuna ulaşıldı${save ? " ve programa eklendi" : ""}.`);
-    if (save) appendSmartMove(label, solution.angles, "movej");
+    setDirectStatus(`${label} konumuna ulaşıldı. Robot hareket etti; program değişmedi.`);
   }
 
   function saveDirectMove(label: string, angles = directAnglesRef.current) {
     appendSmartMove(label, angles, "movej");
-    setDirectStatus(`${label} akıllı kayda işlendi. Aynı veya çok yakın bir poz varsa yeni satır açılmadı.`);
+    setDirectStatus(`${label} programa öğretildi. Robotu yeniden sürebilir veya adımı listeden düzenleyebilirsin.`);
   }
 
   function appendSmartMoveAndGripper(label: string, angles: readonly number[], action: "open" | "close") {
@@ -214,12 +268,7 @@ export function RobotCellStudio() {
       return;
     }
     const target = robotCellAxisTarget(current, axis, current[axis] + delta);
-    const reachesSafeLift = holdingPart && axis === "z" && current.z < 0.74 && target.z >= 0.74;
-    const reachesDropApproach = holdingPart
-      && axis !== "z"
-      && target.z >= 0.74
-      && Math.hypot(target.x - ROBOT_CELL_WORKPIECE.drop.x, target.y - ROBOT_CELL_WORKPIECE.drop.y) <= 0.012;
-    moveGripperTo(target, reachesSafeLift ? "Güvenli kaldırma" : reachesDropApproach ? "Bırakma üstü" : `${axis.toUpperCase()} jog`, true);
+    moveGripperTo(target, `${axis.toUpperCase()} ekseni`);
   }
 
   function gripPart() {
@@ -274,6 +323,7 @@ export function RobotCellStudio() {
     programPlaybackFrame.current = null;
     programCommandProgress.current = 0;
     setProgramPlaying(false);
+    setProgramStepMode(false);
     setActiveProgramCommandIndex(null);
     setProgramCompleted(false);
     if (!resetScene) return;
@@ -286,8 +336,34 @@ export function RobotCellStudio() {
 
   function removeProgramCommand(id: string) {
     setProgramCommands((commands) => commands.filter((command) => command.id !== id));
+    setSelectedProgramCommandId((selected) => selected === id ? null : selected);
     resetProgramPlayback();
     setDirectStatus("Program düzenlendi. Prova başlangıca alındı; yeniden oynattığında ilk satırdan başlayacak.");
+  }
+
+  function moveProgramCommand(id: string, direction: -1 | 1) {
+    setProgramCommands((commands) => moveRobotCellProgramCommand(commands, id, direction));
+    resetProgramPlayback();
+    setDirectStatus("Program sırası güncellendi ve bütün adımlar yeniden ön kontrolden geçirildi.");
+  }
+
+  function overwriteSelectedProgramMove() {
+    if (!selectedProgramCommand || selectedProgramCommand.type !== "move") {
+      setDirectStatus("Üzerine yazmak için önce listeden bir hareket adımı seç.");
+      return;
+    }
+    const replacement: RobotCellProgramCommand = {
+      ...selectedProgramCommand,
+      pose: createTaughtPose(
+        genericSixDofRobot,
+        selectedProgramCommand.pose.id,
+        selectedProgramCommand.pose.label,
+        directAnglesRef.current,
+      ),
+    };
+    setProgramCommands((commands) => replaceRobotCellProgramCommand(commands, selectedProgramCommand.id, replacement));
+    resetProgramPlayback(false);
+    setDirectStatus(`${selectedProgramCommand.pose.label} geçerli robot pozuyla güncellendi.`);
   }
 
   function repairProgram() {
@@ -305,7 +381,10 @@ export function RobotCellStudio() {
     const terminalProgress = selectedPlan.firstIssue?.progress ?? 1;
     const initialProgress = motionProgressRef.current >= terminalProgress - 0.001 ? 0 : motionProgressRef.current;
     if (initialProgress === 0) showMotionProgress(0, selectedPlan);
-    const durationMilliseconds = Math.max(1.2, selectedPlan.estimatedDurationSeconds * (terminalProgress - initialProgress)) * 1_000;
+    // Çok kısa veya çarpışmada erken kesilen yol, kullanıcı durum değişimini
+    // okuyamadan bitmemeli. Bu alt sınır aynı zamanda mobilde yanlışlıkla
+    // "buton çalışmadı" hissini önler.
+    const durationMilliseconds = Math.max(2.5, selectedPlan.estimatedDurationSeconds * (terminalProgress - initialProgress)) * 1_000;
     const animate = (now: number) => {
       const progress = Math.min(1, (now - startedAt) / durationMilliseconds);
       showMotionProgress(initialProgress + progress * (terminalProgress - initialProgress), selectedPlan);
@@ -332,7 +411,11 @@ export function RobotCellStudio() {
         return;
       }
       setActiveProgramCommandIndex(commandIndex);
-      const duration = step.motionPlan ? Math.max(2, step.motionPlan.estimatedDurationSeconds) * 1_000 : 900;
+      const nominalDuration = (step.motionPlan ? Math.max(2, step.motionPlan.estimatedDurationSeconds) : 0.9) / programPlaybackSpeed;
+      // Tek-adım kipinde kullanıcı hangi satırın çalıştığını okuyabilmeli.
+      // Yoğun mobil ana iş parçacığında RAF araları açılsa bile durum en az
+      // 2,5 saniye ekranda kalır; kesintisiz program bu ek gecikmeyi almaz.
+      const duration = Math.max(programStepMode ? 2.5 : 0.45, nominalDuration) * 1_000;
       commandStartedAt ??= now - programCommandProgress.current * duration;
       const progress = Math.min(1, (now - commandStartedAt) / duration);
       programCommandProgress.current = progress;
@@ -355,6 +438,12 @@ export function RobotCellStudio() {
           programCommandProgress.current = 0;
           return;
         }
+        if (programStepMode) {
+          setProgramPlaying(false);
+          setProgramStepMode(false);
+          setActiveProgramCommandIndex(commandIndex);
+          return;
+        }
       }
       programPlaybackFrame.current = window.requestAnimationFrame(advance);
     };
@@ -362,7 +451,7 @@ export function RobotCellStudio() {
     return () => {
       if (programPlaybackFrame.current !== null) window.cancelAnimationFrame(programPlaybackFrame.current);
     };
-  }, [programPlaying, programPreflight, activeProgramCommandIndex, programCommands]);
+  }, [programPlaying, programPreflight, activeProgramCommandIndex, programCommands, programPlaybackSpeed, programStepMode]);
 
   useEffect(() => {
     if (!focusMode) return;
@@ -610,7 +699,8 @@ export function RobotCellStudio() {
                     showFrames={showFrames}
                     motionPlans={focusPanel === "motion" ? motionPlans : undefined}
                     selectedMotion={selectedMotion}
-                    targetTcp={focusPanel === "motion" ? targetTcp : undefined}
+                    targetTcp={focusPanel === "motion" ? targetTcp : selectedProgramTarget}
+                    previewJointAngles={selectedProgramCommand?.type === "move" ? selectedProgramCommand.pose.jointAngles : undefined}
                     workpiecePosition={workpiecePosition}
                     gripperClosed={gripperClosed}
                     directControl={false}
@@ -640,6 +730,8 @@ export function RobotCellStudio() {
                     activeCommandIndex={activeProgramCommandIndex}
                     completed={programCompleted}
                     gripperClosed={gripperClosed}
+                    playbackSpeed={programPlaybackSpeed}
+                    stepMode={programStepMode}
                     onPlay={() => {
                       if (programPlaying) {
                         setProgramPlaying(false);
@@ -654,8 +746,24 @@ export function RobotCellStudio() {
                         setActiveProgramCommandIndex(0);
                         programCommandProgress.current = 0;
                       }
+                      setProgramStepMode(false);
                       setProgramPlaying(true);
                     }}
+                    onStep={() => {
+                      if (activeProgramCommandIndex === null) {
+                        setPreviewAngles(null);
+                        setWorkpiecePosition({ ...ROBOT_CELL_WORKPIECE.start });
+                        setGripperClosed(false);
+                        setHoldingPart(false);
+                        setProgramCompleted(false);
+                        setActiveProgramCommandIndex(0);
+                        programCommandProgress.current = 0;
+                      }
+                      setProgramStepMode(true);
+                      setProgramPlaying(true);
+                    }}
+                    onReset={() => resetProgramPlayback()}
+                    onSpeedChange={setProgramPlaybackSpeed}
                   />
                 )}
               </div>
@@ -679,10 +787,18 @@ export function RobotCellStudio() {
                   activeTarget={holdingPart ? ROBOT_CELL_WORKPIECE.drop : workpiecePosition}
                   taskFinished={directTaskFinished}
                   playing={programPlaying}
+                  programName={programName}
+                  storageStatus={programStorageStatus}
+                  selectedCommandId={selectedProgramCommandId}
                   onGrip={gripPart}
                   onRelease={releasePart}
-                  onSavePose={() => saveDirectMove("Kaydedilen ara konum")}
+                  onProgramNameChange={setProgramName}
+                  onSavePose={() => saveDirectMove(holdingPart ? "Taşıma noktası" : "Yaklaşma noktası")}
                   onJog={jogGripper}
+                  onSelectCommand={(id) => setSelectedProgramCommandId((selected) => selected === id ? null : id)}
+                  onMoveCommand={moveProgramCommand}
+                  onOverwriteSelected={overwriteSelectedProgramMove}
+                  onRemoveCommand={removeProgramCommand}
                   onRepair={repairProgram}
                   onReset={() => {
                     setPreviewAngles(null);
@@ -691,6 +807,7 @@ export function RobotCellStudio() {
                   }}
                   onClear={() => {
                     setProgramCommands([]);
+                    setSelectedProgramCommandId(null);
                     resetProgramPlayback();
                     setDirectStatus("Program temizlendi. Gripper’ı yeniden parçanın üstüne getir.");
                   }}

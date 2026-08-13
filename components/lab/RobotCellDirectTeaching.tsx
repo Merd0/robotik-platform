@@ -24,10 +24,18 @@ export function RobotCellDirectTeaching({
   activeTarget,
   taskFinished,
   playing,
+  programName,
+  storageStatus,
+  selectedCommandId,
   onGrip,
   onRelease,
+  onProgramNameChange,
   onSavePose,
   onJog,
+  onSelectCommand,
+  onMoveCommand,
+  onOverwriteSelected,
+  onRemoveCommand,
   onRepair,
   onReset,
   onClear,
@@ -42,10 +50,18 @@ export function RobotCellDirectTeaching({
   activeTarget: Vec3;
   taskFinished: boolean;
   playing: boolean;
+  programName: string;
+  storageStatus: string;
+  selectedCommandId: string | null;
   onGrip: () => void;
   onRelease: () => void;
+  onProgramNameChange: (name: string) => void;
   onSavePose: () => void;
   onJog: (axis: "x" | "y" | "z", delta: number) => void;
+  onSelectCommand: (id: string) => void;
+  onMoveCommand: (id: string, direction: -1 | 1) => void;
+  onOverwriteSelected: () => void;
+  onRemoveCommand: (id: string) => void;
   onRepair: () => void;
   onReset: () => void;
   onClear: () => void;
@@ -84,7 +100,7 @@ export function RobotCellDirectTeaching({
     <div role="tabpanel" aria-label="Al ve bırak">
       <p className="font-mono text-xs font-semibold uppercase tracking-[.16em] text-site-accent-text">Basit robot kumandası</p>
       <h3 className="mt-2 font-heading text-3xl font-semibold text-site-ink">Robotu adım adım sür</h3>
-      <p className="mt-2 text-sm leading-6 text-site-muted">Uçtaki gripper her zaman aşağı bakar. Önce yatayda X/Y ile hizala, sonra Z− ile alçal. Böylece bilek açısı veya IK dalı seçmek zorunda kalmazsın.</p>
+      <p className="mt-2 text-sm leading-6 text-site-muted">Uçtaki gripper her zaman aşağı bakar. X/Y/Z tuşları yalnız robotu sürer; program kendiliğinden değişmez. İşe yarayan konuma geldiğinde açıkça öğretirsin.</p>
 
       <div className="mt-4 rounded-2xl border border-site-accent bg-site-accent/10 p-4" aria-live="polite">
         <span className="block text-xs font-semibold uppercase tracking-[.14em] text-site-accent-text">Sıradaki iş</span>
@@ -117,8 +133,11 @@ export function RobotCellDirectTeaching({
 
       <button type="button" onClick={gripperClosed ? onRelease : onGrip} disabled={taskFinished || playing || (!gripperClosed && !grip.canGrip)} className="mt-3 min-h-14 w-full rounded-xl bg-site-accent px-3 text-sm font-bold text-site-on-accent disabled:opacity-40">{taskFinished ? "Al-bırak tamamlandı" : gripperClosed ? "Gripper’ı aç · bırak" : "Gripper’ı kapat · kavra"}</button>
 
-      <button type="button" onClick={onSavePose} disabled={playing} className="mt-2 min-h-12 w-full rounded-xl border border-site-accent bg-site-accent/10 px-3 text-sm font-bold text-site-accent-text disabled:opacity-40">Bu pozu programa kaydet</button>
-      <p className="mt-1 text-xs leading-5 text-site-subtle">Jog hareketleri robotu sürer; bu düğme bulunduğun konumu program satırı yapar. Akıllı kayıt aynı/çok yakın pozları çoğaltmaz; kavrama, güvenli kaldırma ve bırakma anlarını kendisi ekler.</p>
+      <div className="mt-3 rounded-2xl border border-site-accent bg-site-accent/10 p-3">
+        <span className="block text-xs font-semibold uppercase tracking-[.14em] text-site-accent-text">Bir karar ver, sonra öğret</span>
+        <button type="button" onClick={onSavePose} disabled={playing} className="mt-2 min-h-12 w-full rounded-xl bg-site-accent px-3 text-sm font-bold text-site-on-accent disabled:opacity-40">Bu noktayı öğret</button>
+        <p className="mt-2 text-xs leading-5 text-site-muted">Bulunduğun TCP konumu tek bir hareket adımı olur. Kavrama ve bırakma düğmeleri de yalnız geçerli olduklarında kendi kritik adımlarını ekler.</p>
+      </div>
 
       <button type="button" onClick={onRepair} disabled={commands.length === 0 || playing} className="mt-2 min-h-11 w-full rounded-xl border border-site-border bg-site-soft px-3 text-sm font-semibold text-site-ink disabled:opacity-35">Kaydı denetle ve sadeleştir</button>
 
@@ -127,15 +146,39 @@ export function RobotCellDirectTeaching({
         <button type="button" onClick={onClear} disabled={commands.length === 0 || playing} className="min-h-11 rounded-xl border border-site-border px-3 text-sm font-semibold text-site-muted disabled:opacity-35">Programı temizle</button>
       </div>
 
-      <div className="mt-5"><p className="text-xs font-semibold uppercase tracking-[.14em] text-site-subtle">Öğretilen iş</p><p className="mt-1 text-xs text-site-muted">{commands.length === 0 ? "Henüz adım yok" : `${commands.length} adım · ${preflight.status === "ready" ? "çalışmaya hazır" : "kontrol gerekli"}`}</p></div>
+      <div className="mt-5 rounded-2xl border border-site-border bg-site-soft p-3">
+        <label htmlFor="robot-cell-program-name" className="text-xs font-semibold uppercase tracking-[.14em] text-site-subtle">Program adı</label>
+        <input id="robot-cell-program-name" aria-label="Program adı" value={programName} maxLength={48} onChange={(event) => onProgramNameChange(event.target.value)} disabled={playing} className="mt-2 min-h-11 w-full rounded-xl border border-site-border bg-site-surface px-3 text-sm font-semibold text-site-ink outline-none focus:border-site-accent disabled:opacity-45" />
+        <p className="mt-2 text-xs text-site-muted" aria-live="polite">{storageStatus}</p>
+      </div>
+
+      <div className="mt-5"><p className="text-xs font-semibold uppercase tracking-[.14em] text-site-subtle">Öğretilen iş</p><p className="mt-1 text-xs text-site-muted">{commands.length === 0 ? "Henüz adım yok · robotu sürmek kayıt oluşturmaz" : `${commands.length} adım · ${preflight.status === "ready" ? "çalışmaya hazır" : "kontrol gerekli"}`}</p></div>
       <ol aria-label="Basit al ve bırak programı" className="mt-3 grid gap-2">
-        {commands.map((command, index) => (
-          <li key={command.id} className="flex min-h-12 items-center gap-3 rounded-xl border border-site-border bg-site-surface px-3 py-2">
-            <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-site-soft font-mono text-xs font-bold">{index + 1}</span>
-            <strong className="min-w-0 flex-1 truncate text-sm text-site-ink">{taskLabel(command)}</strong>
-            <span className="text-xs text-site-subtle">{command.type === "move" ? "hareket" : "gripper"}</span>
-          </li>
-        ))}
+        {commands.map((command, index) => {
+          const selected = command.id === selectedCommandId;
+          const step = preflight.steps[index];
+          return (
+            <li key={command.id} className={`rounded-xl border p-2 ${selected ? "border-site-accent bg-site-accent/10" : step?.status === "blocked" ? "border-rose-400/60 bg-rose-950/10" : "border-site-border bg-site-surface"}`}>
+              <div className="flex min-h-11 items-center gap-2">
+                <button type="button" aria-label={`${index + 1}. adımı seç: ${taskLabel(command)}`} aria-pressed={selected} onClick={() => onSelectCommand(command.id)} disabled={playing} className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-lg px-1 text-left disabled:opacity-45">
+                  <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-site-soft font-mono text-xs font-bold">{index + 1}</span>
+                  <span className="min-w-0 flex-1"><strong className="block truncate text-sm text-site-ink">{taskLabel(command)}</strong><span className="text-xs text-site-subtle">{step?.status === "blocked" ? "ön kontrol engelledi" : command.type === "move" ? "hareket · hedefi görmek için seç" : "gripper"}</span></span>
+                </button>
+                <button type="button" aria-label={`${index + 1}. adımı sil`} onClick={() => onRemoveCommand(command.id)} disabled={playing} className="min-h-11 min-w-11 rounded-lg text-lg text-site-muted hover:bg-site-soft disabled:opacity-35">×</button>
+              </div>
+              {selected && (
+                <div className="mt-2 border-t border-site-border pt-2">
+                  <p className="px-1 text-xs font-semibold text-site-accent-text">{index + 1}. adım seçili · hareket hedefi sahnede sarı işaretle gösteriliyor.</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <button type="button" aria-label="Seçili adımı yukarı taşı" onClick={() => onMoveCommand(command.id, -1)} disabled={playing || index === 0} className="min-h-11 rounded-lg border border-site-border text-xs font-semibold text-site-ink disabled:opacity-35">↑ Yukarı</button>
+                    <button type="button" aria-label="Seçili adımı aşağı taşı" onClick={() => onMoveCommand(command.id, 1)} disabled={playing || index === commands.length - 1} className="min-h-11 rounded-lg border border-site-border text-xs font-semibold text-site-ink disabled:opacity-35">↓ Aşağı</button>
+                  </div>
+                  {command.type === "move" && <button type="button" onClick={onOverwriteSelected} disabled={playing} className="mt-2 min-h-11 w-full rounded-lg border border-site-accent bg-site-surface px-3 text-xs font-bold text-site-accent-text disabled:opacity-35">Bu adımı geçerli pozla güncelle</button>}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ol>
     </div>
   );

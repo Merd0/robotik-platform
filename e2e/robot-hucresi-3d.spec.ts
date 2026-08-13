@@ -111,7 +111,7 @@ test("basit al ve bırak akışında gripper parçayı kavrar ve bırakma alanı
   const direct = focusView.getByRole("tabpanel", { name: "Al ve bırak" });
 
   await expect(direct.getByRole("heading", { name: "Robotu adım adım sür" })).toBeVisible();
-  await expect(direct.getByRole("button", { name: "Bu pozu programa kaydet" })).toBeVisible();
+  await expect(direct.getByRole("button", { name: "Bu noktayı öğret" })).toBeVisible();
   await expect(direct.getByRole("button", { name: "Hazır kavrama" })).toHaveCount(0);
   await expect(direct.getByRole("button", { name: "Parçanın üstüne git" })).toHaveCount(0);
   await expect(direct.getByRole("slider")).toHaveCount(0);
@@ -119,20 +119,23 @@ test("basit al ve bırak akışında gripper parçayı kavrar ve bırakma alanı
   for (let index = 0; index < 3; index += 1) await direct.getByRole("button", { name: "X artı" }).click();
   for (let index = 0; index < 4; index += 1) await direct.getByRole("button", { name: "Y eksi" }).click();
   for (let index = 0; index < 4; index += 1) await direct.getByRole("button", { name: "Z eksi" }).click();
+  await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem")).toHaveCount(0);
   await expect(direct.getByText("Kavrama noktasında", { exact: true })).toBeVisible();
   await expect(direct.getByRole("button", { name: "Gripper’ı kapat · kavra" })).toBeEnabled();
   await direct.getByRole("button", { name: "Gripper’ı kapat · kavra" }).click();
   await expect(direct.getByText("Parça kavrandı", { exact: false })).toBeVisible();
 
   for (let index = 0; index < 2; index += 1) await direct.getByRole("button", { name: "Z artı" }).click();
+  await direct.getByRole("button", { name: "Bu noktayı öğret" }).click();
   for (let index = 0; index < 3; index += 1) await direct.getByRole("button", { name: "X eksi" }).click();
   for (let index = 0; index < 6; index += 1) await direct.getByRole("button", { name: "Y eksi" }).click();
+  await direct.getByRole("button", { name: "Bu noktayı öğret" }).click();
   for (let index = 0; index < 7; index += 1) await direct.getByRole("button", { name: "Z eksi" }).click();
   await expect(direct.getByText("Bırakma noktasında", { exact: true })).toBeVisible();
   await direct.getByRole("button", { name: "Gripper’ı aç · bırak" }).click();
   await expect(direct.getByText("Parça mavi alana bırakıldı", { exact: false })).toBeVisible();
   const recordedSteps = direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem");
-  await expect(recordedSteps).toHaveCount(11);
+  await expect(recordedSteps).toHaveCount(6);
   await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByText("Bırakma konumu")).toBeVisible();
   const recordedLabels = await recordedSteps.allTextContents();
   expect(recordedLabels.findIndex((label) => label.includes("Parçayı bırak")))
@@ -153,8 +156,8 @@ test("gripper havada açılmaz ve kullanıcı ara pozu açıkça kaydeder", asyn
   const focusView = page.getByRole("dialog", { name: "Robot hücresi odak görünümü" });
   const direct = focusView.getByRole("tabpanel", { name: "Al ve bırak" });
 
-  await direct.getByRole("button", { name: "Bu pozu programa kaydet" }).click();
-  await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByText("Kaydedilen ara konum")).toBeVisible();
+  await direct.getByRole("button", { name: "Bu noktayı öğret" }).click();
+  await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByText("Yaklaşma noktası")).toBeVisible();
   await direct.getByRole("button", { name: "Programı temizle" }).click();
 
   for (let index = 0; index < 3; index += 1) await direct.getByRole("button", { name: "X artı" }).click();
@@ -174,4 +177,49 @@ test("gripper havada açılmaz ve kullanıcı ara pozu açıkça kaydeder", asyn
   const manualReleaseSteps = direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem");
   await expect(manualReleaseSteps.getByText("Elle bırakma konumu")).toHaveCount(0);
   await expect(manualReleaseSteps.getByText("Parçayı bırak")).toHaveCount(0);
+});
+
+test("öğretilen adımı seçer, önizler, sıralar ve tarayıcıda kalıcı tutar", async ({ page }) => {
+  await page.goto("/laboratuvar/robot-hucresi");
+  await page.getByRole("region", { name: "3B dijital robot hücresi" }).getByRole("button", { name: "Robotu öğret", exact: true }).click();
+  const focusView = page.getByRole("dialog", { name: "Robot hücresi odak görünümü" });
+  const direct = focusView.getByRole("tabpanel", { name: "Al ve bırak" });
+
+  await direct.getByRole("textbox", { name: "Program adı" }).fill("Gece vardiyası");
+  await direct.getByRole("button", { name: "Bu noktayı öğret" }).click();
+  await direct.getByRole("button", { name: "X artı" }).click();
+  await direct.getByRole("button", { name: "Bu noktayı öğret" }).click();
+  const timeline = direct.getByRole("list", { name: "Basit al ve bırak programı" });
+  await expect(timeline.getByRole("listitem")).toHaveCount(2);
+
+  await timeline.getByRole("button", { name: /2\. adımı seç/ }).click();
+  await expect(direct.getByText("2. adım seçili", { exact: false })).toBeVisible();
+  await direct.getByRole("button", { name: "Seçili adımı yukarı taşı" }).click();
+  await expect(timeline.getByRole("listitem").first()).toContainText("Yaklaşma noktası");
+  await expect(direct.getByText("Tarayıcıya kaydedildi", { exact: false })).toBeVisible();
+
+  await focusView.getByRole("button", { name: "Sayfaya dön" }).click();
+  await page.reload();
+  await page.getByRole("region", { name: "3B dijital robot hücresi" }).getByRole("button", { name: "Robotu öğret", exact: true }).click();
+  const restored = page.getByRole("dialog", { name: "Robot hücresi odak görünümü" }).getByRole("tabpanel", { name: "Al ve bırak" });
+  await expect(restored.getByRole("textbox", { name: "Program adı" })).toHaveValue("Gece vardiyası");
+  await expect(restored.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem")).toHaveCount(2);
+});
+
+test("programı tek adım çalıştırır, prova hızını değiştirir ve sahneyi başlangıca alır", async ({ page }) => {
+  await page.goto("/laboratuvar/robot-hucresi");
+  await page.getByRole("region", { name: "3B dijital robot hücresi" }).getByRole("button", { name: "Robotu öğret", exact: true }).click();
+  const focusView = page.getByRole("dialog", { name: "Robot hücresi odak görünümü" });
+  await focusView.getByRole("tab", { name: "İleri düzey" }).click();
+  await focusView.getByRole("button", { name: "Örnek al-bırak işini yükle" }).click();
+
+  await focusView.getByRole("button", { name: "Hızlı 2×" }).click();
+  await expect(focusView.getByRole("button", { name: "Hızlı 2×" })).toHaveAttribute("aria-pressed", "true");
+  await focusView.getByRole("button", { name: "Sonraki adımı çalıştır" }).click();
+  await expect(focusView.getByText("Satır 1/8 yürütülüyor", { exact: true })).toBeVisible();
+  await expect(focusView.getByText("Sıradaki satır 2/8", { exact: true })).toBeVisible({ timeout: 5_000 });
+
+  await focusView.getByRole("button", { name: "Provayı başa al" }).click();
+  await expect(focusView.getByText("Program bekliyor", { exact: true })).toBeVisible();
+  await expect(focusView.getByRole("button", { name: "Programı oynat" })).toBeEnabled();
 });
