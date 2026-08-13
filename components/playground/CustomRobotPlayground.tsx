@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createLabShareUrl,
   ExperimentShareButton,
@@ -17,7 +17,8 @@ import {
   type CustomRobotValidationIssue,
 } from "@/lib/robotics/customRobot";
 import { forwardKinematics, type RobotSpec } from "@/lib/robotics/kinematics";
-import { solveIkTarget } from "@/lib/robotics/ikSolver";
+import { selectClosestIkSolution, solveIkTarget } from "@/lib/robotics/ikSolver";
+import { stepLiveGuidanceAngles } from "@/lib/robotics/liveRobotGuidance";
 import {
   analyzeCustomRobotPose,
   appendMotionWaypointWithCompaction,
@@ -38,6 +39,13 @@ const MAX_TRACE_POINTS = 160;
 const DEFAULT_PROGRAM_SPEED = 0.35;
 const DEFAULT_DEFINITION = createDefaultCustomRobotDefinition(2);
 type ConsolePanel = "joints" | "target" | "teach";
+type LiveGuideCommand = {
+  target: { x: number; y: number };
+  desiredAngles: number[];
+  lastFrameAtMs: number | null;
+  solver: "analytical" | "dls";
+  residual: number;
+};
 
 const CONSOLE_PANELS: Array<{ id: ConsolePanel; label: string; shortLabel: string }> = [
   { id: "joints", label: "Eklemleri sür", shortLabel: "Eklemler" },
@@ -257,7 +265,7 @@ function PlanarRobotDiagram({
         </g>
         <g fill="#0f172a" stroke="#5eead4" strokeWidth="3">
           {sceneJoints.map((position, index) => (
-            <circle key={`joint-${index}`} cx={position.x} cy={position.y} r="7" />
+            <circle data-robot-joint={index} key={`joint-${index}`} cx={position.x} cy={position.y} r="7" />
           ))}
         </g>
 
@@ -338,6 +346,13 @@ export function CustomRobotPlayground() {
   const [consolePanel, setConsolePanel] = useState<ConsolePanel>("joints");
   const captureRef = useRef<AdaptiveMotionCaptureState | null>(null);
   const consoleTabRefs = useRef<Partial<Record<ConsolePanel, HTMLButtonElement | null>>>({});
+  const activeAnglesRef = useRef([...initialState.jointAngles]);
+  const guideEnabledRef = useRef(false);
+  const robotRef = useRef<RobotSpec | null>(null);
+  const liveGuideCommandRef = useRef<LiveGuideCommand | null>(null);
+  const liveGuideFrameRef = useRef<number | null>(null);
+  const liveGuideTickRef = useRef<(now: number) => void>(() => undefined);
+  const liveGuideLastStatusRef = useRef<{ kind: string; atMs: number }>({ kind: "", atMs: 0 });
 
   const robotResult = useMemo(() => createCustomRobotSpec(activeState.definition), [activeState.definition]);
   const robot = robotResult.ok
@@ -345,6 +360,9 @@ export function CustomRobotPlayground() {
     : createCustomRobotSpec(DEFAULT_DEFINITION).ok
       ? (createCustomRobotSpec(DEFAULT_DEFINITION) as { ok: true; robot: RobotSpec }).robot
       : (() => { throw new Error("Varsayılan robot kurulamadı."); })();
+  useEffect(() => {
+    robotRef.current = robot;
+  }, [robot]);
   const { endEffector } = useMemo(
     () => forwardKinematics(robot, activeState.jointAngles),
     [activeState.jointAngles, robot],
@@ -373,7 +391,23 @@ export function CustomRobotPlayground() {
     [program.waypoints, robot],
   );
 
-  function restoreState(state: CustomRobotLabState, source: "storage" | "share") {
+  const stopLiveGuidance = useCallback(() => {
+    liveGuideCommandRef.current = null;
+    if (liveGuideFrameRef.current !== null) {
+      window.cancelAnimationFrame(liveGuideFrameRef.current);
+      liveGuideFrameRef.current = null;
+    }
+  }, []);
+
+  const ensureLiveGuidanceFrame = useCallback(() => {
+    if (liveGuideFrameRef.current !== null) return;
+    liveGuideFrameRef.current = window.requestAnimationFrame((now) => {
+      liveGuideFrameRef.current = null;
+      liveGuideTickRef.current(now);
+    });
+  }, []);
+
+  const restoreState = useCallback((state: CustomRobotLabState, source: "storage" | "share") => {
     const result = createCustomRobotSpec(state.definition);
     if (!result.ok) return;
     const restoredProgram = state.program ?? { waypoints: [], speedScale: DEFAULT_PROGRAM_SPEED };
@@ -381,6 +415,8 @@ export function CustomRobotPlayground() {
       ? planJointTrajectory(result.robot, restoredProgram.waypoints, restoredProgram.speedScale)
       : null;
     setDraft(result.definition);
+    stopLiveGuidance();
+    activeAnglesRef.current = [...state.jointAngles];
     setActiveState({
       ...state,
       definition: result.definition,
@@ -407,7 +443,7 @@ export function CustomRobotPlayground() {
     } else {
       setAnnouncement("Bu tarayıcıdaki son robot geri yüklendi.");
     }
-  }
+  }, [stopLiveGuidance]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -428,7 +464,20 @@ export function CustomRobotPlayground() {
       }
     }, 0);
     return () => window.clearTimeout(timer);
+  }, [restoreState]);
+
+  useEffect(() => () => {
+    liveGuideCommandRef.current = null;
+    if (liveGuideFrameRef.current !== null) window.cancelAnimationFrame(liveGuideFrameRef.current);
   }, []);
+
+  useEffect(() => {
+    activeAnglesRef.current = activeState.jointAngles;
+  }, [activeState.jointAngles]);
+
+  useEffect(() => {
+    guideEnabledRef.current = guideEnabled;
+  }, [guideEnabled]);
 
   useSharedLabState(
     "custom-robot",
@@ -458,7 +507,7 @@ export function CustomRobotPlayground() {
       } catch {
         setStorageAvailable(false);
       }
-    }, 0);
+    }, 250);
     return () => window.clearTimeout(timer);
   }, [activeState, storageReady]);
 
@@ -468,6 +517,7 @@ export function CustomRobotPlayground() {
     const animate = (now: number) => {
       const elapsed = (now - playback.startedAt) / 1_000;
       const angles = sampleJointTrajectory(playback.trajectory, elapsed);
+      activeAnglesRef.current = angles;
       setActiveState((current) => ({ ...current, jointAngles: angles }));
       if (elapsed >= playback.trajectory.totalDurationSeconds) {
         setTrace((current) => [...current, tracePoint(robot, angles)].slice(-MAX_TRACE_POINTS));
@@ -506,6 +556,8 @@ export function CustomRobotPlayground() {
       return;
     }
     const nextState = stateFromDefinition(result.definition);
+    stopLiveGuidance();
+    activeAnglesRef.current = [...nextState.jointAngles];
     setDraft(result.definition);
     setActiveState(nextState);
     setIssues([]);
@@ -551,12 +603,13 @@ export function CustomRobotPlayground() {
     let captureMode: "precision" | "rapid" | null = null;
     let shouldRecord = false;
     if (isRecording && capturedAtMs !== undefined) {
-      const capture = captureRef.current ?? beginAdaptiveMotionCapture(activeState.jointAngles, capturedAtMs);
+      const capture = captureRef.current ?? beginAdaptiveMotionCapture(activeAnglesRef.current, capturedAtMs);
       const decision = captureAdaptiveMotionSample(robot, capture, angles, capturedAtMs);
       captureRef.current = decision.state;
       captureMode = decision.mode;
       shouldRecord = decision.shouldRecord;
     }
+    activeAnglesRef.current = angles;
     setActiveState((current) => {
       const nextProgram = shouldRecord
         ? appendRecordedPose(programOf(current), angles, false)
@@ -573,7 +626,7 @@ export function CustomRobotPlayground() {
   }
 
   function setJointAngle(index: number, degrees: number, capturedAtMs: number) {
-    const angles = activeState.jointAngles.map((angle, jointIndex) => jointIndex === index ? (degrees * Math.PI) / 180 : angle);
+    const angles = activeAnglesRef.current.map((angle, jointIndex) => jointIndex === index ? (degrees * Math.PI) / 180 : angle);
     if (commitSafePose(angles, "FK pozu geçerli · eklem limitleri ve idealize öz-çarpışma kontrol edildi.", undefined, capturedAtMs)) {
       setIkStatus("FK güncellendi; turkuaz çizgi TCP izini gösteriyor.");
     }
@@ -601,18 +654,94 @@ export function CustomRobotPlayground() {
   }
 
   function guideTcp(target: { x: number; y: number }, capturedAtMs: number) {
-    let solution = solveIkTarget(robot, target, "auto", "up", activeState.jointAngles);
-    if ((!solution.converged || !solution.angles || describeRejectedPose(robot, solution.angles)) && robot.joints.length === 2) {
-      solution = solveIkTarget(robot, target, "auto", "down", activeState.jointAngles);
-    }
-    if (!solution.converged || !solution.angles) {
-      setMotionStatus(`TCP bu noktaya yönlendirilemedi · son IK hatası ${Number.isFinite(solution.residual) ? round(solution.residual, 4) : "∞"} m.`);
+    const currentAngles = activeAnglesRef.current;
+    const candidates = robot.joints.length === 2
+      ? (["up", "down"] as const).map((elbow) => solveIkTarget(robot, target, "analytical", elbow, currentAngles))
+      : [solveIkTarget(robot, target, "dls", "up", currentAngles)];
+    const safeCandidates = candidates.filter((candidate) => candidate.angles && !describeRejectedPose(robot, candidate.angles));
+    const solution = selectClosestIkSolution(currentAngles, safeCandidates);
+    if (!solution?.angles) {
+      const residual = Math.min(...candidates.map((candidate) => candidate.residual));
+      setMotionStatus(`Bu ara nokta çözülemedi · robot son geçerli hedefe yumuşak ilerlemeyi sürdürüyor · IK hatası ${Number.isFinite(residual) ? round(residual, 4) : "∞"} m.`);
       return;
     }
-    if (commitSafePose(solution.angles, "TCP elle yönlendirildi; poz ön kontrolden geçti.", target, capturedAtMs)) {
-      setIkStatus(`Canlı IK · ${solution.solver === "analytical" ? "analitik" : "DLS"} · hata ${round(solution.residual, 5)} m.`);
-    }
+    liveGuideCommandRef.current = {
+      target,
+      desiredAngles: solution.angles,
+      lastFrameAtMs: liveGuideCommandRef.current?.lastFrameAtMs ?? capturedAtMs,
+      solver: solution.solver,
+      residual: solution.residual,
+    };
+    ensureLiveGuidanceFrame();
   }
+
+  function tickLiveGuidance(now: number) {
+    const command = liveGuideCommandRef.current;
+    const guidanceRobot = robotRef.current;
+    if (!command || !guideEnabledRef.current || !guidanceRobot) {
+      stopLiveGuidance();
+      return;
+    }
+    const elapsedSeconds = command.lastFrameAtMs === null
+      ? 1 / 60
+      : (now - command.lastFrameAtMs) / 1_000;
+    command.lastFrameAtMs = now;
+    const currentAngles = activeAnglesRef.current;
+    const nextAngles = stepLiveGuidanceAngles(guidanceRobot, currentAngles, command.desiredAngles, elapsedSeconds);
+    const reachedTarget = nextAngles.every((angle, index) => Math.abs(angle - command.desiredAngles[index]) < 1e-7);
+    const status = reachedTarget
+      ? "TCP elle yönlendirildi; hız limitli poz ön kontrolden geçti."
+      : "TCP hız limitleri içinde yumuşak biçimde hedefe ilerliyor.";
+    const rejection = describeRejectedPose(guidanceRobot, nextAngles);
+    if (rejection) {
+      stopLiveGuidance();
+      setMotionStatus(rejection);
+      setIkStatus("Canlı IK ara pozu fiziksel ön kontrolden geçmedi; son güvenli poz korundu.");
+      return;
+    }
+    let captureMode: "precision" | "rapid" | null = null;
+    let shouldRecord = false;
+    if (isRecording) {
+      const capture = captureRef.current ?? beginAdaptiveMotionCapture(currentAngles, now);
+      const decision = captureAdaptiveMotionSample(guidanceRobot, capture, nextAngles, now);
+      captureRef.current = decision.state;
+      captureMode = decision.mode;
+      shouldRecord = decision.shouldRecord;
+    }
+    activeAnglesRef.current = nextAngles;
+    setActiveState((current) => ({
+      ...current,
+      jointAngles: nextAngles,
+      target: command.target,
+      program: shouldRecord
+        ? appendRecordedPose(programOf(current), nextAngles, false)
+        : programOf(current),
+    }));
+    setTrace((current) => [...current, tracePoint(guidanceRobot, nextAngles)].slice(-MAX_TRACE_POINTS));
+    const statusKind = captureMode ?? (reachedTarget ? "reached" : "moving");
+    if (
+      reachedTarget ||
+      liveGuideLastStatusRef.current.kind !== statusKind ||
+      now - liveGuideLastStatusRef.current.atMs >= 250
+    ) {
+      liveGuideLastStatusRef.current = { kind: statusKind, atMs: now };
+      setMotionStatus(captureMode === "precision"
+        ? "Adaptif kayıt · hassas hareket ayrıntıları mesafeye göre yakalanıyor."
+        : captureMode === "rapid"
+          ? "Adaptif kayıt · hızlı harekette saniyede en çok bir ara poz alınıyor."
+          : status);
+      setIkStatus(`Canlı IK · ${command.solver === "analytical" ? "analitik" : "DLS"} · hız limitli · hata ${round(command.residual, 5)} m.`);
+    }
+    if (reachedTarget) {
+      liveGuideCommandRef.current = null;
+      return;
+    }
+    ensureLiveGuidanceFrame();
+  }
+
+  useEffect(() => {
+    liveGuideTickRef.current = tickLiveGuidance;
+  });
 
   function teachCurrentPose() {
     const nextProgram = appendRecordedPose(program, activeState.jointAngles, true);
@@ -676,6 +805,8 @@ export function CustomRobotPlayground() {
     }
     setIsRecording(false);
     setGuideEnabled(false);
+    stopLiveGuidance();
+    activeAnglesRef.current = [...trajectoryPlan.trajectory.segments[0].startAngles];
     setActiveState((current) => ({
       ...current,
       jointAngles: [...trajectoryPlan.trajectory.segments[0].startAngles],
@@ -696,6 +827,8 @@ export function CustomRobotPlayground() {
     const next = stateFromDefinition(activeState.definition);
     setActiveState(next);
     setTrace([tracePoint(robot, next.jointAngles)]);
+    stopLiveGuidance();
+    activeAnglesRef.current = [...next.jointAngles];
     setIkStatus("Deney sıfırlandı; robot güvenli başlangıç duruşunda.");
     setGuideEnabled(false);
     setIsRecording(false);
@@ -1033,7 +1166,10 @@ export function CustomRobotPlayground() {
                       aria-pressed={guideEnabled}
                       disabled={Boolean(playback)}
                       onClick={() => {
-                        setGuideEnabled((current) => !current);
+                        const nextGuideEnabled = !guideEnabled;
+                        guideEnabledRef.current = nextGuideEnabled;
+                        if (!nextGuideEnabled) stopLiveGuidance();
+                        setGuideEnabled(nextGuideEnabled);
                         setMotionStatus(guideEnabled
                           ? "TCP yönlendirme kapatıldı."
                           : "TCP yönlendirme açık · sahneye dokunup sürükleyerek canlı IK çalıştır.");

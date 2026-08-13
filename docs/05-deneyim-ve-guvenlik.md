@@ -138,7 +138,11 @@ bir çalışma tezgâhıdır; uzun sütunlar belgeyi sürükleyen `sticky` davra
 ihtiyaç duymaz. İç panel rayları görünmez; ince, site renkli kaydırma göstergesi
 yalnız sayfanın dış kenarında kalır.
 Canlı TCP sürüklemesi en son işaretçi konumunu ekran yenileme karesinde bir kez
-çözer; durum şeritleri sabit yükseklikte kaldığı için yeni metin sahneyi itmez.
+çözer. İki eksenli robotta mevcut poza en yakın geçerli dirsek dalı korunur;
+çözüm pozu doğrudan sıçratılmaz, her eklem `maxVelocity` sınırı içinde kare kare
+hedefe yaklaşır. Uzun bir tarayıcı karesi 50 ms ile kırpıldığı için donma sonrası
+birikmiş süre büyük poz atlamasına dönüşmez. Durum şeritleri sabit yükseklikte
+kaldığı için yeni metin sahneyi itmez.
 
 Bu genişleme tam fizik iddiasında bulunmaz. Tork, yerçekimi, yük, ivme/jerk,
 denetleyici gecikmesi, gerçek bağlantı kalınlığı, motor gövdesi ve çevre

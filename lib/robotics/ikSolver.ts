@@ -17,6 +17,29 @@ export interface IkTargetSolution {
   solver: ResolvedIkSolver;
 }
 
+function wrappedAngularDistance(first: number, second: number): number {
+  const twoPi = 2 * Math.PI;
+  const difference = ((first - second + Math.PI) % twoPi + twoPi) % twoPi - Math.PI;
+  return Math.abs(difference);
+}
+
+/** Canlı sürüşte geçerli adaylar arasından mevcut poza en az eklem hareketi isteyen dalı seçer. */
+export function selectClosestIkSolution(
+  currentAngles: readonly number[],
+  candidates: readonly IkTargetSolution[],
+): IkTargetSolution | null {
+  const valid = candidates.filter(
+    (candidate): candidate is IkTargetSolution & { angles: number[] } =>
+      candidate.converged && candidate.angles !== null && candidate.angles.length === currentAngles.length,
+  );
+  return valid.sort((first, second) => {
+    const distance = (candidate: IkTargetSolution & { angles: number[] }) => Math.hypot(
+      ...candidate.angles.map((angle, index) => wrappedAngularDistance(angle, currentAngles[index])),
+    );
+    return distance(first) - distance(second);
+  })[0] ?? null;
+}
+
 export function resolveIkSolver(robot: RobotSpec, mode: IkSolverMode): ResolvedIkSolver {
   if (mode === "auto") return robot.joints.length === 2 ? "analytical" : "dls";
   return mode;

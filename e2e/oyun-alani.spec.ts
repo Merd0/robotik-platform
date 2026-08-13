@@ -37,7 +37,7 @@ test("oyun alanı geçersiz robotu reddeder, geçerli robotu kaydeder ve paylaş
   await expect(page.getByLabel("Eklem sayısı")).toHaveValue("3");
   await page.getByRole("region", { name: "Robot deneyi" }).getByRole("tab", { name: "Eklemleri sür" }).click();
   await expect(page.getByRole("region", { name: "Robot deneyi" }).getByRole("slider", { name: /^J/ })).toHaveCount(3);
-  expect(await page.evaluate(() => localStorage.getItem("robotik-platform:custom-robot:v1"))).not.toBeNull();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("robotik-platform:custom-robot:v1"))).not.toBeNull();
 
   await page.goto("/oyun-alani#lab=bozuk");
   await expect(page.getByRole("alert").filter({ hasText: "Paylaşım bağlantısı açılamadı" })).toBeVisible();
@@ -181,14 +181,36 @@ test("TCP sahnede sürüklenerek canlı IK ile güvenli bir poza yönlendirilir"
   const box = await scene.boundingBox();
   expect(box).not.toBeNull();
   const scrollBeforeDrag = await page.evaluate(() => window.scrollY);
+  await page.evaluate(() => {
+    const samples: Array<{ x: number; y: number }> = [];
+    (window as Window & { __liveGuideSamples?: Array<{ x: number; y: number }> }).__liveGuideSamples = samples;
+    let frameCount = 0;
+    const sampleTcp = () => {
+      const joints = document.querySelectorAll<SVGCircleElement>("[data-robot-joint]");
+      const tcp = joints.item(joints.length - 1);
+      if (tcp) samples.push({ x: Number(tcp.getAttribute("cx")), y: Number(tcp.getAttribute("cy")) });
+      frameCount += 1;
+      if (frameCount < 180) requestAnimationFrame(sampleTcp);
+    };
+    requestAnimationFrame(sampleTcp);
+  });
   await page.mouse.move(box!.x + box!.width * 0.92, box!.y + box!.height * 0.5);
   await page.mouse.down();
   await page.mouse.move(box!.x + box!.width * 0.74, box!.y + box!.height * 0.35, { steps: 8 });
   await page.mouse.up();
 
-  await expect(experiment.locator('p[role="status"]').filter({ hasText: "TCP elle yönlendirildi" })).toBeVisible();
+  await expect(experiment.locator('p[role="status"]').filter({ hasText: /TCP (elle yönlendirildi|hız limitleri içinde)/ })).toBeVisible();
+  await expect(experiment.locator('p[role="status"]').filter({ hasText: "hız limitli" })).toBeVisible();
   await expect(experiment.getByText("TCP [1.62, 0]", { exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => window.scrollY)).toBe(scrollBeforeDrag);
+  const samples = await page.evaluate(() => (window as Window & { __liveGuideSamples?: Array<{ x: number; y: number }> }).__liveGuideSamples ?? []);
+  const largestFrameStep = samples.slice(1).reduce((largest, sample, sampleIndex) => Math.max(
+    largest,
+    Math.hypot(sample.x - samples[sampleIndex].x, sample.y - samples[sampleIndex].y),
+  ), 0);
+  expect(samples.length).toBeGreaterThan(3);
+  expect(largestFrameStep).toBeGreaterThan(0);
+  expect(largestFrameStep).toBeLessThanOrEqual(45);
 });
 
 test("öz-çarpışmaya götüren eklem hareketini açıklanabilir biçimde reddeder", async ({ page }) => {
