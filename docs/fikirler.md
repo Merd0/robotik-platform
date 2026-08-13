@@ -15,15 +15,15 @@ Aklına gelen ama şu anki faza girmeyen her şey buraya. Kapsam kaymasını
 
 `/laboratuvar/robot-hucresi` için marka bağımsız 6R kol, gerçek DH/FK,
 eklem limitleri, TCP/RPY telemetrisi ve üç kamera açısını içeren ilk dikey
-dilim ayrı bir dalda geliştirildi. Bu çalışma `/oyun-alani`ndaki 2B Kendi
-Robotun deneyinden bağımsız kalır; 2B deney değiştirilmeden korunur.
+dilim ayrı bir dalda geliştirildi. İkinci dilimde kapsül–kutu hareket örnekleme,
+açıklanabilir ilk temas ve MoveJ/konumsal MoveL karşılaştırması eklendi. Bu
+çalışma `/oyun-alani`ndaki 2B Kendi Robotun deneyinden bağımsız kalır; 2B deney
+değiştirilmeden korunur.
 
-- Robot bağlantılarını kapsül/konveks çarpışma hacimleriyle modelle; fikstür,
-  masa ve koruyucu çevreyle hem anlık pozu hem hareket boyunca süpürülen hacmi
-  denetle. Yalnız çizgi-kutu testiyle “güvenli” iddiası üretme.
-- Aynı iki poz için `MoveJ` ve `MoveL` provasını hayalet robot ve TCP iziyle
-  yan yana göster. Hız/ivme sınırlarını zamana bağlı profilde uygulamadan gerçek
-  çevrim süresi iddiası verme.
+- Kapsül–kutu örneklemesini robot öz-çarpışması ve swept-volume sürekli denetime
+  yükselt; örnekler arası kaçırma payını hesaplayıp arayüzde raporla.
+- Konumsal `MoveL` çözümünü takım yönelimini de izleyen tam poz IK'ye yükselt;
+  hız/ivme/jerk profili uygulanmadan gerçek çevrim süresi iddiası verme.
 - Program zaman çizelgesine sensör, tutucu ve bekleme koşulları ekle; oynatıcıyı
   durdur/devam ettir/tek adımla ilerlet kipleriyle gerçek devreye alma akışına
   yaklaştır.

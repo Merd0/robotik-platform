@@ -26,3 +26,26 @@ test("3B robot hücresi altı ekseni sürer ve erişilebilir bir metin karşıl�
     .violations.filter((violation) => ["critical", "serious"].includes(violation.impact ?? ""));
   expect(blocking).toEqual([]);
 });
+
+test("MoveJ ve MoveL yollarını karşılaştırır, çarpışan provayı açıklayarak durdurur", async ({ page }) => {
+  await page.goto("/laboratuvar/robot-hucresi");
+  const studio = page.getByRole("region", { name: "3B dijital robot hücresi" });
+  await studio.getByRole("button", { name: "Hareket provası", exact: true }).click();
+  const motion = studio.getByRole("region", { name: "Hareket prova laboratuvarı" });
+
+  await expect(motion.getByRole("heading", { name: "Aynı hedefe iki farklı hareket" })).toBeVisible();
+  await expect(motion.getByTestId("movej-result")).toContainText("Geçiş temiz");
+  await expect(motion.getByTestId("movel-result")).toContainText("Geçiş temiz");
+
+  await motion.getByRole("button", { name: "MoveL yolunu seç" }).click();
+  await expect(motion.getByRole("button", { name: "MoveL yolunu seç" })).toHaveAttribute("aria-pressed", "true");
+  await expect(motion.getByRole("slider", { name: "Hareket provası ilerlemesi" })).toBeVisible();
+
+  await motion.getByRole("button", { name: "Dar geçiş hedefi" }).click();
+  await expect(motion.getByTestId("movel-result")).toContainText("Fikstür");
+  await expect(motion.getByRole("button", { name: "Çarpışmaya kadar göster" })).toBeEnabled();
+
+  const blocking = (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze())
+    .violations.filter((violation) => ["critical", "serious"].includes(violation.impact ?? ""));
+  expect(blocking).toEqual([]);
+});

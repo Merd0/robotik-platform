@@ -5,10 +5,28 @@ import { useThree } from "@react-three/fiber";
 import { useEffect } from "react";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { cameraPresetOf, type RobotCellCameraPreset } from "@/lib/robotics/robotCellStudio";
+import { ROBOT_CELL_OBSTACLES, type RobotCellMotionPlan, type RobotCellObstacle } from "@/lib/robotics/robotCellMotion";
 import type { RobotSpec } from "@/lib/robotics/kinematics";
+import type { Vec3 } from "@/lib/robotics/transform";
 import { SCENE_PALETTES } from "@/lib/theme";
 import { RobotArmModel } from "./RobotArm";
+import { roboticsVectorToScene } from "./robotFrames";
 import { SceneCanvas } from "./SceneCanvas";
+
+function toSceneTuple(point: Vec3): [number, number, number] {
+  const scenePoint = roboticsVectorToScene(point);
+  return [scenePoint.x, scenePoint.y, scenePoint.z];
+}
+
+function obstacleSizeInScene(obstacle: RobotCellObstacle): [number, number, number] {
+  return [obstacle.halfSize.x * 2, obstacle.halfSize.z * 2, obstacle.halfSize.y * 2];
+}
+
+function requiredObstacle(id: string): RobotCellObstacle {
+  const obstacle = ROBOT_CELL_OBSTACLES.find((candidate) => candidate.id === id);
+  if (!obstacle) throw new Error(`3B hücre engeli bulunamadı: ${id}`);
+  return obstacle;
+}
 
 function CameraRig({ preset }: { preset: RobotCellCameraPreset }) {
   const camera = useThree((state) => state.camera);
@@ -25,13 +43,14 @@ function CameraRig({ preset }: { preset: RobotCellCameraPreset }) {
   return <OrbitControls makeDefault target={definition.target} enableDamping={false} minDistance={1.4} maxDistance={6} />;
 }
 function Table() {
+  const table = requiredObstacle("table");
   return (
     <group>
-      <Box args={[0.9, 0.08, 1.18]} position={[0.78, 0.32, 0.02]}>
+      <Box args={obstacleSizeInScene(table)} position={toSceneTuple(table.center)}>
         <meshStandardMaterial color="#334155" roughness={0.78} />
       </Box>
-      {[[0.42, 0.15, -0.45], [1.14, 0.15, -0.45], [0.42, 0.15, 0.49], [1.14, 0.15, 0.49]].map((position, index) => (
-        <Box key={index} args={[0.07, 0.3, 0.07]} position={position as [number, number, number]}>
+      {[[0.42, 0.11, -0.45], [1.14, 0.11, -0.45], [0.42, 0.11, 0.49], [1.14, 0.11, 0.49]].map((position, index) => (
+        <Box key={index} args={[0.07, 0.22, 0.07]} position={position as [number, number, number]}>
           <meshStandardMaterial color="#1e293b" />
         </Box>
       ))}
@@ -63,15 +82,21 @@ export function RobotCellScene({
   activeJointIndex,
   cameraPreset,
   showFrames,
+  motionPlans,
+  selectedMotion,
 }: {
   robot: RobotSpec;
   jointAngles: number[];
   activeJointIndex: number;
   cameraPreset: RobotCellCameraPreset;
   showFrames: boolean;
+  motionPlans?: RobotCellMotionPlan[];
+  selectedMotion?: "movej" | "movel";
 }) {
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
+  const fixture = requiredObstacle("fixture");
+  const bin = requiredObstacle("bin");
 
   return (
     <SceneCanvas
@@ -96,14 +121,35 @@ export function RobotCellScene({
         <meshStandardMaterial color="#0f766e" metalness={0.18} roughness={0.55} />
       </Cylinder>
       <RobotArmModel robot={robot} jointAngles={jointAngles} activeJointIndex={activeJointIndex} showFrames={showFrames} />
+      {motionPlans?.map((plan) => {
+        if (plan.tcpPath.length < 2) return null;
+        const selected = plan.kind === selectedMotion;
+        const color = plan.status === "collision" ? "#fb7185" : plan.kind === "movej" ? "#a78bfa" : "#2dd4bf";
+        return (
+          <group key={plan.kind}>
+            <Line
+              points={plan.tcpPath.map(toSceneTuple)}
+              color={color}
+              lineWidth={selected ? 4 : 2}
+              transparent
+              opacity={selected ? 1 : 0.42}
+            />
+            {plan.firstIssue?.reason === "collision" && plan.samples[plan.firstIssue.sampleIndex] && (
+              <Sphere args={[0.055, 16, 16]} position={toSceneTuple(plan.samples[plan.firstIssue.sampleIndex].tcp)}>
+                <meshStandardMaterial color="#fb7185" emissive="#be123c" emissiveIntensity={0.65} />
+              </Sphere>
+            )}
+          </group>
+        );
+      })}
       <Table />
-      <Box args={[0.28, 0.28, 0.28]} position={[0.72, 0.5, 0.18]}>
+      <Box args={obstacleSizeInScene(fixture)} position={toSceneTuple(fixture.center)}>
         <meshStandardMaterial color="#7c2d12" roughness={0.7} />
       </Box>
-      <Sphere args={[0.075, 20, 20]} position={[0.64, 0.45, -0.22]}>
+      <Sphere args={[0.075, 20, 20]} position={[0.64, 0.38, -0.22]}>
         <meshStandardMaterial color="#f59e0b" emissive="#7c2d12" emissiveIntensity={0.18} />
       </Sphere>
-      <Box args={[0.34, 0.22, 0.36]} position={[0.86, 0.46, 0.39]}>
+      <Box args={obstacleSizeInScene(bin)} position={toSceneTuple(bin.center)}>
         <meshStandardMaterial color="#1d4ed8" roughness={0.68} />
       </Box>
       <SafetyFence />
