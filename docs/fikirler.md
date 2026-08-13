@@ -11,6 +11,27 @@ Aklına gelen ama şu anki faza girmeyen her şey buraya. Kapsam kaymasını
 - İngilizce çeviri
 - Öğretmen paneli: sınıfa ödev verme
 
+## 3B Robot Hücresi — doğrulama sonrası kilometre taşları
+
+`/laboratuvar/robot-hucresi` için marka bağımsız 6R kol, gerçek DH/FK,
+eklem limitleri, TCP/RPY telemetrisi ve üç kamera açısını içeren ilk dikey
+dilim ayrı bir dalda geliştirildi. Bu çalışma `/oyun-alani`ndaki 2B Kendi
+Robotun deneyinden bağımsız kalır; 2B deney değiştirilmeden korunur.
+
+- Robot bağlantılarını kapsül/konveks çarpışma hacimleriyle modelle; fikstür,
+  masa ve koruyucu çevreyle hem anlık pozu hem hareket boyunca süpürülen hacmi
+  denetle. Yalnız çizgi-kutu testiyle “güvenli” iddiası üretme.
+- Aynı iki poz için `MoveJ` ve `MoveL` provasını hayalet robot ve TCP iziyle
+  yan yana göster. Hız/ivme sınırlarını zamana bağlı profilde uygulamadan gerçek
+  çevrim süresi iddiası verme.
+- Program zaman çizelgesine sensör, tutucu ve bekleme koşulları ekle; oynatıcıyı
+  durdur/devam ettir/tek adımla ilerlet kipleriyle gerçek devreye alma akışına
+  yaklaştır.
+- URDF içe aktarmayı ancak birim, eklem ekseni, limit ve görsel/çarpışma mesh'i
+  için doğrulama sözleşmesi tasarlandıktan sonra aç.
+- Öğretmenin hazırladığı hücreyi salt veri olarak URL ile paylaş; kod çalıştırma,
+  harici mesh URL'si ve üretici kontrol programı dışa aktarma V1 kapsamına girmez.
+
 ## Kendi Robotun — sonraki gerçekçilik katmanları
 
 - Bağlantı kalınlığı + motor gövdesi tanımıyla sürekli çarpışma/swept-volume

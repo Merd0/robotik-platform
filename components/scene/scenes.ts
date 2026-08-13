@@ -11,3 +11,4 @@
 export { RobotArm } from "./RobotArm";
 export { PlanningGrid } from "./PlanningGrid";
 export { JacobianScene } from "./JacobianScene";
+export { RobotCellScene } from "./RobotCellScene";

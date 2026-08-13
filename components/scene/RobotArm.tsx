@@ -25,6 +25,11 @@ interface RobotArmProps {
   children?: ReactNode;
 }
 
+export interface RobotArmModelProps extends RobotArmProps {
+  /** Koordinat çerçeveleri ile etkin eklem eksenini gösterir. */
+  showFrames?: boolean;
+}
+
 const LINK_RADIUS = 0.04;
 const JOINT_RADIUS = 0.07;
 const FRAME_AXIS_LENGTH = 0.24;
@@ -153,7 +158,8 @@ function ArmModel({
   linkColor,
   accentColor,
   palette,
-}: RobotArmProps & {
+  showFrames = true,
+}: RobotArmModelProps & {
   linkColor: string;
   accentColor: string;
   palette: (typeof SCENE_PALETTES)[keyof typeof SCENE_PALETTES];
@@ -196,7 +202,7 @@ function ArmModel({
           />
         </Sphere>
       ))}
-      {showsOrientation && (
+      {showsOrientation && showFrames && (
         <>
           <FrameTriad
             frame={roboticsFrameToScene(BASE_FRAME)}
@@ -214,6 +220,29 @@ function ArmModel({
         </>
       )}
     </group>
+  );
+}
+
+/** Canvas kurmadan, ortak FK geometrisini mevcut bir 3B sahneye yerleştirir. */
+export function RobotArmModel({
+  robot,
+  jointAngles,
+  activeJointIndex,
+  showFrames = true,
+}: RobotArmModelProps) {
+  const { theme } = useTheme();
+  const palette = SCENE_PALETTES[theme];
+
+  return (
+    <ArmModel
+      robot={robot}
+      jointAngles={jointAngles}
+      activeJointIndex={activeJointIndex}
+      showFrames={showFrames}
+      linkColor={palette.link}
+      accentColor={palette.accent}
+      palette={palette}
+    />
   );
 }
 
@@ -240,13 +269,10 @@ export function RobotArm({ robot, jointAngles, activeJointIndex, children }: Rob
         sectionColor={palette.gridSection}
         fadeDistance={8}
       />
-      <ArmModel
+      <RobotArmModel
         robot={robot}
         jointAngles={jointAngles}
         activeJointIndex={activeJointIndex}
-        linkColor={palette.link}
-        accentColor={palette.accent}
-        palette={palette}
       />
       {children}
     </SceneCanvas>

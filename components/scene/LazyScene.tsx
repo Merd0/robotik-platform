@@ -49,6 +49,11 @@ export const JacobianScene = dynamic(() => import("./scenes").then((modul) => mo
   loading: SahneIskeleti,
 });
 
+export const RobotCellScene = dynamic(() => import("./scenes").then((modul) => modul.RobotCellScene), {
+  ssr: false,
+  loading: SahneIskeleti,
+});
+
 interface SahneAlaniProps {
   /** Sahne kutusunun boyut/renk sınıfları. */
   className?: string;
