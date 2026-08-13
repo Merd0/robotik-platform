@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { RobotSpec } from "./kinematics";
 import {
   analyzeCustomRobotPose,
+  appendMotionWaypointWithCompaction,
+  beginAdaptiveMotionCapture,
+  captureAdaptiveMotionSample,
   planJointTrajectory,
   sampleJointTrajectory,
 } from "./customRobotMotion";
@@ -75,5 +78,42 @@ describe("öğretilmiş robot hareketinin fiziksel ön doğrulaması", () => {
 
     expect(limitResult).toEqual(expect.objectContaining({ ok: false, reason: "joint-limit" }));
     expect(collisionResult).toEqual(expect.objectContaining({ ok: false, reason: "self-collision" }));
+  });
+
+  it("hızlı sürüklemede olay sayısını değil zamanı örnekler", () => {
+    const robot = planarRobot(1);
+    let capture = beginAdaptiveMotionCapture([0], 0);
+
+    const early = captureAdaptiveMotionSample(robot, capture, [0.35], 100);
+    capture = early.state;
+    const stillEarly = captureAdaptiveMotionSample(robot, capture, [0.9], 550);
+    capture = stillEarly.state;
+    const oneSecond = captureAdaptiveMotionSample(robot, capture, [1.2], 1_000);
+
+    expect(early).toEqual(expect.objectContaining({ shouldRecord: false, mode: "rapid" }));
+    expect(stillEarly.shouldRecord).toBe(false);
+    expect(oneSecond.shouldRecord).toBe(true);
+  });
+
+  it("yavaş mikro hareketi küçük açı farkları birikince ayrıntılı kaydeder", () => {
+    const robot = planarRobot(1);
+    let capture = beginAdaptiveMotionCapture([0], 0);
+
+    const firstMicronudge = captureAdaptiveMotionSample(robot, capture, [0.001], 200);
+    capture = firstMicronudge.state;
+    const accumulatedMicronudge = captureAdaptiveMotionSample(robot, capture, [0.002], 400);
+
+    expect(firstMicronudge).toEqual(expect.objectContaining({ shouldRecord: false, mode: "precision" }));
+    expect(accumulatedMicronudge).toEqual(expect.objectContaining({ shouldRecord: true, mode: "precision" }));
+  });
+
+  it("uzun kaydı kesmek yerine düz ara pozları sıkıştırıp köşeyi ve uçları korur", () => {
+    const waypoints = [[0], [0.25], [0.5], [1.5]];
+    const next = appendMotionWaypointWithCompaction(waypoints, [2], 4);
+
+    expect(next).toHaveLength(4);
+    expect(next[0]).toEqual([0]);
+    expect(next).toContainEqual([1.5]);
+    expect(next.at(-1)).toEqual([2]);
   });
 });

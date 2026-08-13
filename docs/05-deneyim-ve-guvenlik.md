@@ -127,6 +127,13 @@ düz çizgiyle birleştirmez; kübik eklem-uzayı hareketinin gerçekten üretti
 yoludur. Böylece kullanıcı “hangi noktaları öğrettim?” ile “robotun ucu arada
 nereden geçti?” farkını görür. Program yerel kayda ve paylaşım URL'sine dahildir.
 
+Deney kumandaları sahnenin yanındaki üç sekmeli konsolda tutulur: eklemler,
+hedef ve hareket öğretme arasında sayfayı aşağı-yukarı kaydırmadan geçilir;
+sekme grubu ok tuşlarıyla da çalışır ve tüm hedefler en az 44 pikseldir. Yol
+kaydı olay sayısına göre kota tüketmez. Yavaş/mikro hareket geometrik farka göre
+daha ayrıntılı, hızlı hareket yaklaşık saniyelik aralıklarla örneklenir; iç
+temsil bütçesi dolduğunda eski düz ara örnekler seyreltilerek kayıt sürer.
+
 Bu genişleme tam fizik iddiasında bulunmaz. Tork, yerçekimi, yük, ivme/jerk,
 denetleyici gecikmesi, gerçek bağlantı kalınlığı, motor gövdesi ve çevre
 engelleri modellenmez; arayüz bunu sürekli görünür bir “Gerçeklik kapsamı”

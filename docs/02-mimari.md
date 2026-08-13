@@ -138,7 +138,7 @@ localStorage ve paylaşım için iki ayrı doğrulama yolu oluşmaz. Bu genişle
 tanımlı örnekleri devreye alır.
 
 `custom-robot` v1 durumu geriye uyumlu, isteğe bağlı bir öğretim programı da
-taşıyabilir: en fazla 32 eklem pozu ve `0.05–1.0` hız ölçeği. Eski bağlantılarda
+taşıyabilir: paylaşımda en fazla 32 temsilî eklem pozu ve `0.05–1.0` hız ölçeği. Eski bağlantılarda
 bu alan yoksa boş program olarak açılır. `lib/robotics/customRobotMotion.ts`,
 her pozu bağımsız eklem limitleri ve düzlemsel bağlantı merkez çizgilerinin
 öz-kesişimi açısından denetler; pozlar arasındaki hareketi sıfır uç-hızlı kübik
@@ -147,6 +147,14 @@ Ara yol en fazla 2° eklem adımıyla tekrar denetlenmeden oynatılmaz; URL'den
 açılan program da oyun alanında aynı provayı yeniden geçer. Sayısal IK başlangıç
 tahminini ve her DLS iterasyonunu mekanik limitlere izdüşürür; çözücü limit
 dışından geçip yalnız son noktada kontrol yapamaz.
+
+Canlı yol kaydı tarayıcının ürettiği her `pointer`/`input` olayını waypoint
+saymaz. Adaptif örnekleyici, hızlı hareketi en çok saniyede bir; yavaş ve hassas
+hareketi ise eklem/TCP mesafesi anlamlı olduğunda kaydeder. Temsilî poz bütçesi
+dolduğunda kayıt kesilmez: başlangıç, geometrik köşeler ve en yeni poz korunup
+en az bilgi taşıyan eski ara poz seyreltilir. Böylece cihazın olay frekansı URL
+boyutunu veya öğretim hakkını belirlemez; oynatma öncesi yoğun 2° ara-yol
+doğrulaması aynı kalır.
 
 Bu bir **kinematik dijital prova**, tam rijit-cisim dinamiği değildir. V1;
 tork, yerçekimi, yük, ivme/jerk, denetleyici gecikmesi, bağlantı kalınlığı,

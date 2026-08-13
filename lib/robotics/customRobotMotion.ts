@@ -1,8 +1,13 @@
 import { forwardKinematics, type RobotSpec } from "./kinematics";
 
+/** Paylaşım ve doğrulama maliyetini sınırlayan iç savunma sınırı. */
 export const CUSTOM_ROBOT_MAX_WAYPOINTS = 32;
 const COLLISION_EPSILON = 1e-7;
 const MAX_VALIDATION_ANGLE_STEP = (2 * Math.PI) / 180;
+const RAPID_SAMPLE_INTERVAL_MS = 1_000;
+const PRECISION_MIN_SAMPLE_INTERVAL_MS = 80;
+const RAPID_VELOCITY_RATIO = 0.15;
+const PRECISION_JOINT_DELTA = (0.1 * Math.PI) / 180;
 
 export interface JointLimitViolation {
   jointIndex: number;
@@ -50,6 +55,135 @@ export type JointTrajectoryPlanResult =
 interface Point2 {
   x: number;
   y: number;
+}
+
+export interface AdaptiveMotionCaptureState {
+  lastObservedAngles: number[];
+  lastObservedAtMs: number;
+  lastRecordedAngles: number[];
+  lastRecordedAtMs: number;
+}
+
+export interface AdaptiveMotionCaptureDecision {
+  shouldRecord: boolean;
+  mode: "precision" | "rapid";
+  state: AdaptiveMotionCaptureState;
+}
+
+/** Adaptif hareket kaydını ilk güvenli pozdan başlatır. */
+export function beginAdaptiveMotionCapture(
+  initialAngles: readonly number[],
+  nowMs: number,
+): AdaptiveMotionCaptureState {
+  return {
+    lastObservedAngles: [...initialAngles],
+    lastObservedAtMs: nowMs,
+    lastRecordedAngles: [...initialAngles],
+    lastRecordedAtMs: nowMs,
+  };
+}
+
+/**
+ * Girdi olaylarını bire bir waypoint'e dönüştürmez. Hızlı sürüklemede saniyede
+ * en çok bir poz, hassas harekette ise TCP/eklem farkı anlamlı olduğunda poz
+ * ister. Böylece cihazın olay üretme hızı öğretilen programın ayrıntısını
+ * belirlemez; yavaş hareketin küçük geometrik ayrıntısı yine korunur.
+ */
+export function captureAdaptiveMotionSample(
+  robot: RobotSpec,
+  capture: AdaptiveMotionCaptureState,
+  angles: readonly number[],
+  nowMs: number,
+): AdaptiveMotionCaptureDecision {
+  if (
+    angles.length !== robot.joints.length ||
+    angles.some((angle) => !Number.isFinite(angle)) ||
+    !Number.isFinite(nowMs)
+  ) {
+    return { shouldRecord: false, mode: "precision", state: capture };
+  }
+
+  const observedElapsedMs = Math.max(1, nowMs - capture.lastObservedAtMs);
+  const observedElapsedSeconds = observedElapsedMs / 1_000;
+  const peakVelocityRatio = Math.max(
+    ...angles.map((angle, jointIndex) => {
+      const maxVelocity = robot.joints[jointIndex].maxVelocity;
+      if (maxVelocity <= 0) return Number.POSITIVE_INFINITY;
+      return Math.abs(angle - capture.lastObservedAngles[jointIndex]) / observedElapsedSeconds / maxVelocity;
+    }),
+    0,
+  );
+  const mode = peakVelocityRatio >= RAPID_VELOCITY_RATIO ? "rapid" : "precision";
+  const elapsedSinceRecordMs = Math.max(0, nowMs - capture.lastRecordedAtMs);
+  const jointDelta = Math.max(
+    ...angles.map((angle, jointIndex) => Math.abs(angle - capture.lastRecordedAngles[jointIndex])),
+    0,
+  );
+  const previousTcp = forwardKinematics(robot, capture.lastRecordedAngles).endEffector;
+  const nextTcp = forwardKinematics(robot, [...angles]).endEffector;
+  const tcpDelta = Math.hypot(
+    nextTcp.x - previousTcp.x,
+    nextTcp.y - previousTcp.y,
+    nextTcp.z - previousTcp.z,
+  );
+  const reach = robot.joints.reduce((sum, joint) => sum + Math.abs(joint.dhParams.a), 0);
+  const precisionTcpDelta = Math.max(0.0005, reach * 0.0015);
+  const shouldRecord = mode === "rapid"
+    ? elapsedSinceRecordMs >= RAPID_SAMPLE_INTERVAL_MS
+    : elapsedSinceRecordMs >= PRECISION_MIN_SAMPLE_INTERVAL_MS &&
+      (jointDelta >= PRECISION_JOINT_DELTA || tcpDelta >= precisionTcpDelta);
+
+  return {
+    shouldRecord,
+    mode,
+    state: {
+      lastObservedAngles: [...angles],
+      lastObservedAtMs: nowMs,
+      lastRecordedAngles: shouldRecord ? [...angles] : capture.lastRecordedAngles,
+      lastRecordedAtMs: shouldRecord ? nowMs : capture.lastRecordedAtMs,
+    },
+  };
+}
+
+function interpolationDeviation(
+  before: readonly number[],
+  current: readonly number[],
+  after: readonly number[],
+): number {
+  return Math.max(
+    ...current.map((angle, jointIndex) =>
+      Math.abs(angle - (before[jointIndex] + after[jointIndex]) / 2)),
+    0,
+  );
+}
+
+/**
+ * Kayıt dolduğunda kullanıcıyı durdurmaz. Başlangıç ve en yeni pozları korur,
+ * eklem uzayında komşularınca en iyi temsil edilen eski ara pozu çıkarır.
+ * Böylece URL boyutu sınırlı kalırken uzun bir öğretme hareketi sürebilir.
+ */
+export function appendMotionWaypointWithCompaction(
+  waypoints: readonly (readonly number[])[],
+  angles: readonly number[],
+  maxWaypoints = CUSTOM_ROBOT_MAX_WAYPOINTS,
+): number[][] {
+  if (maxWaypoints < 2 || waypoints.length === 0) return [[...angles]];
+  if (waypoints.length < maxWaypoints) return [...waypoints.map((waypoint) => [...waypoint]), [...angles]];
+
+  let removableIndex = 1;
+  let smallestDeviation = Number.POSITIVE_INFINITY;
+  for (let index = 1; index < waypoints.length - 1; index += 1) {
+    const deviation = interpolationDeviation(waypoints[index - 1], waypoints[index], waypoints[index + 1]);
+    if (deviation < smallestDeviation) {
+      smallestDeviation = deviation;
+      removableIndex = index;
+    }
+  }
+  return [
+    ...waypoints.slice(0, removableIndex).map((waypoint) => [...waypoint]),
+    ...waypoints.slice(removableIndex + 1).map((waypoint) => [...waypoint]),
+    [...angles],
+  ];
 }
 
 function orientation(a: Point2, b: Point2, c: Point2): number {

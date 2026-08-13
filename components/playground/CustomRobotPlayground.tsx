@@ -20,10 +20,14 @@ import { forwardKinematics, type RobotSpec } from "@/lib/robotics/kinematics";
 import { solveIkTarget } from "@/lib/robotics/ikSolver";
 import {
   analyzeCustomRobotPose,
+  appendMotionWaypointWithCompaction,
+  beginAdaptiveMotionCapture,
+  captureAdaptiveMotionSample,
   CUSTOM_ROBOT_MAX_WAYPOINTS,
   planJointTrajectory,
   sampleJointTrajectory,
   sampleTrajectoryTcpPath,
+  type AdaptiveMotionCaptureState,
   type JointTrajectory,
   type JointTrajectoryPlanResult,
 } from "@/lib/robotics/customRobotMotion";
@@ -32,8 +36,14 @@ import { decodeLabState, encodeLabState, type CustomRobotLabState } from "@/lib/
 const STORAGE_KEY = "robotik-platform:custom-robot:v1";
 const MAX_TRACE_POINTS = 160;
 const DEFAULT_PROGRAM_SPEED = 0.35;
-const MIN_RECORDED_ANGLE_DELTA = (2 * Math.PI) / 180;
 const DEFAULT_DEFINITION = createDefaultCustomRobotDefinition(2);
+type ConsolePanel = "joints" | "target" | "teach";
+
+const CONSOLE_PANELS: Array<{ id: ConsolePanel; label: string; shortLabel: string }> = [
+  { id: "joints", label: "Eklemleri sür", shortLabel: "Eklemler" },
+  { id: "target", label: "Hedefe git", shortLabel: "Hedef" },
+  { id: "teach", label: "Hareket öğret", shortLabel: "Öğret" },
+];
 
 function round(value: number, digits = 3) {
   const scale = 10 ** digits;
@@ -120,7 +130,7 @@ function PlanarRobotDiagram({
   taughtPath: Array<{ x: number; y: number }>;
   taughtPoints: Array<{ x: number; y: number }>;
   guideEnabled: boolean;
-  onGuideTarget: (target: { x: number; y: number }) => void;
+  onGuideTarget: (target: { x: number; y: number }, capturedAtMs: number) => void;
 }) {
   const dragging = useRef(false);
   const { jointPositions, endEffector } = useMemo(
@@ -148,7 +158,7 @@ function PlanarRobotDiagram({
     if (bounds.width <= 0 || bounds.height <= 0) return;
     const sceneX = ((event.clientX - bounds.left) / bounds.width) * 400;
     const sceneY = ((event.clientY - bounds.top) / bounds.height) * 400;
-    onGuideTarget({ x: (sceneX - 200) / scale, y: (200 - sceneY) / scale });
+    onGuideTarget({ x: (sceneX - 200) / scale, y: (200 - sceneY) / scale }, event.timeStamp);
   }
 
   return (
@@ -303,6 +313,9 @@ export function CustomRobotPlayground() {
   const [isRecording, setIsRecording] = useState(false);
   const [motionStatus, setMotionStatus] = useState("Öğretim programı boş; robotu konumlandırıp ilk pozu kaydet.");
   const [playback, setPlayback] = useState<{ trajectory: JointTrajectory; startedAt: number } | null>(null);
+  const [consolePanel, setConsolePanel] = useState<ConsolePanel>("joints");
+  const captureRef = useRef<AdaptiveMotionCaptureState | null>(null);
+  const consoleTabRefs = useRef<Partial<Record<ConsolePanel, HTMLButtonElement | null>>>({});
 
   const robotResult = useMemo(() => createCustomRobotSpec(activeState.definition), [activeState.definition]);
   const robot = robotResult.ok
@@ -353,6 +366,7 @@ export function CustomRobotPlayground() {
     });
     setIssues([]);
     setTrace([tracePoint(result.robot, state.jointAngles)]);
+    setConsolePanel("joints");
     setIkStatus("IK durumu yüklendi; hedefi değiştirebilir veya yeniden çözebilirsin.");
     setMotionStatus(restoredPlan?.ok
       ? `${restoredProgram.waypoints.length} öğretilmiş poz yüklendi; dijital provayı çalıştırabilirsin.`
@@ -362,6 +376,7 @@ export function CustomRobotPlayground() {
           ? "Bir öğretilmiş poz yüklendi; prova için ikinci pozu öğret."
           : "Öğretim programı boş; robotu konumlandırıp ilk pozu kaydet.");
     setIsRecording(false);
+    captureRef.current = null;
     setPlayback(null);
     if (source === "share") {
       setAnnouncement("Paylaşılan robot yüklendi ve bu tarayıcıya kaydedildi.");
@@ -477,6 +492,7 @@ export function CustomRobotPlayground() {
     setMotionStatus("Yeni robot için öğretim programı temizlendi; ilk pozu kaydedebilirsin.");
     setGuideEnabled(false);
     setIsRecording(false);
+    captureRef.current = null;
     setPlayback(null);
     setAnnouncement(storageAvailable === false
       ? "Robot uygulandı; yerel depolama kapalı olduğu için yalnız bu sekmede kalacak."
@@ -485,34 +501,58 @@ export function CustomRobotPlayground() {
 
   function appendRecordedPose(currentProgram: ReturnType<typeof programOf>, angles: number[], force: boolean) {
     const last = currentProgram.waypoints.at(-1);
-    const movedEnough = !last || Math.max(...angles.map((angle, index) => Math.abs(angle - last[index]))) >= MIN_RECORDED_ANGLE_DELTA;
-    if ((!force && !movedEnough) || (force && last && angles.every((angle, index) => Math.abs(angle - last[index]) < 1e-9))) {
+    if (last && angles.every((angle, index) => Math.abs(angle - last[index]) < 1e-9)) {
       return currentProgram;
     }
-    if (currentProgram.waypoints.length >= CUSTOM_ROBOT_MAX_WAYPOINTS) return currentProgram;
-    return { ...currentProgram, waypoints: [...currentProgram.waypoints, [...angles]] };
+    if (!force && !captureRef.current) return currentProgram;
+    return {
+      ...currentProgram,
+      waypoints: appendMotionWaypointWithCompaction(
+        currentProgram.waypoints,
+        angles,
+        CUSTOM_ROBOT_MAX_WAYPOINTS,
+      ),
+    };
   }
 
-  function commitSafePose(angles: number[], status: string, target?: { x: number; y: number }) {
+  function commitSafePose(
+    angles: number[],
+    status: string,
+    target?: { x: number; y: number },
+    capturedAtMs?: number,
+  ) {
     const rejection = describeRejectedPose(robot, angles);
     if (rejection) {
       setMotionStatus(rejection);
       return false;
     }
+    let captureMode: "precision" | "rapid" | null = null;
+    let shouldRecord = false;
+    if (isRecording && capturedAtMs !== undefined) {
+      const capture = captureRef.current ?? beginAdaptiveMotionCapture(activeState.jointAngles, capturedAtMs);
+      const decision = captureAdaptiveMotionSample(robot, capture, angles, capturedAtMs);
+      captureRef.current = decision.state;
+      captureMode = decision.mode;
+      shouldRecord = decision.shouldRecord;
+    }
     setActiveState((current) => {
-      const nextProgram = isRecording
+      const nextProgram = shouldRecord
         ? appendRecordedPose(programOf(current), angles, false)
         : programOf(current);
       return { ...current, jointAngles: angles, ...(target ? { target } : {}), program: nextProgram };
     });
     setTrace((current) => [...current, tracePoint(robot, angles)].slice(-MAX_TRACE_POINTS));
-    setMotionStatus(isRecording ? `Yol kaydı sürüyor · en fazla ${CUSTOM_ROBOT_MAX_WAYPOINTS} ayırt edici poz saklanır.` : status);
+    setMotionStatus(captureMode === "precision"
+      ? "Adaptif kayıt · hassas hareket ayrıntıları mesafeye göre yakalanıyor."
+      : captureMode === "rapid"
+        ? "Adaptif kayıt · hızlı harekette saniyede en çok bir ara poz alınıyor."
+        : status);
     return true;
   }
 
-  function setJointAngle(index: number, degrees: number) {
+  function setJointAngle(index: number, degrees: number, capturedAtMs: number) {
     const angles = activeState.jointAngles.map((angle, jointIndex) => jointIndex === index ? (degrees * Math.PI) / 180 : angle);
-    if (commitSafePose(angles, "FK pozu geçerli · eklem limitleri ve idealize öz-çarpışma kontrol edildi.")) {
+    if (commitSafePose(angles, "FK pozu geçerli · eklem limitleri ve idealize öz-çarpışma kontrol edildi.", undefined, capturedAtMs)) {
       setIkStatus("FK güncellendi; turkuaz çizgi TCP izini gösteriyor.");
     }
   }
@@ -522,7 +562,7 @@ export function CustomRobotPlayground() {
     setIkStatus("Yeni hedef seçildi; çözümü hesaplamak için “Hedefe çöz” düğmesini kullan.");
   }
 
-  function solveTarget() {
+  function solveTarget(capturedAtMs: number) {
     let solution = solveIkTarget(robot, activeState.target, "auto", "up", activeState.jointAngles);
     if (!solution.converged && robot.joints.length === 2) {
       solution = solveIkTarget(robot, activeState.target, "auto", "down", activeState.jointAngles);
@@ -531,14 +571,14 @@ export function CustomRobotPlayground() {
       setIkStatus(`IK hedefe yakınsamadı · son hata ${Number.isFinite(solution.residual) ? round(solution.residual, 4) : "∞"} m. Hedefi veya eklem limitlerini değiştir.`);
       return;
     }
-    if (commitSafePose(solution.angles, "IK pozu fiziksel ön kontrolden geçti.")) {
+    if (commitSafePose(solution.angles, "IK pozu fiziksel ön kontrolden geçti.", undefined, capturedAtMs)) {
       setIkStatus(`IK çözümü bulundu · ${solution.solver === "analytical" ? "analitik" : "DLS"} · ${solution.iterations} iterasyon · hata ${round(solution.residual, 5)} m.`);
     } else {
       setIkStatus("IK matematiksel bir aday buldu ancak hareket öz-çarpışma ön kontrolünden geçmedi.");
     }
   }
 
-  function guideTcp(target: { x: number; y: number }) {
+  function guideTcp(target: { x: number; y: number }, capturedAtMs: number) {
     let solution = solveIkTarget(robot, target, "auto", "up", activeState.jointAngles);
     if ((!solution.converged || !solution.angles || describeRejectedPose(robot, solution.angles)) && robot.joints.length === 2) {
       solution = solveIkTarget(robot, target, "auto", "down", activeState.jointAngles);
@@ -547,7 +587,7 @@ export function CustomRobotPlayground() {
       setMotionStatus(`TCP bu noktaya yönlendirilemedi · son IK hatası ${Number.isFinite(solution.residual) ? round(solution.residual, 4) : "∞"} m.`);
       return;
     }
-    if (commitSafePose(solution.angles, "TCP elle yönlendirildi; poz ön kontrolden geçti.", target)) {
+    if (commitSafePose(solution.angles, "TCP elle yönlendirildi; poz ön kontrolden geçti.", target, capturedAtMs)) {
       setIkStatus(`Canlı IK · ${solution.solver === "analytical" ? "analitik" : "DLS"} · hata ${round(solution.residual, 5)} m.`);
     }
   }
@@ -571,14 +611,17 @@ export function CustomRobotPlayground() {
         : "İlk poz öğretildi; robotu başka bir konuma getirip ikinci pozu kaydet.");
   }
 
-  function toggleRecording() {
+  function toggleRecording(capturedAtMs: number) {
     if (isRecording) {
       setIsRecording(false);
-      const plan = program.waypoints.length >= 2
-        ? planJointTrajectory(robot, program.waypoints, program.speedScale)
+      captureRef.current = null;
+      const nextProgram = appendRecordedPose(program, activeState.jointAngles, true);
+      if (nextProgram !== program) setActiveState((current) => ({ ...current, program: nextProgram }));
+      const plan = nextProgram.waypoints.length >= 2
+        ? planJointTrajectory(robot, nextProgram.waypoints, nextProgram.speedScale)
         : null;
       setMotionStatus(plan?.ok
-        ? `Prova hazır · ${program.waypoints.length} poz ve ${plan.trajectory.checkedSamples} ara kontrol.`
+        ? `Prova hazır · ${nextProgram.waypoints.length} poz ve ${plan.trajectory.checkedSamples} ara kontrol.`
         : plan
           ? describeTrajectoryFailure(plan) ?? "Kayıt bitti ancak prova tamamlanamadı."
           : "Kayıt bitti; oynatma için en az iki farklı poz öğret.");
@@ -586,9 +629,10 @@ export function CustomRobotPlayground() {
     }
     const nextProgram = appendRecordedPose(program, activeState.jointAngles, true);
     setActiveState((current) => ({ ...current, program: nextProgram }));
+    captureRef.current = beginAdaptiveMotionCapture(activeState.jointAngles, capturedAtMs);
     setIsRecording(true);
     setPlayback(null);
-    setMotionStatus("Yol kaydı başladı · eklemleri veya TCP’yi hareket ettir; ayırt edici pozlar otomatik saklanacak.");
+    setMotionStatus("Adaptif kayıt başladı · yavaş harekette küçük ayrıntılar, hızlı harekette yaklaşık saniyede bir ara poz saklanır.");
   }
 
   function updateProgramSpeed(speedScale: number) {
@@ -621,6 +665,7 @@ export function CustomRobotPlayground() {
   function clearProgram() {
     setPlayback(null);
     setIsRecording(false);
+    captureRef.current = null;
     setActiveState((current) => ({ ...current, program: { waypoints: [], speedScale: programOf(current).speedScale } }));
     setMotionStatus("Öğretim programı temizlendi; robot geometrisi ve mevcut poz korunuyor.");
   }
@@ -632,11 +677,25 @@ export function CustomRobotPlayground() {
     setIkStatus("Deney sıfırlandı; robot güvenli başlangıç duruşunda.");
     setGuideEnabled(false);
     setIsRecording(false);
+    captureRef.current = null;
     setPlayback(null);
     setMotionStatus("Deney ve öğretim programı sıfırlandı.");
   }
 
   const issueFor = (field: string) => issues.some((issue) => issue.field === field || (issue.field.endsWith(".limits") && field.startsWith(issue.field.slice(0, -"limits".length))));
+
+  function selectConsolePanelFromKeyboard(event: React.KeyboardEvent<HTMLButtonElement>, panelIndex: number) {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const nextIndex = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? CONSOLE_PANELS.length - 1
+        : (panelIndex + (event.key === "ArrowRight" ? 1 : -1) + CONSOLE_PANELS.length) % CONSOLE_PANELS.length;
+    const nextPanel = CONSOLE_PANELS[nextIndex].id;
+    setConsolePanel(nextPanel);
+    window.requestAnimationFrame(() => consoleTabRefs.current[nextPanel]?.focus());
+  }
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14" aria-label="Özel robot tasarım alanı">
@@ -757,7 +816,7 @@ export function CustomRobotPlayground() {
           </p>
         </form>
 
-        <section aria-label="Robot deneyi" className="lab-panel overflow-hidden p-4 sm:p-6">
+        <section aria-label="Robot deneyi" className="lab-panel overflow-hidden p-4 sm:p-6 xl:sticky xl:top-16">
           <div className="flex flex-col gap-4 border-b border-site-border pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-site-accent-text">FK / IK / TCP izi</p>
@@ -794,148 +853,195 @@ export function CustomRobotPlayground() {
               </div>
             </div>
 
-            <div className="grid content-start gap-5">
-              <fieldset className="grid gap-3">
-                <legend className="mb-1 text-sm font-bold text-site-ink">İleri kinematik</legend>
-                {robot.joints.map((joint, index) => {
-                  const degrees = round((activeState.jointAngles[index] * 180) / Math.PI, 1);
-                  return (
-                    <label key={index} className="grid gap-1 text-xs font-semibold text-site-muted">
-                      <span className="flex justify-between gap-3"><span>J{index + 1} açısı</span><output className="font-mono text-site-ink">{degrees}°</output></span>
-                      <input
-                        type="range"
-                        aria-label={`J${index + 1} açısı`}
-                        value={degrees}
-                        min={round((joint.limits.min * 180) / Math.PI, 6)}
-                        max={round((joint.limits.max * 180) / Math.PI, 6)}
-                        step={1}
-                        onChange={(event) => setJointAngle(index, Number(event.target.value))}
-                        className="min-h-11 w-full accent-teal-600"
-                      />
-                    </label>
-                  );
-                })}
-              </fieldset>
-
-              <fieldset className="grid gap-3 border-t border-site-border pt-5">
-                <legend className="mb-1 text-sm font-bold text-site-ink">Ters kinematik hedefi</legend>
-                {(["x", "y"] as const).map((axis) => (
-                  <label key={axis} className="grid gap-1 text-xs font-semibold text-site-muted">
-                    <span className="flex justify-between gap-3"><span>Hedef {axis.toUpperCase()}</span><output className="font-mono text-site-ink">{round(activeState.target[axis], 2)} m</output></span>
-                    <input
-                      type="range"
-                      aria-label={`Hedef ${axis.toUpperCase()}`}
-                      value={activeState.target[axis]}
-                      min={round(-reach, 2)}
-                      max={round(reach, 2)}
-                      step={0.01}
-                      onChange={(event) => setTarget(axis, Number(event.target.value))}
-                      className="min-h-11 w-full accent-rose-500"
-                    />
-                  </label>
+            <div className="grid content-start gap-4">
+              <div
+                role="tablist"
+                aria-label="Deney kumandaları"
+                className="grid grid-cols-3 gap-1 rounded-2xl border border-site-border bg-site-soft p-1"
+              >
+                {CONSOLE_PANELS.map((panel, panelIndex) => (
+                  <button
+                    key={panel.id}
+                    ref={(element) => { consoleTabRefs.current[panel.id] = element; }}
+                    id={`console-tab-${panel.id}`}
+                    type="button"
+                    role="tab"
+                    aria-label={panel.label}
+                    aria-selected={consolePanel === panel.id}
+                    aria-controls={`console-panel-${panel.id}`}
+                    tabIndex={consolePanel === panel.id ? 0 : -1}
+                    onClick={() => setConsolePanel(panel.id)}
+                    onKeyDown={(event) => selectConsolePanelFromKeyboard(event, panelIndex)}
+                    className={`relative min-h-12 rounded-xl px-2 py-2 text-xs font-bold transition-colors sm:px-3 ${
+                      consolePanel === panel.id
+                        ? "bg-site-strong text-site-on-strong shadow-sm"
+                        : "text-site-muted hover:bg-site-surface hover:text-site-ink"
+                    }`}
+                  >
+                    <span className="hidden sm:inline">{panel.label}</span>
+                    <span className="sm:hidden">{panel.shortLabel}</span>
+                    {panel.id === "teach" && (isRecording || program.waypoints.length > 0) && (
+                      <span className={`ml-1.5 inline-flex min-w-5 justify-center rounded-full px-1.5 py-0.5 font-mono text-[9px] ${
+                        consolePanel === panel.id ? "bg-white/20" : "bg-poster-purple/15 text-poster-purple-text"
+                      }`}>
+                        {isRecording ? "REC" : program.waypoints.length}
+                      </span>
+                    )}
+                  </button>
                 ))}
-                <button type="button" onClick={solveTarget} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-bold text-white hover:bg-teal-800">
-                  Hedefe çöz
-                </button>
-                <p role="status" aria-live="polite" className="min-h-10 rounded-xl border border-site-border bg-site-soft p-3 text-xs leading-5 text-site-muted">{ikStatus}</p>
-              </fieldset>
+              </div>
 
-              <section className="grid gap-4 border-t border-site-border pt-5" aria-labelledby="teach-motion-title">
-                <div>
-                  <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-poster-purple-text">Teach-by-demonstration</p>
-                  <h3 id="teach-motion-title" className="mt-1 font-heading text-2xl font-bold text-site-ink">Hareketi öğret</h3>
-                  <p className="mt-1 text-xs leading-5 text-site-muted">TCP’yi sahnede yönlendir veya eklem kaydırıcılarını kullan. Pozları kaydet; mor eğri noktaları düz bağlamaz, eklem uzayındaki hız-sınırlı hareketten doğan gerçek TCP yolunu gösterir.</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    aria-pressed={guideEnabled}
-                    disabled={Boolean(playback)}
-                    onClick={() => {
-                      setGuideEnabled((current) => !current);
-                      setMotionStatus(guideEnabled
-                        ? "TCP yönlendirme kapatıldı."
-                        : "TCP yönlendirme açık · sahneye dokunup sürükleyerek canlı IK çalıştır.");
-                    }}
-                    className="min-h-11 rounded-xl border border-site-border bg-site-surface px-3 text-xs font-bold text-site-ink hover:bg-site-soft disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {guideEnabled ? "Yönlendirmeyi kapat" : "TCP’yi elle yönlendir"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={teachCurrentPose}
-                    disabled={Boolean(playback)}
-                    className="min-h-11 rounded-xl bg-poster-purple px-3 text-xs font-bold text-poster-bg hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Bu pozu öğret
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={isRecording}
-                    onClick={toggleRecording}
-                    disabled={Boolean(playback)}
-                    className="min-h-11 rounded-xl border border-poster-purple/40 bg-poster-purple/10 px-3 text-xs font-bold text-poster-purple-text hover:bg-poster-purple/15 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {isRecording ? "Kaydı bitir" : "Yolu kaydet"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearProgram}
-                    disabled={program.waypoints.length === 0}
-                    className="min-h-11 rounded-xl border border-site-border bg-site-surface px-3 text-xs font-bold text-site-ink hover:bg-site-soft disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Programı temizle
-                  </button>
-                </div>
-
-                <label className="grid gap-1 text-xs font-semibold text-site-muted">
-                  <span className="flex justify-between gap-3">
-                    <span>Prova hızı</span>
-                    <output className="font-mono text-site-ink">%{Math.round(program.speedScale * 100)}</output>
-                  </span>
-                  <input
-                    type="range"
-                    aria-label="Program hızı"
-                    value={program.speedScale}
-                    min="0.05"
-                    max="1"
-                    step="0.05"
-                    onChange={(event) => updateProgramSpeed(Number(event.currentTarget.value))}
-                    className="min-h-11 w-full accent-poster-purple"
-                  />
-                </label>
-
-                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-site-border bg-site-border font-mono text-[10px] text-site-muted">
-                  <p aria-label={`${program.waypoints.length} öğretilmiş poz`} className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{program.waypoints.length}</strong>öğretilmiş poz</p>
-                  <p className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{trajectoryPlan?.ok ? `${round(trajectoryPlan.trajectory.totalDurationSeconds, 2)} s` : "—"}</strong>zamanlı prova</p>
-                  <p className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{trajectoryPlan?.ok ? trajectoryPlan.trajectory.checkedSamples : "—"}</strong>ara kontrol</p>
-                  <p className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{trajectoryPlan?.ok ? `${round(trajectoryPlan.trajectory.tcpTravelMeters, 2)} m` : "—"}</strong>TCP yolu</p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={playProgram}
-                  disabled={!trajectoryPlan?.ok || Boolean(playback)}
-                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-site-strong px-4 py-3 text-sm font-bold text-site-on-strong hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+              {consolePanel === "joints" && (
+                <div
+                  id="console-panel-joints"
+                  role="tabpanel"
+                  aria-labelledby="console-tab-joints"
+                  aria-label="Eklemleri sür"
+                  className="rounded-2xl border border-site-border bg-site-surface p-4"
                 >
-                  {playback ? "Program oynatılıyor…" : "Programı oynat"}
-                </button>
-                <p role="status" aria-live="polite" className="min-h-12 rounded-xl border border-poster-purple/35 bg-poster-purple/10 p-3 text-xs leading-5 text-site-ink">{motionStatus}</p>
-              </section>
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-site-accent-text">İleri kinematik</p>
+                      <h3 className="mt-1 font-heading text-2xl font-bold text-site-ink">Eklemleri doğrudan sür</h3>
+                    </div>
+                    <span className="rounded-full border border-site-border bg-site-soft px-2.5 py-1 font-mono text-[10px] text-site-muted">limitli</span>
+                  </div>
+                  <fieldset className="grid gap-3">
+                    <legend className="sr-only">Eklem açıları</legend>
+                    {robot.joints.map((joint, index) => {
+                      const degrees = round((activeState.jointAngles[index] * 180) / Math.PI, 1);
+                      return (
+                        <label key={index} className="grid gap-1 text-xs font-semibold text-site-muted">
+                          <span className="flex justify-between gap-3"><span>J{index + 1} açısı</span><output className="font-mono text-site-ink">{degrees}°</output></span>
+                          <input
+                            type="range"
+                            aria-label={`J${index + 1} açısı`}
+                            value={degrees}
+                            min={round((joint.limits.min * 180) / Math.PI, 6)}
+                            max={round((joint.limits.max * 180) / Math.PI, 6)}
+                            step={0.1}
+                            onChange={(event) => setJointAngle(index, Number(event.target.value), event.timeStamp)}
+                            className="min-h-11 w-full accent-teal-600"
+                          />
+                        </label>
+                      );
+                    })}
+                  </fieldset>
+                </div>
+              )}
 
-              <aside className="rounded-2xl border border-warning-border bg-warning-surface p-4 text-warning-ink">
-                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em]">Gerçeklik kapsamı</p>
-                <p className="mt-2 text-xs font-bold">Kinematik, eklem limitleri, azami hız ve merkez çizgisi öz-çarpışması denetlenir.</p>
-                <p className="mt-1 text-xs leading-5">Tork, yerçekimi, yük, ivme/jerk sınırı ve denetleyici gecikmesi modellenmiyor. Bağlantı kalınlığı, motor gövdesi ve çevre engelleri de bu düzlemsel V1’in dışında; gerçek robota doğrudan komut üretmez.</p>
-              </aside>
+              {consolePanel === "target" && (
+                <div
+                  id="console-panel-target"
+                  role="tabpanel"
+                  aria-labelledby="console-tab-target"
+                  aria-label="Hedefe git"
+                  className="rounded-2xl border border-site-border bg-site-surface p-4"
+                >
+                  <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-rose-600">Ters kinematik</p>
+                  <h3 className="mt-1 font-heading text-2xl font-bold text-site-ink">TCP hedefini seç</h3>
+                  <fieldset className="mt-4 grid gap-3">
+                    <legend className="sr-only">Ters kinematik hedefi</legend>
+                    {(["x", "y"] as const).map((axis) => (
+                      <label key={axis} className="grid gap-1 text-xs font-semibold text-site-muted">
+                        <span className="flex justify-between gap-3"><span>Hedef {axis.toUpperCase()}</span><output className="font-mono text-site-ink">{round(activeState.target[axis], 2)} m</output></span>
+                        <input
+                          type="range"
+                          aria-label={`Hedef ${axis.toUpperCase()}`}
+                          value={activeState.target[axis]}
+                          min={round(-reach, 2)}
+                          max={round(reach, 2)}
+                          step={0.01}
+                          onChange={(event) => setTarget(axis, Number(event.target.value))}
+                          className="min-h-11 w-full accent-rose-500"
+                        />
+                      </label>
+                    ))}
+                    <button type="button" onClick={(event) => solveTarget(event.timeStamp)} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-bold text-white hover:bg-teal-800">
+                      Hedefe çöz
+                    </button>
+                  </fieldset>
+                  <p role="status" aria-live="polite" className="mt-3 min-h-10 rounded-xl border border-site-border bg-site-soft p-3 text-xs leading-5 text-site-muted">{ikStatus}</p>
+                </div>
+              )}
 
-              <div className="grid grid-cols-2 gap-3 border-t border-site-border pt-5">
+              {consolePanel === "teach" && (
+                <div
+                  id="console-panel-teach"
+                  role="tabpanel"
+                  aria-labelledby="console-tab-teach"
+                  aria-label="Hareket öğret"
+                  className="grid gap-4 rounded-2xl border border-poster-purple/35 bg-poster-purple/5 p-4"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-poster-purple-text">Teach-by-demonstration</p>
+                      {isRecording && <span className="rounded-full bg-red-600 px-2.5 py-1 font-mono text-[10px] font-bold text-white">● KAYIT</span>}
+                    </div>
+                    <h3 className="mt-1 font-heading text-2xl font-bold text-site-ink">Hareketi öğret</h3>
+                    <p className="mt-1 text-xs leading-5 text-site-muted">Yavaş harekette küçük ayrıntılar mesafeye göre, hızlı harekette yaklaşık saniyede bir örnek alınır. Kayıt olay sayısına bağlı değildir.</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      aria-pressed={guideEnabled}
+                      disabled={Boolean(playback)}
+                      onClick={() => {
+                        setGuideEnabled((current) => !current);
+                        setMotionStatus(guideEnabled
+                          ? "TCP yönlendirme kapatıldı."
+                          : "TCP yönlendirme açık · sahneye dokunup sürükleyerek canlı IK çalıştır.");
+                      }}
+                      className="min-h-11 rounded-xl border border-site-border bg-site-surface px-3 text-xs font-bold text-site-ink hover:bg-site-soft disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {guideEnabled ? "Yönlendirmeyi kapat" : "TCP’yi elle yönlendir"}
+                    </button>
+                    <button type="button" onClick={teachCurrentPose} disabled={Boolean(playback)} className="min-h-11 rounded-xl bg-poster-purple px-3 text-xs font-bold text-poster-bg hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
+                      Bu pozu öğret
+                    </button>
+                    <button type="button" aria-pressed={isRecording} onClick={(event) => toggleRecording(event.timeStamp)} disabled={Boolean(playback)} className="min-h-11 rounded-xl border border-poster-purple/40 bg-poster-purple/10 px-3 text-xs font-bold text-poster-purple-text hover:bg-poster-purple/15 disabled:cursor-not-allowed disabled:opacity-50">
+                      {isRecording ? "Kaydı bitir" : "Yolu kaydet"}
+                    </button>
+                    <button type="button" onClick={clearProgram} disabled={program.waypoints.length === 0} className="min-h-11 rounded-xl border border-site-border bg-site-surface px-3 text-xs font-bold text-site-ink hover:bg-site-soft disabled:cursor-not-allowed disabled:opacity-50">
+                      Programı temizle
+                    </button>
+                  </div>
+
+                  <label className="grid gap-1 text-xs font-semibold text-site-muted">
+                    <span className="flex justify-between gap-3"><span>Prova hızı</span><output className="font-mono text-site-ink">%{Math.round(program.speedScale * 100)}</output></span>
+                    <input type="range" aria-label="Program hızı" value={program.speedScale} min="0.05" max="1" step="0.05" onChange={(event) => updateProgramSpeed(Number(event.currentTarget.value))} className="min-h-11 w-full accent-poster-purple" />
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-site-border bg-site-border font-mono text-[10px] text-site-muted">
+                    <p aria-label={`${program.waypoints.length} öğretilmiş poz`} className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{program.waypoints.length}</strong>temsilî poz</p>
+                    <p className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{trajectoryPlan?.ok ? `${round(trajectoryPlan.trajectory.totalDurationSeconds, 2)} s` : "—"}</strong>zamanlı prova</p>
+                    <p className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{trajectoryPlan?.ok ? trajectoryPlan.trajectory.checkedSamples : "—"}</strong>ara kontrol</p>
+                    <p className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{trajectoryPlan?.ok ? `${round(trajectoryPlan.trajectory.tcpTravelMeters, 2)} m` : "—"}</strong>TCP yolu</p>
+                  </div>
+
+                  <button type="button" onClick={playProgram} disabled={!trajectoryPlan?.ok || Boolean(playback)} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-site-strong px-4 py-3 text-sm font-bold text-site-on-strong hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45">
+                    {playback ? "Program oynatılıyor…" : "Programı oynat"}
+                  </button>
+                </div>
+              )}
+
+              <p role="status" aria-live="polite" className="min-h-12 rounded-xl border border-poster-purple/35 bg-poster-purple/5 p-3 text-xs leading-5 text-site-ink">{motionStatus}</p>
+
+              <div className="grid grid-cols-2 gap-3">
                 <button type="button" onClick={() => setTrace([tracePoint(robot, activeState.jointAngles)])} className="min-h-11 rounded-xl border border-site-border bg-site-surface px-3 text-xs font-bold text-site-ink hover:bg-site-soft">İzi temizle</button>
                 <button type="button" onClick={resetExperiment} className="min-h-11 rounded-xl border border-site-border bg-site-surface px-3 text-xs font-bold text-site-ink hover:bg-site-soft">Deneyi sıfırla</button>
               </div>
             </div>
           </div>
+
+          <aside className="mt-5 grid gap-2 rounded-2xl border border-warning-border bg-warning-surface p-4 text-warning-ink sm:grid-cols-[auto_1fr] sm:items-start sm:gap-4">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em]">Gerçeklik kapsamı</p>
+            <div>
+              <p className="text-xs font-bold">Kinematik, eklem limitleri, azami hız ve merkez çizgisi öz-çarpışması denetlenir.</p>
+              <p className="mt-1 text-xs leading-5">Tork, yerçekimi, yük, ivme/jerk sınırı ve denetleyici gecikmesi modellenmiyor. Bağlantı kalınlığı, motor gövdesi ve çevre engelleri de bu düzlemsel V1’in dışında; gerçek robota doğrudan komut üretmez.</p>
+            </div>
+          </aside>
 
           <ExperimentShareButton
             seviye="universite"
