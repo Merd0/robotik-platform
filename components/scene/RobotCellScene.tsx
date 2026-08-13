@@ -3,10 +3,12 @@
 import { Box, Cylinder, Grid, Line, OrbitControls, Sphere, Torus } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { useEffect } from "react";
+import * as THREE from "three";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { cameraPresetOf, type RobotCellCameraPreset } from "@/lib/robotics/robotCellStudio";
 import { ROBOT_CELL_OBSTACLES, type RobotCellMotionPlan, type RobotCellObstacle } from "@/lib/robotics/robotCellMotion";
-import type { RobotSpec } from "@/lib/robotics/kinematics";
+import { ROBOT_CELL_WORKPIECE } from "@/lib/robotics/robotCellProgram";
+import { forwardKinematics, type RobotSpec } from "@/lib/robotics/kinematics";
 import type { Vec3 } from "@/lib/robotics/transform";
 import { SCENE_PALETTES } from "@/lib/theme";
 import { RobotArmModel } from "./RobotArm";
@@ -85,6 +87,8 @@ export function RobotCellScene({
   motionPlans,
   selectedMotion,
   targetTcp,
+  workpiecePosition,
+  gripperClosed = false,
 }: {
   robot: RobotSpec;
   jointAngles: number[];
@@ -94,9 +98,18 @@ export function RobotCellScene({
   motionPlans?: RobotCellMotionPlan[];
   selectedMotion?: "movej" | "movel";
   targetTcp?: Vec3;
+  workpiecePosition?: Vec3;
+  gripperClosed?: boolean;
 }) {
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
+  const tcpTransform = forwardKinematics(robot, jointAngles).jointTransforms.at(-1)!;
+  const gripperQuaternion = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().set(
+    tcpTransform[0][0], tcpTransform[0][2], -tcpTransform[0][1], 0,
+    tcpTransform[2][0], tcpTransform[2][2], -tcpTransform[2][1], 0,
+    -tcpTransform[1][0], -tcpTransform[1][2], tcpTransform[1][1], 0,
+    0, 0, 0, 1,
+  ));
   const fixture = requiredObstacle("fixture");
   const bin = requiredObstacle("bin");
 
@@ -123,6 +136,14 @@ export function RobotCellScene({
         <meshStandardMaterial color="#0f766e" metalness={0.18} roughness={0.55} />
       </Cylinder>
       <RobotArmModel robot={robot} jointAngles={jointAngles} activeJointIndex={activeJointIndex} showFrames={showFrames} />
+      <group position={toSceneTuple(forwardKinematics(robot, jointAngles).endEffector)} quaternion={gripperQuaternion}>
+        <Box args={[0.025, 0.09, 0.025]} position={[-0.035, -0.045, 0]}>
+          <meshStandardMaterial color={gripperClosed ? "#fbbf24" : "#cbd5e1"} />
+        </Box>
+        <Box args={[0.025, 0.09, 0.025]} position={[0.035, -0.045, 0]}>
+          <meshStandardMaterial color={gripperClosed ? "#fbbf24" : "#cbd5e1"} />
+        </Box>
+      </group>
       {motionPlans?.map((plan) => {
         if (plan.tcpPath.length < 2) return null;
         const selected = plan.kind === selectedMotion;
@@ -157,7 +178,7 @@ export function RobotCellScene({
       <Box args={obstacleSizeInScene(fixture)} position={toSceneTuple(fixture.center)}>
         <meshStandardMaterial color="#7c2d12" roughness={0.7} />
       </Box>
-      <Sphere args={[0.075, 20, 20]} position={[0.64, 0.38, -0.22]}>
+      <Sphere args={[0.075, 20, 20]} position={toSceneTuple(workpiecePosition ?? ROBOT_CELL_WORKPIECE.start)}>
         <meshStandardMaterial color="#f59e0b" emissive="#7c2d12" emissiveIntensity={0.18} />
       </Sphere>
       <Box args={obstacleSizeInScene(bin)} position={toSceneTuple(bin.center)}>

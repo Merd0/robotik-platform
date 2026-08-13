@@ -66,3 +66,38 @@ test("MoveJ ve MoveL yollarını karşılaştırır, çarpışan provayı açık
     .violations.filter((violation) => ["critical", "serious"].includes(violation.impact ?? ""));
   expect(blocking).toEqual([]);
 });
+
+test("robot pozlarını öğretir, programı ön kontrolden geçirir ve satır satır oynatır", async ({ page }) => {
+  await page.goto("/laboratuvar/robot-hucresi");
+  const studio = page.getByRole("region", { name: "3B dijital robot hücresi" });
+  await studio.getByRole("button", { name: "Hareket provası", exact: true }).click();
+  const focusView = page.getByRole("dialog", { name: "Robot hücresi odak görünümü" });
+
+  await focusView.getByRole("tab", { name: "İşi öğret" }).click();
+  const teaching = focusView.getByRole("tabpanel", { name: "İşi öğret" });
+  await expect(teaching.getByRole("heading", { name: "Robot işini adım adım öğret" })).toBeVisible();
+  await expect(teaching.getByText("Önce robotu prova zaman çizgisinde bir poza getir", { exact: false })).toBeVisible();
+
+  await teaching.getByRole("button", { name: "Örnek al-bırak işini yükle" }).click();
+  await expect(teaching.getByText("5 hareket · ön kontrol temiz", { exact: false })).toBeVisible();
+  await teaching.getByRole("button", { name: "Programı temizle" }).click();
+
+  await teaching.getByRole("button", { name: "Geçerli pozu öğret" }).click();
+  await expect(teaching.getByRole("list", { name: "Öğretilen robot programı" }).getByText("P1")).toBeVisible();
+  await expect(teaching.getByText("1 hareket · ön kontrol temiz", { exact: false })).toBeVisible();
+
+  await teaching.getByRole("button", { name: "Tutucuyu aç" }).click();
+  await expect(teaching.getByRole("list", { name: "Öğretilen robot programı" }).getByText("Tutucuyu aç")).toBeVisible();
+  await expect(focusView.getByRole("button", { name: "Programı oynat" })).toBeEnabled();
+
+  const stage = focusView.getByTestId("robot-cell-stage");
+  await focusView.getByRole("button", { name: "Programı oynat" }).click();
+  await expect(focusView.getByRole("button", { name: "Programı duraklat" })).toBeVisible();
+  await expect(stage).toBeInViewport();
+  await expect(focusView.getByText(/Satır [12]\/2/)).toBeVisible();
+
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+  const blocking = (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze())
+    .violations.filter((violation) => ["critical", "serious"].includes(violation.impact ?? ""));
+  expect(blocking).toEqual([]);
+});

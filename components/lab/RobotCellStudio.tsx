@@ -13,13 +13,16 @@ import {
 } from "@/lib/robotics/robotCellStudio";
 import { computeJacobian, forwardKinematics, isNearSingularity } from "@/lib/robotics/kinematics";
 import { planRobotCellMoveJ, planRobotCellMoveL, ROBOT_CELL_OBSTACLES, sampleRobotCellMotion, type RobotCellMotionKind } from "@/lib/robotics/robotCellMotion";
+import { createRobotCellSampleJob, createTaughtPose, preflightRobotCellProgram, ROBOT_CELL_WORKPIECE, type RobotCellProgramCommand } from "@/lib/robotics/robotCellProgram";
 import { genericSixDofRobot } from "@/lib/robotics/robots/genericSixDof";
+import type { Vec3 } from "@/lib/robotics/transform";
 import {
   ROBOT_CELL_MOTION_TARGETS,
   RobotCellMotionSettings,
   RobotCellMotionTransport,
   type RobotCellMotionTargetId,
 } from "./RobotCellMotionWorkbench";
+import { RobotCellProgramTransport, RobotCellTeachingWorkbench } from "./RobotCellTeachingWorkbench";
 
 const RAD_TO_DEG = 180 / Math.PI;
 const CAMERA_BUTTONS: Array<{ preset: RobotCellCameraPreset; label: string }> = [
@@ -36,21 +39,39 @@ function formatDegrees(value: number): string {
   return value.toLocaleString("tr-TR", { maximumFractionDigits: 0 });
 }
 
+function nextIndexedId(prefix: "C" | "P", values: readonly string[]): string {
+  const maximum = values.reduce((current, value) => {
+    const index = Number.parseInt(value.slice(1), 10);
+    return Number.isFinite(index) ? Math.max(current, index) : current;
+  }, 0);
+  return `${prefix}${maximum + 1}`;
+}
+
 export function RobotCellStudio() {
   const [studio, setStudio] = useState(createRobotCellStudioState);
   const [showFrames, setShowFrames] = useState(false);
   const [controlMode, setControlMode] = useState<"joints" | "motion">("joints");
   const [focusMode, setFocusMode] = useState(false);
+  const [focusPanel, setFocusPanel] = useState<"motion" | "teach">("motion");
   const [motionTargetId, setMotionTargetId] = useState<RobotCellMotionTargetId>("inspection");
   const [selectedMotion, setSelectedMotion] = useState<RobotCellMotionKind>("movej");
   const [motionProgress, setMotionProgress] = useState(0);
   const [previewAngles, setPreviewAngles] = useState<number[] | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [programCommands, setProgramCommands] = useState<RobotCellProgramCommand[]>([]);
+  const [programPlaying, setProgramPlaying] = useState(false);
+  const [activeProgramCommandIndex, setActiveProgramCommandIndex] = useState<number | null>(null);
+  const [programCompleted, setProgramCompleted] = useState(false);
+  const [workpiecePosition, setWorkpiecePosition] = useState<Vec3>(() => ({ ...ROBOT_CELL_WORKPIECE.start }));
+  const [gripperClosed, setGripperClosed] = useState(false);
   const playbackFrame = useRef<number | null>(null);
+  const programPlaybackFrame = useRef<number | null>(null);
+  const programCommandProgress = useRef(0);
   const motionProgressRef = useRef(0);
   const focusCloseButton = useRef<HTMLButtonElement | null>(null);
   const focusDialog = useRef<HTMLDivElement | null>(null);
   const focusLaunchButton = useRef<HTMLButtonElement | null>(null);
+  const focusSettingsPanel = useRef<HTMLElement | null>(null);
   const jointAngles = useMemo(() => jointAnglesRadians(studio), [studio]);
   const [motionStartAngles, setMotionStartAngles] = useState(() => [...jointAngles]);
   const targetAngles = useMemo(
@@ -68,6 +89,10 @@ export function RobotCellStudio() {
   );
   const motionPlans = useMemo(() => [moveJPlan, moveLPlan], [moveJPlan, moveLPlan]);
   const selectedPlan = selectedMotion === "movej" ? moveJPlan : moveLPlan;
+  const programPreflight = useMemo(
+    () => preflightRobotCellProgram(genericSixDofRobot, motionStartAngles, programCommands),
+    [motionStartAngles, programCommands],
+  );
   const displayedAngles = previewAngles ?? jointAngles;
   const kinematics = useMemo(() => forwardKinematics(genericSixDofRobot, displayedAngles), [displayedAngles]);
   const orientation = useMemo(
@@ -114,6 +139,31 @@ export function RobotCellStudio() {
     setPlaying(false);
   }
 
+  function selectFocusPanel(panel: "motion" | "teach") {
+    setFocusPanel(panel);
+    focusSettingsPanel.current?.scrollTo({ top: 0 });
+  }
+
+  function teachCurrentPose() {
+    const poseId = nextIndexedId("P", programCommands.flatMap((command) => command.type === "move" ? [command.pose.id] : []));
+    const pose = createTaughtPose(genericSixDofRobot, poseId, `Öğretilen poz ${poseId.slice(1)}`, displayedAngles);
+    const commandId = nextIndexedId("C", programCommands.map((command) => command.id));
+    setProgramCommands((commands) => [...commands, { id: commandId, type: "move", motion: selectedMotion, pose }]);
+    setProgramCompleted(false);
+  }
+
+  function addGripperCommand(action: "open" | "close") {
+    const commandId = nextIndexedId("C", programCommands.map((command) => command.id));
+    setProgramCommands((commands) => [...commands, { id: commandId, type: "gripper", action }]);
+    setProgramCompleted(false);
+  }
+
+  function removeProgramCommand(id: string) {
+    setProgramCommands((commands) => commands.filter((command) => command.id !== id));
+    programCommandProgress.current = 0;
+    setProgramCompleted(false);
+  }
+
   useEffect(() => {
     if (!playing) return;
     const startedAt = performance.now();
@@ -132,6 +182,51 @@ export function RobotCellStudio() {
       if (playbackFrame.current !== null) window.cancelAnimationFrame(playbackFrame.current);
     };
   }, [playing, selectedPlan, showMotionProgress]);
+
+  useEffect(() => {
+    if (!programPlaying || programPreflight.status !== "ready") return;
+    let commandIndex = activeProgramCommandIndex ?? 0;
+    let commandStartedAt: number | null = null;
+
+    const advance = (now: number) => {
+      const step = programPreflight.steps[commandIndex];
+      if (!step) {
+        setProgramPlaying(false);
+        setActiveProgramCommandIndex(null);
+        setProgramCompleted(true);
+        return;
+      }
+      setActiveProgramCommandIndex(commandIndex);
+      const duration = step.motionPlan ? Math.max(2, step.motionPlan.estimatedDurationSeconds) * 1_000 : 900;
+      commandStartedAt ??= now - programCommandProgress.current * duration;
+      const progress = Math.min(1, (now - commandStartedAt) / duration);
+      programCommandProgress.current = progress;
+      if (step.motionPlan) setPreviewAngles([...sampleRobotCellMotion(step.motionPlan, progress).jointAngles]);
+      if (step.motionPlan && step.holdingPartAfter) setWorkpiecePosition({ ...sampleRobotCellMotion(step.motionPlan, progress).tcp });
+      if (progress >= 1) {
+        const command = programCommands[commandIndex];
+        if (command?.type === "gripper") {
+          setGripperClosed(command.action === "close");
+          if (command.action === "open") setWorkpiecePosition({ ...step.workpiecePositionAfter });
+        }
+        commandIndex += 1;
+        commandStartedAt = now;
+        programCommandProgress.current = 0;
+        if (commandIndex >= programPreflight.steps.length) {
+          setProgramPlaying(false);
+          setActiveProgramCommandIndex(null);
+          setProgramCompleted(true);
+          programCommandProgress.current = 0;
+          return;
+        }
+      }
+      programPlaybackFrame.current = window.requestAnimationFrame(advance);
+    };
+    programPlaybackFrame.current = window.requestAnimationFrame(advance);
+    return () => {
+      if (programPlaybackFrame.current !== null) window.cancelAnimationFrame(programPlaybackFrame.current);
+    };
+  }, [programPlaying, programPreflight, activeProgramCommandIndex, programCommands]);
 
   useEffect(() => {
     if (!focusMode) return;
@@ -178,6 +273,9 @@ export function RobotCellStudio() {
 
   function leaveMotionFocus() {
     setPlaying(false);
+    setProgramPlaying(false);
+    setActiveProgramCommandIndex(null);
+    programCommandProgress.current = 0;
     setFocusMode(false);
     setControlMode("joints");
     setPreviewAngles(null);
@@ -375,35 +473,95 @@ export function RobotCellStudio() {
                     motionPlans={motionPlans}
                     selectedMotion={selectedMotion}
                     targetTcp={targetTcp}
+                    workpiecePosition={workpiecePosition}
+                    gripperClosed={gripperClosed}
                   />
                 </SahneAlani>
               </div>
 
               <div className="shrink-0 border-t border-white/10 bg-slate-950 px-3 py-3 text-white sm:px-4">
-                <RobotCellMotionTransport
-                  selectedPlan={selectedPlan}
-                  selectedMotion={selectedMotion}
-                  motionProgress={motionProgress}
-                  playing={playing}
-                  onProgress={(progress) => showMotionProgress(progress)}
-                  onPlay={() => setPlaying((current) => !current)}
-                  onShowCollision={() => {
-                    if (!selectedPlan.firstIssue) return;
-                    showMotionProgress(selectedPlan.firstIssue.progress, selectedPlan);
-                  }}
-                />
+                {focusPanel === "motion" ? (
+                  <RobotCellMotionTransport
+                    selectedPlan={selectedPlan}
+                    selectedMotion={selectedMotion}
+                    motionProgress={motionProgress}
+                    playing={playing}
+                    onProgress={(progress) => showMotionProgress(progress)}
+                    onPlay={() => setPlaying((current) => !current)}
+                    onShowCollision={() => {
+                      if (!selectedPlan.firstIssue) return;
+                      showMotionProgress(selectedPlan.firstIssue.progress, selectedPlan);
+                    }}
+                  />
+                ) : (
+                  <RobotCellProgramTransport
+                    commandCount={programCommands.length}
+                    preflight={programPreflight}
+                    playing={programPlaying}
+                    activeCommandIndex={activeProgramCommandIndex}
+                    completed={programCompleted}
+                    gripperClosed={gripperClosed}
+                    onPlay={() => {
+                      if (programPlaying) {
+                        setProgramPlaying(false);
+                        return;
+                      }
+                      if (activeProgramCommandIndex === null) {
+                        setPreviewAngles(null);
+                        setWorkpiecePosition({ ...ROBOT_CELL_WORKPIECE.start });
+                        setGripperClosed(false);
+                        setProgramCompleted(false);
+                        setActiveProgramCommandIndex(0);
+                        programCommandProgress.current = 0;
+                      }
+                      setProgramPlaying(true);
+                    }}
+                  />
+                )}
               </div>
             </div>
 
-            <aside className="min-h-0 overflow-y-auto bg-site-surface p-4 sm:p-5" aria-label="Odak görünümü hareket ayarları">
-              <RobotCellMotionSettings
-                targetId={motionTargetId}
-                selectedMotion={selectedMotion}
-                moveJPlan={moveJPlan}
-                moveLPlan={moveLPlan}
-                onSelectTarget={selectMotionTarget}
-                onSelectMotion={selectMotion}
-              />
+            <aside ref={focusSettingsPanel} className="min-h-0 overflow-y-auto bg-site-surface p-4 sm:p-5" aria-label="Odak görünümü hareket ayarları">
+              <div className="mb-5 grid grid-cols-2 gap-1 rounded-xl border border-site-border bg-site-soft p-1" role="tablist" aria-label="Robot hücresi çalışma modu">
+                <button type="button" role="tab" aria-selected={focusPanel === "motion"} onClick={() => selectFocusPanel("motion")} className={`min-h-11 rounded-lg px-3 text-sm font-semibold ${focusPanel === "motion" ? "bg-site-surface text-site-ink shadow-sm" : "text-site-muted"}`}>Yolu karşılaştır</button>
+                <button type="button" role="tab" aria-selected={focusPanel === "teach"} onClick={() => selectFocusPanel("teach")} className={`min-h-11 rounded-lg px-3 text-sm font-semibold ${focusPanel === "teach" ? "bg-site-surface text-site-ink shadow-sm" : "text-site-muted"}`}>İşi öğret</button>
+              </div>
+              {focusPanel === "motion" ? (
+                <div role="tabpanel" aria-label="Yolu karşılaştır">
+                  <RobotCellMotionSettings
+                    targetId={motionTargetId}
+                    selectedMotion={selectedMotion}
+                    moveJPlan={moveJPlan}
+                    moveLPlan={moveLPlan}
+                    onSelectTarget={selectMotionTarget}
+                    onSelectMotion={selectMotion}
+                  />
+                </div>
+              ) : (
+                <RobotCellTeachingWorkbench
+                  selectedMotion={selectedMotion}
+                  commands={programCommands}
+                  preflight={programPreflight}
+                  playing={programPlaying}
+                  activeCommandIndex={activeProgramCommandIndex}
+                  onSelectMotion={selectMotion}
+                  onTeachPose={teachCurrentPose}
+                  onAddGripper={addGripperCommand}
+                  onRemoveCommand={removeProgramCommand}
+                  onClear={() => {
+                    setProgramCommands([]);
+                    programCommandProgress.current = 0;
+                    setProgramCompleted(false);
+                  }}
+                  onLoadSample={() => {
+                    setProgramCommands(createRobotCellSampleJob(genericSixDofRobot));
+                    setWorkpiecePosition({ ...ROBOT_CELL_WORKPIECE.start });
+                    setGripperClosed(false);
+                    programCommandProgress.current = 0;
+                    setProgramCompleted(false);
+                  }}
+                />
+              )}
             </aside>
           </div>
         </div>,
