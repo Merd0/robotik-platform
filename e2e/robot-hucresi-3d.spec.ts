@@ -30,9 +30,10 @@ test("3B robot hücresi altı ekseni sürer ve erişilebilir bir metin karşıl�
 test("MoveJ ve MoveL yollarını karşılaştırır, çarpışan provayı açıklayarak durdurur", async ({ page }) => {
   await page.goto("/laboratuvar/robot-hucresi");
   const studio = page.getByRole("region", { name: "3B dijital robot hücresi" });
-  await studio.getByRole("button", { name: "Hareket provası", exact: true }).click();
+  await studio.getByRole("button", { name: "Robotu öğret", exact: true }).click();
   const focusView = page.getByRole("dialog", { name: "Robot hücresi odak görünümü" });
   await expect(focusView).toBeVisible();
+  await focusView.getByRole("tab", { name: "Yol provası" }).click();
   const motion = focusView.getByRole("region", { name: "Hareket prova laboratuvarı" });
 
   await expect(motion.getByRole("heading", { name: "Aynı hedefe iki farklı hareket" })).toBeVisible();
@@ -60,7 +61,7 @@ test("MoveJ ve MoveL yollarını karşılaştırır, çarpışan provayı açık
 
   await focusView.getByRole("button", { name: "Sayfaya dön" }).click();
   await expect(focusView).toBeHidden();
-  await expect(page.getByRole("button", { name: "Hareket provası" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Robotu öğret" })).toBeFocused();
 
   const blocking = (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze())
     .violations.filter((violation) => ["critical", "serious"].includes(violation.impact ?? ""));
@@ -70,10 +71,10 @@ test("MoveJ ve MoveL yollarını karşılaştırır, çarpışan provayı açık
 test("robot pozlarını öğretir, programı ön kontrolden geçirir ve satır satır oynatır", async ({ page }) => {
   await page.goto("/laboratuvar/robot-hucresi");
   const studio = page.getByRole("region", { name: "3B dijital robot hücresi" });
-  await studio.getByRole("button", { name: "Hareket provası", exact: true }).click();
+  await studio.getByRole("button", { name: "Robotu öğret", exact: true }).click();
   const focusView = page.getByRole("dialog", { name: "Robot hücresi odak görünümü" });
 
-  await focusView.getByRole("tab", { name: "İşi öğret" }).click();
+  await focusView.getByRole("tab", { name: "İleri düzey" }).click();
   const teaching = focusView.getByRole("tabpanel", { name: "İşi öğret" });
   await expect(teaching.getByRole("heading", { name: "Robot işini adım adım öğret" })).toBeVisible();
   await expect(teaching.getByText("Önce robotu prova zaman çizgisinde bir poza getir", { exact: false })).toBeVisible();
@@ -95,6 +96,34 @@ test("robot pozlarını öğretir, programı ön kontrolden geçirir ve satır s
   await expect(focusView.getByRole("button", { name: "Programı duraklat" })).toBeVisible();
   await expect(stage).toBeInViewport();
   await expect(focusView.getByText(/Satır [12]\/2/)).toBeVisible();
+
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+  const blocking = (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze())
+    .violations.filter((violation) => ["critical", "serious"].includes(violation.impact ?? ""));
+  expect(blocking).toEqual([]);
+});
+
+test("basit al ve bırak akışında gripper parçayı kavrar ve bırakma alanına taşır", async ({ page }) => {
+  await page.goto("/laboratuvar/robot-hucresi");
+  const studio = page.getByRole("region", { name: "3B dijital robot hücresi" });
+  await studio.getByRole("button", { name: "Robotu öğret", exact: true }).click();
+  const focusView = page.getByRole("dialog", { name: "Robot hücresi odak görünümü" });
+  const direct = focusView.getByRole("tabpanel", { name: "Al ve bırak" });
+
+  await expect(direct.getByRole("heading", { name: "Gripper’ı götür, kavra, bırak" })).toBeVisible();
+  await direct.getByRole("button", { name: /Parçanın üstüne git/ }).click();
+  await direct.getByRole("button", { name: /Parçaya in/ }).click();
+  await expect(direct.getByText("Merkez hizalı", { exact: true })).toBeVisible();
+  await expect(direct.getByText("Bilek hizalı", { exact: true })).toBeVisible();
+  await expect(direct.getByRole("button", { name: "Gripper’ı kapat · kavra" })).toBeEnabled();
+  await direct.getByRole("button", { name: "Gripper’ı kapat · kavra" }).click();
+  await expect(direct.getByText("Parça kavrandı", { exact: false })).toBeVisible();
+
+  await direct.getByRole("button", { name: /Bırakma alanına git/ }).click();
+  await direct.getByRole("button", { name: "Gripper’ı aç · bırak" }).click();
+  await expect(direct.getByText("Parça mavi alana bırakıldı", { exact: false })).toBeVisible();
+  await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem")).toHaveCount(7);
+  await expect(focusView.getByRole("button", { name: "Programı oynat" })).toBeEnabled();
 
   expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
   const blocking = (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze())

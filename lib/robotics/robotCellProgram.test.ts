@@ -3,6 +3,9 @@ import { genericSixDofRobot } from "./robots/genericSixDof";
 import {
   createTaughtPose,
   createRobotCellSampleJob,
+  assessRobotCellGrip,
+  solveRobotCellDragTarget,
+  ROBOT_CELL_WORKPIECE,
   preflightRobotCellProgram,
   type RobotCellProgramCommand,
 } from "./robotCellProgram";
@@ -59,6 +62,33 @@ describe("3B robot hücresi öğretim programı", () => {
 
     expect(result.status).toBe("blocked");
     expect(result.firstIssue).toEqual(expect.objectContaining({ commandId: "C1", reason: "grip-zone" }));
+  });
+
+  it("gripper yalnız parçanın merkezinde ve kavrama açıklığı uygunken kutuyu tutar", () => {
+    const aligned = assessRobotCellGrip(genericSixDofRobot, toRadians([-13.16, 39.95, 44.79, 15.25, 163.25, 90]), { ...ROBOT_CELL_WORKPIECE.start });
+    const tilted = assessRobotCellGrip(genericSixDofRobot, toRadians([-13.16, 39.95, 44.79, 15.25, 163.25, 0]), { ...ROBOT_CELL_WORKPIECE.start });
+
+    expect(aligned).toEqual(expect.objectContaining({
+      canGrip: true,
+      positionAligned: true,
+      orientationAligned: true,
+      positionErrorMetres: expect.any(Number),
+    }));
+    expect(tilted).toEqual(expect.objectContaining({
+      canGrip: false,
+      reason: "orientation",
+      positionAligned: true,
+      orientationAligned: false,
+    }));
+  });
+
+  it("sürüklenen gripper hedefini en yakın limit-içi ve çarpışmasız IK pozuna çözer", () => {
+    const result = solveRobotCellDragTarget(genericSixDofRobot, HOME, { x: 0.72, y: -0.18, z: 0.86 });
+    const unreachable = solveRobotCellDragTarget(genericSixDofRobot, HOME, { x: 4, y: 0, z: 4 });
+
+    expect(result).toEqual(expect.objectContaining({ status: "ready", angles: expect.any(Array) }));
+    expect(result.angles).toHaveLength(6);
+    expect(unreachable).toEqual(expect.objectContaining({ status: "ik-failure", angles: null }));
   });
 
   it("boş programı oynatılabilir saymaz", () => {

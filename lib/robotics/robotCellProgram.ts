@@ -1,6 +1,7 @@
-import { forwardKinematics, type RobotSpec } from "./kinematics";
+import { forwardKinematics, inverseKinematicsNumerical, type RobotSpec } from "./kinematics";
 import {
   ROBOT_CELL_OBSTACLES,
+  detectRobotCellCollisions,
   planRobotCellMoveJ,
   planRobotCellMoveL,
   type RobotCellMotionKind,
@@ -49,6 +50,22 @@ export interface RobotCellProgramPreflight {
   estimatedDurationSeconds: number;
 }
 
+export interface RobotCellGripAssessment {
+  canGrip: boolean;
+  reason?: "position" | "orientation";
+  positionAligned: boolean;
+  orientationAligned: boolean;
+  positionErrorMetres: number;
+  verticalAlignment: number;
+}
+
+export interface RobotCellDragSolution {
+  status: "ready" | "ik-failure" | "collision";
+  angles: number[] | null;
+  errorMetres: number;
+  obstacleLabel?: string;
+}
+
 export const ROBOT_CELL_WORKPIECE = {
   start: { x: 0.72, y: -0.18, z: 0.73 },
   drop: { x: 0.8, y: -0.45, z: 0.595 },
@@ -95,6 +112,50 @@ function issueFromPlan(command: RobotCellProgramCommand & { type: "move" }, comm
 }
 
 const WORKPIECE_COLLISION_RADIUS = 0.075;
+const GRIP_POSITION_TOLERANCE = 0.055;
+const GRIP_VERTICAL_ALIGNMENT = 0.72;
+
+export function assessRobotCellGrip(
+  robot: RobotSpec,
+  jointAngles: readonly number[],
+  workpiecePosition: Vec3,
+): RobotCellGripAssessment {
+  const kinematics = forwardKinematics(robot, [...jointAngles]);
+  const tcpTransform = kinematics.jointTransforms.at(-1)!;
+  const positionErrorMetres = distance(kinematics.endEffector, workpiecePosition);
+  const verticalAlignment = Math.abs(tcpTransform[2][1]);
+  const positionAligned = positionErrorMetres <= GRIP_POSITION_TOLERANCE;
+  const orientationAligned = verticalAlignment >= GRIP_VERTICAL_ALIGNMENT;
+  if (!positionAligned) {
+    return { canGrip: false, reason: "position", positionAligned, orientationAligned, positionErrorMetres, verticalAlignment };
+  }
+  if (!orientationAligned) {
+    return { canGrip: false, reason: "orientation", positionAligned, orientationAligned, positionErrorMetres, verticalAlignment };
+  }
+  return { canGrip: true, positionAligned, orientationAligned, positionErrorMetres, verticalAlignment };
+}
+
+export function solveRobotCellDragTarget(
+  robot: RobotSpec,
+  currentAngles: readonly number[],
+  target: Vec3,
+): RobotCellDragSolution {
+  const result = inverseKinematicsNumerical(robot, target, {
+    initialGuess: [...currentAngles],
+    maxIterations: 180,
+    tolerance: 0.001,
+    damping: 0.065,
+    maxStep: 0.11,
+  });
+  if (!result.converged || !result.angles) {
+    return { status: "ik-failure", angles: null, errorMetres: result.finalError };
+  }
+  const collision = detectRobotCellCollisions(robot, result.angles, ROBOT_CELL_OBSTACLES)[0];
+  if (collision) {
+    return { status: "collision", angles: null, errorMetres: result.finalError, obstacleLabel: collision.obstacleLabel };
+  }
+  return { status: "ready", angles: [...result.angles], errorMetres: result.finalError };
+}
 
 function carriedWorkpieceIssue(
   robot: RobotSpec,
@@ -174,15 +235,16 @@ export function preflightRobotCellProgram(
     const tcp = forwardKinematics(robot, currentAngles).endEffector;
     let issue: RobotCellProgramIssue | undefined;
     if (command.action === "close" && holdingPart) issue = { commandId: command.id, commandIndex, reason: "already-holding" };
-    else if (command.action === "close" && distance(tcp, workpiecePosition) > ROBOT_CELL_WORKPIECE.gripRadiusMetres) {
-      issue = { commandId: command.id, commandIndex, reason: "grip-zone" };
+    else if (command.action === "close") {
+      const grip = assessRobotCellGrip(robot, currentAngles, workpiecePosition);
+      if (!grip.canGrip) issue = { commandId: command.id, commandIndex, reason: "grip-zone" };
+      else holdingPart = true;
     } else if (command.action === "open" && !holdingPart) {
       // Boş tutucuyu açmak gerçek kontrolörlerde geçerli ve güvenli bir komuttur.
     } else if (command.action === "open" && holdingPart) {
       workpiecePosition = releasedWorkpiecePosition(tcp);
       holdingPart = false;
     }
-    else if (command.action === "close") holdingPart = true;
 
     steps.push({
       commandId: command.id,

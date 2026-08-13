@@ -28,6 +28,7 @@ interface RobotArmProps {
 export interface RobotArmModelProps extends RobotArmProps {
   /** Koordinat çerçeveleri ile etkin eklem eksenini gösterir. */
   showFrames?: boolean;
+  industrial?: boolean;
 }
 
 const LINK_RADIUS = 0.04;
@@ -39,7 +40,7 @@ function toThreeVector(p: Vec3): [number, number, number] {
   return [p.x, p.y, p.z];
 }
 
-function ArmSegment({ start, end, color }: { start: Vec3; end: Vec3; color: string }) {
+function ArmSegment({ start, end, color, radius = LINK_RADIUS }: { start: Vec3; end: Vec3; color: string; radius?: number }) {
   const { position, quaternion, length } = useMemo(() => {
     const startVec = new THREE.Vector3(start.x, start.y, start.z);
     const endVec = new THREE.Vector3(end.x, end.y, end.z);
@@ -57,7 +58,7 @@ function ArmSegment({ start, end, color }: { start: Vec3; end: Vec3; color: stri
 
   return (
     <Cylinder
-      args={[LINK_RADIUS, LINK_RADIUS, length, 16]}
+      args={[radius * 0.88, radius, length, 20]}
       position={position}
       quaternion={quaternion}
     >
@@ -159,6 +160,7 @@ function ArmModel({
   accentColor,
   palette,
   showFrames = true,
+  industrial = false,
 }: RobotArmModelProps & {
   linkColor: string;
   accentColor: string;
@@ -185,13 +187,21 @@ function ArmModel({
         direction: roboticsVectorToScene(activeAxisRobotics.direction),
       }
     : null;
+  const sceneJointAxes = showsOrientation
+    ? sceneJointPositions.map((position, index) => ({
+        position,
+        direction: roboticsVectorToScene(jointAxisOf(jointTransforms, Math.min(index, robot.joints.length - 1)).direction),
+      }))
+    : [];
 
   return (
     <group>
       {sceneJointPositions.slice(0, -1).map((position, index) => (
-        <ArmSegment key={index} start={position} end={sceneJointPositions[index + 1]} color={linkColor} />
+        <ArmSegment key={index} start={position} end={sceneJointPositions[index + 1]} color={linkColor} radius={industrial ? 0.052 : LINK_RADIUS} />
       ))}
-      {sceneJointPositions.map((position, index) => (
+      {industrial ? sceneJointAxes.map(({ position, direction }, index) => (
+        <JointHousing key={index} position={position} direction={direction} color={index === 0 ? "#0f766e" : accentColor} active={index === activeJointIndex} />
+      )) : sceneJointPositions.map((position, index) => (
         <Sphere
           key={index}
           args={[index === activeJointIndex ? JOINT_RADIUS * 1.22 : JOINT_RADIUS, 24, 24]}
@@ -223,12 +233,30 @@ function ArmModel({
   );
 }
 
+function JointHousing({ position, direction, color, active }: { position: Vec3; direction: Vec3; color: string; active: boolean }) {
+  const quaternion = useMemo(() => new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0, 1, 0),
+    new THREE.Vector3(direction.x, direction.y, direction.z).normalize(),
+  ), [direction]);
+  return (
+    <group position={toThreeVector(position)} quaternion={quaternion}>
+      <Cylinder args={[active ? 0.105 : 0.09, active ? 0.105 : 0.09, 0.13, 24]}>
+        <meshStandardMaterial color={color} metalness={0.35} roughness={0.36} />
+      </Cylinder>
+      <Torus args={[active ? 0.108 : 0.093, 0.012, 10, 36]} rotation={[Math.PI / 2, 0, 0]}>
+        <meshStandardMaterial color={active ? "#fbbf24" : "#334155"} metalness={0.5} roughness={0.3} />
+      </Torus>
+    </group>
+  );
+}
+
 /** Canvas kurmadan, ortak FK geometrisini mevcut bir 3B sahneye yerleştirir. */
 export function RobotArmModel({
   robot,
   jointAngles,
   activeJointIndex,
   showFrames = true,
+  industrial = false,
 }: RobotArmModelProps) {
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
@@ -239,6 +267,7 @@ export function RobotArmModel({
       jointAngles={jointAngles}
       activeJointIndex={activeJointIndex}
       showFrames={showFrames}
+      industrial={industrial}
       linkColor={palette.link}
       accentColor={palette.accent}
       palette={palette}
