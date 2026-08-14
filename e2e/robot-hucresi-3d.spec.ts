@@ -111,6 +111,7 @@ test("basit al ve bırak akışında gripper parçayı kavrar ve bırakma alanı
   const direct = focusView.getByRole("tabpanel", { name: "Al ve bırak" });
 
   await expect(direct.getByRole("heading", { name: "Robotu adım adım sür" })).toBeVisible();
+  await expect(direct.getByText("Parçaya giderken önce X/Y’yi, sonra Z’yi sıfırla", { exact: false })).toBeVisible();
   await expect(direct.getByRole("button", { name: "Bu noktayı öğret" })).toBeVisible();
   await expect(direct.getByRole("button", { name: "Hazır kavrama" })).toHaveCount(0);
   await expect(direct.getByRole("button", { name: "Parçanın üstüne git" })).toHaveCount(0);
@@ -121,6 +122,7 @@ test("basit al ve bırak akışında gripper parçayı kavrar ve bırakma alanı
   for (let index = 0; index < 4; index += 1) await direct.getByRole("button", { name: "Z eksi" }).click();
   await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem")).toHaveCount(0);
   await expect(direct.getByText("Kavrama noktasında", { exact: true })).toBeVisible();
+  await expect(direct.getByText("X, Y ve Z hedef farkları sıfırlandı", { exact: false })).toBeVisible();
   await expect(direct.getByRole("button", { name: "Gripper’ı kapat · kavra" })).toBeEnabled();
   await direct.getByRole("button", { name: "Gripper’ı kapat · kavra" }).click();
   await expect(direct.getByText("Parça kavrandı", { exact: false })).toBeVisible();

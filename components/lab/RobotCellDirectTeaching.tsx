@@ -4,6 +4,8 @@ import { useState } from "react";
 import type { RobotCellGripAssessment, RobotCellProgramCommand, RobotCellProgramPreflight } from "@/lib/robotics/robotCellProgram";
 import type { Vec3 } from "@/lib/robotics/transform";
 
+const TARGET_ZERO_TOLERANCE_METRES = 0.005;
+
 function taskLabel(command: RobotCellProgramCommand): string {
   if (command.type === "gripper") return command.action === "close" ? "Parçayı kavra" : "Parçayı bırak";
   return command.pose.label;
@@ -67,22 +69,37 @@ export function RobotCellDirectTeaching({
   onClear: () => void;
 }) {
   const [stepMetres, setStepMetres] = useState(0.05);
-  const targetDistance = Math.hypot(tcp.x - activeTarget.x, tcp.y - activeTarget.y, tcp.z - activeTarget.z);
-  const atTarget = targetDistance <= 0.012;
-  const mustLift = holdingPart && tcp.z < 0.74;
-  const targetLabel = holdingPart ? "Bırakma noktası" : "Kavrama noktası";
-  const nextStep = taskFinished
-    ? "İş tamam. Programı oynatıp hareketi yeniden izle."
-    : holdingPart
-      ? mustLift ? "Önce Z+ ile parçayı güvenli yüksekliğe kaldır." : "Parçayı mavi tablaya taşı, sonra Z− ile indir."
-      : atTarget
-        ? "Parça merkezindesin. Gripper’ı kapat."
-        : "X, Y ve Z tuşlarıyla turuncu parçaya ilerle.";
   const remaining = {
     x: activeTarget.x - tcp.x,
     y: activeTarget.y - tcp.y,
     z: activeTarget.z - tcp.z,
   };
+  const axisReady = {
+    x: Math.abs(remaining.x) <= TARGET_ZERO_TOLERANCE_METRES,
+    y: Math.abs(remaining.y) <= TARGET_ZERO_TOLERANCE_METRES,
+    z: Math.abs(remaining.z) <= TARGET_ZERO_TOLERANCE_METRES,
+  };
+  const atTarget = axisReady.x && axisReady.y && axisReady.z;
+  const horizontalAligned = axisReady.x && axisReady.y;
+  const mustLift = holdingPart && tcp.z < 0.74;
+  const targetLabel = holdingPart ? "Bırakma noktası" : "Kavrama noktası";
+  const nextStep = taskFinished
+    ? "İş tamam. Programı oynatıp hareketi yeniden izle."
+    : holdingPart
+      ? mustLift
+        ? "1. Z+ ile parçayı güvenli yüksekliğe kaldır."
+        : !horizontalAligned
+          ? "2. X ve Y hedef farklarını sıfırla."
+          : !atTarget
+            ? "3. Z− ile parçayı mavi tablaya indir."
+            : "Üç hedef farkı da sıfır. Gripper’ı aç."
+      : atTarget
+        ? "Üç hedef farkı da sıfır. Gripper’ı kapat."
+        : !horizontalAligned && tcp.z < activeTarget.z + 0.1
+          ? "Önce Z+ ile yüksel; sonra X ve Y hedef farklarını sıfırla."
+          : !horizontalAligned
+            ? "Önce X ve Y hedef farklarını sıfırla."
+            : "Şimdi Z hedef farkını sıfırla.";
   const jogButton = (axis: "x" | "y" | "z", direction: -1 | 1, label: string) => (
     <button
       type="button"
@@ -101,6 +118,7 @@ export function RobotCellDirectTeaching({
       <p className="font-mono text-xs font-semibold uppercase tracking-[.16em] text-site-accent-text">Basit robot kumandası</p>
       <h3 className="mt-2 font-heading text-3xl font-semibold text-site-ink">Robotu adım adım sür</h3>
       <p className="mt-2 text-sm leading-6 text-site-muted">Uçtaki gripper her zaman aşağı bakar. X/Y/Z tuşları yalnız robotu sürer; program kendiliğinden değişmez. İşe yarayan konuma geldiğinde açıkça öğretirsin.</p>
+      <p className="mt-2 rounded-xl border border-site-border bg-site-soft px-3 py-2 text-xs leading-5 text-site-muted"><strong className="text-site-ink">İpucu:</strong> Parçaya giderken önce X/Y’yi, sonra Z’yi sıfırla. Taşırken sıra Z+ ile kaldır → X/Y ile hizala → Z− ile indir.</p>
 
       <div className="mt-4 rounded-2xl border border-site-accent bg-site-accent/10 p-4" aria-live="polite">
         <span className="block text-xs font-semibold uppercase tracking-[.14em] text-site-accent-text">Sıradaki iş</span>
@@ -128,10 +146,19 @@ export function RobotCellDirectTeaching({
 
       <div className={`mt-3 rounded-xl border p-3 ${atTarget || taskFinished ? "border-site-accent bg-site-accent/10" : "border-site-border bg-site-soft"}`} aria-live="polite">
         <strong className="block text-sm text-site-ink">{taskFinished ? "Parça bırakma tablasında" : atTarget ? `${targetLabel}nda` : `${targetLabel}na kalan`}</strong>
-        {!taskFinished && <span className="mt-1 block font-mono text-xs text-site-muted">X {remaining.x >= 0 ? "+" : ""}{formatCoordinate(remaining.x)} · Y {remaining.y >= 0 ? "+" : ""}{formatCoordinate(remaining.y)} · Z {remaining.z >= 0 ? "+" : ""}{formatCoordinate(remaining.z)} m</span>}
+        {!taskFinished && (
+          <div className="mt-2 grid grid-cols-3 gap-2" aria-label="Hedef farkları">
+            {(["x", "y", "z"] as const).map((axis) => (
+              <span key={axis} aria-label={`${axis.toUpperCase()} hedef farkı ${formatCoordinate(remaining[axis])} metre${axisReady[axis] ? ", hazır" : ""}`} className={`rounded-lg border px-2 py-2 text-center font-mono text-xs font-semibold ${axisReady[axis] ? "border-site-accent bg-site-accent/15 text-site-accent-text" : "border-site-border bg-site-surface text-site-muted"}`}>
+                {axisReady[axis] ? "✓ " : ""}{axis.toUpperCase()} {remaining[axis] >= 0 ? "+" : ""}{formatCoordinate(remaining[axis])}
+              </span>
+            ))}
+          </div>
+        )}
+        {atTarget && !taskFinished && <span className="mt-2 block text-xs font-semibold text-site-accent-text">✓ X, Y ve Z hedef farkları sıfırlandı.</span>}
       </div>
 
-      <button type="button" onClick={gripperClosed ? onRelease : onGrip} disabled={taskFinished || playing || (!gripperClosed && !grip.canGrip)} className="mt-3 min-h-14 w-full rounded-xl bg-site-accent px-3 text-sm font-bold text-site-on-accent disabled:opacity-40">{taskFinished ? "Al-bırak tamamlandı" : gripperClosed ? "Gripper’ı aç · bırak" : "Gripper’ı kapat · kavra"}</button>
+      <button type="button" onClick={gripperClosed ? onRelease : onGrip} disabled={taskFinished || playing || (!gripperClosed && (!atTarget || !grip.canGrip))} className="mt-3 min-h-14 w-full rounded-xl bg-site-accent px-3 text-sm font-bold text-site-on-accent disabled:opacity-40">{taskFinished ? "Al-bırak tamamlandı" : gripperClosed ? "Gripper’ı aç · bırak" : "Gripper’ı kapat · kavra"}</button>
 
       <div className="mt-3 rounded-2xl border border-site-accent bg-site-accent/10 p-3">
         <span className="block text-xs font-semibold uppercase tracking-[.14em] text-site-accent-text">Bir karar ver, sonra öğret</span>

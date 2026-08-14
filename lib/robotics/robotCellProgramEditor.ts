@@ -122,6 +122,16 @@ export function appendRobotCellDemonstration(input: RobotCellDemonstrationInput)
     };
   }
 
+  const directCommands = createDemonstrationCommands(input, [normalizedTrace.at(-1)!]);
+  const directPreflight = preflightRobotCellProgram(input.robot, input.startAngles, directCommands);
+  if (directPreflight.status === "ready") {
+    return {
+      commands: directCommands,
+      preflight: directPreflight,
+      insertedIntermediateCount: 0,
+    };
+  }
+
   let keptTrace = normalizedTrace;
   let commands = createDemonstrationCommands(input, keptTrace);
   let preflight = preflightRobotCellProgram(input.robot, input.startAngles, commands);

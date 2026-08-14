@@ -91,4 +91,24 @@ describe("3B robot hücresi program editörü", () => {
     expect(result.preflight.firstIssue).toEqual(expect.objectContaining({ reason: "collision" }));
     expect(result.insertedIntermediateCount).toBe(0);
   });
+
+  it("hedef güvenliyse dolaşırken oluşan engelli ara pozu atıp kavramayı tamamlar", () => {
+    const result = appendRobotCellDemonstration({
+      robot: genericSixDofRobot,
+      startAngles: radians(ROBOT_CELL_HOME_DEGREES),
+      commands: [],
+      jointTrace: [
+        radians(ROBOT_CELL_HOME_DEGREES),
+        radians(ROBOT_CELL_SAMPLE_JOB.drop),
+        radians(ROBOT_CELL_SAMPLE_JOB.pick),
+      ],
+      terminalLabel: "Kavrama konumu",
+      terminalAction: "close",
+    });
+
+    expect(result.preflight.status).toBe("ready");
+    expect(result.insertedIntermediateCount).toBe(0);
+    expect(result.commands).toHaveLength(2);
+    expect(result.commands.at(-1)).toEqual(expect.objectContaining({ type: "gripper", action: "close" }));
+  });
 });

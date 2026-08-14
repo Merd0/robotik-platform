@@ -317,8 +317,9 @@ export function RobotCellStudio() {
       setDirectStatus("Parça havada bırakılamaz. Z− ile masa veya mavi bırakma tablasına 2,5 cm yaklaş; sonra gripper’ı aç.");
       return;
     }
-    const atDrop = Math.hypot(currentTcp.x - ROBOT_CELL_WORKPIECE.drop.x, currentTcp.y - ROBOT_CELL_WORKPIECE.drop.y) <= 0.012
-      && Math.abs(currentTcp.z - ROBOT_CELL_WORKPIECE.drop.z) <= 0.012;
+    const atDrop = Math.abs(currentTcp.x - ROBOT_CELL_WORKPIECE.drop.x) <= 0.005
+      && Math.abs(currentTcp.y - ROBOT_CELL_WORKPIECE.drop.y) <= 0.005
+      && Math.abs(currentTcp.z - ROBOT_CELL_WORKPIECE.drop.z) <= 0.005;
     const recorded = recordDemonstratedAction(atDrop ? "Bırakma konumu" : "Elle bırakma konumu", currentAngles, "open");
     if (!recorded) return;
     setGripperClosed(false);
