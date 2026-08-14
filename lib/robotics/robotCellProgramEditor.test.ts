@@ -111,4 +111,20 @@ describe("3B robot hücresi program editörü", () => {
     expect(result.commands).toHaveLength(2);
     expect(result.commands.at(-1)).toEqual(expect.objectContaining({ type: "gripper", action: "close" }));
   });
+
+  it("aynı kavrama programı tarayıcıdan yüklendiyse ikinci kapatma eklemek yerine mevcut adımı kullanır", () => {
+    const existing = createRobotCellSampleJob(genericSixDofRobot).slice(0, 3);
+    const result = appendRobotCellDemonstration({
+      robot: genericSixDofRobot,
+      startAngles: radians(ROBOT_CELL_HOME_DEGREES),
+      commands: existing,
+      jointTrace: [radians(ROBOT_CELL_SAMPLE_JOB.pick)],
+      terminalLabel: "Kavrama konumu",
+      terminalAction: "close",
+    });
+
+    expect(result.preflight.status).toBe("ready");
+    expect(result.commands).toEqual(existing);
+    expect(result.insertedIntermediateCount).toBe(0);
+  });
 });

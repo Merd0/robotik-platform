@@ -103,6 +103,17 @@ export function appendRobotCellDemonstration(input: RobotCellDemonstrationInput)
   });
 
   const lastExistingMove = [...input.commands].reverse().find((command) => command.type === "move");
+  const lastExistingCommand = input.commands.at(-1);
+  if (lastExistingMove?.type === "move"
+    && lastExistingCommand?.type === "gripper"
+    && lastExistingCommand.action === input.terminalAction
+    && normalizedTrace.at(-1)
+    && sameJointPose(lastExistingMove.pose.jointAngles, normalizedTrace.at(-1)!)) {
+    const preflight = preflightRobotCellProgram(input.robot, input.startAngles, input.commands);
+    if (preflight.status === "ready") {
+      return { commands: [...input.commands], preflight, insertedIntermediateCount: 0 };
+    }
+  }
   if (lastExistingMove?.type === "move" && normalizedTrace[0]
     && sameJointPose(lastExistingMove.pose.jointAngles, normalizedTrace[0])) {
     normalizedTrace.shift();

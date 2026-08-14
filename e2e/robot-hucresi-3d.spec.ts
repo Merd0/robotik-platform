@@ -181,6 +181,37 @@ test("gripper havada açılmaz ve kullanıcı ara pozu açıkça kaydeder", asyn
   await expect(manualReleaseSteps.getByText("Parçayı bırak")).toHaveCount(0);
 });
 
+test("kaydedilmiş kavrama programı yeniden açıldığında gripper mevcut adımı tekrar kullanır", async ({ page }) => {
+  const openDirectTeaching = async () => {
+    await page.getByRole("region", { name: "3B dijital robot hücresi" }).getByRole("button", { name: "Robotu öğret", exact: true }).click();
+    return page.getByRole("dialog", { name: "Robot hücresi odak görünümü" }).getByRole("tabpanel", { name: "Al ve bırak" });
+  };
+  const moveToPick = async (direct: ReturnType<typeof page.getByRole>) => {
+    await direct.getByRole("button", { name: "Normal 5 cm" }).click();
+    for (let index = 0; index < 3; index += 1) await direct.getByRole("button", { name: "X artı" }).click();
+    for (let index = 0; index < 4; index += 1) await direct.getByRole("button", { name: "Y eksi" }).click();
+    for (let index = 0; index < 4; index += 1) await direct.getByRole("button", { name: "Z eksi" }).click();
+  };
+
+  await page.goto("/laboratuvar/robot-hucresi");
+  const firstSession = await openDirectTeaching();
+  await moveToPick(firstSession);
+  await firstSession.getByRole("button", { name: "Gripper’ı kapat · kavra" }).click();
+  await expect(firstSession.getByText("2 adım · çalışmaya hazır", { exact: true })).toBeVisible();
+  await expect(firstSession.getByText("Tarayıcıya kaydedildi", { exact: false })).toBeVisible();
+
+  await page.reload();
+  const restoredSession = await openDirectTeaching();
+  await expect(restoredSession.getByText("2 adım · çalışmaya hazır", { exact: true })).toBeVisible();
+  await moveToPick(restoredSession);
+  const grip = restoredSession.getByRole("button", { name: "Gripper’ı kapat · kavra" });
+  await expect(grip).toBeEnabled();
+  await grip.click();
+
+  await expect(restoredSession.getByText("Parça kavrandı", { exact: false })).toBeVisible();
+  await expect(restoredSession.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem")).toHaveCount(2);
+});
+
 test("öğretilen adımı seçer, önizler, sıralar ve tarayıcıda kalıcı tutar", async ({ page }) => {
   await page.goto("/laboratuvar/robot-hucresi");
   await page.getByRole("region", { name: "3B dijital robot hücresi" }).getByRole("button", { name: "Robotu öğret", exact: true }).click();
