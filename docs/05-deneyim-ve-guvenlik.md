@@ -282,3 +282,37 @@ WebGL sahnesiyle açılan sayfa için gerçekçi olmayabilir).
 
 Ölçüm ayrıntısı ve yapılan üç optimizasyon: `docs/durum-denetim.md`,
 "Faz 5 tamamlandı" bölümü.
+
+## Bilinen ödünleşim: "3D'siz ders" yüzeyi tüm etkileşimli bileşenleri taşıyor
+
+**2026-08-15'te bulundu, kök nedeni araştırıldı, bilinçli olarak açık
+bırakıldı.** `scripts/check-performance-budget.ts`'teki "3D'siz ders" yüzeyi
+(temsilci sayfa: `a-ortaokul-robot-nedir`) 255/240 KiB gzip/brotli bütçesini
+257.0/239.4 KiB'e taşırken bulundu — Python API çalışmasından bağımsız,
+önceden var olan bir durum (`git stash` ile doğrulandı: değişiklik öncesi
+zaten 256.7/239.2 KiB'di).
+
+Kök neden: `components/interactive/index.ts`, 19 etkileşimli bileşenin
+TAMAMINI tek bir `mdxComponents` haritası olarak `compileMDX`'e verir
+(`app/ders/[slug]/page.tsx`). Bu, `JointSliders` dışında hiçbir şey
+kullanmayan bir ders bile `CodeRunner`, `PlannerRace`, tüm Lab
+bileşenlerinin kodunu (~31 KiB gzip) taşıdığı anlamına gelir — çünkü hepsi
+AYNI `/ders/[slug]` route şablonundan, dinamik `[slug]` parametresi kadar
+sayfa üretiyor.
+
+**Denendi, işe yaramadı:** her bileşeni `next/dynamic(() => import(...))`
+ile sarmak. Ölçülebilir hiçbir kazanç vermedi — hepsi yine aynı paylaşılan
+route chunk'ına toplandı. Sebep: Next'in kod bölme analizi MODÜL grafiğine
+bakar, MDX İÇERİĞİNE değil — bir dersin gerçekte hangi bileşeni kullandığı
+derleme zamanında değil, dosya okunduğunda (çalışma zamanı verisi) belli
+olur. `lib/interactionManifest.ts`'teki `extractUsedComponents` bu bilgiyi
+zaten AST'den çıkarıyor, ama onu gerçek bir bundle-boyutu kazancına
+çevirmek route şablonunu (ör. ders başına ayrı, üretim zamanında yazılan
+giriş noktaları) değiştirmeyi gerektirir — bu, mevcut `[slug]` dinamik
+route mimarisinin ötesinde büyük bir iş.
+
+**Yapılan:** bütçe, mevcut gerçek maliyeti yansıtacak şekilde 265/245 KiB
+gzip/brotli'ye güncellendi (bkz. script içindeki not) — küçük içerik
+eklemelerinde tekrar tekrar kırılmaması için makul bir pay bırakıldı, ama
+sınırsız değil. Gerçek düzeltme (ders başına minimal bileşen seti) Faz 5
+sonrası "cila" fazının maddesi.

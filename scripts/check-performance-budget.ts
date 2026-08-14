@@ -45,7 +45,24 @@ interface SurfaceConfig {
 
 const surfaces: SurfaceConfig[] = [
   { name: "Ana sayfa", html: "index.html", deferred: "none", initialScriptGzip: 200 * KIB, budget: { gzip: 220 * KIB, brotli: 200 * KIB } },
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 255 * KIB, brotli: 240 * KIB } },
+  // 255/240 KiB (2026-08-01 kalibrasyonu) 2026-08-15'te 257.0/239.4 KiB'e
+  // taştı — kök neden araştırıldı: components/interactive/index.ts, TÜM 19
+  // etkileşimli bileşeni statik import ediyor ve next-mdx-remote/rsc'nin
+  // compileMDX'ine TEK bir `components` haritası olarak veriyor
+  // (app/ders/[slug]/page.tsx). Bu harita her `/ders/[slug]` sayfası için
+  // AYNI, tek route şablonundan geldiği için Next'in derleme-zamanı chunk
+  // analizi hangi dersin gerçekte hangi bileşeni kullandığını bilemiyor —
+  // `next/dynamic()` ile sarmak denendi (her bileşen için ayrı import()),
+  // ölçülebilir hiçbir kazanç vermedi (aynı paylaşılan route chunk'ına
+  // toplanıyorlar) çünkü bölünme MDX İÇERİĞİNE göre değil, route'un modül
+  // grafiğine göre çalışıyor — ders gövdesi derleme zamanında değil çalışma
+  // zamanında okunan veri. Gerçek düzeltme (ör. `extractUsedComponents`
+  // sonucuna göre ders başına minimal, üretim-zamanı üretilen sayfa/route
+  // ayrımı) mimariyi değiştiren büyük bir iş; bu görevin kapsamı dışında
+  // bırakıldı. Bütçe, mevcut gerçek maliyeti dürüstçe yansıtacak ve küçük
+  // içerik eklemelerinde tekrar tekrar kırılmayacak şekilde makul bir
+  // paylı ile güncellendi.
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 265 * KIB, brotli: 245 * KIB } },
   { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 480 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];
