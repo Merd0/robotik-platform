@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { genericSixDofRobot } from "./robots/genericSixDof";
-import { createRobotCellSampleJob, type RobotCellProgramCommand } from "./robotCellProgram";
+import { ROBOT_CELL_SAMPLE_JOB, createRobotCellSampleJob, type RobotCellProgramCommand } from "./robotCellProgram";
+import { ROBOT_CELL_HOME_DEGREES } from "./robotCellStudio";
 import {
+  appendRobotCellDemonstration,
   decodeRobotCellProgramDraft,
   encodeRobotCellProgramDraft,
   moveRobotCellProgramCommand,
   replaceRobotCellProgramCommand,
 } from "./robotCellProgramEditor";
+
+const radians = (values: readonly number[]) => values.map((value) => value * Math.PI / 180);
 
 describe("3B robot hücresi program editörü", () => {
   it("öğretilen programı ad, sürüm ve komutlarla kayıpsız saklar", () => {
@@ -43,5 +47,48 @@ describe("3B robot hücresi program editörü", () => {
 
     expect(replaceRobotCellProgramCommand(commands, "C1", replacement).map((command) => command.id)).toEqual(["C1", "C2", "C3"]);
     expect(replaceRobotCellProgramCommand(commands, "C3", replacement)).toEqual(commands);
+  });
+
+  it("elle sürülen güvenli yolu az sayıda zorunlu ara noktaya sadeleştirir", () => {
+    const sample = createRobotCellSampleJob(genericSixDofRobot);
+    const existing = sample.slice(0, 3);
+    const result = appendRobotCellDemonstration({
+      robot: genericSixDofRobot,
+      startAngles: radians(ROBOT_CELL_HOME_DEGREES),
+      commands: existing,
+      jointTrace: [
+        radians(ROBOT_CELL_SAMPLE_JOB.pick),
+        radians(ROBOT_CELL_SAMPLE_JOB.approach),
+        radians(ROBOT_CELL_SAMPLE_JOB.inspect),
+        radians(ROBOT_CELL_SAMPLE_JOB.dropApproach),
+        radians(ROBOT_CELL_SAMPLE_JOB.drop),
+      ],
+      terminalLabel: "Elle bırakma konumu",
+      terminalAction: "open",
+    });
+
+    expect(result.preflight.status).toBe("ready");
+    expect(result.insertedIntermediateCount).toBe(1);
+    expect(result.commands).toHaveLength(existing.length + 3);
+    expect(result.commands.at(-1)).toEqual(expect.objectContaining({ type: "gripper", action: "open" }));
+    expect(result.commands.filter((command) => command.type === "move").at(-1))
+      .toEqual(expect.objectContaining({ pose: expect.objectContaining({ label: "Elle bırakma konumu" }) }));
+  });
+
+  it("kullanıcı güvenli ara yol göstermediyse tehlikeli kestirmeyi hazır saymaz", () => {
+    const sample = createRobotCellSampleJob(genericSixDofRobot);
+    const existing = sample.slice(0, 3);
+    const result = appendRobotCellDemonstration({
+      robot: genericSixDofRobot,
+      startAngles: radians(ROBOT_CELL_HOME_DEGREES),
+      commands: existing,
+      jointTrace: [radians(ROBOT_CELL_SAMPLE_JOB.pick), radians(ROBOT_CELL_SAMPLE_JOB.drop)],
+      terminalLabel: "Bırakma konumu",
+      terminalAction: "open",
+    });
+
+    expect(result.preflight.status).toBe("blocked");
+    expect(result.preflight.firstIssue).toEqual(expect.objectContaining({ reason: "collision" }));
+    expect(result.insertedIntermediateCount).toBe(0);
   });
 });

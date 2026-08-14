@@ -15,6 +15,7 @@ import { computeJacobian, forwardKinematics, isNearSingularity } from "@/lib/rob
 import { planRobotCellMoveJ, planRobotCellMoveL, ROBOT_CELL_OBSTACLES, sampleRobotCellMotion, type RobotCellMotionKind } from "@/lib/robotics/robotCellMotion";
 import { assessRobotCellGrip, assessRobotCellRelease, createRobotCellSampleJob, createTaughtPose, preflightRobotCellProgram, recordRobotCellCommandSmart, releasedWorkpiecePosition, repairRobotCellProgram, ROBOT_CELL_WORKPIECE, solveRobotCellDirectTarget, type RobotCellProgramCommand } from "@/lib/robotics/robotCellProgram";
 import {
+  appendRobotCellDemonstration,
   decodeRobotCellProgramDraft,
   encodeRobotCellProgramDraft,
   moveRobotCellProgramCommand,
@@ -85,6 +86,7 @@ export function RobotCellStudio() {
   const playbackFrame = useRef<number | null>(null);
   const programPlaybackFrame = useRef<number | null>(null);
   const directAnglesRef = useRef<number[]>([]);
+  const directTraceRef = useRef<number[][]>([]);
   const programCommandProgress = useRef(0);
   const motionProgressRef = useRef(0);
   const focusCloseButton = useRef<HTMLButtonElement | null>(null);
@@ -232,10 +234,15 @@ export function RobotCellStudio() {
   }
 
   function moveGripperTo(target: Vec3, label: string) {
-    const solution = solveRobotCellDirectTarget(genericSixDofRobot, directAnglesRef.current, target);
+    const previousAngles = [...directAnglesRef.current];
+    const solution = solveRobotCellDirectTarget(genericSixDofRobot, previousAngles, target);
     if (solution.status !== "ready" || !solution.angles) {
       setDirectStatus(solution.status === "collision" ? `Bu poz ${solution.obstacleLabel ?? "hücre elemanı"} ile çarpışıyor.` : "Robot bu noktaya eklem limitleri içinde ulaşamıyor.");
       return;
+    }
+    if (directTraceRef.current.length === 0) directTraceRef.current.push(previousAngles);
+    if (!directTraceRef.current.at(-1)?.every((angle, index) => Math.abs(angle - solution.angles![index]) <= 0.0005)) {
+      directTraceRef.current.push([...solution.angles]);
     }
     directAnglesRef.current = [...solution.angles];
     setPreviewAngles(solution.angles);
@@ -245,19 +252,33 @@ export function RobotCellStudio() {
 
   function saveDirectMove(label: string, angles = directAnglesRef.current) {
     appendSmartMove(label, angles, "movej");
+    directTraceRef.current = [[...angles]];
     setDirectStatus(`${label} programa öğretildi. Robotu yeniden sürebilir veya adımı listeden düzenleyebilirsin.`);
   }
 
-  function appendSmartMoveAndGripper(label: string, angles: readonly number[], action: "open" | "close") {
-    setProgramCommands((commands) => {
-      const poseId = nextIndexedId("P", commands.flatMap((command) => command.type === "move" ? [command.pose.id] : []));
-      const moveId = nextIndexedId("C", commands.map((command) => command.id));
-      const pose = createTaughtPose(genericSixDofRobot, poseId, label, angles);
-      const afterMove = recordRobotCellCommandSmart(commands, { id: moveId, type: "move", motion: "movej", pose }).commands;
-      const gripperId = nextIndexedId("C", afterMove.map((command) => command.id));
-      return recordRobotCellCommandSmart(afterMove, { id: gripperId, type: "gripper", action }).commands;
+  function recordDemonstratedAction(label: string, angles: readonly number[], action: "open" | "close") {
+    const trace = directTraceRef.current.length > 0
+      ? directTraceRef.current
+      : [[...angles]];
+    const result = appendRobotCellDemonstration({
+      robot: genericSixDofRobot,
+      startAngles: motionStartAngles,
+      commands: programCommands,
+      jointTrace: trace,
+      terminalLabel: label,
+      terminalAction: action,
     });
+    if (result.preflight.status !== "ready") {
+      const obstacle = result.preflight.firstIssue?.obstacleLabel;
+      setDirectStatus(obstacle
+        ? `Elle gösterilen yol ${obstacle} ile temas ediyor. Güvenli yüksekliğe çıkıp yolu yeniden göster.`
+        : "Elle gösterilen yol ön kontrolden geçmedi. Güvenli yüksekliğe çıkıp yolu yeniden göster.");
+      return null;
+    }
+    setProgramCommands(result.commands);
     setProgramCompleted(false);
+    directTraceRef.current = [[...angles]];
+    return result;
   }
 
   function jogGripper(axis: "x" | "y" | "z", delta: number) {
@@ -278,11 +299,14 @@ export function RobotCellStudio() {
       setDirectStatus(assessment.reason === "orientation" ? "Bilek açısı uygun değil. Gripper parçaya üstten ve paralel gelmeli." : "Gripper parçanın merkezinde değil. Biraz daha yaklaştır.");
       return;
     }
-    appendSmartMoveAndGripper("Kavrama konumu", currentAngles, "close");
+    const recorded = recordDemonstratedAction("Kavrama konumu", currentAngles, "close");
+    if (!recorded) return;
     setGripperClosed(true);
     setHoldingPart(true);
     setDirectTaskFinished(false);
-    setDirectStatus("Parça kavrandı. Şimdi mavi bırakma alanına taşı.");
+    setDirectStatus(recorded.insertedIntermediateCount > 0
+      ? `Parça kavrandı. Elle sürdüğün yoldan ${recorded.insertedIntermediateCount} güvenli ara nokta çıkarıldı.`
+      : "Parça kavrandı. Şimdi mavi bırakma alanına taşı.");
   }
 
   function releasePart() {
@@ -295,15 +319,19 @@ export function RobotCellStudio() {
     }
     const atDrop = Math.hypot(currentTcp.x - ROBOT_CELL_WORKPIECE.drop.x, currentTcp.y - ROBOT_CELL_WORKPIECE.drop.y) <= 0.012
       && Math.abs(currentTcp.z - ROBOT_CELL_WORKPIECE.drop.z) <= 0.012;
-    appendSmartMoveAndGripper(atDrop ? "Bırakma konumu" : "Elle bırakma konumu", currentAngles, "open");
+    const recorded = recordDemonstratedAction(atDrop ? "Bırakma konumu" : "Elle bırakma konumu", currentAngles, "open");
+    if (!recorded) return;
     setGripperClosed(false);
     setHoldingPart(false);
     const landedPosition = releasedWorkpiecePosition(currentTcp);
     setWorkpiecePosition(landedPosition);
     setDirectTaskFinished(atDrop);
+    const pathSummary = recorded.insertedIntermediateCount > 0
+      ? ` Elle sürdüğün yoldan ${recorded.insertedIntermediateCount} güvenli ara nokta çıkarıldı.`
+      : "";
     setDirectStatus(atDrop
-      ? "Parça mavi alana bırakıldı. Programı oynatıp bütün işi izle."
-      : "Gripper açıldı. Parça altındaki yüzeye bırakıldı ve iki komut programa kaydedildi.");
+      ? `Parça mavi alana bırakıldı. Programı oynatıp bütün işi izle.${pathSummary}`
+      : `Gripper açıldı. Parça altındaki yüzeye bırakıldı.${pathSummary}`);
   }
 
   function teachCurrentPose() {
@@ -332,6 +360,7 @@ export function RobotCellStudio() {
     setGripperClosed(false);
     setHoldingPart(false);
     setDirectTaskFinished(false);
+    directTraceRef.current = [[...motionStartAngles]];
   }
 
   function removeProgramCommand(id: string) {
@@ -493,6 +522,8 @@ export function RobotCellStudio() {
     setMotionProgress(0);
     motionProgressRef.current = 0;
     setPlaying(false);
+    directAnglesRef.current = [...jointAngles];
+    directTraceRef.current = [[...jointAngles]];
     setFocusPanel("direct");
     setFocusMode(true);
   }
@@ -803,6 +834,7 @@ export function RobotCellStudio() {
                   onReset={() => {
                     setPreviewAngles(null);
                     directAnglesRef.current = [...jointAngles];
+                    directTraceRef.current = [[...jointAngles]];
                     setDirectStatus("Robot başlangıç pozuna döndü. X/Y ile hizala, Z ile alçal.");
                   }}
                   onClear={() => {

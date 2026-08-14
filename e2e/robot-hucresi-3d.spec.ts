@@ -126,16 +126,16 @@ test("basit al ve bırak akışında gripper parçayı kavrar ve bırakma alanı
   await expect(direct.getByText("Parça kavrandı", { exact: false })).toBeVisible();
 
   for (let index = 0; index < 2; index += 1) await direct.getByRole("button", { name: "Z artı" }).click();
-  await direct.getByRole("button", { name: "Bu noktayı öğret" }).click();
   for (let index = 0; index < 3; index += 1) await direct.getByRole("button", { name: "X eksi" }).click();
   for (let index = 0; index < 6; index += 1) await direct.getByRole("button", { name: "Y eksi" }).click();
-  await direct.getByRole("button", { name: "Bu noktayı öğret" }).click();
   for (let index = 0; index < 7; index += 1) await direct.getByRole("button", { name: "Z eksi" }).click();
   await expect(direct.getByText("Bırakma noktasında", { exact: true })).toBeVisible();
   await direct.getByRole("button", { name: "Gripper’ı aç · bırak" }).click();
   await expect(direct.getByText("Parça mavi alana bırakıldı", { exact: false })).toBeVisible();
   const recordedSteps = direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem");
-  await expect(recordedSteps).toHaveCount(6);
+  expect(await recordedSteps.count()).toBeGreaterThanOrEqual(5);
+  expect(await recordedSteps.count()).toBeLessThan(10);
+  await expect(direct.getByText(/Otomatik güvenli ara nokta/).first()).toBeVisible();
   await expect(direct.getByRole("list", { name: "Basit al ve bırak programı" }).getByText("Bırakma konumu")).toBeVisible();
   const recordedLabels = await recordedSteps.allTextContents();
   expect(recordedLabels.findIndex((label) => label.includes("Parçayı bırak")))

@@ -1,5 +1,10 @@
 import { forwardKinematics, type RobotSpec } from "./kinematics";
-import type { RobotCellProgramCommand } from "./robotCellProgram";
+import {
+  createTaughtPose,
+  preflightRobotCellProgram,
+  type RobotCellProgramCommand,
+  type RobotCellProgramPreflight,
+} from "./robotCellProgram";
 
 export const ROBOT_CELL_PROGRAM_STORAGE_KEY = "robotik-platform:robot-cell-program:v1";
 const MAX_COMMANDS = 64;
@@ -14,6 +19,135 @@ export interface RobotCellProgramDraft {
 export type RobotCellProgramDraftResult =
   | { ok: true; value: RobotCellProgramDraft }
   | { ok: false; error: string };
+
+export interface RobotCellDemonstrationInput {
+  robot: RobotSpec;
+  startAngles: readonly number[];
+  commands: readonly RobotCellProgramCommand[];
+  jointTrace: readonly (readonly number[])[];
+  terminalLabel: string;
+  terminalAction: "open" | "close";
+}
+
+export interface RobotCellDemonstrationResult {
+  commands: RobotCellProgramCommand[];
+  preflight: RobotCellProgramPreflight;
+  insertedIntermediateCount: number;
+}
+
+const TRACE_ANGLE_EPSILON = 0.0005;
+
+function nextIndexedId(prefix: "C" | "P", values: readonly string[]): string {
+  const maximum = values.reduce((current, value) => {
+    const index = Number.parseInt(value.slice(1), 10);
+    return Number.isFinite(index) ? Math.max(current, index) : current;
+  }, 0);
+  return `${prefix}${maximum + 1}`;
+}
+
+function sameJointPose(first: readonly number[], second: readonly number[]): boolean {
+  return first.length === second.length
+    && first.every((angle, index) => Math.abs(angle - second[index]) <= TRACE_ANGLE_EPSILON);
+}
+
+function validTracePose(robot: RobotSpec, angles: readonly number[]): boolean {
+  return angles.length === robot.joints.length && angles.every((angle, index) =>
+    Number.isFinite(angle)
+    && angle >= robot.joints[index].limits.min
+    && angle <= robot.joints[index].limits.max);
+}
+
+function createDemonstrationCommands(
+  input: RobotCellDemonstrationInput,
+  trace: readonly (readonly number[])[],
+): RobotCellProgramCommand[] {
+  const commands = [...input.commands];
+  const commandIds = commands.map((command) => command.id);
+  const poseIds = commands.flatMap((command) => command.type === "move" ? [command.pose.id] : []);
+
+  trace.forEach((angles, index) => {
+    const commandId = nextIndexedId("C", commandIds);
+    const poseId = nextIndexedId("P", poseIds);
+    const terminal = index === trace.length - 1;
+    commands.push({
+      id: commandId,
+      type: "move",
+      motion: "movej",
+      pose: createTaughtPose(
+        input.robot,
+        poseId,
+        terminal ? input.terminalLabel : `Otomatik güvenli ara nokta ${index + 1}`,
+        angles,
+      ),
+    });
+    commandIds.push(commandId);
+    poseIds.push(poseId);
+  });
+
+  const gripperId = nextIndexedId("C", commandIds);
+  commands.push({ id: gripperId, type: "gripper", action: input.terminalAction });
+  return commands;
+}
+
+/**
+ * Elle sürülen yolu olduğu gibi doğrular, ardından yalnızca güvenliği bozmayan
+ * ara noktaları siler. Böylece program ekranı her jog'u doldurmaz; fakat taşıma
+ * yolu hiçbir zaman yalnızca görsel olarak doğru son poza indirgenmez.
+ */
+export function appendRobotCellDemonstration(input: RobotCellDemonstrationInput): RobotCellDemonstrationResult {
+  const normalizedTrace: number[][] = [];
+  input.jointTrace.forEach((angles) => {
+    if (!validTracePose(input.robot, angles)) return;
+    if (normalizedTrace.at(-1) && sameJointPose(normalizedTrace.at(-1)!, angles)) return;
+    normalizedTrace.push([...angles]);
+  });
+
+  const lastExistingMove = [...input.commands].reverse().find((command) => command.type === "move");
+  if (lastExistingMove?.type === "move" && normalizedTrace[0]
+    && sameJointPose(lastExistingMove.pose.jointAngles, normalizedTrace[0])) {
+    normalizedTrace.shift();
+  } else if (input.commands.length === 0 && normalizedTrace[0]
+    && sameJointPose(input.startAngles, normalizedTrace[0])) {
+    normalizedTrace.shift();
+  }
+
+  if (normalizedTrace.length === 0) {
+    const commands = [...input.commands];
+    const commandId = nextIndexedId("C", commands.map((command) => command.id));
+    commands.push({ id: commandId, type: "gripper", action: input.terminalAction });
+    return {
+      commands,
+      preflight: preflightRobotCellProgram(input.robot, input.startAngles, commands),
+      insertedIntermediateCount: 0,
+    };
+  }
+
+  let keptTrace = normalizedTrace;
+  let commands = createDemonstrationCommands(input, keptTrace);
+  let preflight = preflightRobotCellProgram(input.robot, input.startAngles, commands);
+
+  if (preflight.status === "ready") {
+    let index = 0;
+    while (index < keptTrace.length - 1) {
+      const candidateTrace = keptTrace.filter((_, candidateIndex) => candidateIndex !== index);
+      const candidateCommands = createDemonstrationCommands(input, candidateTrace);
+      const candidatePreflight = preflightRobotCellProgram(input.robot, input.startAngles, candidateCommands);
+      if (candidatePreflight.status === "ready") {
+        keptTrace = candidateTrace;
+        commands = candidateCommands;
+        preflight = candidatePreflight;
+      } else {
+        index += 1;
+      }
+    }
+  }
+
+  return {
+    commands,
+    preflight,
+    insertedIntermediateCount: Math.max(0, keptTrace.length - 1),
+  };
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
