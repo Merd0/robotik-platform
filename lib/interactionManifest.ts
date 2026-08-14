@@ -66,7 +66,7 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
   },
   CodeRunner: {
     componentFile: "components/interactive/CodeRunner.tsx",
-    engineFiles: ["lib/codeLab.ts", "lib/robotics/kinematics.ts"],
+    engineFiles: ["lib/codeLab.ts", "lib/robotics/kinematics.ts", "lib/robotics/pythonBridge.ts"],
     workerFiles: ["lib/workers/pyodideWorker.ts", "lib/workers/executionLimits.ts"],
   },
   SignalTimeline: {

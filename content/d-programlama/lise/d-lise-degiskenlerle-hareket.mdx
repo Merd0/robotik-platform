@@ -1,0 +1,102 @@
+---
+id: d-lise-degiskenlerle-hareket
+baslik: Değişkenlerle robot kontrolü ve movej
+hat: d-programlama
+seviye: lise
+sure: 15
+sira: 4
+onkosul:
+  - d-lise-koordinat-hiz-bekleme
+kazanimlar:
+  - "`movej(acilar)` ile birden çok eklemi TEK çağrıda, bir açı listesiyle hareket ettirebilme"
+  - Bir hedef değeri değişkende tutup kodun farklı yerlerinde yeniden kullanabilme
+  - "`eklem_ac` ve `movej`'in aynı işi (eklem açısı ayarlamak) farklı biçimde ifade ettiğini ayırt edebilme"
+kaynaklar:
+  - kind: software-doc
+    title: "Python Tutorial: More Control Flow Tools"
+    url: https://docs.python.org/3.14/tutorial/controlflow.html
+    publisher: Python Software Foundation
+    version: "Python 3.14"
+    accessedAt: "2026-08-15"
+  - kind: official-doc
+    title: "RAPID Instructions, Functions and Data Types Reference Manual — MoveJ talimatı"
+    publisher: ABB
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+durum: yayinda
+---
+
+## Kanca
+
+Üç dersten beri `eklem_ac` ile her eklemi tek tek çağırıyorsun. Gerçek bir
+robot kontrolöründe eklemleri TEK satırda, bir açı LİSTESİYLE hareket
+ettirmek asıl kullanılan yöntemdir — endüstri bu komuta `movej` der (RAPID'de
+`MoveJ`, KRL'de `PTP`). Aynı `robot` nesnesi artık bu ismi de tanıyor.
+
+<CodeRunner
+  robot="generic-2dof"
+  theme="lise"
+  skillId="movej-degiskenlerle-hareket"
+  taskTitle="movej ile robotu Eklem 1 = 75°, Eklem 2 = -35° durumuna getir; hedef açıları önce bir DEĞİŞKENDE tut."
+  expectedFinalDegrees={[75, -35]}
+  toleranceDegrees={0.5}
+  initialCode={`# eklem_ac iki satır gerektiriyordu: robot.eklem_ac(0, ...), robot.eklem_ac(1, ...).
+# movej aynı işi TEK satırda, bir listeyle yapar.
+
+hedef_acilar = [75, -35]
+robot.movej(hedef_acilar)
+print("Yeni duruş:", hedef_acilar)`}
+/>
+
+## Ne oldu
+
+`robot.movej(acilar)`, `acilar` listesindeki her sayıyı sırasıyla o
+indeksteki ekleme yazar — `acilar[0]` eklem 0'a, `acilar[1]` eklem 1'e gider.
+Bu robotun 2 eklemi olduğu için liste tam 2 sayı içermeli; başka bir uzunluk
+verirsen (`robot.movej([75])` gibi) `movej` çalışmaz ve sana kaç eklem
+beklediğini söyleyen bir hata verir — bunu "Dene" bölümünde göreceksin.
+
+`hedef_acilar` bir DEĞİŞKEN. Sayıları doğrudan `movej([75, -35])` diye de
+yazabilirdin, ama değişkende tutmanın faydası şu: aynı sayıyı `print` satırında
+da kullanabildin, kodu değiştirmeden tekrar okuyabildin. İleride aynı hedefi
+birden çok yerde kullanacağın derslerde bu fark daha da belirginleşecek.
+
+## Gerçek dünyada
+
+ABB RAPID'de bir `MoveJ` komutu hedefi ayrı bir değişkende (`jointtarget`
+veri tipiyle) tanımlar, sonra komutta o değişkeni kullanır — tıpkı yukarıdaki
+`hedef_acilar` gibi. Bu bir tesadüf değil: gerçek robot programlarında da
+hedefler neredeyse hiç satır içine gömülmez, isimli bir değişkende tutulur —
+hem okunurluk hem de aynı hedefi programın başka yerinde yeniden kullanabilmek
+için.
+
+## Dene
+
+`hedef_acilar`'ı `[75, -35]` yaparak testi geçir. Sonra bilerek bozmayı dene:
+`hedef_acilar = [75]` yap (tek sayılı bir liste) ve çalıştır — hatanın
+kaç eklem beklendiğini ve bir örnek çağrıyı nasıl gösterdiğine bak. Son olarak
+`hedef_acilar = [200, -35]` dene: 200° bu robotun eklem limitinin (±180°)
+dışında, hatanın bu sefer ne söylediğini karşılaştır.
+
+<Quiz
+  sorular={[
+    {
+      soru: "robot.movej([75]) çalıştırıldığında (robot 2 eklemli) ne olur?",
+      secenekler: [
+        "Eklem 0, 75°'ye ayarlanır; eklem 1 değişmeden kalır",
+        "Kaç eklem açısı beklendiğini açıklayan bir hata verir, hiçbir eklem değişmez",
+        "Eksik eklem otomatik olarak 0° kabul edilir",
+      ],
+      dogru: 1,
+      aciklama: "movej, listenin uzunluğunu robotun eklem sayısıyla karşılaştırır; eşleşmezse hiçbir açıyı değiştirmeden öğretici bir hata verir — 'bazı eklemleri değiştir, bazılarını değiştirme' gibi belirsiz bir davranışa izin vermez.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki ders `movel`'i tanıtıyor — tıpkı `hedefe_git` gibi ama gerçek ismiyle
+ve bir `for` döngüsüyle birleşince robotu arka arkaya birden çok noktaya
+gezdirebiliyorsun.

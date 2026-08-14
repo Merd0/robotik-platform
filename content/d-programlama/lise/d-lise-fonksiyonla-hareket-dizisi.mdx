@@ -1,0 +1,106 @@
+---
+id: d-lise-fonksiyonla-hareket-dizisi
+baslik: Fonksiyonlarla tekrar kullanılabilir hareket dizileri
+hat: d-programlama
+seviye: lise
+sure: 15
+sira: 7
+onkosul:
+  - d-lise-kosullu-robot-durumu
+kazanimlar:
+  - Parametreli ve parametresiz Python fonksiyonu tanımlayabilme
+  - Bir hareket dizisini fonksiyona sarıp istediği kadar çağırabilme
+  - Fonksiyon kullanmanın kod tekrarını nasıl azalttığını açıklayabilme
+kaynaklar:
+  - kind: software-doc
+    title: "Python Tutorial: Defining Functions"
+    url: https://docs.python.org/3.14/tutorial/controlflow.html#defining-functions
+    publisher: Python Software Foundation
+    version: "Python 3.14"
+    accessedAt: "2026-08-15"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+durum: yayinda
+---
+
+## Kanca
+
+Aynı iki satırı ("ev pozisyonuna dön ve bunu yazdır") kodun içinde üç yerde
+tekrar yazsaydın bir şey yanlış giderdi — o iki satırı BİR kez tanımlayıp
+istediğin kadar çağırabilirsin. Python'da bunun adı fonksiyon.
+
+<CodeRunner
+  robot="generic-2dof"
+  theme="lise"
+  skillId="fonksiyonla-hareket-dizisi"
+  taskTitle="eve_don() ve koseye_git(x, y) fonksiyonlarını tanımla, kullan; diziyi eve_don() ile bitir."
+  expectedFinalDegrees={[0, 0]}
+  toleranceDegrees={0.5}
+  initialCode={`def eve_don():
+    robot.movej([0, 0])
+    print("Ev pozisyonunda.")
+
+def koseye_git(x, y):
+    robot.movel(x, y, 0)
+    print(f"Koseye gidildi: ({x}, {y})")
+
+eve_don()
+koseye_git(1.0, 0.5)
+eve_don()`}
+/>
+
+## Ne oldu
+
+`def eve_don():` bir fonksiyon TANIMLAR — bu satır tek başına robotu
+hareket ettirmez, sadece "`eve_don` dendiğinde şunlar çalışsın" diye bir
+tarif yazar. Tarif ancak `eve_don()` diye ÇAĞRILDIĞINDA çalışır — kodun
+sonundaki üç satır bu çağrıları yapıyor.
+
+`koseye_git(x, y)` aynı fikrin PARAMETRELİ hali: `x` ve `y`, fonksiyon
+çağrılırken verilen değerlerin fonksiyonun İÇİNDE hangi isimle anılacağını
+belirler. `koseye_git(1.0, 0.5)` çağrısında `x` 1.0, `y` 0.5 olur — aynı
+fonksiyonu farklı sayılarla tekrar tekrar çağırıp her seferinde farklı bir
+yere gidebilirsin, `koseye_git`'in TANIMINI hiç değiştirmeden.
+
+Kod robotu son olarak `eve_don()` ile bitiriyor — bu yüzden otomatik test
+son duruşu `[0, 0]` derece olarak kontrol ediyor, ortadaki `koseye_git`
+çağrısının ara duruşunu değil.
+
+## Gerçek dünyada
+
+RAPID'de buna karşılık gelen yapı `PROC` (procedure) ile tanımlanır:
+`PROC EveDon()` ... `ENDPROC`, sonra ana programda `EveDon;` diye çağrılır.
+KRL'de benzer yapı `DEF`/`END` ile kurulur. Fikir aynı: bir hareket dizisini
+bir kez adlandır, istediğin yerde çağır — üretim hattındaki "parçayı al",
+"parçayı bırak" gibi tekrar eden diziler neredeyse hep böyle fonksiyon/PROC
+olarak yazılır.
+
+## Dene
+
+`koseye_git` fonksiyonunu ÜÇ farklı noktayla art arda çağır (`koseye_git(1.2,
+0.5)`, `koseye_git(0.3, 1.4)`, `koseye_git(-1.0, 0.8)`), en sonda yine
+`eve_don()` ile bitir. Fonksiyon tanımını hiç değiştirmeden kaç farklı
+yere gidebildiğini gözlemle.
+
+<Quiz
+  sorular={[
+    {
+      soru: "Aşağıdaki koddan sadece def koseye_git(x, y): ... satırları çalıştırılıp hiç çağrı (koseye_git(...)) yapılmazsa robot ne yapar?",
+      secenekler: [
+        "Robot hemen (0, 0) noktasına gider",
+        "Hiçbir şey — fonksiyon sadece TANIMLANMIŞ olur, çağrılmadan çalışmaz",
+        "Python hata verir çünkü fonksiyon kullanılmadı",
+      ],
+      dogru: 1,
+      aciklama: "def bloğu bir tarif yazar, çalıştırmaz. Fonksiyonun içindeki kod yalnızca fonksiyon ADIYLA ÇAĞRILDIĞINDA (koseye_git(1, 2) gibi) çalışır — tanımlamak başka, çağırmak başka.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Hat D'nin üniversite dersleri artık `movej`/`movel`'i ileri kinematiğe
+(`forward_kinematics`) ve ters kinematiğe (`inverse_kinematics`) bağlayarak
+altı eksenli bir kolda ele alıyor.

@@ -1,0 +1,107 @@
+---
+id: d-lise-donguyle-cok-nokta
+baslik: Döngülerle çok noktalı hareket ve movel
+hat: d-programlama
+seviye: lise
+sure: 15
+sira: 5
+onkosul:
+  - d-lise-degiskenlerle-hareket
+kazanimlar:
+  - "`movel(x, y, z)` ile hedefi koordinat olarak verip robotu gerçek ismiyle hareket ettirebilme"
+  - Bir `for` döngüsüyle bir nokta listesindeki her hedefe sırayla gidebilme
+  - Aynı üç satır kodun neden onlarca farklı hedef için de çalıştığını açıklayabilme
+kaynaklar:
+  - kind: software-doc
+    title: "Python Tutorial: More Control Flow Tools — for Statements"
+    url: https://docs.python.org/3.14/tutorial/controlflow.html
+    publisher: Python Software Foundation
+    version: "Python 3.14"
+    accessedAt: "2026-08-15"
+  - kind: official-doc
+    title: "RAPID Instructions, Functions and Data Types Reference Manual — MoveL talimatı"
+    publisher: ABB
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+durum: yayinda
+---
+
+## Kanca
+
+`hedefe_git` seni her seferinde TEK bir noktaya götürüyordu. Şimdi
+`movel`'i (aynı fikrin gerçek ismi) bir nokta listesiyle ve bir `for`
+döngüsüyle birleştirip robotu arka arkaya üç farklı noktaya, üç satır kodla
+gezdireceksin.
+
+<CodeRunner
+  robot="generic-2dof"
+  theme="lise"
+  skillId="movel-donguyle-rota"
+  taskTitle="Robotu sırasıyla (1.2, 0.5), (0.3, 1.4) ve (-1.0, 0.8) noktalarına götür; son duruşu koru."
+  expectedFinalDegrees={[102.68, 90.0]}
+  toleranceDegrees={1}
+  initialCode={`hiz = 150  # önceki dersten hatırla: bu ortamda hız sadece bir sayı, hareketi etkilemiyor.
+rota = [(1.2, 0.5), (0.3, 1.4), (-1.0, 0.8)]
+
+for x, y in rota:
+    robot.movel(x, y, 0, speed=hiz)
+    print(f"Hedefe gidildi: ({x}, {y})")`}
+/>
+
+## Ne oldu
+
+`robot.movel(x, y, z, speed=None)` üç koordinatı alır (bu kol düzlemsel
+olduğu için `z` her zaman 0) ve robotu oraya götürür — açıları kendisi
+hesaplar, tıpkı `hedefe_git` gibi. `speed` parametresi kabul edilir ama
+(önceki derste gördüğün gibi) sahnede gerçek zamanlı bir hız farkı
+yaratmaz; şimdilik sadece gerçek robot kodlarına benzerlik için orada.
+
+`for x, y in rota:` satırı, listedeki her `(x, y)` çiftini sırayla alıp
+döngü gövdesini (iki satır) o değerlerle çalıştırır. Üç nokta için üç kez,
+otuz nokta için otuz kez — kod satır sayısı DEĞİŞMEZ. Bu, önceki
+dersteki `hedef_acilar` değişkenindeki fikrin bir adım ilerisi: tek bir
+değer yerine tüm bir LİSTE üzerinde tekrar kullanım.
+
+`movel`, `hedefe_git`'in aksine sayısal (iteratif) bir çözücü kullanır —
+kapalı formda değil, tahmin ede ede yakınsayan bir yöntemle çalışır. İki
+eklemli bu kolda sonuç pratikte aynı, ama bu yöntem ileride altı eklemli
+robotlarda da (kapalı form formülü olmayan durumlarda) çalışacak — üniversite
+dersinde bunu göreceksin.
+
+## Gerçek dünyada
+
+Bir RAPID programında bu döngü genelde bir dizi (`num` dizisi veya
+`robtarget` listesi) üzerinde `FOR` döngüsüyle yazılır; her adımda bir
+`MoveL` çağrılır. Kaynak taşıma hatlarında, kalite kontrol istasyonlarında —
+"aynı hareketi farklı noktalar için tekrarla" neredeyse her endüstriyel
+programın omurgasıdır.
+
+## Dene
+
+`rota` listesine kendi seçtiğin dördüncü bir nokta ekle (kolun erişimi 0.2
+ile 1.8 birim arası, ikinci dersten hatırla). Sonra listedeki bir noktayı
+kolun kesinlikle erişemeyeceği kadar uzak yap (ör. `(5, 5)`) ve çalıştır —
+`movel` bu sefer NE yapıyor, `hedefe_git`'in sessizce `False` dönmesinden
+farkı ne?
+
+<Quiz
+  sorular={[
+    {
+      soru: "rota listesindeki bir nokta robotun erişemeyeceği kadar uzaksa (ör. (5, 5)) robot.movel(x, y, 0) o satırda ne yapar?",
+      secenekler: [
+        "Sessizce en yakın ulaşılabilir noktaya gider",
+        "Hedefin çalışma uzayı dışında olduğunu açıklayan bir hata verir; program orada durur",
+        "O noktayı atlayıp döngünün bir sonraki noktasına geçer",
+      ],
+      dogru: 1,
+      aciklama: "movel, hedefe_git gibi sessizce False dönmez — ulaşılamayan bir hedef için açık bir hata fırlatır. Bu yüzden döngü içinde erişilemeyen bir nokta varsa programın orada durduğunu görürsün, sonraki noktalara sessizce geçmez.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki ders `if`/`else` ile robotun güncel durumunu (`get_tcp()`) kontrol
+edip harekete karar vermeyi ele alıyor.

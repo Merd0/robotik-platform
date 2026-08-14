@@ -87,6 +87,10 @@ liste tam vizyondur; hangi sırayla üretileceği `03-yol-haritasi.md` içinde.
 - Python ile komut dizisi yazma
 - Hareket komutları: eklem hareketi ve doğrusal hareket
 - Koordinat girme, hız ve bekleme
+- Değişkenlerle robot kontrolü ve `movej` (`eklem_ac`'in endüstriyel karşılığı)
+- Döngülerle çok noktalı hareket ve `movel` (`hedefe_git`'in endüstriyel karşılığı)
+- Koşullarla robotun durumunu (`get_tcp`/`get_joints`) kontrol etme
+- Fonksiyonlarla tekrar kullanılabilir hareket dizileri
 
 **D / Üniversite**
 - ABB RAPID: yapı, `MoveJ` / `MoveL`, hedef tanımlama, iş nesnesi
@@ -95,6 +99,16 @@ liste tam vizyondur; hangi sırayla üretileceği `03-yol-haritasi.md` içinde.
 - Fanuc TP ve karşılaştırmalı bakış
 - Çevrim dışı programlama (offline programming) mantığı
 - ROS 2 temelleri: düğüm, konu (topic), servis; robotik yazılımının ortak dili
+- Python'da ileri ve ters kinematik (`forward_kinematics`/`inverse_kinematics`)
+  ile `movej`/`movel`'i birleştirme
+
+**Not (2026-08-15):** D/Lise'nin son 4 maddesi ve D/Üniversite'nin son maddesi
+kullanıcı talebiyle eklendi — bu platformdaki mevcut `robot.eklem_ac`/
+`robot.hedefe_git` Pyodide köprüsü (bkz. `docs/02-mimari.md` "Python↔robot
+köprüsü") `movej`/`movel`/`get_joints`/`get_tcp`/`forward_kinematics`/
+`inverse_kinematics` ile genişletildi; var olan üç ders (Python ile komut
+dizisi yazma → Hareket komutları → Koordinat/hız/bekleme) değiştirilmeden
+temel alındı, üzerine devam edildi. bkz. `content/d-programlama/`.
 
 ---
 

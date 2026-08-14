@@ -675,6 +675,92 @@ describe("CodeRunner rollout: golden + negatif predicate testleri", () => {
   });
 });
 
+describe.each([
+  ["movej-degiskenlerle-hareket-v1", "d-lise-degiskenlerle-hareket", "movej-degiskenlerle-hareket"],
+  ["fonksiyonla-hareket-dizisi-v1", "d-lise-fonksiyonla-hareket-dizisi", "fonksiyonla-hareket-dizisi"],
+  ["python-fk-ik-round-trip-v1", "d-universite-python-fk-ik", "python-fk-ik-round-trip"],
+] as const)("robot-python-api rollout (%s): golden + negatif predicate testleri", (predicateId, lessonId, skillId) => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === predicateId)!;
+  const run = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+    stage: EvidenceEvent["stage"] = "assessed",
+  ) => event(stage, result, { lessonId, skillId, metrics, contentVersion: "robot-python-api-v1" });
+
+  it("predicate doğru lessonId/skillId'ye kayıtlı", () => {
+    expect(predicate.lessonId).toBe(lessonId);
+    expect(predicate.skillId).toBe(skillId);
+  });
+
+  it("golden: otomatik poz testi geçen koşu geçer", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, outputMatches: true, traceSteps: 1 })]).passed).toBe(true);
+  });
+
+  it("negatif: poza ulaşmayan koşu geçmez", () => {
+    expect(predicate.evaluate([run("retry", { poseMatches: false, outputMatches: true, traceSteps: 1 })]).passed).toBe(false);
+  });
+
+  it("negatif: assessed olmayan gözlem olayı başarı üretmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, outputMatches: true, traceSteps: 1 }, "observed")]).passed).toBe(false);
+  });
+});
+
+describe("movel-donguyle-rota-v1: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "movel-donguyle-rota-v1")!;
+  const run = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+    stage: EvidenceEvent["stage"] = "assessed",
+  ) => event(stage, result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "robot-python-api-v1",
+  });
+
+  it("golden: üç adımlık rota izi ve poz testi geçen koşu geçer", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 3 })]).passed).toBe(true);
+  });
+
+  it("negatif: doğru poza ulaşmayan koşu geçmez", () => {
+    expect(predicate.evaluate([run("retry", { poseMatches: false, traceSteps: 3 })]).passed).toBe(false);
+  });
+
+  it("negatif: rota tamamlanmadan (üçten az iz) geçmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 2 })]).passed).toBe(false);
+  });
+
+  it("negatif: assessed olmayan gözlem olayı başarı üretmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 3 }, "observed")]).passed).toBe(false);
+  });
+});
+
+describe("kosullu-tcp-kontrolu-v1: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "kosullu-tcp-kontrolu-v1")!;
+  const run = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+    stage: EvidenceEvent["stage"] = "assessed",
+  ) => event(stage, result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "robot-python-api-v1",
+  });
+
+  it("golden: beklenen çıktıyla eşleşen koşu geçer", () => {
+    expect(predicate.evaluate([run("success", { outputMatches: true, poseMatches: true })]).passed).toBe(true);
+  });
+
+  it("negatif: çıktısı eşleşmeyen koşu geçmez", () => {
+    expect(predicate.evaluate([run("retry", { outputMatches: false, poseMatches: true })]).passed).toBe(false);
+  });
+
+  it("negatif: assessed olmayan gözlem olayı başarı üretmez", () => {
+    expect(predicate.evaluate([run("success", { outputMatches: true, poseMatches: true }, "observed")]).passed).toBe(false);
+  });
+});
+
 describe("SignalTimeline rollout: golden + negatif predicate testleri", () => {
   const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "handshake-signal-order-v1")!;
   const run = (

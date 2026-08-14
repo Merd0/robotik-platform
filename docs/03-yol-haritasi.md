@@ -98,6 +98,14 @@ build/lint temizdi. Yayın ve insan incelemesi o tarihte ayrı bir adım olarak
 planlanmıştı; güncel opsiyonel inceleme politikası için yukarıdaki nota ve
 `docs/durum-denetim.md` Faz 3 bölümü.
 
+**Not (2026-08-15):** Hat D'ye kullanıcı talebiyle 5 yeni ders eklendi — 11 →
+16 ders. `robot.eklem_ac`/`robot.hedefe_git` Pyodide köprüsü `movej`/`movel`/
+`get_joints`/`get_tcp`/`forward_kinematics`/`inverse_kinematics` ile
+genişletildi (bkz. `docs/02-mimari.md` "Python↔robot köprüsü",
+`docs/01-mufredat.md` Hat D notu). Var olan 3 lise dersi değiştirilmedi,
+üzerine 4 yeni lise + 1 yeni üniversite dersi eklendi. `durum: yayinda`,
+`kaynaklar` dolu, testler/build/lint/e2e temiz.
+
 ---
 
 ## Faz 4 — Endüstriyel gerçeklik

@@ -1,0 +1,112 @@
+---
+id: d-universite-python-fk-ik
+baslik: Python'da ileri ve ters kinematik ile robot kontrolü
+hat: d-programlama
+seviye: universite
+sure: 18
+sira: 7
+onkosul:
+  - d-lise-fonksiyonla-hareket-dizisi
+  - d-universite-mecademic-python
+kazanimlar:
+  - "`forward_kinematics(acilar)` ile bilinen eklem açılarından TCP konumunu Python'da hesaplayabilme"
+  - "`inverse_kinematics(x, y, z)` ile bir konumdan eklem açılarına dönüp bunu `movej` ile uygulayabilme"
+  - Altı eksenli bir kolda aynı konuma birden fazla eklem kombinasyonuyla ulaşılabileceğini bir round-trip deneyiyle gözlemleyebilme
+kaynaklar:
+  - kind: software-doc
+    title: "Python Tutorial: More Control Flow Tools — Keyword Arguments"
+    url: https://docs.python.org/3.14/tutorial/controlflow.html#keyword-arguments
+    publisher: Python Software Foundation
+    version: "Python 3.14"
+    accessedAt: "2026-08-15"
+  - kind: book
+    title: "Modern Robotics: Mechanics, Planning, and Control, Bölüm 6"
+    publisher: Cambridge University Press
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+durum: yayinda
+---
+
+## Kanca
+
+Lise seviyesinde iki eklemli bir kolda aynı noktaya "dirsek yukarı" veya
+"dirsek aşağı" iki farklı şekilde uzanılabildiğini gördün. Şimdi bunu kodda
+test edeceksin: altı eksenli bir kolda `forward_kinematics` ile bir poz
+üret, `inverse_kinematics` ile geri çöz — dönen açılar başlangıç
+açılarınla birebir aynı çıkar mı?
+
+<CodeRunner
+  robot="generic-6dof"
+  theme="universite"
+  skillId="python-fk-ik-round-trip"
+  taskTitle="baslangic_acilari için forward_kinematics çalıştır, sonucu inverse_kinematics ile geri çöz ve movej ile uygula."
+  expectedFinalDegrees={[0, -19.56, 39.05, 0, 8.06, 0]}
+  toleranceDegrees={1}
+  initialCode={`baslangic_acilari = [0, -30, 45, 0, 60, 0]
+poz = robot.forward_kinematics(baslangic_acilari)
+print(poz)
+
+hesaplanan_acilar = robot.inverse_kinematics(x=poz.x, y=poz.y, z=poz.z)
+print("IK'nin bulduğu açılar:", [round(a, 1) for a in hesaplanan_acilar])
+
+robot.movej(hesaplanan_acilar)`}
+/>
+
+## Ne oldu
+
+`robot.forward_kinematics(acilar)` robotu HİÇ hareket ettirmez — sadece
+"bu altı açıyla TCP nerede olurdu" sorusunu yanıtlar ve `x`/`y`/`z` alanları
+olan bir poz nesnesi döner (önceki derste gördüğün `get_tcp()` ile aynı tip).
+`robot.inverse_kinematics(x=, y=, z=)` bunun tersini yapar: bir konumdan
+eklem açılarına döner — sayısal (iteratif) bir çözücü kullanır, çünkü altı
+eklemli genel bir kol için kapalı formda tek bir formül yoktur.
+
+Burada ilginç bir şey oluyor: `hesaplanan_acilar`, `baslangic_acilari` ile
+BİREBİR AYNI çıkmaz — ama `robot.movej(hesaplanan_acilar)` sonrası TCP yine
+aynı `(x, y, z)` noktasında olur. Sebep şu: altı eklemli bir kol, üç sayıyla
+(x, y, z) tanımlanan bir konuma birden fazla açı kombinasyonuyla
+ulaşabilir — konum üç serbestlik derecesi ister, kolun kendisi altı taşır.
+Kalan üç serbestlik derecesi "aynı noktaya farklı dirsek/bilek
+konfigürasyonlarıyla ulaşma" olarak ortaya çıkar. Çözücü, senin başlangıç
+açılarını değil, ARAMAYA nereden başladığını (bu ortamda robotun o anki
+duruşunu) esas alır — bu yüzden farklı bir geçerli çözüme iner.
+
+## Gerçek dünyada
+
+Gerçek robot kontrolörleri de aynı belirsizlikle karşılaşır: bir
+`GetRobTarget`/ters kinematik çağrısı birden fazla geçerli eklem
+konfigürasyonundan birini döner (genelde robotun "o anki konfigürasyon"una
+en yakın olanı, ani sıçramaları önlemek için). Mecademic ve ABB gibi
+üreticiler bu yüzden konfigürasyon bilgisini (dirsek yukarı/aşağı, bilek
+flip gibi) hedef veriyle birlikte ayrıca taşır — sadece `(x, y, z)` yetmez.
+
+## Dene
+
+`baslangic_acilari`'nı `[10, -45, 60, 0, 45, 0]` yap ve tekrar çalıştır.
+Yeni `poz` değişir mi? `hesaplanan_acilar`, yeni `baslangic_acilari` ile
+aynı mı çıkıyor? Round-trip'in konumu (x, y, z) her zaman koruduğunu ama
+açıları koruma GARANTİSİ vermediğini kendi gözlemlerinle doğrula.
+
+<Quiz
+  sorular={[
+    {
+      soru: "hesaplanan_acilar, baslangic_acilari ile birebir aynı değilse bu neyi gösterir?",
+      secenekler: [
+        "inverse_kinematics fonksiyonunda bir hata olduğunu",
+        "Bu konuma robotun başka bir eklem kombinasyonuyla da ulaşabildiğini — konum tek başına eklem açılarını belirlemez",
+        "forward_kinematics'in yanlış bir poz hesapladığını",
+      ],
+      dogru: 1,
+      aciklama: "Altı eklemli bir kolda üç sayılık bir hedefe (x, y, z) birden fazla açı kombinasyonuyla ulaşılabilir. movej(hesaplanan_acilar) sonrası TCP'nin yine aynı poz'da olması, ters kinematiğin doğru çalıştığının kanıtıdır — açıların birebir eşleşmesi gerekmez.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Bu, Hat D'nin Python API'sinin son durağı. Sıradaki dersler ROS 2'nin temel
+kavramlarını (düğüm, konu, servis) ele alıyor — burada öğrendiğin
+`movej`/`movel`/FK/IK fikirleri orada da karşına, farklı bir arayüzle,
+tekrar çıkacak.

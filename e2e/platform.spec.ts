@@ -15,7 +15,8 @@ test("ana sayfa taşmadan güvenilir bir başlangıç sunar", async ({ page }) =
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   const platformNumbers = page.getByRole("region", { name: "Platform sayıları" });
   // 2026-08-10 politika değişikliğinde 50 taslak yayına alındığı için 39 → 89.
-  await expect(platformNumbers.getByText("89", { exact: true })).toBeVisible();
+  // 2026-08-15: Hat D'ye 5 yeni Python/movej/movel dersi eklendi, 89 → 94.
+  await expect(platformNumbers.getByText("94", { exact: true })).toBeVisible();
   await expect(platformNumbers.getByText("yayında ders", { exact: true })).toBeVisible();
   const overflows = await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1);
   expect(overflows).toBe(false);
@@ -171,6 +172,82 @@ test("CodeRunner state'i doğrulanmış paylaşım bağlantısıyla geri yüklen
 
   await page.goto(href!);
   await expect(page.getByLabel("Python kodu")).toHaveValue(sharedCode);
+});
+
+test("movej geçerli bir açı listesiyle robotu hareket ettirir ve predicate'i kanıtlar", async ({ page }) => {
+  await page.goto("/ders/d-lise-degiskenlerle-hareket");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText(/Otomatik test geçti/)).toBeVisible({ timeout: 30_000 });
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "movej-degiskenlerle-hareket-v1",
+  )).toBe(true);
+});
+
+test("movej yanlış sayıda eklem açısı için öğretici bir hata verir, robotu bozmaz", async ({ page }) => {
+  await page.goto("/ders/d-lise-degiskenlerle-hareket");
+  await page.getByLabel("Python kodu").fill("robot.movej([75])\nprint(\"bu satıra hiç ulaşılmamalı\")");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText(/2 eklemli olduğu için movej\(\) 2 eklem açısı bekliyor/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator("pre")).not.toContainText("bu satıra hiç ulaşılmamalı");
+});
+
+test("fonksiyonla tanımlanan hareket dizisi çalışır ve predicate'i kanıtlar", async ({ page }) => {
+  await page.goto("/ders/d-lise-fonksiyonla-hareket-dizisi");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText(/Otomatik test geçti/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator("pre")).toContainText("Koseye gidildi: (1.0, 0.5)");
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "fonksiyonla-hareket-dizisi-v1",
+  )).toBe(true);
+});
+
+test("movel bir for döngüsüyle üç noktayı gezer ve predicate'i kanıtlar", async ({ page }) => {
+  await page.goto("/ders/d-lise-donguyle-cok-nokta");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText(/Otomatik test geçti/)).toBeVisible({ timeout: 30_000 });
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "movel-donguyle-rota-v1",
+  )).toBe(true);
+});
+
+test("koşullu TCP kontrolü doğru dala girer ve predicate'i kanıtlar", async ({ page }) => {
+  await page.goto("/ders/d-lise-kosullu-robot-durumu");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText(/Otomatik test geçti/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator("pre")).toContainText("TCP guvenli calisma bolgesinde");
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "kosullu-tcp-kontrolu-v1",
+  )).toBe(true);
+});
+
+test("Python FK/IK round-trip aynı TCP noktasına ulaşır ve predicate'i kanıtlar", async ({ page }) => {
+  await page.goto("/ders/d-universite-python-fk-ik");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText(/Otomatik test geçti/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator("pre")).toContainText("IK'nin bulduğu açılar");
+
+  const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(evidence.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "python-fk-ik-round-trip-v1",
+  )).toBe(true);
 });
 
 test("SignalTimeline state'i paylaşılır ve doğru el sıkışma sırası kanıtlanır", async ({ page }) => {

@@ -1,0 +1,101 @@
+---
+id: d-lise-kosullu-robot-durumu
+baslik: Koşullarla robotun durumunu kontrol etme
+hat: d-programlama
+seviye: lise
+sure: 12
+sira: 6
+onkosul:
+  - d-lise-donguyle-cok-nokta
+kazanimlar:
+  - "`get_tcp()` ile robotun güncel uç nokta konumunu Python'a okuyabilme"
+  - "`if`/`else` ile bir ölçüme göre farklı iki koda dallanabilme"
+  - Bir programın hareket etmeden önce durumu kontrol edip karar verebileceğini açıklayabilme
+kaynaklar:
+  - kind: software-doc
+    title: "Python Tutorial: More Control Flow Tools — if Statements"
+    url: https://docs.python.org/3.14/tutorial/controlflow.html
+    publisher: Python Software Foundation
+    version: "Python 3.14"
+    accessedAt: "2026-08-15"
+incelendi_tarafindan: ""
+incelendi_tarih: ""
+etkilesimli:
+  - CodeRunner
+durum: yayinda
+---
+
+## Kanca
+
+Bir robot programı bazen hareket etmeden önce KARAR vermeli: TCP güvenli
+çalışma bölgesinde mi, yoksa tabana çok mu yakın? Bu kararı `if`/`else` ile
+kodun içine yazacaksın — robotun kendi durumunu okuyarak.
+
+<CodeRunner
+  robot="generic-2dof"
+  theme="lise"
+  skillId="kosullu-tcp-kontrolu"
+  taskTitle="Robotu (1.0, 0.3) noktasına götür, sonra TCP'nin tabana uzaklığını hesaplayıp güvenli/uyarı mesajı yazdır."
+  expectedOutput={`Hedefe gidildi.
+TCP guvenli calisma bolgesinde (mesafe=1.04)`}
+  initialCode={`hedef_x, hedef_y = 1.0, 0.3
+robot.movel(hedef_x, hedef_y, 0)
+print("Hedefe gidildi.")
+
+tcp = robot.get_tcp()
+mesafe = (tcp.x ** 2 + tcp.y ** 2) ** 0.5
+
+if mesafe < 0.25:
+    print(f"Uyari: TCP tabana cok yakin (mesafe={mesafe:.2f})")
+else:
+    print(f"TCP guvenli calisma bolgesinde (mesafe={mesafe:.2f})")`}
+/>
+
+## Ne oldu
+
+`robot.get_tcp()`, robotu HİÇ hareket ettirmeden güncel uç nokta (TCP)
+konumunu okur — `x`, `y`, `z` alanları olan bir nesne döner
+(`tcp.x`, `tcp.y`, `tcp.z` şeklinde okunur). Bu, önceki derslerdeki
+`movej`/`movel` gibi robotu SÜRMÜYOR, sadece mevcut durumu SORUYOR.
+
+`mesafe = (tcp.x ** 2 + tcp.y ** 2) ** 0.5` iki koordinattan Öklid
+uzaklığını hesaplar. `if mesafe < 0.25:` bu sayıyı bir eşikle karşılaştırır;
+sonuca göre İKİ satırdan sadece BİRİ çalışır — `if` bloğu ya da `else` bloğu,
+asla ikisi birden. İkinci derste gördüğün "kolun en yakın erişebildiği nokta
+tabana 0.2 birim uzaklıktadır" bilgisi burada eşik seçimine ilham verdi:
+0.25, o sınıra yakın ama biraz paylı bir eşik.
+
+## Gerçek dünyada
+
+Gerçek hücrelerde robot programları hareket etmeden önce sık sık durum
+kontrolü yapar: "tutucu boş mu?", "önceki hareket bitti mi?", "TCP güvenli
+bölgede mi?" Bu kontroller genelde bir sensörden veya kontrolörün kendi
+durumundan (`get_tcp()`'e karşılık gelen gerçek komut) okunur, sabit kodlanmış
+bir sayı değildir — programın kendi kendini izlemesi böyle çalışır.
+
+## Dene
+
+`hedef_x, hedef_y` değerlerini `0.15, 0.1` yap (uzaklık `0.25`'in altına
+düşecek şekilde) ve çalıştır — "Uyari" satırının basıldığını gör. Sonra tekrar
+`1.0, 0.3`'e dön ve `mesafe < 0.25` şartını `mesafe < 1.5` yaparak iki dalın
+da nasıl yer değiştirdiğini gözlemle.
+
+<Quiz
+  sorular={[
+    {
+      soru: "if mesafe < 0.25: ... else: ... yapısında mesafe = 1.04 ise hangi satır çalışır?",
+      secenekler: [
+        "if bloğu (Uyarı mesajı)",
+        "else bloğu (Güvenli mesajı)",
+        "İkisi de çalışır, ikisi de basılır",
+      ],
+      dogru: 1,
+      aciklama: "1.04, 0.25'ten büyük olduğu için if şartı (mesafe < 0.25) yanlıştır (False); Python bu durumda else bloğuna geçer. if/else birbirini dışlar — ikisi asla aynı anda çalışmaz.",
+    },
+  ]}
+/>
+
+## Sonraki
+
+Sıradaki ders bu bilgileri bir araya getirip TEKRAR KULLANILABİLİR hareket
+dizilerini fonksiyon olarak tanımlamayı ele alıyor.

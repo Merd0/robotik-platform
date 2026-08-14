@@ -195,6 +195,78 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     },
   },
   {
+    id: "movej-degiskenlerle-hareket-v1",
+    lessonId: "d-lise-degiskenlerle-hareket",
+    skillId: "movej-degiskenlerle-hareket",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "movej-degiskenlerle-hareket" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
+    id: "movel-donguyle-rota-v1",
+    lessonId: "d-lise-donguyle-cok-nokta",
+    skillId: "movel-donguyle-rota",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "movel-donguyle-rota" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true &&
+        typeof event.metrics?.traceSteps === "number" &&
+        event.metrics.traceSteps >= 3,
+      ),
+      metrics: { requiredTraceSteps: 3 },
+    }),
+  },
+  {
+    id: "kosullu-tcp-kontrolu-v1",
+    lessonId: "d-lise-kosullu-robot-durumu",
+    skillId: "kosullu-tcp-kontrolu",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "kosullu-tcp-kontrolu" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.outputMatches === true,
+      ),
+      metrics: { requiresOutputMatch: true },
+    }),
+  },
+  {
+    id: "fonksiyonla-hareket-dizisi-v1",
+    lessonId: "d-lise-fonksiyonla-hareket-dizisi",
+    skillId: "fonksiyonla-hareket-dizisi",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "fonksiyonla-hareket-dizisi" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
+    id: "python-fk-ik-round-trip-v1",
+    lessonId: "d-universite-python-fk-ik",
+    skillId: "python-fk-ik-round-trip",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "python-fk-ik-round-trip" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresRoundTripPoseMatch: true },
+    }),
+  },
+  {
     id: "handshake-signal-order-v1",
     lessonId: "e-lise-el-sikisma",
     skillId: "handshake-order",

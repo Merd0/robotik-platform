@@ -307,6 +307,36 @@ olmayan bir bileşen için `computeInteractionHash` açıkça hata fırlatır.
 kapsam sınırı: Sprint 2 yalnız motor/state katmanını teslim etti, sayfa
 entegrasyonu ayrı bir adımdır.
 
+### 7. Python↔robot köprüsü (Pyodide)
+
+`components/interactive/CodeRunner.tsx`, öğrencinin Pyodide'de çalıştırdığı
+Python koduna `robot` adlı, kasıtlı olarak KÜÇÜK bir API yüzeyi enjekte eder
+(`lib/workers/pyodideWorker.ts`, bkz. bölüm 3 "MoveJ/MoveL komut örneği"
+yerine burada gerçek çalışan bir sürüm): `eklem_ac(index, derece)` ve
+(sadece 2 eklemli robotlarda) `hedefe_git(x, y)`; ayrıca (robotSpec
+verildiğinde, eklem sayısından bağımsız) `movej(acilar)`, `movel(x, y, z,
+speed=None)`, `get_joints()`, `get_tcp()`, `forward_kinematics(acilar)`,
+`inverse_kinematics(x, y, z)`. `movej`/`movel` `eklem_ac`/`hedefe_git`'in
+YERİNE geçmez — aynı bridge'e sonradan eklendi, ikisi de aynı
+`currentAngles`/`jointTrace` durumunu paylaşır (bkz. `content/d-programlama/`
+lise dersleri, `eklem_ac`/`hedefe_git` önce öğretilip sonra "gerçek
+endüstriyel isimleri" olarak `movej`/`movel`'e bağlanıyor).
+
+Girdi doğrulama ve hata mesajı üretimi (`lib/robotics/pythonBridge.ts`) SAF
+bir modül — worker'ın Pyodide/PyProxy detaylarından ayrı, bu yüzden Vitest
+ile doğrudan test edilebiliyor. Yeni matematik içermez; `forwardKinematics`/
+`inverseKinematicsNumerical`'ı sarıp Türkçe, öğretici hata mesajı üretir
+(ör. yanlış eklem sayısı, eklem limiti ihlali, çalışma uzayı dışı hedef).
+`speed` parametresi kabul edilir ama şu an hiçbir yerde kullanılmaz — bu
+platform gerçek zamanlı hız/animasyon simülasyonu yapmaz (bkz. bölüm
+"kinematik dijital prova" sınırı, aynı dürüstlük ilkesi).
+
+Bu genişleme `RobotSpec`/`PlanResult`/`Planner` sözleşmelerini değiştirmez;
+`pythonBridge.ts` yalnız var olan `kinematics.ts` fonksiyonlarını tüketir.
+`LAB_DEPENDENCY_REGISTRY`'deki `CodeRunner` girdisine yeni saf dosya
+eklendi (`lib/robotics/pythonBridge.ts`) — bu yüzden bu köprünün mantığı
+değişirse `interactionHash` de değişir, eski kanıt otomatik eskir.
+
 ---
 
 ## Doğrulama stratejisi
