@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { RobotCellGripAssessment, RobotCellProgramCommand, RobotCellProgramPreflight } from "@/lib/robotics/robotCellProgram";
+import type { RobotCellProgramCommand, RobotCellProgramPreflight } from "@/lib/robotics/robotCellProgram";
 import type { Vec3 } from "@/lib/robotics/transform";
 
 const TARGET_ZERO_TOLERANCE_METRES = 0.005;
@@ -18,7 +18,6 @@ function formatCoordinate(value: number): string {
 export function RobotCellDirectTeaching({
   commands,
   preflight,
-  grip,
   gripperClosed,
   holdingPart,
   directStatus,
@@ -44,7 +43,6 @@ export function RobotCellDirectTeaching({
 }: {
   commands: readonly RobotCellProgramCommand[];
   preflight: RobotCellProgramPreflight;
-  grip: RobotCellGripAssessment;
   gripperClosed: boolean;
   holdingPart: boolean;
   directStatus: string;
@@ -123,7 +121,6 @@ export function RobotCellDirectTeaching({
       <div className="mt-4 rounded-2xl border border-site-accent bg-site-accent/10 p-4" aria-live="polite">
         <span className="block text-xs font-semibold uppercase tracking-[.14em] text-site-accent-text">Sıradaki iş</span>
         <strong className="mt-1 block text-base text-site-ink">{nextStep}</strong>
-        <span className="mt-1 block text-xs leading-5 text-site-muted">{directStatus}</span>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2" aria-label="Jog hassasiyeti">
@@ -158,7 +155,8 @@ export function RobotCellDirectTeaching({
         {atTarget && !taskFinished && <span className="mt-2 block text-xs font-semibold text-site-accent-text">✓ X, Y ve Z hedef farkları sıfırlandı.</span>}
       </div>
 
-      <button type="button" onClick={gripperClosed ? onRelease : onGrip} disabled={taskFinished || playing || (!gripperClosed && (!atTarget || !grip.canGrip))} className="mt-3 min-h-14 w-full rounded-xl bg-site-accent px-3 text-sm font-bold text-site-on-accent disabled:opacity-40">{taskFinished ? "Al-bırak tamamlandı" : gripperClosed ? "Gripper’ı aç · bırak" : "Gripper’ı kapat · kavra"}</button>
+      <button type="button" onClick={gripperClosed ? onRelease : onGrip} disabled={taskFinished || playing || (!gripperClosed && !atTarget)} className="mt-3 min-h-14 w-full rounded-xl bg-site-accent px-3 text-sm font-bold text-site-on-accent disabled:opacity-40">{taskFinished ? "Al-bırak tamamlandı" : gripperClosed ? "Gripper’ı aç · bırak" : "Gripper’ı kapat · kavra"}</button>
+      <p className="mt-2 rounded-xl border border-site-border bg-site-soft px-3 py-2 text-xs leading-5 text-site-muted" aria-live="polite">{directStatus}</p>
 
       <div className="mt-3 rounded-2xl border border-site-accent bg-site-accent/10 p-3">
         <span className="block text-xs font-semibold uppercase tracking-[.14em] text-site-accent-text">Bir karar ver, sonra öğret</span>

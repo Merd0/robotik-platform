@@ -212,6 +212,39 @@ test("kaydedilmiş kavrama programı yeniden açıldığında gripper mevcut ad�
   await expect(restoredSession.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem")).toHaveCount(2);
 });
 
+test("program kaydı engelli olsa bile geçerli gripper kavraması fiziksel olarak çalışır", async ({ page }) => {
+  await page.goto("/laboratuvar/robot-hucresi");
+  await page.getByRole("region", { name: "3B dijital robot hücresi" }).getByRole("button", { name: "Robotu öğret", exact: true }).click();
+  const focusView = page.getByRole("dialog", { name: "Robot hücresi odak görünümü" });
+
+  await focusView.getByRole("tab", { name: "İleri düzey" }).click();
+  const advanced = focusView.getByRole("tabpanel", { name: "İşi öğret" });
+  await advanced.getByRole("button", { name: "Tutucuyu kapat" }).click();
+  await expect(advanced.getByText("Program oynatılamıyor", { exact: true })).toBeVisible();
+
+  await focusView.getByRole("tab", { name: "Al ve bırak" }).click();
+  const direct = focusView.getByRole("tabpanel", { name: "Al ve bırak" });
+  await direct.getByRole("button", { name: "Normal 5 cm" }).click();
+  for (let index = 0; index < 3; index += 1) await direct.getByRole("button", { name: "X artı" }).click();
+  for (let index = 0; index < 4; index += 1) await direct.getByRole("button", { name: "Y eksi" }).click();
+  for (let index = 0; index < 4; index += 1) await direct.getByRole("button", { name: "Z eksi" }).click();
+  await direct.getByRole("button", { name: "Gripper’ı kapat · kavra" }).click();
+
+  await expect(focusView.getByText("Tutucu kapalı · parça bağlı", { exact: true })).toBeVisible();
+  await expect(direct.getByText("Parça kavrandı", { exact: false })).toBeVisible();
+  await expect(direct.getByText("program kaydı", { exact: false })).toBeVisible();
+
+  for (let index = 0; index < 2; index += 1) await direct.getByRole("button", { name: "Z artı" }).click();
+  for (let index = 0; index < 3; index += 1) await direct.getByRole("button", { name: "X eksi" }).click();
+  for (let index = 0; index < 6; index += 1) await direct.getByRole("button", { name: "Y eksi" }).click();
+  for (let index = 0; index < 7; index += 1) await direct.getByRole("button", { name: "Z eksi" }).click();
+  await direct.getByRole("button", { name: "Gripper’ı aç · bırak" }).click();
+
+  await expect(focusView.getByText("Tutucu açık", { exact: true })).toBeVisible();
+  await expect(direct.getByText("Parça bırakıldı; gripper açıldı", { exact: false })).toBeVisible();
+  await expect(direct.getByRole("button", { name: "Al-bırak tamamlandı" })).toBeVisible();
+});
+
 test("öğretilen adımı seçer, önizler, sıralar ve tarayıcıda kalıcı tutar", async ({ page }) => {
   await page.goto("/laboratuvar/robot-hucresi");
   await page.getByRole("region", { name: "3B dijital robot hücresi" }).getByRole("button", { name: "Robotu öğret", exact: true }).click();

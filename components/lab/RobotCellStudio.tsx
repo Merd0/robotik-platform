@@ -170,10 +170,6 @@ export function RobotCellStudio() {
     [displayedAngles],
   );
   const activeJoint = genericSixDofRobot.joints[studio.activeJointIndex];
-  const gripAssessment = useMemo(
-    () => assessRobotCellGrip(genericSixDofRobot, displayedAngles, workpiecePosition),
-    [displayedAngles, workpiecePosition],
-  );
   function selectCamera(cameraPreset: RobotCellCameraPreset) {
     setStudio((current) => ({ ...current, cameraPreset }));
   }
@@ -293,17 +289,31 @@ export function RobotCellStudio() {
   }
 
   function gripPart() {
-    const currentAngles = [...directAnglesRef.current];
-    const assessment = assessRobotCellGrip(genericSixDofRobot, currentAngles, workpiecePosition);
+    let currentAngles = [...directAnglesRef.current];
+    let assessment = assessRobotCellGrip(genericSixDofRobot, currentAngles, workpiecePosition);
+    if (!assessment.canGrip && assessment.reason === "orientation" && assessment.positionAligned) {
+      const aligned = solveRobotCellDirectTarget(genericSixDofRobot, currentAngles, workpiecePosition);
+      if (aligned.status === "ready" && aligned.angles) {
+        currentAngles = [...aligned.angles];
+        directAnglesRef.current = [...aligned.angles];
+        directTraceRef.current.push([...aligned.angles]);
+        setPreviewAngles(aligned.angles);
+        assessment = assessRobotCellGrip(genericSixDofRobot, currentAngles, workpiecePosition);
+      }
+    }
     if (!assessment.canGrip) {
       setDirectStatus(assessment.reason === "orientation" ? "Bilek açısı uygun değil. Gripper parçaya üstten ve paralel gelmeli." : "Gripper parçanın merkezinde değil. Biraz daha yaklaştır.");
       return;
     }
     const recorded = recordDemonstratedAction("Kavrama konumu", currentAngles, "close");
-    if (!recorded) return;
     setGripperClosed(true);
     setHoldingPart(true);
     setDirectTaskFinished(false);
+    if (!recorded) {
+      directTraceRef.current = [[...currentAngles]];
+      setDirectStatus("Parça kavrandı; gripper kapandı. Mevcut program kaydı engelli olduğu için bu hareket kayda eklenmedi. Yeni kayıt için Programı temizle.");
+      return;
+    }
     setDirectStatus(recorded.insertedIntermediateCount > 0
       ? `Parça kavrandı. Elle sürdüğün yoldan ${recorded.insertedIntermediateCount} güvenli ara nokta çıkarıldı.`
       : "Parça kavrandı. Şimdi mavi bırakma alanına taşı.");
@@ -321,12 +331,16 @@ export function RobotCellStudio() {
       && Math.abs(currentTcp.y - ROBOT_CELL_WORKPIECE.drop.y) <= 0.005
       && Math.abs(currentTcp.z - ROBOT_CELL_WORKPIECE.drop.z) <= 0.005;
     const recorded = recordDemonstratedAction(atDrop ? "Bırakma konumu" : "Elle bırakma konumu", currentAngles, "open");
-    if (!recorded) return;
     setGripperClosed(false);
     setHoldingPart(false);
     const landedPosition = releasedWorkpiecePosition(currentTcp);
     setWorkpiecePosition(landedPosition);
     setDirectTaskFinished(atDrop);
+    if (!recorded) {
+      directTraceRef.current = [[...currentAngles]];
+      setDirectStatus("Parça bırakıldı; gripper açıldı. Mevcut program kaydı engelli olduğu için bu hareket kayda eklenmedi. Yeni kayıt için Programı temizle.");
+      return;
+    }
     const pathSummary = recorded.insertedIntermediateCount > 0
       ? ` Elle sürdüğün yoldan ${recorded.insertedIntermediateCount} güvenli ara nokta çıkarıldı.`
       : "";
@@ -811,7 +825,6 @@ export function RobotCellStudio() {
                 <RobotCellDirectTeaching
                   commands={programCommands}
                   preflight={programPreflight}
-                  grip={gripAssessment}
                   gripperClosed={gripperClosed}
                   holdingPart={holdingPart}
                   directStatus={directStatus}
