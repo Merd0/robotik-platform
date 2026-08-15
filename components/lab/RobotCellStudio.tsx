@@ -124,31 +124,35 @@ export function RobotCellStudio() {
     directAnglesRef.current = [...displayedAngles];
   }, [displayedAngles]);
   useEffect(() => {
-    // localStorage okuma senkron ve ucuz; ekstra setTimeout(…, 0) sarmalayıcısı
-    // hiçbir doğruluk/hydration faydası sağlamıyordu (useEffect zaten yalnız
-    // mount sonrası, istemci tarafında çalışır) — sadece bu okumayı ana iş
-    // parçacığındaki başka pahalı işlerle (ör. 3B sahne kurulumu, bkz.
-    // docs/05-deneyim-ve-guvenlik.md "3D'li sayfalar Lighthouse hedefinin
-    // altında") YARIŞTIRIYORDU. Kısıtlı CPU'lu (mobil/tablet CI) ortamlarda bu
-    // yarış, page.reload() sonrası geri yüklemenin gözlemlenebilir gecikmeyle
-    // veya (test zaman aşımı içinde) hiç tamamlanmamasıyla sonuçlanabiliyordu.
-    try {
-      const stored = window.localStorage.getItem(ROBOT_CELL_PROGRAM_STORAGE_KEY);
-      if (stored) {
-        const decoded = decodeRobotCellProgramDraft(stored, genericSixDofRobot);
-        if (decoded.ok) {
-          setProgramName(decoded.value.name);
-          setProgramCommands(decoded.value.commands);
-          setProgramStorageStatus("Tarayıcıdaki program geri yüklendi.");
-        } else {
-          setProgramStorageStatus("Eski kayıt güvenlik kontrolünden geçmedi; boş programla başlandı.");
+    // setState'i efekt gövdesinde DOĞRUDAN çağırmak react-hooks/set-state-in-effect
+    // kuralını ihlal eder (basamaklı render riski) — bu yüzden bir geciktirme
+    // sarmalayıcısı zorunlu. Önceki sürüm `setTimeout(fn, 0)` kullanıyordu; bu
+    // bir MAKROGÖREV kuyruğa girer ve ana iş parçacığındaki başka pahalı işlerle
+    // (ör. 3B sahne kurulumu, bkz. docs/05-deneyim-ve-guvenlik.md "3D'li
+    // sayfalar Lighthouse hedefinin altında") aynı kuyrukta yarışabilir.
+    // `queueMicrotask`, mevcut iş biter bitmez, herhangi bir yeni makrogörevden
+    // (render dahil) ÖNCE çalışır — aynı lint kaçışını sağlar, ama kısıtlı
+    // CPU'lu (mobil/tablet CI) ortamlarda page.reload() sonrası geri yüklemeyi
+    // makrogörev kuyruğu tıkanıklığına karşı daha dayanıklı yapar.
+    queueMicrotask(() => {
+      try {
+        const stored = window.localStorage.getItem(ROBOT_CELL_PROGRAM_STORAGE_KEY);
+        if (stored) {
+          const decoded = decodeRobotCellProgramDraft(stored, genericSixDofRobot);
+          if (decoded.ok) {
+            setProgramName(decoded.value.name);
+            setProgramCommands(decoded.value.commands);
+            setProgramStorageStatus("Tarayıcıdaki program geri yüklendi.");
+          } else {
+            setProgramStorageStatus("Eski kayıt güvenlik kontrolünden geçmedi; boş programla başlandı.");
+          }
         }
+      } catch {
+        setProgramStorageStatus("Tarayıcı kaydı kullanılamıyor; program bu oturumda kalacak.");
+      } finally {
+        setProgramStorageReady(true);
       }
-    } catch {
-      setProgramStorageStatus("Tarayıcı kaydı kullanılamıyor; program bu oturumda kalacak.");
-    } finally {
-      setProgramStorageReady(true);
-    }
+    });
   }, []);
   useEffect(() => {
     if (!programStorageReady) return;
