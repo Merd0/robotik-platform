@@ -68,7 +68,12 @@ export function RobotCellStudio() {
   const [motionProgress, setMotionProgress] = useState(0);
   const [previewAngles, setPreviewAngles] = useState<number[] | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [programCommands, setProgramCommands] = useState<RobotCellProgramCommand[]>([]);
+  const [programCommands, setProgramCommandsRaw] = useState<RobotCellProgramCommand[]>([]);
+  const setProgramCommands: typeof setProgramCommandsRaw = (value) => {
+    const stack = new Error().stack?.split("\n").slice(2, 5).map((line) => line.trim()).join(" <- ");
+    console.log("DEBUG setProgramCommands", Date.now(), typeof value === "function" ? "fn" : value.length, stack);
+    setProgramCommandsRaw(value);
+  };
   const [programName, setProgramName] = useState("Benim al-bırak programım");
   const [programStorageReady, setProgramStorageReady] = useState(false);
   const [programStorageStatus, setProgramStorageStatus] = useState("Bu tarayıcıda otomatik saklanır.");
