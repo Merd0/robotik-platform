@@ -156,8 +156,10 @@ export function RobotCellStudio() {
   }, []);
   useEffect(() => {
     if (!programStorageReady) return;
+    console.log("DEBUG persist-effect-scheduled", Date.now(), programCommands.length);
     const persist = window.setTimeout(() => {
       try {
+        console.log("DEBUG persist-fired", Date.now(), programCommands.length);
         window.localStorage.setItem(ROBOT_CELL_PROGRAM_STORAGE_KEY, encodeRobotCellProgramDraft({
           name: programName.trim() || "Adsız robot programı",
           commands: programCommands,
