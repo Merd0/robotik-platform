@@ -199,8 +199,10 @@ test("kaydedilmiş kavrama programı yeniden açıldığında gripper mevcut ad�
   await firstSession.getByRole("button", { name: "Gripper’ı kapat · kavra" }).click();
   await expect(firstSession.getByText("2 adım · çalışmaya hazır", { exact: true })).toBeVisible();
   await expect(firstSession.getByText("Tarayıcıya kaydedildi", { exact: false })).toBeVisible();
+  console.log("DEBUG beforeReload", await page.evaluate(() => window.localStorage.getItem("robotik-platform:robot-cell-program:v1")));
 
   await page.reload();
+  console.log("DEBUG afterReload", await page.evaluate(() => window.localStorage.getItem("robotik-platform:robot-cell-program:v1")));
   const restoredSession = await openDirectTeaching();
   // Kısıtlı CPU'lu (mobil/tablet CI) ortamlarda 3B sahne kurulumu ana iş
   // parçacığını uzun süre tutabiliyor (bkz. docs/05-deneyim-ve-guvenlik.md);
