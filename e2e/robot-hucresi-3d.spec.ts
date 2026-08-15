@@ -199,10 +199,21 @@ test("kaydedilmiş kavrama programı yeniden açıldığında gripper mevcut ad�
   await firstSession.getByRole("button", { name: "Gripper’ı kapat · kavra" }).click();
   await expect(firstSession.getByText("2 adım · çalışmaya hazır", { exact: true })).toBeVisible();
   await expect(firstSession.getByText("Tarayıcıya kaydedildi", { exact: false })).toBeVisible();
-  console.log("DEBUG beforeReload", await page.evaluate(() => window.localStorage.getItem("robotik-platform:robot-cell-program:v1")));
+  // "Tarayıcıya kaydedildi" metni her başarılı yazımda AYNI dizgeyle
+  // güncellenir — mount anındaki (henüz boş) ilk debounce'lu yazımdan bile
+  // görünür olabilir. Bu yüzden reload'dan önce GERÇEKTEN localStorage'a
+  // yazılan içeriği (metnin kendisini değil) bekliyoruz.
+  await page.waitForFunction(() => {
+    const raw = window.localStorage.getItem("robotik-platform:robot-cell-program:v1");
+    if (!raw) return false;
+    try {
+      return JSON.parse(raw).commands?.length === 2;
+    } catch {
+      return false;
+    }
+  }, { timeout: 15_000 });
 
   await page.reload();
-  console.log("DEBUG afterReload", await page.evaluate(() => window.localStorage.getItem("robotik-platform:robot-cell-program:v1")));
   const restoredSession = await openDirectTeaching();
   // Kısıtlı CPU'lu (mobil/tablet CI) ortamlarda 3B sahne kurulumu ana iş
   // parçacığını uzun süre tutabiliyor (bkz. docs/05-deneyim-ve-guvenlik.md);
@@ -268,6 +279,17 @@ test("öğretilen adımı seçer, önizler, sıralar ve tarayıcıda kalıcı tu
   await direct.getByRole("button", { name: "Seçili adımı yukarı taşı" }).click();
   await expect(timeline.getByRole("listitem").first()).toContainText("Yaklaşma noktası");
   await expect(direct.getByText("Tarayıcıya kaydedildi", { exact: false })).toBeVisible();
+  // bkz. yukarıdaki "gerçekten yazılan içeriği bekle" notu.
+  await page.waitForFunction(() => {
+    const raw = window.localStorage.getItem("robotik-platform:robot-cell-program:v1");
+    if (!raw) return false;
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed.name === "Gece vardiyası" && parsed.commands?.length === 2;
+    } catch {
+      return false;
+    }
+  }, { timeout: 15_000 });
 
   await focusView.getByRole("button", { name: "Sayfaya dön" }).click();
   await page.reload();
