@@ -181,7 +181,11 @@ test("gripper havada açılmaz ve kullanıcı ara pozu açıkça kaydeder", asyn
   await expect(manualReleaseSteps.getByText("Parçayı bırak")).toHaveCount(0);
 });
 
-test("kaydedilmiş kavrama programı yeniden açıldığında gripper mevcut adımı tekrar kullanır", async ({ page }) => {
+test("kaydedilmiş kavrama programı yeniden açıldığında gripper mevcut adımı tekrar kullanır", async ({ page }, testInfo) => {
+  const tag = `${testInfo.project.name}-retry${testInfo.retry}`;
+  page.on("console", (msg) => {
+    if (msg.text().startsWith("DEBUG")) console.log(`[${tag}]`, msg.text());
+  });
   const openDirectTeaching = async () => {
     await page.getByRole("region", { name: "3B dijital robot hücresi" }).getByRole("button", { name: "Robotu öğret", exact: true }).click();
     return page.getByRole("dialog", { name: "Robot hücresi odak görünümü" }).getByRole("tabpanel", { name: "Al ve bırak" });
