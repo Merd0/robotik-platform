@@ -35,6 +35,7 @@ import { RobotCellProgramTransport, RobotCellTeachingWorkbench } from "./RobotCe
 import { RobotCellDirectTeaching } from "./RobotCellDirectTeaching";
 
 const RAD_TO_DEG = 180 / Math.PI;
+const DEFAULT_ROBOT_CELL_PROGRAM_NAME = "Benim al-bırak programım";
 const CAMERA_BUTTONS: Array<{ preset: RobotCellCameraPreset; label: string }> = [
   { preset: "cell", label: "Hücre görünümü" },
   { preset: "top", label: "Üstten gör" },
@@ -68,13 +69,8 @@ export function RobotCellStudio() {
   const [motionProgress, setMotionProgress] = useState(0);
   const [previewAngles, setPreviewAngles] = useState<number[] | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [programCommands, setProgramCommandsRaw] = useState<RobotCellProgramCommand[]>([]);
-  const setProgramCommands: typeof setProgramCommandsRaw = (value) => {
-    const stack = new Error().stack?.split("\n").slice(2, 5).map((line) => line.trim()).join(" <- ");
-    console.log("DEBUG setProgramCommands", Date.now(), typeof value === "function" ? "fn" : value.length, stack);
-    setProgramCommandsRaw(value);
-  };
-  const [programName, setProgramName] = useState("Benim al-bırak programım");
+  const [programCommands, setProgramCommands] = useState<RobotCellProgramCommand[]>([]);
+  const [programName, setProgramName] = useState(DEFAULT_ROBOT_CELL_PROGRAM_NAME);
   const [programStorageReady, setProgramStorageReady] = useState(false);
   const [programStorageStatus, setProgramStorageStatus] = useState("Bu tarayıcıda otomatik saklanır.");
   const [selectedProgramCommandId, setSelectedProgramCommandId] = useState<string | null>(null);
@@ -131,22 +127,27 @@ export function RobotCellStudio() {
   useEffect(() => {
     // setState'i efekt gövdesinde DOĞRUDAN çağırmak react-hooks/set-state-in-effect
     // kuralını ihlal eder (basamaklı render riski) — bu yüzden bir geciktirme
-    // sarmalayıcısı zorunlu. Önceki sürüm `setTimeout(fn, 0)` kullanıyordu; bu
-    // bir MAKROGÖREV kuyruğa girer ve ana iş parçacığındaki başka pahalı işlerle
-    // (ör. 3B sahne kurulumu, bkz. docs/05-deneyim-ve-guvenlik.md "3D'li
-    // sayfalar Lighthouse hedefinin altında") aynı kuyrukta yarışabilir.
-    // `queueMicrotask`, mevcut iş biter bitmez, herhangi bir yeni makrogörevden
-    // (render dahil) ÖNCE çalışır — aynı lint kaçışını sağlar, ama kısıtlı
-    // CPU'lu (mobil/tablet CI) ortamlarda page.reload() sonrası geri yüklemeyi
-    // makrogörev kuyruğu tıkanıklığına karşı daha dayanıklı yapar.
+    // sarmalayıcısı zorunlu.
+    //
+    // Bu geri yükleme SENKRON değil (queueMicrotask/setTimeout fark etmez):
+    // ana iş parçacığı 3B sahne kurulumuyla (bkz. docs/05-deneyim-ve-guvenlik.md
+    // "3D'li sayfalar Lighthouse hedefinin altında") uzun süre meşgul olabilir,
+    // bu yüzden geri yükleme mount'tan SANİYELER sonra bile çalışabilir —
+    // yani kullanıcı (veya bu kadar hızlı davranabilen bir e2e testi) bu arada
+    // ZATEN etkileşime girmiş, `programCommands`/`programName`'i değiştirmiş
+    // olabilir. Bu yüzden geri yükleme YALNIZ hâlâ başlangıç durumundaysa
+    // (kullanıcı henüz hiçbir şey yapmadıysa) uygulanır — fonksiyonel
+    // updater ile, kapanışta donmuş eski bir değere değil, UYGULANMA ANINDAKİ
+    // gerçek state'e bakarak. Aksi halde geç gelen bir geri yükleme, kullanıcının
+    // o sırada zaten yaptığı (daha güncel) işi sessizce ezebilirdi.
     queueMicrotask(() => {
       try {
         const stored = window.localStorage.getItem(ROBOT_CELL_PROGRAM_STORAGE_KEY);
         if (stored) {
           const decoded = decodeRobotCellProgramDraft(stored, genericSixDofRobot);
           if (decoded.ok) {
-            setProgramName(decoded.value.name);
-            setProgramCommands(decoded.value.commands);
+            setProgramName((current) => current === DEFAULT_ROBOT_CELL_PROGRAM_NAME ? decoded.value.name : current);
+            setProgramCommands((current) => current.length === 0 ? decoded.value.commands : current);
             setProgramStorageStatus("Tarayıcıdaki program geri yüklendi.");
           } else {
             setProgramStorageStatus("Eski kayıt güvenlik kontrolünden geçmedi; boş programla başlandı.");
@@ -161,10 +162,8 @@ export function RobotCellStudio() {
   }, []);
   useEffect(() => {
     if (!programStorageReady) return;
-    console.log("DEBUG persist-effect-scheduled", Date.now(), programCommands.length);
     const persist = window.setTimeout(() => {
       try {
-        console.log("DEBUG persist-fired", Date.now(), programCommands.length);
         window.localStorage.setItem(ROBOT_CELL_PROGRAM_STORAGE_KEY, encodeRobotCellProgramDraft({
           name: programName.trim() || "Adsız robot programı",
           commands: programCommands,

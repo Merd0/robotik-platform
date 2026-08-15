@@ -181,14 +181,7 @@ test("gripper havada açılmaz ve kullanıcı ara pozu açıkça kaydeder", asyn
   await expect(manualReleaseSteps.getByText("Parçayı bırak")).toHaveCount(0);
 });
 
-test("kaydedilmiş kavrama programı yeniden açıldığında gripper mevcut adımı tekrar kullanır", async ({ page }, testInfo) => {
-  const tag = `${testInfo.project.name}-retry${testInfo.retry}`;
-  page.on("console", (msg) => {
-    if (msg.text().startsWith("DEBUG") || /hydrat|Hydrat|Minified React error/.test(msg.text()) || msg.type() === "error") {
-      console.log(`[${tag}] [${msg.type()}]`, msg.text());
-    }
-  });
-  page.on("pageerror", (err) => console.log(`[${tag}] [pageerror]`, err.message));
+test("kaydedilmiş kavrama programı yeniden açıldığında gripper mevcut adımı tekrar kullanır", async ({ page }) => {
   const openDirectTeaching = async () => {
     await page.getByRole("region", { name: "3B dijital robot hücresi" }).getByRole("button", { name: "Robotu öğret", exact: true }).click();
     return page.getByRole("dialog", { name: "Robot hücresi odak görünümü" }).getByRole("tabpanel", { name: "Al ve bırak" });
@@ -207,17 +200,8 @@ test("kaydedilmiş kavrama programı yeniden açıldığında gripper mevcut ad�
   await expect(firstSession.getByText("2 adım · çalışmaya hazır", { exact: true })).toBeVisible();
   await expect(firstSession.getByText("Tarayıcıya kaydedildi", { exact: false })).toBeVisible();
 
-  const beforeReload = await page.evaluate(() => window.localStorage.getItem("robotik-platform:robot-cell-program:v1"));
-  console.log("DEBUG beforeReload:", beforeReload);
-
   await page.reload();
-
-  const afterReload = await page.evaluate(() => window.localStorage.getItem("robotik-platform:robot-cell-program:v1"));
-  console.log("DEBUG afterReload:", afterReload);
-
   const restoredSession = await openDirectTeaching();
-  const statusText = await restoredSession.getByLabel("Program adı").evaluate((el) => el.closest("div")?.parentElement?.textContent);
-  console.log("DEBUG panelText:", statusText);
   // Kısıtlı CPU'lu (mobil/tablet CI) ortamlarda 3B sahne kurulumu ana iş
   // parçacığını uzun süre tutabiliyor (bkz. docs/05-deneyim-ve-guvenlik.md);
   // varsayılan 5 sn zaman aşımı bu yüzden yetersiz kalabiliyordu.
