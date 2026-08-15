@@ -152,6 +152,34 @@ tamamen bitti.
 
 ---
 
+## Faz 5 sonrası — laboratuvar genişlemesi (2026-08-12 — 2026-08-15)
+
+Resmi bir faz değil, "cila" öncesi doğrudan `main`'e giren laboratuvar
+işi. Ayrıntı, kronoloji ve kök nedenler `docs/durum-denetim.md`'nin
+"Öğretmen sayfası, kum havuzu ve 3D robot hücresi" bölümünde.
+
+- [x] `/ogretmen` sayfası navbar'a bağlandı — vardı ama prod'da
+      keşfedilemiyordu (yalnız footer'dan erişilebiliyordu)
+- [x] `/oyun-alani` "Kendi Robotun" kum havuzu olgunlaştırıldı — canlı
+      TCP sürükleyerek öğretme, adaptif örnekleme, bağımsız tezgah
+      kaydırması, erişilemeyen IK hedeflerinin kurtarılması
+- [x] `/laboratuvar/robot-hucresi` sabit görevden gerçek bir 3D stüdyoya
+      dönüştü: `RobotCellStudio`, sahnede doğrudan sürükleyerek al-bırak
+      programı öğretme, hareket ön-provası, gripper kontrolü
+- [x] Reload sonrası veri kaybı riski kapatıldı — geç gelen localStorage
+      geri yüklemesi taze kullanıcı işini sessizce eziyordu; düzeltme +
+      yanlış test sinyalinin düzeltilmesi ikisi de `main`'de
+- [x] Hat D'ye Python API genişlemesi (`movej`/`movel`/`get_joints`/
+      `get_tcp`/`forward_kinematics`/`inverse_kinematics`) + 5 yeni ders
+      (11 → 16), performans bütçesi gerçek maliyete göre yeniden ölçüldü
+
+**Çıktı:** `/oyun-alani` ve `/laboratuvar/robot-hucresi` artık
+`05-deneyim-ve-guvenlik.md`'nin tarif ettiği "serbest deney" hissine
+daha yakın; Hat D 16 derse çıktı. CI bu dönem boyunca her commit'te
+yeşil kaldı (son doğrulanan koşu: `1a00aa1`).
+
+---
+
 ## Bir sonraki sprint — contentVersion entegrasyonu + TransferChallenge predicate sertleştirmesi
 
 **Amaç:** hazırlanmış kanıt hash altyapısını canlı Evidence sürüm sözleşmesine

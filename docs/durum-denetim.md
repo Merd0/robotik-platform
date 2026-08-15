@@ -2297,8 +2297,22 @@ gitmemeli.
 
 ## Uygulama notu — Aşama 0 + Aşama 1 (2026-08-09)
 
-Dal: `feat/review-v2-hash-split`. `main`'e merge EDİLMEDİ — governance/altyapı
-değişikliği, insan onayı bekliyor.
+Dal: `feat/review-v2-hash-split`. Yazıldığı anda `main`'e merge edilmemişti —
+governance/altyapı değişikliği, insan onayı bekliyordu.
+
+**Düzeltme (2026-08-15, doğrulanarak kaydedildi):** Bu not artık bayat.
+Onay verildi ve dal aynı gün (2026-08-10) `main`'e girdi — insan
+incelemesini yayın şartı olmaktan çıkaran karar (`528d843 policy: insan
+gozden gecirmesi zorunlulugunu kaldir, 50 taslagi yayina al`, 00:56) ve ilk
+gerçek Review Receipt v2 kaydı (`32ca865`, 00:19) bu dalın parçası olarak
+`main`'e gitti. Doğrulama: `git branch -a | grep review-v2` dalı hâlâ
+gösteriyor ama `git log --oneline main..feat/review-v2-hash-split` **boş**
+dönüyor ve `git merge-base --is-ancestor feat/review-v2-hash-split main`
+**true** — yani dalın içeriği bugün main'de birebir var, main'in dışında
+kalan hiçbir commit yok. `scripts/review.ts` ve `lib/lessonArtifact.ts`
+içindeki `sourceHash`/`teachingHash`/`presentationHash` bölünmesi şu an
+çalışan kod. **Bekleyen bir governance kararı yok**; aşağıdaki "Yapılanlar"
+listesi geçmiş zamanda okunmalı, dilek değil gerçekleşmiş durum.
 
 **Yapılanlar**
 
@@ -2448,3 +2462,138 @@ gösteriyordu. Ardından ana dizinde `npm ci` tekrar çalıştırıldı: 604 pak
 kuruldu, 0 zafiyet. `node .claude/hooks/check-lesson-frontmatter.mjs`
 artık `ERR_MODULE_NOT_FOUND` fırlatmadan çalışıyor — hook ana dizinde
 fiilen tekrar aktif.
+
+---
+
+## Öğretmen sayfası, kum havuzu ve 3D robot hücresi (2026-08-12 20:55 — 2026-08-15 14:53)
+
+Bu bölüm, bu dosyanın yukarıdaki son girişinden (2026-08-12 20:38, hook
+düzeltmesi) bugüne kadar `main`'e giren ve daha önce hiç kayda geçmemiş
+işi tek seferde topluyor. Hepsi doğrudan `main`'e commit'lendi (ayrı bir
+entegrasyon dalı yok), CI her adımda yeşil kaldı. `docs/03-yol-haritasi.md`
+bu dönemi ayrı bir "Faz 5 sonrası" bölümünde özetliyor; burada olayların
+kronolojik ve teknik ayrıntısı var.
+
+### 1. Öğretmen sayfası prod'a bağlandı (`77be55c`, `91b7920`)
+
+`/ogretmen` sayfası (Hat B pilot kaynağı: ders planı önerisi, sınıf içi
+kullanım notları, `TeacherPilotActions.tsx`) `codex/sprint3-ogretmen-p1`
+dalından cherry-pick edilmişti ama **navbar'da hiç linklenmemişti** —
+yalnız footer'dan erişilebiliyordu ve `SiteHeader`'da yoktu, yani gerçek
+kullanıcı canlı sitede yalnız Ara/Sözlük/Canlı lab görüyordu. `91b7920`
+navbar'a Öğretmen linkini ekledi; sayfa artık gerçekten keşfedilebilir.
+
+### 2. Kendi Robotun kum havuzu genişledi (`ad2df32`, `eeb9da6`, `47ca06e`, `7ea8539`, `400c234`, `dfec41a`)
+
+`/oyun-alani`'ndaki "Kendi Robotun" deneyi (`CustomRobotPlayground.tsx`,
+576 satır) birkaç ardışık düzeltmeyle olgunlaştırıldı:
+
+- Canlı TCP sürüklemesiyle "öğret" akışı (`eeb9da6` — kullanıcı hedefi
+  sürükleyip robotu bir poza sokuyor, pozu kaydediyor).
+- Kontrol paneli ve **adaptif örnekleme** iyileştirmesi (`47ca06e`) —
+  `docs/05-deneyim-ve-guvenlik.md`'deki "hızlı hareket saniyede bir,
+  yavaş/hassas hareket mesafeye göre" kuralının uygulanmış hali.
+- Bağımsız çalışma tezgahı kaydırması (`7ea8539`) — geniş ekranda tasarım
+  ve deney panelinin, imlecin bulunduğu sütunda ayrı kaydırılması.
+- Canlı TCP rehberliğinin yumuşatılması (`400c234`) ve erişilebilir IK
+  hedeflerinin kurtarılması (`dfec41a` — kullanıcı robotu erişilemez bir
+  poza soktuğunda çözücünün elinde kalmaması).
+
+Bu değişiklikler `docs/02-mimari.md`'deki "kinematik dijital prova"
+sözleşmesini (RobotSpec, öz-çarpışma provası, `maxVelocity` sınırı)
+bozmadı — üstündeki UI/UX katmanını olgunlaştırdı.
+
+### 3. `/laboratuvar/robot-hucresi` — sabit görevden 3D stüdyoya (`34fc438` → `1a00aa1`)
+
+Bu dönemin en büyük tekil işi. Önceki durum (`docs/durum-denetim.md`'nin
+2026-08-09 bölümünde not edilmişti): sayfa vardı ama "görev tabanlı
+capstone, serbest kum havuzu değil" — sabit bir al-bırak görevi.
+
+**`34fc438` (3d robot cell studio):** Sayfaya gerçek bir stüdyo katmanı
+eklendi — `components/lab/RobotCellStudio.tsx` (191 satır) ve
+`components/scene/RobotCellScene.tsx` (113 satır), `RobotArm.tsx`'e yeni
+prop'lar, saf motor `lib/robotics/robotCellStudio.ts` (+ 47 satırlık test).
+
+**`ec0d46d` → `e1134af` → `57351ba` (hareket ön-provası, direkt öğretim,
+al-bırak programı öğretme):** Kullanıcı artık robotu sahnede doğrudan
+sürükleyerek pick & place adımlarını öğretebiliyor; öğretilen program
+robotu gerçekten oynatmadan önce prova ediliyor (`docs/02-mimari.md`'deki
+"2° ara-yol doğrulaması" ilkesiyle aynı disiplin).
+
+**Gripper kontrolü ayrı bir alt-sorun oldu** ve kendi düzeltme zinciriyle
+olgunlaştı: kavrama/bırakma aksiyonunun havada parça bırakmaması
+(`9d3bb7c`), bırakma yüksekliğinin oynatmada korunması (`5063230`),
+öğretim kayıtlarının hangi yüzeyde durduğunu bilmesi (`314e704`), manuel
+kavrama/bırakma + poz kaydına izin verilmesi (`bb56c0d`), gripper'ın
+program kaydından ayrıştırılması (`8f75c04`) ve geri yüklenen gripper
+aksiyonunun yeniden kullanılması (`f794ead`). Bu commit'lerin çoğu "fix"
+— yani ilk tasarım (`ef312c3` "rebuild 3d robot teaching workflow") tek
+seferde doğru gelmedi, kullanıcı testiyle (Mert bizzat tarayıcıda deneyip
+geri bildirim verdi) iteratif düzeltildi. Bu normal ve beklenen bir
+döngü, ayrı ayrı "bug" olarak okunmamalı.
+
+**Son ve en ciddi bulgu — reload sonrası veri kaybı riski (`e3d90db`,
+`1a00aa1`):** `main`'e push sonrası CI'da `e2e/robot-hucresi-3d.spec.ts`
+içindeki 3 test mobile-390/tablet-768'de deterministik başarısız oluyordu
+(desktop-1440'ta değil) — Python API işiyle ilgisiz, önceden var olan bir
+sorun, bu sefer ilk kez CI'ın sonuna kadar çalıştırılınca ortaya çıktı.
+Teşhis 7 commit'lik bir zincir gerektirdi (`8f7c13e` → `447e1d7`, geçici
+tanı logları — Linux CI taşma zincirindeki (2026-08-12) 7 turluk teşhis
+yöntemiyle aynı disiplin).
+
+Kök neden iki katmanlıydı:
+
+1. **Gerçek veri kaybı riski (`e3d90db`).** localStorage geri yükleme
+   efekti mount'tan saniyeler sonra bile çalışabiliyordu (`setTimeout`
+   veya `queueMicrotask` fark etmiyor — ikisi de aynı senkron ana iş
+   parçacığı işiyle, ör. 3B sahne kurulumu, aynı kuyrukta yarışıyor). Bu
+   süre içinde kullanıcı zaten `programCommands`/`programName`'i
+   değiştirmiş oluyorsa, geç gelen geri yükleme bu TAZE veriyi
+   localStorage'daki ESKİ veriyle sessizce eziyordu. Düzeltme: geri
+   yükleme artık fonksiyonel bir updater ile yalnız hâlâ başlangıç
+   durumundaysa uygulanıyor — kapanışta donmuş eski bir değere değil,
+   uygulanma anındaki gerçek state'e bakarak.
+2. **Test sinyali yanlıştı (`1a00aa1`).** "Tarayıcıya kaydedildi" metni
+   her başarılı yazımda aynı dizgeyle güncelleniyor — mount anındaki
+   (henüz boş) ilk debounce'lu yazımdan bile görünür olabiliyordu. Test
+   bu metni görünce reload'a geçiyordu ama bu, "senin verdiğin komut
+   kaydedildi" garantisi vermiyordu. Düzeltme: iki testte de reload'dan
+   önce durum metnini değil, gerçekten localStorage'a yazılan içeriği
+   (`page.waitForFunction`) bekliyor.
+
+Bu ikisi birbirinden bağımsız hatalardı — biri gerçek uygulama davranışı
+(kullanıcı verisi kaybı riski), diğeri yalnız testin yanlış sinyale
+güvenmesi. İkisi de düzeltilmeden CI yeşile dönmedi.
+
+### 4. Python API genişlemesi ve performans bütçesi düzeltmesi (`6c8be50`, `bc484a4`)
+
+`6c8be50`: Pyodide→robot köprüsü (`eklem_ac`/`hedefe_git`, bozulmadı)
+`movej`/`movel`/`get_joints`/`get_tcp`/`forward_kinematics`/
+`inverse_kinematics` ile genişletildi; saf doğrulama/hata-mesajı mantığı
+`lib/robotics/pythonBridge.ts`'te. Hat D'ye 5 yeni ders eklendi (11 → 16).
+Bu iş zaten `docs/01-mufredat.md`'deki Hat D notunda ve
+`docs/03-yol-haritasi.md` Faz 3'ün 2026-08-15 notunda kayıtlı.
+
+`bc484a4`: Bu değişiklik "3D'siz ders" performans bütçesini aşırdı — ama
+**Python API işinden bağımsız, önceden var olan bir durum** (`git stash`
+ile doğrulandı: bütçe zaten aşılıyordu). Kök neden `docs/05-deneyim-ve-
+guvenlik.md`'de zaten kayıtlı olan bilinen ödünleşimin ta kendisi
+(`components/interactive/index.ts`'in 19 bileşenin tamamını tek route
+şablonuna taşıması). `next/dynamic` sarmalama tekrar denendi, yine
+ölçülebilir kazanç vermedi. Bütçe gerçek maliyeti yansıtacak şekilde
+265/245 KiB gzip/brotli'ye güncellendi; kök neden zaten `docs/05`'te
+belgeli olduğu için orada tekrar yazılmadı.
+
+### Doğrulama
+
+Her commit kendi CI koşusundan geçti; bu bölümün yazıldığı an itibarıyla
+`main`'deki son commit (`1a00aa1`, run `31883727215`) **başarılı**. Çalışma
+ağacı temiz, `feat/gripper-reload-state` gibi kısa ömürlü PR dalları
+merge sonrası silinebilir durumda.
+
+### Sonraki için not
+
+`docs/03-yol-haritasi.md`'deki "Bir sonraki sprint" maddesi
+(`contentVersion` ↔ `computeEvidenceVersionRoot` bağlantısı,
+`TransferChallenge` predicate sertleştirmesi) bu dönemde ele alınmadı —
+bilinçli olarak ayrı bırakıldı, hâlâ açık.
