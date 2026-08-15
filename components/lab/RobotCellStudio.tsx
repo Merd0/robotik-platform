@@ -124,26 +124,31 @@ export function RobotCellStudio() {
     directAnglesRef.current = [...displayedAngles];
   }, [displayedAngles]);
   useEffect(() => {
-    const restore = window.setTimeout(() => {
-      try {
-        const stored = window.localStorage.getItem(ROBOT_CELL_PROGRAM_STORAGE_KEY);
-        if (stored) {
-          const decoded = decodeRobotCellProgramDraft(stored, genericSixDofRobot);
-          if (decoded.ok) {
-            setProgramName(decoded.value.name);
-            setProgramCommands(decoded.value.commands);
-            setProgramStorageStatus("Tarayıcıdaki program geri yüklendi.");
-          } else {
-            setProgramStorageStatus("Eski kayıt güvenlik kontrolünden geçmedi; boş programla başlandı.");
-          }
+    // localStorage okuma senkron ve ucuz; ekstra setTimeout(…, 0) sarmalayıcısı
+    // hiçbir doğruluk/hydration faydası sağlamıyordu (useEffect zaten yalnız
+    // mount sonrası, istemci tarafında çalışır) — sadece bu okumayı ana iş
+    // parçacığındaki başka pahalı işlerle (ör. 3B sahne kurulumu, bkz.
+    // docs/05-deneyim-ve-guvenlik.md "3D'li sayfalar Lighthouse hedefinin
+    // altında") YARIŞTIRIYORDU. Kısıtlı CPU'lu (mobil/tablet CI) ortamlarda bu
+    // yarış, page.reload() sonrası geri yüklemenin gözlemlenebilir gecikmeyle
+    // veya (test zaman aşımı içinde) hiç tamamlanmamasıyla sonuçlanabiliyordu.
+    try {
+      const stored = window.localStorage.getItem(ROBOT_CELL_PROGRAM_STORAGE_KEY);
+      if (stored) {
+        const decoded = decodeRobotCellProgramDraft(stored, genericSixDofRobot);
+        if (decoded.ok) {
+          setProgramName(decoded.value.name);
+          setProgramCommands(decoded.value.commands);
+          setProgramStorageStatus("Tarayıcıdaki program geri yüklendi.");
+        } else {
+          setProgramStorageStatus("Eski kayıt güvenlik kontrolünden geçmedi; boş programla başlandı.");
         }
-      } catch {
-        setProgramStorageStatus("Tarayıcı kaydı kullanılamıyor; program bu oturumda kalacak.");
-      } finally {
-        setProgramStorageReady(true);
       }
-    }, 0);
-    return () => window.clearTimeout(restore);
+    } catch {
+      setProgramStorageStatus("Tarayıcı kaydı kullanılamıyor; program bu oturumda kalacak.");
+    } finally {
+      setProgramStorageReady(true);
+    }
   }, []);
   useEffect(() => {
     if (!programStorageReady) return;

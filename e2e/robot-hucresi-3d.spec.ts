@@ -202,7 +202,10 @@ test("kaydedilmiş kavrama programı yeniden açıldığında gripper mevcut ad�
 
   await page.reload();
   const restoredSession = await openDirectTeaching();
-  await expect(restoredSession.getByText("2 adım · çalışmaya hazır", { exact: true })).toBeVisible();
+  // Kısıtlı CPU'lu (mobil/tablet CI) ortamlarda 3B sahne kurulumu ana iş
+  // parçacığını uzun süre tutabiliyor (bkz. docs/05-deneyim-ve-guvenlik.md);
+  // varsayılan 5 sn zaman aşımı bu yüzden yetersiz kalabiliyordu.
+  await expect(restoredSession.getByText("2 adım · çalışmaya hazır", { exact: true })).toBeVisible({ timeout: 15_000 });
   await moveToPick(restoredSession);
   const grip = restoredSession.getByRole("button", { name: "Gripper’ı kapat · kavra" });
   await expect(grip).toBeEnabled();
@@ -268,7 +271,8 @@ test("öğretilen adımı seçer, önizler, sıralar ve tarayıcıda kalıcı tu
   await page.reload();
   await page.getByRole("region", { name: "3B dijital robot hücresi" }).getByRole("button", { name: "Robotu öğret", exact: true }).click();
   const restored = page.getByRole("dialog", { name: "Robot hücresi odak görünümü" }).getByRole("tabpanel", { name: "Al ve bırak" });
-  await expect(restored.getByRole("textbox", { name: "Program adı" })).toHaveValue("Gece vardiyası");
+  // bkz. yukarıdaki "kısıtlı CPU" notu.
+  await expect(restored.getByRole("textbox", { name: "Program adı" })).toHaveValue("Gece vardiyası", { timeout: 15_000 });
   await expect(restored.getByRole("list", { name: "Basit al ve bırak programı" }).getByRole("listitem")).toHaveCount(2);
 });
 
