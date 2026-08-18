@@ -250,6 +250,81 @@ test("Python FK/IK round-trip aynı TCP noktasına ulaşır ve predicate'i kanı
   )).toBe(true);
 });
 
+test("Kod Akademisi: Değeri değiştir modülü doğru düzeltmeyle predicate'i kanıtlar, düzeltmeden geçmez", async ({ page }) => {
+  await page.goto("/kod-akademisi/temel/koda-temel-degisken-degistir");
+  await expect(page.getByRole("heading", { name: "Değeri değiştir" })).toBeVisible();
+
+  // Düzenlemeden çalıştırma: predicate geçmemeli.
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tekrar dene", { exact: true })).toBeVisible({ timeout: 30_000 });
+  const oncesindekiKanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(oncesindekiKanit.some((event: { stage?: string; predicateId?: string }) =>
+    event.stage === "passed" && event.predicateId === "koda-temel-degisken-degistir-v1",
+  )).toBe(false);
+
+  // İlk çalıştırma bittiğinde dar viewport'ta "Sonuç" sekmesine otomatik
+  // geçilir ("Kod" paneli o an gizli) — gerçek kullanıcı gibi önce geri dön.
+  const kodSekmesi = page.getByRole("tab", { name: "Kod" });
+  if (await kodSekmesi.isVisible()) await kodSekmesi.click();
+
+  // Doğru düzeltmeyle çalıştırma: predicate geçmeli.
+  await page.getByLabel("Python kodu").fill("aci_1 = 60\naci_2 = -45\nrobot.movej([aci_1, aci_2])");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tamamlandı ✓", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const kanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(kanit.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "koda-temel-degisken-degistir-v1",
+  )).toBe(true);
+});
+
+test("Kod Akademisi: ipucu açma Evidence'a hintLevel ile kaydedilir", async ({ page }) => {
+  await page.goto("/kod-akademisi/temel/koda-temel-degisken-degistir");
+  await page.getByRole("button", { name: /İpucu göster/ }).click();
+  await expect(page.getByText(/İpucu 1:/)).toBeVisible();
+
+  const kanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(kanit.some((event: { lessonId?: string; stage?: string; metrics?: { hintLevel?: number } }) =>
+    event.lessonId === "koda-temel-degisken-degistir" &&
+    event.stage === "observed" &&
+    event.metrics?.hintLevel === 1,
+  )).toBe(true);
+});
+
+test("Kod Akademisi: mobilde çalıştırma sonrası otomatik Sonuç sekmesine geçer", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-390", "Sekme davranışı yalnız lg: eşiğinin altında var.");
+  await page.goto("/kod-akademisi/temel/koda-temel-ilk-calistirma");
+  const kodSekmesi = page.getByRole("tab", { name: "Kod" });
+  const sonucSekmesi = page.getByRole("tab", { name: "Sonuç" });
+  await expect(kodSekmesi).toHaveAttribute("aria-selected", "true");
+  await expect(sonucSekmesi).toHaveAttribute("aria-selected", "false");
+
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(sonucSekmesi).toHaveAttribute("aria-selected", "true", { timeout: 30_000 });
+  await expect(page.getByText("Tamamlandı", { exact: true })).toBeVisible();
+});
+
+test("Kod Akademisi: 768px'de (md:) hâlâ sekmeli görünüm var, tam ekran ayrımı yok", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "tablet-768", "Bu test özellikle ölçülen lg: (1024px) eşiğinin tablet-768'de henüz devreye girmediğini kanıtlıyor.");
+  await page.goto("/kod-akademisi/temel/koda-temel-ilk-calistirma");
+  await expect(page.getByRole("tablist", { name: "Kod Akademisi görünümü" })).toBeVisible();
+  await expect(page.getByLabel("Python kodu")).toBeVisible();
+  // 768px'de (lg:'in altı) "Sonuç" paneli sekmeye basılmadan görünmemeli —
+  // 1024px eşiğinin altında hâlâ sekmeli davranış olduğunun kanıtı.
+  await expect(page.locator("#koda-mobile-panel-sonuc")).toBeHidden();
+});
+
+test("Kod Akademisi: masaüstünde (1440px) kod ve sonuç aynı anda görünür, sekme yok", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "lg: (1024px) eşiğinin üstünde sekme mekanizması devre dışı kalmalı.");
+  await page.goto("/kod-akademisi/temel/koda-temel-ilk-calistirma");
+  await expect(page.getByRole("tablist", { name: "Kod Akademisi görünümü" })).toBeHidden();
+  await expect(page.getByLabel("Python kodu")).toBeVisible();
+  // "Sonuç" paneli sekmeye hiç basılmadan da görünür olmalı — masaüstü ayrımının aslı bu.
+  await expect(page.locator("#koda-mobile-panel-sonuc")).toBeVisible();
+});
+
 test("SignalTimeline state'i paylaşılır ve doğru el sıkışma sırası kanıtlanır", async ({ page }) => {
   await page.goto("/ders/e-lise-el-sikisma");
   await page.getByRole("button", { name: /Dolum robotu: Tepsi hazır — adım 2:/ }).click();
@@ -581,6 +656,8 @@ test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
     "/ders/a-universite-homojen-donusum",
     "/ders/b-lise-ileri-kinematik",
     "/laboratuvar/robot-hucresi",
+    "/kod-akademisi",
+    "/kod-akademisi/temel/koda-temel-ilk-calistirma",
   ];
   for (const url of denetlenen) {
     await page.goto(url);
