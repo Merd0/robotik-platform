@@ -1,0 +1,31 @@
+---
+id: koda-temel-parametre-gonder
+baslik: Parametre gönder
+asama: temel
+sira: 3
+kazanimlar:
+  - "robot.movej() fonksiyonuna doğru sayıda ve doğru sırada parametre geçebilme"
+ipuclari:
+  - "robot.movej() içine kaç sayı yazman gerekiyor? Robotun kaç eklemi var?"
+  - "movej bir liste alır: robot.movej([J1_derece, J2_derece]) şeklinde."
+  - "Hedef J1=45°, J2=-30° — köşeli parantezin içine bu iki sayıyı sırayla yaz."
+cozum: |
+  robot.movej([45, -30])
+initialCode: |
+  # Robotun ucunu J1=45 derece, J2=-30 dereceye götür.
+  robot.movej([])
+robot: generic-2dof
+skillId: koda-temel-parametre-gonder
+expectedFinalDegrees: [45, -30]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Görev
+
+`robot.movej()` bir açı listesi bekler. Aşağıdaki çağrı boş — robotun
+birinci eklemini 45 dereceye, ikinci eklemini -30 dereceye götürecek
+şekilde köşeli parantezin içini doldur.
+
+Boş bırakıp çalıştırırsan ne olacağını da görebilirsin — hata mesajı sana
+kaç sayı eksik olduğunu söyler.

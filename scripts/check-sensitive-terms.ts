@@ -36,8 +36,18 @@ import { fileURLToPath } from "node:url";
  * Bu betiğin ilk sürümü sadece `content/` tarıyordu ve tam bu yüzden
  * `docs/durum-codex.md` ile `docs/guncel-fikirler.md`'deki sızıntılar
  * otomatik yakalanmayıp elle bulundu.
+ *
+ * `content-kod-akademisi/` sonradan eklendi (2026-08-18): Kod Akademisi
+ * modülleri `content/` DIŞINDA — `lib/content.ts`'in ders kataloğu
+ * `content/` altındaki HER `.mdx`'i `DersFrontmatter` olarak okuyor, `hat`/
+ * `seviye` alanı olmayan bir modül oraya konsaydı katalog `undefined`
+ * anahtarlı hayalet kayıtlarla kirlenirdi (bkz. docs/durum-codex.md "Kod
+ * Akademisi — mimari teklif"). Ama Kod Akademisi de yayına açık eğitim
+ * içeriği; gizlilik/ton taramasının dışında kalması yanlış olurdu.
  */
-const TARAMA_KOKLERI = ["content", "docs"];
+const ICERIK_KOKLERI = ["content", "content-kod-akademisi"];
+const DOKUMAN_KOKLERI = ["docs"];
+const TARAMA_KOKLERI = [...ICERIK_KOKLERI, ...DOKUMAN_KOKLERI];
 const TARANAN_UZANTILAR = [".mdx", ".md"];
 
 /**
@@ -165,9 +175,10 @@ function gorecekYol(dosya: string): string {
   return path.relative(process.cwd(), dosya).replace(/\\/g, "/");
 }
 
-/** Ders içeriği mi, yoksa kendi aramızdaki planlama/durum belgesi mi. */
+/** Yayına açık içerik mi (ders veya Kod Akademisi modülü), yoksa kendi aramızdaki planlama/durum belgesi mi. */
 function icerikDosyasiMi(dosya: string): boolean {
-  return gorecekYol(dosya).startsWith("content/");
+  const yol = gorecekYol(dosya);
+  return ICERIK_KOKLERI.some((kok) => yol.startsWith(`${kok}/`));
 }
 
 /**
@@ -238,10 +249,10 @@ function main(): void {
     process.exit(1);
   }
 
-  const dersSayisi = dosyalar.filter((dosya) => dosya.endsWith(".mdx")).length;
+  const icerikSayisi = dosyalar.filter((dosya) => dosya.endsWith(".mdx")).length;
   console.log(
-    `Hassas terim denetimi temiz: ${dersSayisi} ders, ` +
-      `${dosyalar.length - dersSayisi} doküman (content/ + docs/).`,
+    `Hassas terim denetimi temiz: ${icerikSayisi} ders/modül, ` +
+      `${dosyalar.length - icerikSayisi} doküman (${TARAMA_KOKLERI.map((kok) => `${kok}/`).join(" + ")}).`,
   );
 }
 

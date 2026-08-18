@@ -679,6 +679,8 @@ describe.each([
   ["movej-degiskenlerle-hareket-v1", "d-lise-degiskenlerle-hareket", "movej-degiskenlerle-hareket"],
   ["fonksiyonla-hareket-dizisi-v1", "d-lise-fonksiyonla-hareket-dizisi", "fonksiyonla-hareket-dizisi"],
   ["python-fk-ik-round-trip-v1", "d-universite-python-fk-ik", "python-fk-ik-round-trip"],
+  ["koda-temel-degisken-degistir-v1", "koda-temel-degisken-degistir", "koda-temel-degisken-degistir"],
+  ["koda-temel-parametre-gonder-v1", "koda-temel-parametre-gonder", "koda-temel-parametre-gonder"],
 ] as const)("robot-python-api rollout (%s): golden + negatif predicate testleri", (predicateId, lessonId, skillId) => {
   const predicate = EVIDENCE_PREDICATES.find((item) => item.id === predicateId)!;
   const run = (

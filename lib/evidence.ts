@@ -209,6 +209,37 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     }),
   },
   {
+    // Kod Akademisi, Temel aşama dikey dilimi (bkz. docs/durum-codex.md
+    // "Kod Akademisi — mimari teklif"). Aynı desen: CodeRunner'ın kendi
+    // evaluateCodeLab/poseMatches mekanizması, yeni motor kodu yok.
+    id: "koda-temel-degisken-degistir-v1",
+    lessonId: "koda-temel-degisken-degistir",
+    skillId: "koda-temel-degisken-degistir",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-temel-degisken-degistir" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
+    id: "koda-temel-parametre-gonder-v1",
+    lessonId: "koda-temel-parametre-gonder",
+    skillId: "koda-temel-parametre-gonder",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-temel-parametre-gonder" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
     id: "movel-donguyle-rota-v1",
     lessonId: "d-lise-donguyle-cok-nokta",
     skillId: "movel-donguyle-rota",
