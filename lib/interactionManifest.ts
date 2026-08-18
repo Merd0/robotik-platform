@@ -66,7 +66,16 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
   },
   CodeRunner: {
     componentFile: "components/interactive/CodeRunner.tsx",
-    engineFiles: ["lib/codeLab.ts", "lib/robotics/kinematics.ts", "lib/robotics/pythonBridge.ts"],
+    // useCodeRunnerEngine.ts: worker/durum mantığının kendisi (2026-08-18'de
+    // CodeRunner'dan çıkarıldı, Kod Akademisi'nin ayrı yerleşimiyle
+    // paylaşılıyor) — davranışı belirleyen kod, sadece lib/robotics/**
+    // değil.
+    engineFiles: [
+      "components/interactive/useCodeRunnerEngine.ts",
+      "lib/codeLab.ts",
+      "lib/robotics/kinematics.ts",
+      "lib/robotics/pythonBridge.ts",
+    ],
     workerFiles: ["lib/workers/pyodideWorker.ts", "lib/workers/executionLimits.ts"],
   },
   SignalTimeline: {
@@ -116,6 +125,16 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
   FourLensTraceLab: {
     componentFile: "components/interactive/FourLensTraceLab.tsx",
     engineFiles: ["lib/robotics/fourLensTrace.ts"],
+  },
+  KodAkademisiCodeLab: {
+    componentFile: "components/kod-akademisi/KodAkademisiCodeLab.tsx",
+    engineFiles: [
+      "components/interactive/useCodeRunnerEngine.ts",
+      "lib/codeLab.ts",
+      "lib/robotics/kinematics.ts",
+      "lib/robotics/pythonBridge.ts",
+    ],
+    workerFiles: ["lib/workers/pyodideWorker.ts", "lib/workers/executionLimits.ts"],
   },
 };
 
