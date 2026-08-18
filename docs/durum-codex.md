@@ -1839,3 +1839,71 @@ predicate (`koda-temel-degisken-degistir-v1`,
 sticky-panel + mobil sekme yerleşimi. `koda-temel-ilk-calistirma`
 predicate gerektirmez (yalnız "tried" kanıtı yeterli, docs/15'in
 Gözlem tanımıyla tutarlı).
+
+### 2026-08-19 · Kod Akademisi — dikey dilim uygulandı (`feat/kod-akademisi-vertical-slice`)
+
+Yukarıdaki plan onaylandıktan sonra uygulandı. `main`'e merge EDİLMEDİ —
+kullanıcının açık isteğiyle dal olarak kalıyor, inceleme bekliyor.
+
+**Kurulan altyapı:**
+- `lib/kodAkademisiArtifact.ts` — tek hash'li modül sürüm kökü (`computeModuleHash`),
+  `lib/lessonArtifact.ts`'ten paylaşılan `canonicalize`/`digest` üzerine. 7 birim testi.
+- `lib/kodAkademisi.ts` — içerik yükleyici. `content-kod-akademisi/` bilinçli
+  olarak `content/` DIŞINDA (gerekçe dosyanın kendi başlığında): `lib/content.ts`
+  `content/` altındaki her `.mdx`'i `DersFrontmatter` sayıp `hat`/`seviye`'ye göre
+  indeksliyor, ayrı şema oraya karışırsa katalog `undefined` anahtarlı hayalet
+  kayıtla kirlenir. `scripts/check-sensitive-terms.ts` yine de yeni dizini tarar
+  (`ICERIK_KOKLERI` genişletildi) — gizlilik/ton taraması dışarıda kalmasın diye.
+- `components/ui/Tabs.tsx` — ayrı commit'te çıkarıldı, iki mevcut çağrı yeri
+  (`CustomRobotPlayground`, `RobotCellStudio`) buna geçirildi.
+- `components/interactive/useCodeRunnerEngine.ts` — CodeRunner'ın worker/durum
+  mantığı saf "extract hook" ile ayrıldı; `CodeRunner.tsx`'in çıktısı öncesi/
+  sonrası birebir aynı. Kod Akademisi'nin yan yana/sekmeli yerleşimi
+  (`components/kod-akademisi/KodAkademisiCodeLab.tsx`) aynı hook'u kullanıyor —
+  worker/pythonBridge/evidence mantığı hiç tekrar yazılmadı.
+- `lib/evidence.ts`'e 2 yeni predicate (`koda-temel-degisken-degistir-v1`,
+  `koda-temel-parametre-gonder-v1`) — mevcut `movej-degiskenlerle-hareket-v1`
+  ile AYNI desen (poseMatches), yeni motor kodu yok.
+- `app/kod-akademisi/`, `app/kod-akademisi/[asama]/`, `app/kod-akademisi/[asama]/[modul]/`
+  — üç route, `content-kod-akademisi/temel/` altında 3 modül
+  (`koda-temel-ilk-calistirma` Gözlem/predicate'siz,
+  `koda-temel-degisken-degistir` ve `koda-temel-parametre-gonder`
+  Değiştir/Tamamla tipi, predicate'li). Navbar'a "Kod Akademisi" eklendi.
+
+**Gerçek regresyon bulundu ve düzeltildi (`Tabs.tsx` çıkarımı sırasında):**
+Tam e2e paketi ilk çalıştırmada `[mobile-390]` projesinde 7 test
+(`e2e/oyun-alani.spec.ts`, hepsi `CustomRobotPlayground`'ın "Deney
+kumandaları" sekmelerine dokunuyor) `getByRole("tab", { name: "Eklemleri
+sür" })` bulamayıp 30s zaman aşımına uğradı. Kök neden: orijinal
+`CustomRobotPlayground` her sekme düğmesinde açık `aria-label={panel.label}`
+taşıyordu; bu, `hidden sm:inline` / `sm:hidden` ile viewport'a göre değişen
+GÖRÜNEN metinden BAĞIMSIZ, erişilebilir adı sabitliyordu. `Tabs.tsx`'e
+çıkarırken bu `aria-label` unutuldu — sonuç: dar viewport'ta (`sm:` altı)
+erişilebilir ad sessizce yalnız `shortLabel`'e ("Eklemler") düştü, testler
+tam etiketi ("Eklemleri sür") arıyordu. Düzeltme: `Tabs.tsx`'teki her tab
+düğmesine `aria-label={item.label}` eklendi (davranış CustomRobotPlayground'ın
+orijinaliyle birebir eşleşiyor). Bu, otomatik testin yakaladığı gerçek bir
+erişilebilirlik regresyonuydu — ekran okuyucu kullanıcıları da dar ekranda
+sekmeleri yalnız kısaltılmış adla duyacaktı, sadece Playwright'ın değil,
+gerçek kullanıcıların da etkileneceği bir hataydı.
+
+**Doğrulama (hepsi bu dalda, main'e dokunmadan):**
+- `npx tsc`, `npm run lint`, `npx vitest run` (643/643) — temiz.
+- `npm run build` (308 sayfa, 8 yeni Kod Akademisi rotası dahil),
+  `check-content`/`validate-content-graph`/`check-quiz-dagilimi`/
+  `check-mdx-guvenlik` hâlâ 94 ders görüyor (yeni dizin kataloğu
+  kirletmedi), `check-sensitive-terms` 97 ders/modül (94+3) görüyor,
+  `check-performance-budget` bütçede, `npm audit` 0 açık.
+- `npm run test:e2e` (regresyon düzeltmesinden SONRA, rakip `next dev`
+  süreci kapatılmış temiz ortamda): **156 geçti, 0 başarısız, 12
+  atlandı** (viewport-özel testler). Yeni eklenen 6 Kod Akademisi testi:
+  predicate geç/kal (düzeltmeden geçmez, düzeltmeyle geçer), ipucu →
+  Evidence `hintLevel` kaydı, mobilde çalıştırma sonrası "Sonuç"
+  sekmesine otomatik geçiş, 768px'de hâlâ sekmeli (1024 eşiğinin ALTINDA
+  olduğunun kanıtı), 1440px'de sekme yok/ikisi de görünür. WCAG axe
+  taraması `/kod-akademisi` ve ilk modüle genişletildi, kritik/ciddi
+  ihlal yok.
+- Canlı tarayıcıda manuel doğrulama (ekran görüntüleriyle): masaüstü
+  yan yana bölünmüş görünüm + 3D sahne gerçekten render oluyor, kod
+  çalıştırma gerçekten robotu hareket ettiriyor, predicate gerçekten
+  pass/fail ayrımı yapıyor, ipucu sistemi gerçekten kademeli açılıyor.
