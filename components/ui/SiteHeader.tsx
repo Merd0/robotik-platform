@@ -1,5 +1,12 @@
 import Link from "next/link";
+import { MobileNavMenu } from "./MobileNavMenu";
 import { ThemeToggle } from "./ThemeToggle";
+
+const OVERFLOW_NAV_LINKS = [
+  { href: "/sozluk", label: "Sözlük" },
+  { href: "/ogretmen", label: "Öğretmen" },
+  { href: "/laboratuvar/robot-hucresi", label: "Canlı lab" },
+];
 
 export function SiteHeader() {
   return (
@@ -11,10 +18,17 @@ export function SiteHeader() {
         </Link>
         <nav aria-label="Ana menü" className="flex items-center gap-1 text-sm">
           <Link href="/ara" className="inline-flex min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft">Ara</Link>
-          <Link href="/sozluk" className="hidden min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft md:inline-flex">Sözlük</Link>
-          <Link href="/ogretmen" className="hidden min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft lg:inline-flex">Öğretmen</Link>
-          <Link href="/laboratuvar/robot-hucresi" className="hidden min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft xl:inline-flex">Canlı lab</Link>
+          {OVERFLOW_NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="hidden min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft md:inline-flex"
+            >
+              {link.label}
+            </Link>
+          ))}
           <Link href="/oyun-alani" className="inline-flex min-h-11 items-center rounded-lg bg-site-soft px-3 font-semibold text-site-ink hover:bg-site-border">Oyun alanı</Link>
+          <MobileNavMenu links={OVERFLOW_NAV_LINKS} />
           <ThemeToggle />
         </nav>
       </div>
