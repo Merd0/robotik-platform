@@ -65,6 +65,11 @@ export function Tabs({ items, activeId, onSelect, ariaLabel, idPrefix, className
             id={`${idPrefix}-tab-${item.id}`}
             type="button"
             role="tab"
+            // shortLabel varken görünen metin viewport'a göre değişir (bkz.
+            // aşağıdaki hidden/sm:hidden span'ları); erişilebilir ad görünen
+            // metne bırakılırsa dar viewport'ta yalnız kısaltma okunur. Sabit
+            // aria-label, hangi span görünürse görünsün tam etiketi korur.
+            aria-label={item.label}
             aria-selected={active}
             aria-controls={`${idPrefix}-panel-${item.id}`}
             tabIndex={active ? 0 : -1}
