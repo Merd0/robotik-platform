@@ -1593,3 +1593,249 @@ güven verisini yanlış temel üzerine kurmasını engeller.
   **tamamlanmış değildir; entegrasyon yarımdır.** Sonraki iş
   `docs/03-yol-haritasi.md` içindeki “contentVersion entegrasyonu +
   TransferChallenge predicate sertleştirmesi” maddesidir.
+
+### 2026-08-18 · Kod Akademisi — mimari teklif (uygulama değil, plan)
+
+Kaynak: `docs/15-kod-akademisi.md` (vizyon/kapsam, aynı gün eklendi).
+Bu bölüm o vizyonun üstüne kurulan mimari teklif — kod yazılmadı,
+mevcut kod tabanı (`lib/evidence.ts`, `CodeRunner.tsx`,
+`lib/interactionManifest.ts`, `app/ders/[slug]/page.tsx`,
+`app/oyun-alani/page.tsx`) okunup gerçek sözleşmelere bağlandı.
+
+#### 1. Sayfa/route yapısı
+
+Mevcut iki desenin (`/seviye/[seviye]/hat/[hat]` liste + `/ders/[slug]`
+içerik) aynısı, üç kademeye ayrılmış:
+
+- `app/kod-akademisi/page.tsx` — statik giriş: 4 aşama kartı
+  (Temel/Orta/İleri/Usta), her kartta localStorage'dan hesaplanan
+  ilerleme özeti. `/oyun-alani/page.tsx` ile aynı üslupta sabit sayfa.
+- `app/kod-akademisi/[asama]/page.tsx` — bir aşamanın modül listesi,
+  `generateStaticParams` ile içerikten üretilir (asama =
+  `temel|orta|ileri|usta`).
+- `app/kod-akademisi/[asama]/[modul]/page.tsx` — asıl alıştırma sayfası:
+  kod editörü + sahne + ipucu paneli + tamamlama durumu.
+
+İçerik: `content/kod-akademisi/<asama>/<modul-id>.mdx` —
+`content/<hat>/<seviye>/<id>.mdx` ile birebir aynı fikir (içerik
+koddan ayrı kalır). Frontmatter, ders şemasını AYNEN kopyalamaz:
+`hat`/`seviye`/`onkosul` üçlüsü yok çünkü Kod Akademisi'nin ilerlemesi
+bir graph değil, aşama-içi DOĞRUSAL bir sıra (modül N, N-1'i gerektirir).
+Bunun yerine: `asama`, `sira` (aşama içi sıra), `kazanimlar`, `kaynaklar`
+(gizlilik kuralı burada da geçerli — Python/robotik referansı varsa
+gösterilir), `ipuclari` (3 elemanlı dize dizisi), `cozum`, `durum`.
+`scripts/validate-content-graph.ts`'in tam graph doğrulayıcısı yerine
+çok daha basit bir doğrusal-sıra kontrolü yeterli — yeni script değil,
+mevcut script'e küçük bir mod eklenir.
+
+Gövdede aynı `<CodeRunner ... />` çağrısı kalır (Hat D derslerinde
+zaten kullanılan bileşen, `mdxComponents` listesine yeni bir bileşen
+eklenmez — docs/08'in "MDX kendi bileşenini icat edemez" kuralı).
+
+#### 2. İlerleme + ipucu veri modeli — `lib/evidence.ts` ile entegrasyon
+
+Öneri: **yeni bir depolama/şema icat etme, mevcut `EvidenceEvent`
+akışını aynen kullan.**
+
+- `lessonId` = modül id'si (`koda-temel-degisken-degistir` gibi).
+- `skillId` = modül içindeki tekil alıştırma/beceri id'si — bugün Hat D
+  derslerinde zaten aynı desen var (`d-lise-degiskenlerle-hareket` dersi
+  → `movej-degiskenlerle-hareket` skillId'si).
+- Başarı: `EVIDENCE_PREDICATES` dizisine modül başına yeni kayıtlar
+  eklenir — somut örnek madde 3'te. Yeni bir doğrulama sistemi
+  icatı yok, mevcut predicate mimarisi genişler (docs/15'in kendi
+  sözü zaten buydu).
+- **İpucu açma da bir Evidence olayıdır, ayrı bir depolama anahtarı
+  DEĞİL.** Kullanıcı bir ipucu açtığında `appendEvidence({ stage:
+  "observed", skillId, result: "neutral", metrics: { hintLevel: 1|2|3
+  } })` yazılır (`kind: "observation"`, `verification:
+  "component-observed"` zaten otomatik). Gerekçe: `evidence.ts`'in
+  saklama/retention/migration/export makinesini (bkz. `applyRetentionPolicy`,
+  `serializeEvidence`, iki-adımlı silme) ikinci kez yazmamak. Yan
+  faydası: "kaç ipucu açıldı" ölçülebilir bir sinyal olarak zaten
+  kayıtlı duruyor — bir predicate isterse ileride "ipucu almadan
+  çözdü" gibi bir metrik bile türetebilir (v1'de ZORUNLU değil, sadece
+  altyapı bunu bedavaya veriyor).
+- Aşama/modül ilerleme özeti (`Temel · 2/3 tamamlandı` gibi) yeni bir
+  saf fonksiyon: `lib/kodAkademisiProgress.ts` içinde
+  `summarizeStage(events, asama, moduleIds)` — mevcut
+  `summarizeEvidence`'ı modül başına çağırıp toplar, evidence.ts'e
+  dokunmaz.
+
+**Karar (2026-08-18, onaylandı):** `lib/kodAkademisiArtifact.ts` — ayrı,
+TEK hash'li modül. Üç köklü source/teaching/presentation ayrımı
+KOPYALANMADI; o ayrım Review Receipt kapsam sorununu çözüyor (bir
+kaynağın erişim tarihini tazelemenin pedagojik incelemeyi eskitmemesi),
+Kod Akademisi'nin `kaynaklar` alanı yok ve Review Receipt sistemine hiç
+girmiyor — o problem burada yok. Modül içeriği (frontmatter'ın öğretim
+alanları: `baslik`/`asama`/`sira`/`kazanimlar`/`ipuclari`/`cozum` + gövde)
++ başlangıç kodu + bağlı `EVIDENCE_PREDICATES` id kümesinden TEK bir
+`computeModuleHash` üretiliyor; bu `lib/evidence.ts`'e verilen
+`contentVersion` olacak. `lib/lessonArtifact.ts`'teki `canonicalize`/
+`digest` yardımcıları export edilip PAYLAŞILDI, yeniden yazılmadı — hash
+biçimi ve anahtar sıralama iki sistemde de aynı. Uygulandı ve test edildi:
+`lib/kodAkademisiArtifact.ts` + `lib/kodAkademisiArtifact.test.ts` (7
+test: satır sonu kanonikleştirme, gövde/başlangıç kodu/ipucu/çözüm/sıra/
+aşama değişince hash değişir, predicate kümesi değişince hash değişir ama
+sırası önemsiz, deterministik).
+
+#### 3. "Yaz" tipi alıştırma — somut davranışsal değerlendirme örneği
+
+Modül: `koda-usta-uc-nokta-rotasi` (Usta aşaması).
+skillId: `usta-uc-nokta-rotasi`.
+
+Görev metni: "Robotun TCP'si sırasıyla üç noktayı ziyaret etsin:
+(0.3, 0.1), (0.3, -0.1), (0.1, 0.0). Editör boş — nasıl yazacağın sana
+kalmış (döngüyle veya üç ayrı çağrıyla)."
+
+Değerlendirme **kod metnine hiç bakmaz** — proje genelinde zaten
+kurulu ilke ("kod tam olarak şöyle mi yazıldı değil, robot doğru yere
+gitti mi"). Mevcut `d-lise-donguyle-cok-nokta` dersinin
+`movel-donguyle-rota-v1` predicate'i neredeyse aynı deseni zaten
+kullanıyor (traceSteps + poseMatches) — bu, tekerleği yeniden icat
+etmiyor, onu genelliyor:
+
+1. `CodeRunner`'a yeni bir prop: `expectedWaypoints?: {x:number;
+   y:number; z:number}[]` (bugünkü `expectedFinalDegrees` tek hedef
+   için var, bu çoklu hedef için doğal genişlemesi).
+2. Worker zaten her çalıştırmada TCP/eklem izini (trace) topluyor
+   (mimari dokümanındaki 500 örnek sınırıyla). Çalıştırma bitince
+   component, iz üzerindeki noktalardan her `expectedWaypoints`
+   öğesine (sırayla, tolerans içinde) en az bir kez yaklaşılıp
+   yaklaşılmadığını kontrol eder.
+3. Sonuç `assessed` olayı olarak yazılır: `metrics: { waypointsVisited:
+   3, waypointsRequired: 3, orderCorrect: true }`.
+4. Predicate:
+
+```ts
+{
+  id: "usta-uc-nokta-rotasi-v1",
+  lessonId: "koda-usta-uc-nokta-rotasi",
+  skillId: "usta-uc-nokta-rotasi",
+  evaluate: (events) => ({
+    passed: events.some((event) =>
+      event.skillId === "usta-uc-nokta-rotasi" &&
+      event.stage === "assessed" &&
+      event.result === "success" &&
+      event.metrics?.waypointsVisited === 3 &&
+      event.metrics?.orderCorrect === true,
+    ),
+    metrics: { requiredWaypoints: 3 },
+  }),
+}
+```
+
+Kod nasıl yazıldığına (for döngüsü mü, üç `movel()` mi, değişken adı
+ne) hiç bakılmıyor — bilinçli olarak. Statik AST kontrolü (döngü
+kullanıldı mı gibi) ÖNERMİYORUM; davranış zaten doğru sırayla doğru
+yere gitmeyi kanıtlıyorsa yazım şekli önemsiz, ekstra kontrol
+karmaşıklık katar, değer katmaz.
+
+#### 4. Dikey dilim önerisi — Temel aşamasının ilk 2-3 modülü
+
+1. **`koda-temel-ilk-calistirma`** (Gözlem). Hazır kod, hiç değişiklik
+   yok, sadece Çalıştır'a bas, TCP'nin hareket ettiğini gör. Yazım
+   gerektirmez — amaç yazım değil, tüm boru hattını (route → içerik →
+   CodeRunner → Evidence "tried/observed" → tamamlama) uçtan uca
+   kanıtlamak, en düşük içerik yazım maliyetiyle.
+2. **`koda-temel-degisken-degistir`** (Değiştir). Tek bir sayısal
+   değeri (bir açı veya hedef koordinat) değiştir, çalıştır, farkı gör.
+   İlk kez gerçek bir `assessed` yazımı + predicate + İpucu 1
+   (yönlendirici soru) devreye girer.
+3. **`koda-temel-parametre-gonder`** (Değiştir→Tamamla sınırı).
+   `robot.movej([...])` çağrısına kendi açılarını gir (tek hedef,
+   `expectedFinalDegrees` — çoklu waypoint değil, dilimi minimal tutmak
+   için Usta'daki örnek 4. maddeye saklandı). İlk kez ipucu sisteminin
+   ÜÇ kademesinin de anlamlı olduğu modül (kullanıcı gerçekten
+   takılabilir).
+
+Neden bu üçü ve bu sıra: hiçbiri yeni motor kodu gerektirmiyor —
+üçü de bugünkü `CodeRunner` + `pythonBridge.ts` + `evidence.ts`
+yüzeyiyle karşılanıyor (madde 3'teki `expectedWaypoints` genişlemesi
+dilimde YOK, sonraki içerik genişlemesine bırakıldı). Dikey dilim
+"sistem gerçekten uçtan uca çalışıyor mu" sorusunu üç küçük, ucuz
+modülle kanıtlıyor; büyük patlama yok (docs/15'in kendi kapanış
+ilkesi).
+
+#### 5. Görünürlük ve yönelim ilkesi'nin somut uygulaması
+
+**Masaüstü** — `app/kod-akademisi/[asama]/[modul]/page.tsx`:
+`lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`. Sol sütun normal akışta
+kaydırılır (kod editörü + Çalıştır/Sıfırla + ipucu accordion'u — kod
+uzun olabilir). Sağ sütun `lg:sticky lg:top-20` (navbar yüksekliği +
+boşluk) ile SABİTLENİR: 3D sahne + çalışma izi (trace scrubber) +
+çıktı konsolu + değerlendirme durumu. Kod ne kadar uzasa da sağ panel
+ekranda kalır — bugünkü `CodeRunner`'ın dikey istiflemesinden (docs/15'in
+kaynak sorunu) TEK fark bu.
+
+**Mobil** — `lg:` eşiğinin altında (768 değil 1024 — bir Python
+editörü + 3D sahne yan yana 768px'de bile sığmaz) iki sekmeli yapı:
+"Kod" / "Sonuç", `role="tablist"`/`"tab"`/`"tabpanel"`, ok tuşu
+gezintili. Bu deseni sıfırdan yazmıyoruz —
+`components/playground/CustomRobotPlayground.tsx`'teki (ve
+`RobotCellStudio.tsx`'teki) "üç sekmeli konsol" ile AYNI erişilebilir
+model. **Yapıldı (2026-08-18):** `components/ui/Tabs.tsx` ortak bileşen
+olarak çıkarıldı, her iki mevcut çağrı yeri (`CustomRobotPlayground`,
+`RobotCellStudio`) buna geçirildi — üçüncü bağımsız kopya açılmadı. Yan
+bulgu: orijinal deferred-focus deseni (`requestAnimationFrame` içinde
+`.focus()`) bu ortam gibi arka planda/gizli bir sekmede rAF hiç
+ateşlenmezse çalışmıyor; tüm sekme düğmeleri her zaman DOM'da olduğu için
+(aktif panel koşuluna bağlı değil) buna gerek yoktu — SENKRON `.focus()`'a
+geçirildi, hem daha sağlam hem daha basit. `RobotCellStudio`'nun sekmeleri
+bu geçişle ayrıca ok tuşu gezintisi KAZANDI (öncesinde yalnız tıklama
+vardı). Çalıştır'a
+basınca sonuç geldiğinde mobilde OTOMATİK "Sonuç" sekmesine geçilir —
+kullanıcı sonucu görmek için sekmeyi elle aramaz (docs/05'in "neden ve
+sonuç aynı anda görünür" gereksinimi, mobildeki somut karşılığı).
+
+**Yönelim (neredeyim/sırada ne var):**
+- Sabit kırıntı + ilerleme: "Temel · Modül 2/3", tıklanabilir aşama/modül
+  seçici.
+- Sabit yükseklikli durum şeridi (Oyun alanı'ndaki "Durum şeritleri
+  sabit yükseklikte kaldığı için yeni metin sahneyi itmez" deseninin
+  aynısı): Hazır → Çalışıyor → Değerlendiriliyor → Tamamlandı/Tekrar
+  dene, sessiz başarısızlık yok.
+- Sayfa altında her zaman "Sonraki modül" bağlantısı — `LessonNav`
+  bileşeninin ders sayfalarında zaten yaptığı previous/next deseni
+  aynen tekrar kullanılır, yeni bileşen yazılmaz.
+
+**Karar (2026-08-18, ölçülerek doğrulandı):** mobil eşik `lg:` (1024px).
+Varsayımla değil, gerçek `CodeRunner` içeriğiyle (JetBrains Mono 14px kod
+editörü + `aspect-video` 3D sahne) mobil navbar düzeltmesindeki iframe
+genişlik tekniğiyle ölçüldü — d-universite-python-fk-ik dersindeki gerçek
+DOM düğümleri, önerilen `1fr 1fr` masaüstü ızgarasına canlı olarak
+yeniden dizilip `max-w-7xl` bir kapta (Kod Akademisi sayfasının kendi
+kapsayıcısı, ders sayfasının `lg:` kenar panelinden bağımsız) çeşitli
+genişliklerde ölçüldü:
+
+| Kap genişliği | Kod editörü (karakter/satır) | 3D sahne yüksekliği |
+|---|---|---|
+| 640px | 28 | 148px |
+| 768px | 36 | 184px |
+| 850px | 41 | 207px |
+| 900px | 44 | 221px |
+| 950px | 47 | 236px |
+| **1024px** | **51** | **256px** |
+| 1100px | 55 | 278px |
+
+768px'de (`md:`) kod editörü yalnız 36 karakter/satıra düşüyor — bu
+depodaki gerçek Python satırları için (ör. `hesaplanan_acilar =
+robot.inverse_kinematics(x=poz.x, y=poz.y, z=poz.z)`, 73 karakter) sürekli
+sarma demek, ve 184px'lik sahne küçük/güç okunur kalıyor. 1024px'de
+(`lg:`) her iki taraf da kullanılabilir eşiği aşıyor (51 karakter, 256px).
+Ölçüm sırasında bir yan bulgu da düzeltildi: ilk ölçüm turu 1024px'de
+düşüşe düşüyordu (456→276px) çünkü ders sayfasının KENDİ `lg:grid-cols-
+[minmax(0,1fr)_320px]` yan paneli araya giriyordu — Kod Akademisi
+sayfasının böyle bir yan paneli olmayacağı için ölçüm CodeRunner kökünü
+bağımsız bir `max-w-7xl` kaba taşıyarak tekrarlandı (tablodaki sayılar bu
+düzeltilmiş turdan).
+
+#### Onay bekleyen adım
+
+Bu plan onaylanırsa sıradaki iş: madde 4'teki 3 modülle dikey dilim —
+route iskeleti, `content/kod-akademisi/temel/` altında 3 MDX, 2 yeni
+predicate (`koda-temel-degisken-degistir-v1`,
+`koda-temel-parametre-gonder-v1`), ipucu UI bileşeni, masaüstü
+sticky-panel + mobil sekme yerleşimi. `koda-temel-ilk-calistirma`
+predicate gerektirmez (yalnız "tried" kanıtı yeterli, docs/15'in
+Gözlem tanımıyla tutarlı).

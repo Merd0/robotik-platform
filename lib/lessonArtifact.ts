@@ -3,7 +3,16 @@ import type { DersFrontmatter, Lesson } from "./content";
 
 type CanonicalValue = null | boolean | number | string | CanonicalValue[] | { [key: string]: CanonicalValue };
 
-function canonicalize(value: unknown): CanonicalValue {
+/**
+ * Kanonik JSON serileştirme + SHA-256 hash yardımcıları — dersler için
+ * tasarlandı, ama kendileri ders'e özel değil (anahtar sıralama +
+ * `undefined` eleme + hex-prefixed digest). `lib/kodAkademisiArtifact.ts`
+ * bunları paylaşır; üç köklü ders bölünmesini (source/teaching/presentation)
+ * KOPYALAMAZ — Kod Akademisi modüllerinin `kaynaklar` alanı yok ve Review
+ * Receipt sistemine hiç girmiyor, o bölünmenin çözdüğü sorun burada yok
+ * (bkz. docs/durum-codex.md "Kod Akademisi — mimari teklif").
+ */
+export function canonicalize(value: unknown): CanonicalValue {
   if (value === null || typeof value === "boolean" || typeof value === "number" || typeof value === "string") {
     return value;
   }
@@ -78,7 +87,7 @@ function pick(frontmatter: DersFrontmatter, fields: readonly string[]): Record<s
   return Object.fromEntries(fields.filter((field) => source[field] !== undefined).map((field) => [field, source[field]]));
 }
 
-function digest(payload: string): string {
+export function digest(payload: string): string {
   return `sha256:${createHash("sha256").update(payload, "utf8").digest("hex")}`;
 }
 
