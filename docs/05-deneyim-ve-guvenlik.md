@@ -229,6 +229,46 @@ Bu yüzden:
 
 ---
 
+## Görünürlük ve yönelim ilkesi (2026-08 kararı, tüm etkileşimli
+bileşenler için geçerli)
+
+Bu, tek bir bileşene özel bir düzeltme değil — her simülasyon, her
+laboratuvar, her kod çalıştırma alanı, gelecekte eklenecek her
+etkileşimli özellik için geçerli, kalıcı bir kural. Kaynağı: mevcut
+CodeRunner'da kod, çalıştırma izi ve 3D sahnenin alt alta dizilip
+kullanıcıyı sürekli kaydırmaya zorlaması (docs/15'te detaylandırıldı).
+Kök sebep aynı ama etkisi genel: kullanıcı neden (kendi eylemi) ile
+sonuç (sistemin tepkisi) arasındaki bağı kaybediyor.
+
+İki temel gereksinim, her etkileşimli bileşende sınanmalı:
+
+1. Neden ve sonuç aynı anda görünür olmalı. Kullanıcı bir şeyi
+   değiştirdiğinde (kod, kaydırıcı, tıklama), sonucu görmek için
+   kaydırma/sekme değiştirme/arama YAPMAMALI. Masaüstünde yan yana
+   veya sabit (sticky) panel, mobilde anlık geçişli sekme — çözüm
+   bağlama göre değişir ama ilke sabit: eylem ve tepki tek bakışta.
+
+2. Kullanıcı her an "neredeyim, ne oluyor, sırada ne var" sorusuna
+   cevap bulabilmeli. Kaybolma hissi vermemeli: açık ilerleme
+   göstergesi, net durum bildirimi (sessiz başarısızlık YOK), her
+   zaman bir sonraki adımın belli olması. Bir bileşen "bir şey oldu
+   ama ne olduğu belirsiz" hissi bırakıyorsa, bitmemiş sayılır.
+
+Amaç açık: kullanıcı sıkılıp platformdan kopmasın, "bir sonrakini de
+deneyeyim" merakıyla ilerlesin. Bu doğrudan mikro-kazanç ilkesiyle ve
+docs/00'daki "önce oyna sonra oku" felsefesiyle bağlantılı.
+
+Uygulama kuralı: Yeni bir etkileşimli bileşen eklenirken şu iki soru
+sorulur: "Kullanıcı eylemiyle sonucu aynı anda görüyor mu (mobil
+dahil)?" ve "Kullanıcı her an nerede olduğunu biliyor mu?" İkisine de
+"hayır" cevabı çıkarsa bileşen tamamlanmış sayılmaz.
+
+Not: bu ilke, az önce düzelttiğin mobil navbar sorunuyla da (kullanıcı
+sayfalara ulaşamaması, "neredeyim/nereye gidebilirim" belirsizliği)
+aynı aileden — ekleme gerekçesini o örnekle de destekleyebilirsin.
+
+---
+
 # Bölüm 3 — Hız (ölçülebilir hedefler)
 
 "Hızlı olsun" demek yetmez, sayı lazım:
