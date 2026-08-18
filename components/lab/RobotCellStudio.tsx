@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { RobotCellScene, SahneAlani } from "@/components/scene/LazyScene";
+import { Tabs, TabPanel, type TabItem } from "@/components/ui/Tabs";
 import { toolOrientationOf } from "@/components/scene/robotFrames";
 import {
   cameraPresetOf,
@@ -40,6 +41,12 @@ const CAMERA_BUTTONS: Array<{ preset: RobotCellCameraPreset; label: string }> = 
   { preset: "cell", label: "Hücre görünümü" },
   { preset: "top", label: "Üstten gör" },
   { preset: "front", label: "Önden gör" },
+];
+
+const FOCUS_PANELS: readonly TabItem[] = [
+  { id: "direct", label: "Al ve bırak" },
+  { id: "motion", label: "Yol provası" },
+  { id: "teach", label: "İleri düzey" },
 ];
 
 function formatMetres(value: number): string {
@@ -831,12 +838,19 @@ export function RobotCellStudio() {
             </div>
 
             <aside ref={focusSettingsPanel} className="min-h-0 overflow-y-auto bg-site-surface p-4 sm:p-5" aria-label="Odak görünümü hareket ayarları">
-              <div className="mb-5 grid grid-cols-3 gap-1 rounded-xl border border-site-border bg-site-soft p-1" role="tablist" aria-label="Robot hücresi çalışma modu">
-                <button type="button" role="tab" aria-selected={focusPanel === "direct"} onClick={() => selectFocusPanel("direct")} className={`min-h-11 rounded-lg px-2 text-xs font-semibold sm:text-sm ${focusPanel === "direct" ? "bg-site-surface text-site-ink shadow-sm" : "text-site-muted"}`}>Al ve bırak</button>
-                <button type="button" role="tab" aria-selected={focusPanel === "motion"} onClick={() => selectFocusPanel("motion")} className={`min-h-11 rounded-lg px-2 text-xs font-semibold sm:text-sm ${focusPanel === "motion" ? "bg-site-surface text-site-ink shadow-sm" : "text-site-muted"}`}>Yol provası</button>
-                <button type="button" role="tab" aria-selected={focusPanel === "teach"} onClick={() => selectFocusPanel("teach")} className={`min-h-11 rounded-lg px-2 text-xs font-semibold sm:text-sm ${focusPanel === "teach" ? "bg-site-surface text-site-ink shadow-sm" : "text-site-muted"}`}>İleri düzey</button>
-              </div>
+              <Tabs
+                items={FOCUS_PANELS}
+                activeId={focusPanel}
+                onSelect={(id) => selectFocusPanel(id as typeof focusPanel)}
+                ariaLabel="Robot hücresi çalışma modu"
+                idPrefix="focus"
+                className="mb-5 grid grid-cols-3 gap-1 rounded-xl border border-site-border bg-site-soft p-1"
+                tabClassName={(active) =>
+                  `min-h-11 rounded-lg px-2 text-xs font-semibold sm:text-sm ${active ? "bg-site-surface text-site-ink shadow-sm" : "text-site-muted"}`
+                }
+              />
               {focusPanel === "direct" ? (
+                <TabPanel id="direct" idPrefix="focus" ariaLabel="Al ve bırak">
                 <RobotCellDirectTeaching
                   commands={programCommands}
                   preflight={programPreflight}
@@ -873,8 +887,9 @@ export function RobotCellStudio() {
                     setDirectStatus("Program temizlendi. Gripper’ı yeniden parçanın üstüne getir.");
                   }}
                 />
+                </TabPanel>
               ) : focusPanel === "motion" ? (
-                <div role="tabpanel" aria-label="Yolu karşılaştır">
+                <TabPanel id="motion" idPrefix="focus" ariaLabel="Yolu karşılaştır">
                   <RobotCellMotionSettings
                     targetId={motionTargetId}
                     selectedMotion={selectedMotion}
@@ -883,8 +898,9 @@ export function RobotCellStudio() {
                     onSelectTarget={selectMotionTarget}
                     onSelectMotion={selectMotion}
                   />
-                </div>
+                </TabPanel>
               ) : (
+                <TabPanel id="teach" idPrefix="focus" ariaLabel="İleri düzey">
                 <RobotCellTeachingWorkbench
                   selectedMotion={selectedMotion}
                   commands={programCommands}
@@ -905,6 +921,7 @@ export function RobotCellStudio() {
                     resetProgramPlayback();
                   }}
                 />
+                </TabPanel>
               )}
             </aside>
           </div>

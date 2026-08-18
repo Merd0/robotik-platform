@@ -33,6 +33,7 @@ import {
   type JointTrajectoryPlanResult,
 } from "@/lib/robotics/customRobotMotion";
 import { decodeLabState, encodeLabState, type CustomRobotLabState } from "@/lib/labState";
+import { Tabs, type TabItem } from "@/components/ui/Tabs";
 
 const STORAGE_KEY = "robotik-platform:custom-robot:v1";
 const MAX_TRACE_POINTS = 160;
@@ -345,7 +346,6 @@ export function CustomRobotPlayground() {
   const [playback, setPlayback] = useState<{ trajectory: JointTrajectory; startedAt: number } | null>(null);
   const [consolePanel, setConsolePanel] = useState<ConsolePanel>("joints");
   const captureRef = useRef<AdaptiveMotionCaptureState | null>(null);
-  const consoleTabRefs = useRef<Partial<Record<ConsolePanel, HTMLButtonElement | null>>>({});
   const activeAnglesRef = useRef([...initialState.jointAngles]);
   const guideEnabledRef = useRef(false);
   const robotRef = useRef<RobotSpec | null>(null);
@@ -849,29 +849,9 @@ export function CustomRobotPlayground() {
 
   const issueFor = (field: string) => issues.some((issue) => issue.field === field || (issue.field.endsWith(".limits") && field.startsWith(issue.field.slice(0, -"limits".length))));
 
-  function selectConsolePanelFromKeyboard(event: React.KeyboardEvent<HTMLButtonElement>, panelIndex: number) {
-    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-    event.preventDefault();
+  function selectConsolePanel(panel: ConsolePanel) {
     const documentScrollY = window.scrollY;
-    const pane = event.currentTarget.closest<HTMLElement>('[data-workbench-pane="experiment"]');
-    const paneScrollTop = pane?.scrollTop ?? 0;
-    const nextIndex = event.key === "Home"
-      ? 0
-      : event.key === "End"
-        ? CONSOLE_PANELS.length - 1
-        : (panelIndex + (event.key === "ArrowRight" ? 1 : -1) + CONSOLE_PANELS.length) % CONSOLE_PANELS.length;
-    const nextPanel = CONSOLE_PANELS[nextIndex].id;
-    setConsolePanel(nextPanel);
-    window.requestAnimationFrame(() => {
-      consoleTabRefs.current[nextPanel]?.focus({ preventScroll: true });
-      if (pane) pane.scrollTop = paneScrollTop;
-      window.scrollTo({ top: documentScrollY, behavior: "instant" });
-    });
-  }
-
-  function selectConsolePanel(panel: ConsolePanel, button: HTMLButtonElement) {
-    const documentScrollY = window.scrollY;
-    const pane = button.closest<HTMLElement>('[data-workbench-pane="experiment"]');
+    const pane = document.querySelector<HTMLElement>('[data-workbench-pane="experiment"]');
     const paneScrollTop = pane?.scrollTop ?? 0;
     setConsolePanel(panel);
     window.requestAnimationFrame(() => {
@@ -1042,42 +1022,35 @@ export function CustomRobotPlayground() {
             </div>
 
             <div className="grid content-start gap-4">
-              <div
-                role="tablist"
-                aria-label="Deney kumandaları"
-                className="grid grid-cols-3 gap-1 rounded-2xl border border-site-border bg-site-soft p-1"
-              >
-                {CONSOLE_PANELS.map((panel, panelIndex) => (
-                  <button
-                    key={panel.id}
-                    ref={(element) => { consoleTabRefs.current[panel.id] = element; }}
-                    id={`console-tab-${panel.id}`}
-                    type="button"
-                    role="tab"
-                    aria-label={panel.label}
-                    aria-selected={consolePanel === panel.id}
-                    aria-controls={`console-panel-${panel.id}`}
-                    tabIndex={consolePanel === panel.id ? 0 : -1}
-                    onClick={(event) => selectConsolePanel(panel.id, event.currentTarget)}
-                    onKeyDown={(event) => selectConsolePanelFromKeyboard(event, panelIndex)}
-                    className={`relative min-h-12 rounded-xl px-2 py-2 text-xs font-bold transition-colors sm:px-3 ${
-                      consolePanel === panel.id
-                        ? "bg-site-strong text-site-on-strong shadow-sm"
-                        : "text-site-muted hover:bg-site-surface hover:text-site-ink"
-                    }`}
-                  >
-                    <span className="hidden sm:inline">{panel.label}</span>
-                    <span className="sm:hidden">{panel.shortLabel}</span>
-                    {panel.id === "teach" && (isRecording || program.waypoints.length > 0) && (
-                      <span className={`ml-1.5 inline-flex min-w-5 justify-center rounded-full px-1.5 py-0.5 font-mono text-[9px] ${
-                        consolePanel === panel.id ? "bg-white/20" : "bg-poster-purple/15 text-poster-purple-text"
-                      }`}>
+              <Tabs
+                items={CONSOLE_PANELS.map((panel): TabItem => ({
+                  id: panel.id,
+                  label: panel.label,
+                  shortLabel: panel.shortLabel,
+                  badge:
+                    panel.id === "teach" && (isRecording || program.waypoints.length > 0) ? (
+                      <span
+                        className={`ml-1.5 inline-flex min-w-5 justify-center rounded-full px-1.5 py-0.5 font-mono text-[9px] ${
+                          consolePanel === panel.id ? "bg-white/20" : "bg-poster-purple/15 text-poster-purple-text"
+                        }`}
+                      >
                         {isRecording ? "REC" : program.waypoints.length}
                       </span>
-                    )}
-                  </button>
-                ))}
-              </div>
+                    ) : undefined,
+                }))}
+                activeId={consolePanel}
+                onSelect={(id) => selectConsolePanel(id as ConsolePanel)}
+                ariaLabel="Deney kumandaları"
+                idPrefix="console"
+                className="grid grid-cols-3 gap-1 rounded-2xl border border-site-border bg-site-soft p-1"
+                tabClassName={(active) =>
+                  `relative min-h-12 rounded-xl px-2 py-2 text-xs font-bold transition-colors sm:px-3 ${
+                    active
+                      ? "bg-site-strong text-site-on-strong shadow-sm"
+                      : "text-site-muted hover:bg-site-surface hover:text-site-ink"
+                  }`
+                }
+              />
 
               {consolePanel === "joints" && (
                 <div
