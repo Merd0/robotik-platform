@@ -13,9 +13,16 @@ describe("Kod Akademisi içerik yükleyicisi", () => {
     ]);
   });
 
-  it("Orta aşamadaki hata avcılığı modülünü döndürür", () => {
+  it("Orta aşamadaki modülleri sıra ile döndürür", () => {
     const modules = getPublicModulesByAsama("orta");
-    expect(modules.map((module) => module.slug)).toEqual(["koda-orta-hata-avcisi"]);
+    expect(modules.map((module) => module.slug)).toEqual([
+      "koda-orta-hata-avcisi",
+      "koda-orta-donguyle-uc-nokta",
+      "koda-orta-liste-ile-aci-dizisi",
+      "koda-orta-kosul-ile-dal",
+      "koda-orta-donguyle-liste-birlikte",
+      "koda-orta-degisken-golgeleme",
+    ]);
   });
 
   it("slug ile tek bir modülü bulur", () => {
@@ -88,6 +95,46 @@ describe("Kod Akademisi içerik yükleyicisi", () => {
 
   it("hata avcılığı modülü gövdesinde modül sonu 'neden' Quiz sorusu var", () => {
     const found = getPublicModuleBySlug("koda-orta-hata-avcisi")!;
+    expect(found.body).toContain("<Quiz");
+    expect(found.body).toContain("soru:");
+  });
+
+  it("döngüyle üç nokta modülü pass yer tutucuyla başlar ve üç adımlık izi doğrular", () => {
+    const found = getPublicModuleBySlug("koda-orta-donguyle-uc-nokta")!;
+    expect(found.frontmatter.initialCode).toContain("pass");
+    expect(found.frontmatter.initialCode).not.toContain("robot.movej(aci)");
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([90, -60]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+  });
+
+  it("liste ile açı dizisi modülü yanlış index'le başlar (ilk durağı seçer, ikinciyi değil)", () => {
+    const found = getPublicModuleBySlug("koda-orta-liste-ile-aci-dizisi")!;
+    expect(found.frontmatter.initialCode).toContain("duraklar[0]");
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([70, -50]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+  });
+
+  it("koşul ile dal modülü if dalında pass yer tutucuyla başlar, else dalı tam kalır", () => {
+    const found = getPublicModuleBySlug("koda-orta-kosul-ile-dal")!;
+    expect(found.frontmatter.initialCode).toContain("pass");
+    expect(found.frontmatter.initialCode).toContain("else:");
+    expect(found.frontmatter.initialCode).toContain("robot.movej([10, 60])");
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([90, -60]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+  });
+
+  it("döngü ve liste birlikte modülü boş bir başlangıç kodu ve dört noktalık davranışsal hedef taşır", () => {
+    const found = getPublicModuleBySlug("koda-orta-donguyle-liste-birlikte")!;
+    expect(found.frontmatter.initialCode.trim()).not.toContain("robot.movej");
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([95, -65]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+  });
+
+  it("değişken gölgeleme modülünün döngü değişkeni dıştaki hedef ile çakışır ve sonunda Quiz var", () => {
+    const found = getPublicModuleBySlug("koda-orta-degisken-golgeleme")!;
+    expect(found.frontmatter.initialCode).toMatch(/for hedef in ara_noktalar:/);
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([90, -60]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
     expect(found.body).toContain("<Quiz");
     expect(found.body).toContain("soru:");
   });
