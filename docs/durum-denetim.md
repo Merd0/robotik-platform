@@ -2597,3 +2597,84 @@ merge sonrası silinebilir durumda.
 (`contentVersion` ↔ `computeEvidenceVersionRoot` bağlantısı,
 `TransferChallenge` predicate sertleştirmesi) bu dönemde ele alınmadı —
 bilinçli olarak ayrı bırakıldı, hâlâ açık.
+
+## Kod Akademisi — vizyon, mimari, dikey dilim, düzeltme, merge (2026-08-18 — 2026-08-19)
+
+Yeni, bağımsız bir bölüm: `/kod-akademisi`. Süreç ayrı bir dalda
+(`feat/kod-akademisi-vertical-slice`) yürütüldü, kullanıcı onayıyla
+`main`'e merge edildi. Ayrıntılı çalışma kaydı `docs/durum-codex.md`'de
+(mimari teklif, ölçüm verisi, uygulama, bulunan hatalar); burası yalnız
+özet.
+
+### Vizyon ve mimari onayı
+
+- `docs/15-kod-akademisi.md` — yeni bölümün vizyon/kapsam dokümanı.
+  Hat D'den farkı (kavram göstermek değil, kodlama becerisi), dört
+  aşamalı yapı (Temel/Orta/İleri/Usta — ortaokul/lise/üniversite
+  üçlüsünden bağımsız), üç kademeli sunucusuz ipucu sistemi (AI YOK —
+  gerekçe: statik/sunucusuz mimari + gizlilik kuralı), CodeRunner'ın
+  mevcut "kod/sahne/sonuç alt alta" yerleşim sorunu.
+- Mimari teklif üç açık kararla onaylandı: (1) tek hash'li
+  `lib/kodAkademisiArtifact.ts` — ders sisteminin üç köklü
+  source/teaching/presentation ayrımı KOPYALANMADI, o ayrımın çözdüğü
+  Review Receipt sorunu burada yok; (2) masaüstü/mobil eşiği
+  VARSAYIMLA değil ÖLÇÜLEREK seçildi — gerçek CodeRunner içeriğiyle
+  (kod editörü + 3D sahne) iframe genişlik testi: 768px'de kod editörü
+  36 karaktere, sahne 184px'e düşüyor (kullanılamaz), 1024px'de ikisi
+  de kullanılabilir eşiği aşıyor → `lg:` (1024px); (3)
+  `components/ui/Tabs.tsx` ortak bileşene çıkarıldı, iki mevcut kopya
+  (`CustomRobotPlayground`, `RobotCellStudio`) buna geçirildi.
+
+### Dikey dilim
+
+`useCodeRunnerEngine` hook'u CodeRunner'dan çıkarıldı (saf mantık
+taşıma, JSX çıktısı öncesi/sonrası birebir aynı) — Kod Akademisi'nin
+yan yana/sekmeli yerleşimi (`KodAkademisiCodeLab`) aynı worker/
+pyodide/evidence motorunu kullanıyor, hiçbir motor kodu tekrar
+yazılmadı. 3 Temel modülü (`koda-temel-ilk-calistirma` Gözlem,
+`koda-temel-degisken-degistir` ve `koda-temel-parametre-gonder`
+Değiştir/Tamamla — 2 yeni predicate, mevcut `poseMatches` deseniyle).
+İçerik `content-kod-akademisi/` altında, bilinçli olarak `content/`
+DIŞINDA (ders kataloğunu `hat`/`seviye`'siz frontmatter'la kirletmesin
+diye); `check-sensitive-terms.ts` yine de yeni dizini tarıyor.
+
+### Bulunan ve düzeltilen iki gerçek hata
+
+1. **Erişilebilirlik regresyonu** (`Tabs.tsx` çıkarımı sırasında,
+   tam e2e paketinin kendisi yakaladı): orijinal
+   `CustomRobotPlayground`'daki sabit `aria-label={panel.label}`
+   çıkarımda unutulmuş — dar viewport'ta erişilebilir ad sessizce
+   yalnız kısaltmaya (`shortLabel`) düşüyordu. `Tabs.tsx`'e
+   `aria-label` eklenerek düzeltildi.
+2. **Ham Python traceback sızıntısı** (kullanıcının ikinci
+   incelemesi yakaladı, ekran görüntüsüyle bildirdi): `robot.movej([])`
+   gibi kullanıcı hatalarında öğretici mesaj yerine CPython'un tam
+   `Traceback (most recent call last): ...` dökümü (dahili dosya/satır
+   bilgisiyle) ekrana dökülüyordu. Kök neden Kod Akademisi'ne özel
+   değil, `lib/workers/pyodideWorker.ts`'te sistemikti (JS
+   callback'lerin `throw` etmesi → Pyodide'in bunu Python istisnası
+   olarak sarıp geri fırlatması → CPython'un traceback formatlaması);
+   mevcut Hat D testi bunu yakalayamamıştı çünkü zayıf bir alt-dize
+   assertion'ı kullanıyordu. Düzeltme: callback'ler artık throw
+   etmiyor, temiz string döndürüyor; Python tarafı kendi `RobotHatasi`
+   istisnasını raise ediyor; kullanıcı kodu bir try/except'e sarılı
+   çalışıyor. Bu, Kod Akademisi'nin YANI SIRA `CodeRunner` kullanan
+   TÜM Hat D derslerini de düzeltti. Ayrıntı, tam kök neden analizi ve
+   test listesi `docs/durum-codex.md`'de.
+
+### Merge ve doğrulama (main'e, 2026-08-19)
+
+`feat/kod-akademisi-vertical-slice` `main`'e fast-forward merge edildi
+(`5f4048f`), push edildi. Merge sonrası `main` üzerinde tekrar
+çalıştırıldı: `tsc`, `lint`, `vitest` (643/643) ve `npm run build`
+(308 statik/SSG sayfa, `check-no-draft-pages`/`check-release-output`
+temiz) — hepsi temiz. E2e paketi dal üzerindeyken zaten kapsamlı
+doğrulanmıştı (156/156, ayrıca tek worker'la izole edilen 12/12);
+fast-forward olduğu için main'deki kod dalla birebir aynı, yeniden tam
+e2e koşulmadı.
+
+`docs/fikirler.md`'ye ayrı bir not düşüldü (`d84323b`): uygulanan
+docs/15 (4 aşamalı) ile `docs/guncel-fikirler.md` §13'teki uygulanmamış,
+daha büyük kapsamlı (6 laboratuvar) alternatif Kod Akademisi planı
+arasında ileride bir uzlaştırma kararı gerekiyor — şimdiki faza
+sokulmadı, yalnız kayda geçirildi.
