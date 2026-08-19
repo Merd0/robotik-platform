@@ -240,6 +240,39 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     }),
   },
   {
+    // Açıkla-sonra-uygula (docs/15 "Ek alıştırma türleri" 2026-08 kararı):
+    // editör boş açılır, öğrenci sıfırdan yazar. Aynı desen — poseMatches.
+    id: "koda-temel-acikla-sonra-uygula-v1",
+    lessonId: "koda-temel-acikla-sonra-uygula",
+    skillId: "koda-temel-acikla-sonra-uygula",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-temel-acikla-sonra-uygula" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
+    // Hata avcılığı (docs/15 aynı karar): başlangıç kodu bilerek bozuk,
+    // birden fazla doğru düzeltme olabilir — bu yüzden davranışsal
+    // (poseMatches), string eşleşmesi DEĞİL.
+    id: "koda-orta-hata-avcisi-v1",
+    lessonId: "koda-orta-hata-avcisi",
+    skillId: "koda-orta-hata-avcisi",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-orta-hata-avcisi" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
     id: "movel-donguyle-rota-v1",
     lessonId: "d-lise-donguyle-cok-nokta",
     skillId: "movel-donguyle-rota",

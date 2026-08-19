@@ -1,0 +1,54 @@
+---
+id: koda-orta-hata-avcisi
+baslik: "Hata avcılığı: eksik parametre"
+asama: orta
+sira: 1
+kazanimlar:
+  - Bir hata mesajını okuyup kod içindeki eksik/yanlış kısmı bulup düzeltebilme
+ipuclari:
+  - "Çalıştır'a bas, hata mesajını oku — kaç eklem açısı beklendiğini söylüyor mu?"
+  - "aci_2 değişkeni tanımlı ama movej()'in içindeki listede hiç kullanılmamış."
+  - "Listeye aci_2'yi de ekle: robot.movej([aci_1, aci_2])."
+cozum: |
+  aci_1 = 90
+  aci_2 = -45
+  robot.movej([aci_1, aci_2])
+initialCode: |
+  aci_1 = 90
+  aci_2 = -45
+  robot.movej([aci_1])
+robot: generic-2dof
+skillId: koda-orta-hata-avcisi
+expectedFinalDegrees: [90, -45]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Bu kod bozuk
+
+Aşağıdaki kod çalışmıyor. `aci_1` ve `aci_2` iki değişken olarak tanımlı,
+ama `robot.movej()` çağrısı ikisini de kullanmıyor.
+
+## Görev
+
+Çalıştır'a bas, hata mesajını oku, kodu düzelt. Robotun birinci eklemi 90
+dereceye, ikinci eklemi -45 dereceye gitmeli. Düzeltmenin tek bir doğru
+yazılışı yok — hata mesajını anladığını gösteren her düzeltme kabul edilir.
+
+## Neden
+
+<Quiz
+  sorular={[
+    {
+      soru: "Hata mesajı 'movej() 2 eklem açısı bekliyor' diyordu. Bunun gerçek nedeni neydi?",
+      secenekler: [
+        "robot.movej() fonksiyonu bozuktu.",
+        "aci_2 değişkeni tanımlanmıştı ama movej()'e verilen listenin içine hiç yazılmamıştı.",
+        "Robotun eklem limiti aşılmıştı.",
+        "aci_1 ve aci_2 aynı değeri taşıyordu.",
+      ],
+      dogru: 1,
+      aciklama: "movej() listenin İÇİNDEKİ eleman sayısına bakar — bir değişkenin bir yerde tanımlanmış olması yetmez, o değişkenin listenin içine de yazılmış olması gerekir.",
+    },
+  ]}
+/>

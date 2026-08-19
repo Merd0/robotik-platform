@@ -335,6 +335,68 @@ test("Kod Akademisi: gerçek Python yazım hatası (NameError) da ham traceback 
   expect(preText).not.toContain("_pyodide/_base.py");
 });
 
+test("Kod Akademisi: Açıkla-sonra-uygula modülü boş editörle açılır, sıfırdan yazılan kod predicate'i geçirir", async ({ page }) => {
+  await page.goto("/kod-akademisi/temel/koda-temel-acikla-sonra-uygula");
+  await expect(page.getByRole("heading", { name: "Açıkla, sonra uygula" })).toBeVisible();
+  await expect(page.getByLabel("Python kodu")).toHaveValue(/^# Buraya kendi kodunu yaz\.?\s*$/);
+
+  // Boş editörle çalıştırma: otomatik test istiyor ama robot hiç hareket
+  // etmedi, predicate geçmemeli.
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tekrar dene", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const kodSekmesi = page.getByRole("tab", { name: "Kod" });
+  if (await kodSekmesi.isVisible()) await kodSekmesi.click();
+
+  // Sıfırdan yazılan doğru kod predicate'i geçirmeli.
+  await page.getByLabel("Python kodu").fill("robot.movej([90, -60])");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tamamlandı ✓", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const kanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(kanit.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "koda-temel-acikla-sonra-uygula-v1",
+  )).toBe(true);
+});
+
+test("Kod Akademisi: Hata avcılığı modülü bozuk kodla öğretici hata gösterir, düzeltmeyle predicate'i geçirir, sonunda 'neden' Quiz sorusu var", async ({ page }) => {
+  await page.goto("/kod-akademisi/orta/koda-orta-hata-avcisi");
+  await expect(page.getByRole("heading", { name: "Hata avcılığı: eksik parametre" })).toBeVisible();
+
+  // Bozuk başlangıç koduyla çalıştırma: temiz öğretici hata mesajı
+  // görünmeli, ham traceback DEĞİL (bkz. Parametre gönder modülündeki aynı
+  // regresyon testi — kök neden ortak, pyodideWorker.ts seviyesinde).
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText(/2 eklemli olduğu için movej\(\) 2 eklem açısı bekliyor/)).toBeVisible({ timeout: 30_000 });
+  const preText = await page.locator("pre").textContent();
+  expect(preText).not.toContain("Traceback");
+  expect(preText).not.toContain("pyodide.ffi");
+
+  const kodSekmesi = page.getByRole("tab", { name: "Kod" });
+  if (await kodSekmesi.isVisible()) await kodSekmesi.click();
+
+  // Birden fazla doğru düzeltme olabilir — burada listeye aci_2 eklenerek
+  // düzeltiliyor, davranışsal (poseMatches) değerlendirme string
+  // eşleşmesi değil bunu kanıtlar.
+  await page.getByLabel("Python kodu").fill("aci_1 = 90\naci_2 = -45\nrobot.movej([aci_1, aci_2])");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tamamlandı ✓", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const kanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(kanit.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "koda-orta-hata-avcisi-v1",
+  )).toBe(true);
+
+  // Modül sonu "neden" Quiz sorusu görünür ve seçilince değerlendirici geri bildirim verir.
+  await expect(page.getByText(/Hata mesajı 'movej\(\) 2 eklem açısı bekliyor' diyordu/)).toBeVisible();
+  await page.getByRole("button", { name: /aci_2 değişkeni tanımlanmıştı/ }).click();
+  await expect(page.getByText(/^Doğru\./)).toBeVisible();
+});
+
 test("Kod Akademisi: ipucu açma Evidence'a hintLevel ile kaydedilir", async ({ page }) => {
   await page.goto("/kod-akademisi/temel/koda-temel-degisken-degistir");
   await page.getByRole("button", { name: /İpucu göster/ }).click();
@@ -713,6 +775,8 @@ test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
     "/laboratuvar/robot-hucresi",
     "/kod-akademisi",
     "/kod-akademisi/temel/koda-temel-ilk-calistirma",
+    "/kod-akademisi/temel/koda-temel-acikla-sonra-uygula",
+    "/kod-akademisi/orta/koda-orta-hata-avcisi",
   ];
   for (const url of denetlenen) {
     await page.goto(url);

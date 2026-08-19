@@ -681,6 +681,8 @@ describe.each([
   ["python-fk-ik-round-trip-v1", "d-universite-python-fk-ik", "python-fk-ik-round-trip"],
   ["koda-temel-degisken-degistir-v1", "koda-temel-degisken-degistir", "koda-temel-degisken-degistir"],
   ["koda-temel-parametre-gonder-v1", "koda-temel-parametre-gonder", "koda-temel-parametre-gonder"],
+  ["koda-temel-acikla-sonra-uygula-v1", "koda-temel-acikla-sonra-uygula", "koda-temel-acikla-sonra-uygula"],
+  ["koda-orta-hata-avcisi-v1", "koda-orta-hata-avcisi", "koda-orta-hata-avcisi"],
 ] as const)("robot-python-api rollout (%s): golden + negatif predicate testleri", (predicateId, lessonId, skillId) => {
   const predicate = EVIDENCE_PREDICATES.find((item) => item.id === predicateId)!;
   const run = (
