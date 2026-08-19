@@ -1,0 +1,36 @@
+---
+id: koda-usta-uc-nokta-sirayla
+baslik: Üç noktayı sırayla ziyaret et
+asama: usta
+sira: 1
+kazanimlar:
+  - Bir görevi baştan sona kendi başına kodlayarak, önceki modüllerde öğrendiği araçları (liste, döngü) ne zaman kullanacağına kendi karar verebilme
+ipuclari:
+  - "Bu üç noktayı bir listede tutup bir yapıyla gezmen gerekebilir — daha önce bunu birkaç kez yaptın."
+  - "Üç ayrı robot.movej() çağrısı da yazabilirsin, ama liste + döngü daha az tekrar gerektirir. İkisi de kabul edilir."
+  - "Son nokta (90°, -60°) — kodun robotu oraya götürdüğünde ve arada diğer iki noktadan geçtiğinde görev tamam."
+cozum: |
+  noktalar = [[20, -10], [55, -35], [90, -60]]
+
+  for aci in noktalar:
+      robot.movej(aci)
+initialCode: |
+  # Buraya kendi kodunu yaz.
+robot: generic-2dof
+skillId: koda-usta-uc-nokta-sirayla
+expectedFinalDegrees: [90, -60]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Görev
+
+Robotun ucunu SIRAYLA şu üç noktaya götür:
+
+1. (20°, -10°)
+2. (55°, -35°)
+3. (90°, -60°)
+
+Nasıl yazacağın sana kalmış — daha önceki modüllerde gördüğün her araç
+(liste, döngü, fonksiyon) kullanılabilir. Önemli olan üç noktanın da
+gerçekten sırayla ziyaret edilmesi.

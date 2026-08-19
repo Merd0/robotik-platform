@@ -2780,3 +2780,59 @@ doküman)/review-debt(bilgi)/review-integrity(temiz)/build/
 perf-budget/audit(0)/e2e `--workers=4` 195/195, 12 skip) — hepsi
 temiz. Governance dosyası değişmedi, docs/09 §7 otomatik geçit
 uygulandı, `main`'e merge edildi.
+
+## Kod Akademisi — Usta aşaması tamamlandı, tüm görev bitti (2026-08-19, aynı otonom oturum)
+
+Aynı `/loop` oturumu, son dal: `feat/kod-akademisi-usta-asama`. docs/15
+müfredat planındaki son 3 Usta modülü:
+
+1. `koda-usta-uc-nokta-sirayla` (Yaz) — docs/01-mufredat.md'deki örnek
+   görevle birebir aynı: "üç noktayı sırayla ziyaret eden bir hareket
+   yaz". Editör tamamen boş, hiçbir iskelet yok — bu curriculum'daki
+   ilk saf "Yaz" modülü. Predicate `traceSteps >= 3`.
+2. `koda-usta-kosullu-hareket` (Yaz) — üç kavramı BİRLİKTE ister:
+   fonksiyon + döngü + koşul. Dört adaydan ikisi "güvenli" (j1 -90..90
+   arası), kod listeyi gezip yalnız güvenli olanlara gitmeli. Predicate
+   `traceSteps >= 2` (iki güvenli adaya da UĞRANDIĞINI ister, doğrudan
+   son adaya atlamak yetmez).
+3. `koda-usta-hata-avcisi-final` (Hata avcılığı + Quiz, aşamanın
+   kapanışı) — İKİ bağımsız hata birlikte: (a) ısınma hareketinde eksik
+   parametre (çöker, öğretici hata verir — Orta modül 1'in sınıfı),
+   (b) döngü içinde `noktalar[0][0]` kullanımı (SESSİZCE yanlış çalışır,
+   hata vermez — İleri modül 4'ün sınıfı, ters yönde). İlk hata
+   düzeltilmeden ikincisi hiç görünmüyor — gerçek, çok adımlı bir hata
+   ayıklama deneyimi. e2e testi üç durumu da doğruladı: düzeltilmemiş
+   (çöker) → yalnız ilk hata düzeltilmiş (sessizce yanlış, predicate
+   geçmiyor) → ikisi de düzeltilmiş (predicate geçiyor). Predicate
+   `traceSteps >= 4` (ısınma + 3 nokta).
+
+**Kod Akademisi artık 17/17 modülle docs/15'teki plana tam:** Temel 4 +
+Orta 6 (1 önceden vardı + 5 yeni) + İleri 4 (hepsi yeni) + Usta 3
+(hepsi yeni) = 17. (docs/15'in müfredat planı bölümündeki "13 yeni
+modül... 18 modüle çıkarır" cümlesinde bir toplama hatası vardı —
+5+4+3=12 yeni, 5+12=17 toplam; bu oturumda docs/15'te de düzeltildi.)
+Hiçbir modül 3 denemeyi aşmadı, hiçbiri atlanmadı.
+
+Kontrol paketi main'e göre tam çalıştı: tsc/lint/vitest(723/723)/
+check-content(94)/graph(94)/quiz-dagilimi(139, content-kod-akademisi
+kapsam dışı)/mdx-guvenlik(94)/sensitive-terms(111 modül+19 doküman)/
+review-debt(bilgi)/review-integrity(temiz)/build(17 Kod Akademisi
+modül sayfası dahil)/perf-budget(bütçe içinde)/audit(0 zafiyet)/
+e2e(`--workers=4`, 204/204, 12 skip) — hepsi temiz. Governance dosyası
+değişmedi, docs/09 §7 otomatik geçit uygulandı, `main`'e merge edildi.
+
+### Görev özeti (AŞAMA 1 uzlaştırma + AŞAMA 2 içerik genişletme)
+
+Kullanıcının "büyük, kapsamlı görev" talimatı tamamen bitti:
+- AŞAMA 1: docs/15 ile docs/guncel-fikirler.md §13 uzlaştırıldı
+  (`37cc4ed`) — §13'ün 6 hat-bazlı laboratuvarı taşınmadı, pedagojik
+  deseni Hata avcılığı tipine zaten yansımıştı.
+- AŞAMA 2: Orta (+5, `5fe3b81`→main `cb30fcf`), İleri (+4, `fef311e`→
+  main `c928ed2`), Usta (+3, bu dal→main) — üç ayrı dalda, her aşama
+  sonunda tam kontrol paketi + merge.
+- Bulunan tek operasyonel sorun (test zayıflatılmadı, düzeltildi):
+  tam e2e paketi varsayılan paralellikte kaynak yarışmasından kırılgan
+  — `--workers=4` ile stabil. Bu notu gören sonraki oturumlar aynısını
+  kullanmalı.
+- `/loop`, `TaskCreate`/`TaskUpdate` ile 15 görevlik bir plan takip
+  edildi, hepsi `completed`.

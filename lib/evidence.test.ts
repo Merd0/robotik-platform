@@ -850,6 +850,111 @@ describe("koda-ileri-fonksiyonla-liste-v1: golden + negatif predicate testleri",
   });
 });
 
+describe("koda-usta-uc-nokta-sirayla-v1: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "koda-usta-uc-nokta-sirayla-v1")!;
+  const run = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+    stage: EvidenceEvent["stage"] = "assessed",
+  ) => event(stage, result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "kod-akademisi-module-v1",
+  });
+
+  it("predicate doğru lessonId/skillId'ye kayıtlı", () => {
+    expect(predicate.lessonId).toBe("koda-usta-uc-nokta-sirayla");
+    expect(predicate.skillId).toBe("koda-usta-uc-nokta-sirayla");
+  });
+
+  it("golden: üç noktalık iz ve poz testi geçen koşu geçer", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 3 })]).passed).toBe(true);
+  });
+
+  it("negatif: doğru poza ulaşmayan koşu geçmez", () => {
+    expect(predicate.evaluate([run("retry", { poseMatches: false, traceSteps: 3 })]).passed).toBe(false);
+  });
+
+  it("negatif: üç nokta da ziyaret edilmeden (üçten az iz) geçmez — doğrudan son noktaya atlamak yetmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 1 })]).passed).toBe(false);
+  });
+
+  it("negatif: assessed olmayan gözlem olayı başarı üretmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 3 }, "observed")]).passed).toBe(false);
+  });
+});
+
+describe("koda-usta-kosullu-hareket-v1: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "koda-usta-kosullu-hareket-v1")!;
+  const run = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+    stage: EvidenceEvent["stage"] = "assessed",
+  ) => event(stage, result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "kod-akademisi-module-v1",
+  });
+
+  it("predicate doğru lessonId/skillId'ye kayıtlı", () => {
+    expect(predicate.lessonId).toBe("koda-usta-kosullu-hareket");
+    expect(predicate.skillId).toBe("koda-usta-kosullu-hareket");
+  });
+
+  it("golden: iki güvenli adaya uğrayan iz ve poz testi geçen koşu geçer", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 2 })]).passed).toBe(true);
+  });
+
+  it("negatif: doğru poza ulaşmayan koşu geçmez", () => {
+    expect(predicate.evaluate([run("retry", { poseMatches: false, traceSteps: 2 })]).passed).toBe(false);
+  });
+
+  it("negatif: yalnız son güvenli adaya doğrudan atlamak (tek iz) geçmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 1 })]).passed).toBe(false);
+  });
+
+  it("negatif: assessed olmayan gözlem olayı başarı üretmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 2 }, "observed")]).passed).toBe(false);
+  });
+});
+
+describe("koda-usta-hata-avcisi-final-v1: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "koda-usta-hata-avcisi-final-v1")!;
+  const run = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+    stage: EvidenceEvent["stage"] = "assessed",
+  ) => event(stage, result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "kod-akademisi-module-v1",
+  });
+
+  it("predicate doğru lessonId/skillId'ye kayıtlı", () => {
+    expect(predicate.lessonId).toBe("koda-usta-hata-avcisi-final");
+    expect(predicate.skillId).toBe("koda-usta-hata-avcisi-final");
+  });
+
+  it("golden: ısınma + üç noktalık iz (dört adım) ve poz testi geçen koşu geçer", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 4 })]).passed).toBe(true);
+  });
+
+  it("negatif: doğru poza ulaşmayan koşu geçmez", () => {
+    expect(predicate.evaluate([run("retry", { poseMatches: false, traceSteps: 4 })]).passed).toBe(false);
+  });
+
+  it("negatif: ısınma+üç nokta tamamlanmadan (dörtten az iz) geçmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 1 })]).passed).toBe(false);
+  });
+
+  it("negatif: assessed olmayan gözlem olayı başarı üretmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 4 }, "observed")]).passed).toBe(false);
+  });
+});
+
 describe("kosullu-tcp-kontrolu-v1: golden + negatif predicate testleri", () => {
   const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "kosullu-tcp-kontrolu-v1")!;
   const run = (

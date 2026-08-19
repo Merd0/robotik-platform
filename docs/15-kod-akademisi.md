@@ -248,8 +248,8 @@ yazım — iskelet verilir, kullanıcı gövdeyi yazar):
    hatayı birlikte barındıran kod; hepsini bul ve düzelt (Hata avcılığı
    + Quiz, aşamanın kapanışı).
 
-Bu üç aşamadaki toplam 13 yeni modül (Orta +5, İleri +4, Usta +3),
-mevcut 5 modülle (Temel 4 + Orta 1) birlikte Kod Akademisi'ni 18
+Bu üç aşamadaki toplam 12 yeni modül (Orta +5, İleri +4, Usta +3),
+mevcut 5 modülle (Temel 4 + Orta 1) birlikte Kod Akademisi'ni 17
 modüle çıkarır. Bu bir üst sınır değil, kuruluş taahhüdü — ileride
 daha fazla modül eklenebilir, ama bu görev bu 18'i bitirmeyi hedefler.
 Bir modül 3 denemeden sonra çözülemezse atlanır, `docs/durum-denetim.md`'ye
