@@ -1,0 +1,46 @@
+---
+id: koda-ileri-kosullu-fonksiyon
+baslik: Güvenli bölge kontrolü
+asama: ileri
+sira: 3
+kazanimlar:
+  - Fonksiyon içinde if/else kullanarak, bir hedefin güvenli sınırlar içinde olup olmadığını kontrol edip robotu ona göre yönlendirebilme
+ipuclari:
+  - "Önce fonksiyonu tanımla: def guvenli_git(j1):"
+  - "İçinde if -90 <= j1 <= 90: ile aralığı kontrol et, movej([j1, -30]) çağır; else: dalında movej([0, 0]) çağır."
+  - "En altta fonksiyonu çağır: guvenli_git(120)."
+cozum: |
+  def guvenli_git(j1):
+      if -90 <= j1 <= 90:
+          robot.movej([j1, -30])
+      else:
+          robot.movej([0, 0])
+
+  guvenli_git(120)
+initialCode: |
+  # Buraya kendi kodunu yaz.
+robot: generic-2dof
+skillId: koda-ileri-kosullu-fonksiyon
+expectedFinalDegrees: [0, 0]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Ne oldu
+
+Gerçek robot hücrelerinde her hedef güvenli değildir — bazı açılar
+robotu bir engele veya çalışma alanının dışına götürebilir. Bu yüzden
+robotu hareket ettirmeden önce hedefi KONTROL ETMEK yaygın bir desen:
+"bu hedef güvenli mi? Öyleyse git, değilse güvenli bir konuma çekil."
+
+## Görev
+
+`guvenli_git(j1)` adında bir fonksiyon yaz. Fonksiyon tek bir parametre
+(`j1`) alsın:
+
+- `j1`, -90° ile 90° arasındaysa (ikisi de dahil) — GÜVENLİ bölge —
+  robotu `movej([j1, -30])` ile o açıya götür.
+- Değilse robotu `movej([0, 0])` ile güvenli, sıfır konumuna götür.
+
+Fonksiyonu yazdıktan sonra `guvenli_git(120)` ile çağır. 120°
+güvenli bölgenin DIŞINDA — robotun hangi dala gittiğini gözlemleyeceksin.

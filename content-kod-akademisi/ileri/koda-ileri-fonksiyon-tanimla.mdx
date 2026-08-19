@@ -1,0 +1,41 @@
+---
+id: koda-ileri-fonksiyon-tanimla
+baslik: Kendi hareket fonksiyonunu yaz
+asama: ileri
+sira: 1
+kazanimlar:
+  - Parametre alan bir fonksiyon tanımlayıp gövdesini tamamlayarak robotu hareket ettirebilme
+ipuclari:
+  - "Fonksiyonun parametreleri j1 ve j2 — bunlar birer sayı, ama movej() bir LİSTE bekler."
+  - "j1 ve j2'yi bir liste içine al: [j1, j2]."
+  - "pass satırını robot.movej([j1, j2]) ile değiştir."
+cozum: |
+  def git(j1, j2):
+      robot.movej([j1, j2])
+
+  git(90, -60)
+initialCode: |
+  def git(j1, j2):
+      pass  # Bu fonksiyonun gövdesini tamamla: robotu (j1, j2) açılarına götürmeli.
+
+  git(90, -60)
+robot: generic-2dof
+skillId: koda-ileri-fonksiyon-tanimla
+expectedFinalDegrees: [90, -60]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Ne oldu
+
+`def git(j1, j2):` bir fonksiyon TANIMLIYOR — ama tanımlamak, çağırmak
+değildir. Fonksiyon yalnız `git(90, -60)` satırıyla ÇAĞRILDIĞINDA
+çalışır; o an `j1 = 90`, `j2 = -60` olarak fonksiyonun içine geçer.
+
+Şu an gövde sadece `pass` — fonksiyon çağrılıyor ama içi boş olduğu için
+robot hiç hareket etmiyor.
+
+## Görev
+
+`pass` satırını, robotu `j1` ve `j2` açılarına götürecek satırla
+değiştir. Aşağıdaki çağrıya (`git(90, -60)`) dokunma.

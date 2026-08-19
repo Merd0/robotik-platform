@@ -13,6 +13,16 @@ describe("Kod Akademisi içerik yükleyicisi", () => {
     ]);
   });
 
+  it("İleri aşamadaki modülleri sıra ile döndürür", () => {
+    const modules = getPublicModulesByAsama("ileri");
+    expect(modules.map((module) => module.slug)).toEqual([
+      "koda-ileri-fonksiyon-tanimla",
+      "koda-ileri-fonksiyonla-liste",
+      "koda-ileri-kosullu-fonksiyon",
+      "koda-ileri-hata-avcisi",
+    ]);
+  });
+
   it("Orta aşamadaki modülleri sıra ile döndürür", () => {
     const modules = getPublicModulesByAsama("orta");
     expect(modules.map((module) => module.slug)).toEqual([
@@ -134,6 +144,41 @@ describe("Kod Akademisi içerik yükleyicisi", () => {
     const found = getPublicModuleBySlug("koda-orta-degisken-golgeleme")!;
     expect(found.frontmatter.initialCode).toMatch(/for hedef in ara_noktalar:/);
     expect(found.frontmatter.expectedFinalDegrees).toEqual([90, -60]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+    expect(found.body).toContain("<Quiz");
+    expect(found.body).toContain("soru:");
+  });
+
+  it("fonksiyon tanımlama modülü pass yer tutucuyla başlar, çağrıya dokunulmaz", () => {
+    const found = getPublicModuleBySlug("koda-ileri-fonksiyon-tanimla")!;
+    expect(found.frontmatter.initialCode).toContain("def git(j1, j2):");
+    expect(found.frontmatter.initialCode).toContain("pass");
+    expect(found.frontmatter.initialCode).toContain("git(90, -60)");
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([90, -60]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+  });
+
+  it("fonksiyon+liste modülü fonksiyon gövdesi boş başlar, çağrı hazır gelir", () => {
+    const found = getPublicModuleBySlug("koda-ileri-fonksiyonla-liste")!;
+    expect(found.frontmatter.initialCode).toContain("def rotayi_izle(noktalar):");
+    expect(found.frontmatter.initialCode).toContain("pass");
+    expect(found.frontmatter.initialCode).toContain("rotayi_izle([[15, -5], [45, -25], [80, -55]])");
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([80, -55]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+  });
+
+  it("güvenli bölge kontrolü modülü boş bir başlangıç kodu ve dışarıdaki dal hedefini taşır", () => {
+    const found = getPublicModuleBySlug("koda-ileri-kosullu-fonksiyon")!;
+    expect(found.frontmatter.initialCode.trim()).not.toContain("def ");
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([0, 0]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+  });
+
+  it("İleri hata avcılığı modülünün fonksiyonu kendi parametresini kullanmaz, sonunda Quiz var", () => {
+    const found = getPublicModuleBySlug("koda-ileri-hata-avcisi")!;
+    expect(found.frontmatter.initialCode).toContain("def git(j1, j2):");
+    expect(found.frontmatter.initialCode).toMatch(/robot\.movej\(\[varsayilan_j1, j2\]\)/);
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([70, -40]);
     expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
     expect(found.body).toContain("<Quiz");
     expect(found.body).toContain("soru:");
