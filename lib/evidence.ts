@@ -415,6 +415,63 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     }),
   },
   {
+    // Usta müfredat planı (docs/15 "Müfredat planı — Orta/İleri/Usta"),
+    // docs/01-mufredat.md'deki örnek görevle aynı: "üç noktayı sırayla
+    // ziyaret eden bir hareket yaz". Editör tamamen boş — Yaz tipi.
+    id: "koda-usta-uc-nokta-sirayla-v1",
+    lessonId: "koda-usta-uc-nokta-sirayla",
+    skillId: "koda-usta-uc-nokta-sirayla",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-usta-uc-nokta-sirayla" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true &&
+        typeof event.metrics?.traceSteps === "number" &&
+        event.metrics.traceSteps >= 3,
+      ),
+      metrics: { requiredTraceSteps: 3 },
+    }),
+  },
+  {
+    // Üç kavram birlikte (fonksiyon + döngü + koşul). traceSteps>=2 iki
+    // güvenli adaya da UĞRANDIĞINI ister — doğrudan son adaya atlamak
+    // yetmez, koşulun listenin TAMAMINI süzdüğü kanıtlanmalı.
+    id: "koda-usta-kosullu-hareket-v1",
+    lessonId: "koda-usta-kosullu-hareket",
+    skillId: "koda-usta-kosullu-hareket",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-usta-kosullu-hareket" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true &&
+        typeof event.metrics?.traceSteps === "number" &&
+        event.metrics.traceSteps >= 2,
+      ),
+      metrics: { requiredTraceSteps: 2 },
+    }),
+  },
+  {
+    // Kapanış modülü: iki bağımsız hata (eksik parametre + yanlış liste
+    // index'i). traceSteps>=4 ısınma hareketi + üç nokta gerçekten
+    // gerçekleştiğini ister.
+    id: "koda-usta-hata-avcisi-final-v1",
+    lessonId: "koda-usta-hata-avcisi-final",
+    skillId: "koda-usta-hata-avcisi-final",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-usta-hata-avcisi-final" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true &&
+        typeof event.metrics?.traceSteps === "number" &&
+        event.metrics.traceSteps >= 4,
+      ),
+      metrics: { requiredTraceSteps: 4 },
+    }),
+  },
+  {
     id: "movel-donguyle-rota-v1",
     lessonId: "d-lise-donguyle-cok-nokta",
     skillId: "movel-donguyle-rota",

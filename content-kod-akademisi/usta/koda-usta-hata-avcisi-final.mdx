@@ -1,0 +1,64 @@
+---
+id: koda-usta-hata-avcisi-final
+baslik: "Hata avcılığı: iki hatayı birden bul"
+asama: usta
+sira: 3
+kazanimlar:
+  - Birden fazla, birbirinden bağımsız hatayı adım adım bulup düzelterek çok parçalı bir kodu çalışır hale getirebilme
+ipuclari:
+  - "Çalıştır'a bas — ilk hata neyi söylüyor? İlk satırdaki ısınma hareketini düzeltmeden geri kalanını göremezsin."
+  - "İlk hatayı düzelttikten sonra tekrar çalıştır — robot son noktaya gitmiyor. Döngü içindeki movej() çağrısına dikkatlice bak: her adımda GERÇEKTEN 'aci' değişkenini mi kullanıyor?"
+  - "noktalar[0][0] her zaman İLK noktanın açısını verir, döngüdeki O ANKİ 'aci'yi değil — bunu aci[0] ile (ya da doğrudan aci ile) değiştir."
+cozum: |
+  def rotayi_yap(noktalar):
+      robot.movej([0, 0])
+
+      for aci in noktalar:
+          robot.movej(aci)
+
+  rotayi_yap([[30, -10], [60, -30], [90, -50]])
+initialCode: |
+  def rotayi_yap(noktalar):
+      robot.movej([0])  # ısınma hareketi
+
+      for aci in noktalar:
+          robot.movej([noktalar[0][0], aci[1]])
+
+  rotayi_yap([[30, -10], [60, -30], [90, -50]])
+robot: generic-2dof
+skillId: koda-usta-hata-avcisi-final
+expectedFinalDegrees: [90, -50]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Bu kod bozuk — İKİ hata var
+
+Bu kod bir "ısınma hareketi" ile başlıyor, sonra üç noktalık bir listeyi
+gezmesi gerekiyor. Ama iki bağımsız hata içeriyor. İlkini düzeltmeden
+ikincisini göremezsin — kod ilk hatada duruyor.
+
+## Görev
+
+Çalıştır'a bas, hatayı oku, düzelt. Tekrar çalıştır, sonucu kontrol et,
+gerekirse tekrar düzelt. Robot son olarak (90°, -50°) açılarında olmalı
+— listedeki üçüncü ve son noktanın açıları. Düzeltmelerin tek bir doğru
+yazılışı yok, her iki hatayı da çözen her düzeltme kabul edilir.
+
+## Neden
+
+<Quiz
+  sorular={[
+    {
+      soru: "İkinci hatayı (noktalar[0][0] kullanımı) neden fark etmek zordu?",
+      secenekler: [
+        "Çünkü Python bu satırda hiçbir hata vermiyordu — kod çalışıyordu, sadece yanlış sonuç üretiyordu.",
+        "Çünkü ilk hatayı düzeltmek ikinci hatayı da otomatik düzeltiyordu.",
+        "Çünkü noktalar[0][0] geçersiz bir Python ifadesiydi.",
+        "Çünkü döngü hiç çalışmıyordu.",
+      ],
+      dogru: 0,
+      aciklama: "Bu hata sınıfının asıl tehlikesi bu: kod ÇÖKMÜYOR, SESSİZCE yanlış çalışıyor. Hata mesajı yok — bu yüzden çıktıyı veya robotun son duruşunu beklenenle karşılaştırmadan fark edilmez. İlk hatadaki (eksik parametre) çökme en azından seni uyarır; ikincisi uyarmaz.",
+    },
+  ]}
+/>

@@ -1,0 +1,41 @@
+---
+id: koda-usta-kosullu-hareket
+baslik: Güvenli adayları süz
+asama: usta
+sira: 2
+kazanimlar:
+  - Fonksiyon, döngü ve koşulu birlikte kullanarak, bir aday listesinden yalnızca güvenli olanlara hareket eden bir kontrol akışı yazabilme
+ipuclari:
+  - "Üç kavramı bir arada kullanacaksın: fonksiyon tanımı, listeyi gezen bir döngü, ve her adayı güvenlik açısından süzen bir koşul."
+  - "Güvenli aday: j1 değeri -90 ile 90 arasında (ikisi dahil). Güvenli OLMAYAN bir adaya HİÇ hareket etme — sadece atla."
+  - "Listedeki dört adaydan ikisi güvenli — kodun ikisine de sırayla gitmeli, güvenli olmayanları atlamalı."
+cozum: |
+  def guvenli_rotayi_izle(adaylar):
+      for aci in adaylar:
+          if -90 <= aci[0] <= 90:
+              robot.movej(aci)
+
+  guvenli_rotayi_izle([[150, -20], [40, -15], [100, -40], [60, -30]])
+initialCode: |
+  # Buraya kendi kodunu yaz.
+robot: generic-2dof
+skillId: koda-usta-kosullu-hareket
+expectedFinalDegrees: [60, -30]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Görev
+
+Aşağıdaki dört aday açı çiftinden oluşan listeyi işleyen bir kod yaz:
+
+```
+[[150, -20], [40, -15], [100, -40], [60, -30]]
+```
+
+Her aday için: eğer birinci açı (j1) -90° ile 90° ARASINDAYSA
+(ikisi de dahil) — güvenli — robotu o adaya götür. Değilse o adayı
+tamamen ATLA, hiç hareket etme.
+
+Bu listede iki aday güvenli, iki aday değil. Kodun listeyi baştan sona
+gezip yalnız güvenli olanlara sırayla gitmeli.

@@ -23,6 +23,15 @@ describe("Kod Akademisi içerik yükleyicisi", () => {
     ]);
   });
 
+  it("Usta aşamadaki modülleri sıra ile döndürür", () => {
+    const modules = getPublicModulesByAsama("usta");
+    expect(modules.map((module) => module.slug)).toEqual([
+      "koda-usta-uc-nokta-sirayla",
+      "koda-usta-kosullu-hareket",
+      "koda-usta-hata-avcisi-final",
+    ]);
+  });
+
   it("Orta aşamadaki modülleri sıra ile döndürür", () => {
     const modules = getPublicModulesByAsama("orta");
     expect(modules.map((module) => module.slug)).toEqual([
@@ -179,6 +188,30 @@ describe("Kod Akademisi içerik yükleyicisi", () => {
     expect(found.frontmatter.initialCode).toContain("def git(j1, j2):");
     expect(found.frontmatter.initialCode).toMatch(/robot\.movej\(\[varsayilan_j1, j2\]\)/);
     expect(found.frontmatter.expectedFinalDegrees).toEqual([70, -40]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+    expect(found.body).toContain("<Quiz");
+    expect(found.body).toContain("soru:");
+  });
+
+  it("Usta ilk modülü tamamen boş bir başlangıç kodu ve üç noktalık davranışsal hedef taşır", () => {
+    const found = getPublicModuleBySlug("koda-usta-uc-nokta-sirayla")!;
+    expect(found.frontmatter.initialCode.trim()).not.toContain("robot.movej");
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([90, -60]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+  });
+
+  it("koşullu hareket (Usta) modülü boş bir başlangıç kodu ve süzülmüş hedefi taşır", () => {
+    const found = getPublicModuleBySlug("koda-usta-kosullu-hareket")!;
+    expect(found.frontmatter.initialCode.trim()).not.toContain("robot.movej");
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([60, -30]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+  });
+
+  it("Usta hata avcılığı finali iki bağımsız hata içerir (eksik parametre + yanlış index) ve sonunda Quiz var", () => {
+    const found = getPublicModuleBySlug("koda-usta-hata-avcisi-final")!;
+    expect(found.frontmatter.initialCode).toMatch(/robot\.movej\(\[0\]\)/);
+    expect(found.frontmatter.initialCode).toContain("noktalar[0][0]");
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([90, -50]);
     expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
     expect(found.body).toContain("<Quiz");
     expect(found.body).toContain("soru:");
