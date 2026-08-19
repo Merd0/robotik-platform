@@ -133,3 +133,22 @@ Bu plan onaylandıktan sonra: önce iskelet + Temel aşamasının ilk 2-3
 modülü ile bir dikey dilim kurulur (tüm sistemin uçtan uca çalıştığı
 kanıtlanır), sonra içerik genişletilir. Büyük patlama (tüm 4 aşamayı
 tek seferde yazmak) YAPILMAZ — bu projenin genelindeki disiplin.
+
+## Ek alıştırma türleri (2026-08 kararı)
+
+Mevcut 4 alıştırma tipine (Gözlem/Değiştir/Tamamla/Yaz) ek olarak üç yeni
+desen:
+
+- Açıkla-sonra-uygula: kod editörü boş açılır, önce komutun ne yaptığı
+  sözle anlatılır, sonra doğal dilde bir görev verilir ("şu açılara
+  getir"), kullanıcı kodu sıfırdan yazar. İpuçları sözdizimine odaklı
+  (hangi komut, kaç parametre, sözdizimi). Değiştir ile Tamamla arasına
+  oturur.
+- Hata avcılığı: başlangıç kodu bilerek bozuk (yaygın hata türü — eksik
+  parametre, yanlış değişken, ters koordinat). Görev: bul ve düzelt.
+  Birden fazla doğru düzeltme olabilir, string eşleşmesi DEĞİL, davranışsal
+  değerlendirme. Worker seviyesindeki temiz hata mesajı sistemine dayanır
+  (bkz. son düzeltme).
+- Modül sonu "neden" sorusu: mevcut Quiz bileşenini modül sonuna ekle,
+  sayı değil kavrayış ölçen sorular. docs/06'daki kural korunur: Quiz
+  tek başına "geçti" üretmez, biçimlendiricidir.
