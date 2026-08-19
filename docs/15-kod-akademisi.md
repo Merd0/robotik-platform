@@ -152,3 +152,105 @@ desen:
 - Modül sonu "neden" sorusu: mevcut Quiz bileşenini modül sonuna ekle,
   sayı değil kavrayış ölçen sorular. docs/06'daki kural korunur: Quiz
   tek başına "geçti" üretmez, biçimlendiricidir.
+
+Bununla birlikte alıştırma modeli artık 6 tip: Gözlem / Değiştir /
+Tamamla / Yaz / Açıkla-sonra-uygula / Hata avcılığı. Bir modülün hangi
+tipi kullanacağı aşamaya (yukarıdaki dört aşama) ve o modülün öğrettiği
+kavrama göre seçilir — aynı aşamada modüller art arda aynı tipte
+olmamalı (04-icerik-rehberi.md'deki kanca çeşitliliği ilkesiyle aynı
+mantık: bir kalıbın art arda tekrarı öğrenciye "hep aynı numara"
+hissi verir).
+
+## Uzlaştırma: docs/guncel-fikirler.md §13 ile birleşik plan (2026-08-19 kararı)
+
+`docs/guncel-fikirler.md` §13 ("Altı ayrıntılı kod laboratuvarı"), bu
+dosyadan BAĞIMSIZ yazılmış, uygulanmamış bir alternatif plandı. İki
+plan arasında bir kapsam kararı gerekiyordu (bkz. `docs/fikirler.md`
+"Kod Akademisi — iki plan arasında uzlaştırma kararı" notu). Karar:
+
+**İkisi aynı şey değil, birleştirilemez — farklı hedefe hizmet ederler.**
+§13'teki 6 laboratuvar (Lab 1–6), Kod Akademisi'nin genel "Python'u
+sıfırdan öğret" ilerleme hattı değil; her biri BELİRLİ bir mevcut hat
+dersine bağlı, davranışsal hata ayıklama derinleştirmesi:
+
+| Lab | Bağlı olduğu ders/hat | Neden Kod Akademisi değil |
+|---|---|---|
+| Lab 1 | `d-ortaokul-sirali-tekrar-kosul` (Hat D) | Blok programlama, belirli bir Hat D dersinin dikey pilotu |
+| Lab 2 | `d-lise-python-komut-dizisi` (Hat D) | Belirli bir Hat D dersinin hata ayıklama harness'i |
+| Lab 3 | `d-universite-ros2-temelleri` (Hat D) | ROS 2'ye özel, Hat D kapsamında |
+| Lab 4 | `a-universite-homojen-donusum` (Hat A) | NumPy/çerçeve zinciri, Hat A kinematiğine bağlı |
+| Lab 5 | `b-universite-ters-kinematik` (Hat B) | DLS IK hata ayıklama, Hat B'ye bağlı |
+| Lab 6 | `c-universite-carpisma-kontrolu` (Hat C) | Planlayıcı/çarpışma, Hat C'ye bağlı |
+
+Kod Akademisi (docs/15) ise kasıtlı olarak hattan bağımsız: "Bu ne, ne
+değil" bölümündeki ayrım burada tekrar geçerli — Hat dersleri "bir
+kavramı Python'la göster", Kod Akademisi "Python'u baştan öğret".
+§13'ün 6 laboratuvarını Kod Akademisi'ne taşımak bu ayrımı bozar ve
+güncel görev kapsamının dışına çıkar ("Hat D derslerine, diğer hatlara
+dokunma" kısıtı) — bu yüzden **taşınmadı**, `docs/fikirler.md`'de
+kendi başlığı altında, Hat bazlı bir gelecek fazı olarak duruyor.
+
+**Taşınan şey mimari değil, PEDAGOJİK DESEN.** §13'ün her lab'ı aynı
+iskeleti kullanıyor: önce tahmin/oku, sonra çalıştır, sonra kırık bir
+şeyi düzelt, çoklu senaryoda (seed/dal) davranışsal doğrula, "kaldırılırsa
+kayıp" ile neden önemli olduğunu gerekçelendir. Bu desen zaten Kod
+Akademisi'nin **Hata avcılığı** tipiyle örtüşüyor (bkz. yukarıdaki
+`koda-orta-hata-avcisi`) — aşağıdaki müfredat planında Orta/İleri/Usta
+modülleri bu deseni genişletiyor: tek hata yerine bazen çok adımlı
+mantık hatası, tek poz yerine bazen çoklu senaryo (örn. iki farklı
+başlangıç durumu) davranışsal olarak sınanıyor. Bu, docs/15'in zaten
+kurulu mimarisi (tek modül hash'i, `poseMatches` tabanlı predicate,
+route yapısı) İÇİNDE yapılıyor — yeni bir test/worker/evidence çekirdeği
+icat edilmiyor, tıpkı §13'ün kendisinin de vaat ettiği gibi ("mevcut
+predicate mimarisi genişletilir").
+
+## Müfredat planı — Orta/İleri/Usta (2026-08-19)
+
+Temel aşaması dikey dilimle tamamlandı (4 modül). Aşağıdaki plan,
+kalan üç aşamayı dolduruyor. Robot tutarlılık için `generic-2dof`
+üzerinde kalıyor (mevcut 5 modülün hepsi bunu kullanıyor); yeni bir
+robot tanımı bu plana dahil değil.
+
+**Orta** (döngü, koşul, liste — küçük boşluk doldurma ağırlıklı,
+Tamamla/Değiştir baskın, ara sıra Açıkla-sonra-uygula/Hata avcılığı):
+
+1. `koda-orta-hata-avcisi` — var (eksik parametre). Hata avcılığı + Quiz.
+2. `koda-orta-donguyle-uc-nokta` — `for` döngüsüyle 3 noktayı sırayla
+   ziyaret et; döngü gövdesi eksik (Tamamla).
+3. `koda-orta-liste-ile-aci-dizisi` — açı listesi index'leme, yanlış
+   index'in ne kırdığını gözlemle (Değiştir).
+4. `koda-orta-kosul-ile-dal` — `if/else` ile `get_tcp()` sonucuna göre
+   iki farklı hedefe dallan (Tamamla).
+5. `koda-orta-donguyle-liste-birlikte` — döngü + liste birlikte, N
+   noktalık bir rotayı bir liste üzerinden gez (Açıkla-sonra-uygula).
+6. `koda-orta-degisken-golgeleme` — döngü değişkeninin dışarıdaki bir
+   değişkenle karıştırılması hatası (Hata avcılığı + Quiz).
+
+**İleri** (fonksiyon tanımlama, kavramları birleştirme, kısmi serbest
+yazım — iskelet verilir, kullanıcı gövdeyi yazar):
+
+1. `koda-ileri-fonksiyon-tanimla` — `def` iskeleti verilir, gövde
+   eksik; parametreyi kullanan bir hareket fonksiyonu yaz (Tamamla).
+2. `koda-ileri-fonksiyonla-liste` — fonksiyon + döngü birleşimi, bir
+   nokta listesini fonksiyona sararak gez (kısmi serbest yazım).
+3. `koda-ileri-kosullu-fonksiyon` — fonksiyon içinde `if/else`,
+   "hedef güvenli bölgede mi" kontrolü (Açıkla-sonra-uygula).
+4. `koda-ileri-hata-avcisi` — fonksiyon parametre/gövde değişkeni
+   karışıklığı (Hata avcılığı + Quiz).
+
+**Usta** (sıfırdan yazım, davranışsal değerlendirme, editör boş açılır):
+
+1. `koda-usta-uc-nokta-sirayla` — "Üç noktayı sırayla ziyaret eden bir
+   hareket yaz" (docs/01-mufredat.md'deki örnekle aynı görev). Yaz.
+2. `koda-usta-kosullu-hareket` — durum bilgisine göre (if/else +
+   fonksiyon + liste, üç kavram birlikte) doğru hedefe git. Yaz.
+3. `koda-usta-hata-avcisi-final` — çok adımlı, birden fazla küçük
+   hatayı birlikte barındıran kod; hepsini bul ve düzelt (Hata avcılığı
+   + Quiz, aşamanın kapanışı).
+
+Bu üç aşamadaki toplam 13 yeni modül (Orta +5, İleri +4, Usta +3),
+mevcut 5 modülle (Temel 4 + Orta 1) birlikte Kod Akademisi'ni 18
+modüle çıkarır. Bu bir üst sınır değil, kuruluş taahhüdü — ileride
+daha fazla modül eklenebilir, ama bu görev bu 18'i bitirmeyi hedefler.
+Bir modül 3 denemeden sonra çözülemezse atlanır, `docs/durum-denetim.md`'ye
+net not düşülür, sonraki modüle geçilir.
