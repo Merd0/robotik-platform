@@ -150,14 +150,32 @@ ctx.onmessage = async (event) => {
 
     const currentAngles = new Array(jointCount ?? 0).fill(0);
     try {
+      // `RobotHatasi` her zaman tanımlı — robot olmayan/hazırlık aşamasındaki
+      // sarmalayıcı da onu referans alabilsin diye. Bu sınıf, öğretici
+      // (Türkçe, kısa) hata mesajlarını Python'ın CPython'un ürettiği çok
+      // satırlı "Traceback (most recent call last): ..." dökümünden ayırmak
+      // için var — bkz. aşağıdaki sarmalanmış exec bloğu.
+      await pyodide.runPythonAsync("class RobotHatasi(Exception):\n    pass\n", { globals: namespace });
+
       if (jointCount) {
-        namespace.set("_eklem_ac", (index: number, derece: number) => {
+        // Doğrulama başarısız olduğunda ARTIK throw ETMİYORLAR — bir hata
+        // mesajı (string) döndürüyorlar. Python tarafındaki `_Robot` sarmalayıcı
+        // bunu görüp `raise RobotHatasi(mesaj)` ile TEMİZ bir Python istisnası
+        // üretiyor. Doğrudan `throw new Error(...)` etmek de teknik olarak
+        // Python'a JsException olarak geçerdi, ama geri döndüğünde CPython'un
+        // ürettiği tam "Traceback (most recent call last): ..." dökümü
+        // (dahili dosya/satır bilgisiyle) `error.message`'a yazılırdı — bu,
+        // öğretici mesajın önüne ham, ürkütücü bir yığın ekler (bkz.
+        // docs/durum-codex.md "Kod Akademisi" — bu senaryo ekran görüntüsüyle
+        // yakalandı).
+        namespace.set("_eklem_ac", (index: number, derece: number): string | undefined => {
           if (!Number.isInteger(index) || index < 0 || index >= currentAngles.length) {
-            throw new RangeError(`Eklem indeksi 0-${currentAngles.length - 1} aralığında olmalı.`);
+            return `Eklem indeksi 0-${currentAngles.length - 1} aralığında olmalı.`;
           }
-          if (!Number.isFinite(derece)) throw new TypeError("Eklem açısı sonlu bir sayı olmalı.");
+          if (!Number.isFinite(derece)) return "Eklem açısı sonlu bir sayı olmalı.";
           currentAngles[index] = (derece * Math.PI) / 180;
           jointTrace.push([...currentAngles]);
+          return undefined;
         });
 
         const canUseIk = robotSpec && robotSpec.joints.length === 2;
@@ -174,18 +192,20 @@ ctx.onmessage = async (event) => {
 
         const hasRobotSpec = Boolean(robotSpec);
         if (robotSpec) {
-          namespace.set("_movej", (anglesArg: unknown) => {
+          namespace.set("_movej", (anglesArg: unknown): string | undefined => {
             const validated = validateJointAnglesDeg(robotSpec, toPlainArray(anglesArg));
-            if (!validated.ok) throw new Error(validated.message);
+            if (!validated.ok) return validated.message;
             validated.value.forEach((angle, index) => (currentAngles[index] = angle));
             jointTrace.push([...currentAngles]);
+            return undefined;
           });
 
-          namespace.set("_movel", (x: number, y: number, z: number) => {
+          namespace.set("_movel", (x: number, y: number, z: number): string | undefined => {
             const solved = solveCartesianTarget(robotSpec, { x, y, z }, currentAngles);
-            if (!solved.ok) throw new Error(solved.message);
+            if (!solved.ok) return solved.message;
             solved.value.forEach((angle, index) => (currentAngles[index] = angle));
             jointTrace.push([...currentAngles]);
+            return undefined;
           });
 
           namespace.set("_get_joints", () => pyodide.toPy(radiansToDegrees(currentAngles)));
@@ -195,16 +215,19 @@ ctx.onmessage = async (event) => {
             return pyodide.toPy([pose.x, pose.y, pose.z]);
           });
 
+          // Başarı değeri her zaman bir liste (pyodide.toPy), hata değeri her
+          // zaman düz bir string — Python tarafı `isinstance(_sonuc, str)` ile
+          // ayırt ediyor, iki farklı JS→Python geçiş türü hiç karışmıyor.
           namespace.set("_forward_kinematics", (anglesArg: unknown) => {
             const validated = validateJointAnglesDeg(robotSpec, toPlainArray(anglesArg));
-            if (!validated.ok) throw new Error(validated.message);
+            if (!validated.ok) return validated.message;
             const pose = poseOf(robotSpec, validated.value);
             return pyodide.toPy([pose.x, pose.y, pose.z]);
           });
 
           namespace.set("_inverse_kinematics", (x: number, y: number, z: number) => {
             const solved = solveCartesianTarget(robotSpec, { x, y, z }, currentAngles);
-            if (!solved.ok) throw new Error(solved.message);
+            if (!solved.ok) return solved.message;
             return pyodide.toPy(radiansToDegrees(solved.value));
           });
         }
@@ -219,33 +242,66 @@ ctx.onmessage = async (event) => {
             '        return f"Pose(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"\n' +
             "class _Robot:\n" +
             "    def eklem_ac(self, index, derece):\n" +
-            "        _eklem_ac(index, derece)\n" +
+            "        _hata = _eklem_ac(index, derece)\n" +
+            "        if _hata is not None:\n" +
+            "            raise RobotHatasi(_hata)\n" +
             (canUseIk
               ? "    def hedefe_git(self, x, y):\n" +
                 "        return _hedefe_git(x, y)\n"
               : "") +
             (hasRobotSpec
               ? "    def movej(self, acilar):\n" +
-                "        _movej(acilar)\n" +
+                "        _hata = _movej(acilar)\n" +
+                "        if _hata is not None:\n" +
+                "            raise RobotHatasi(_hata)\n" +
                 "    def movel(self, x, y, z, speed=None):\n" +
-                "        _movel(x, y, z)\n" +
+                "        _hata = _movel(x, y, z)\n" +
+                "        if _hata is not None:\n" +
+                "            raise RobotHatasi(_hata)\n" +
                 "    def get_joints(self):\n" +
                 "        return _get_joints()\n" +
                 "    def get_tcp(self):\n" +
                 "        x, y, z = _get_tcp()\n" +
                 "        return _Pose(x, y, z)\n" +
                 "    def forward_kinematics(self, acilar):\n" +
-                "        x, y, z = _forward_kinematics(acilar)\n" +
+                "        _sonuc = _forward_kinematics(acilar)\n" +
+                "        if isinstance(_sonuc, str):\n" +
+                "            raise RobotHatasi(_sonuc)\n" +
+                "        x, y, z = _sonuc\n" +
                 "        return _Pose(x, y, z)\n" +
                 "    def inverse_kinematics(self, x, y, z):\n" +
-                "        return _inverse_kinematics(x, y, z)\n"
+                "        _sonuc = _inverse_kinematics(x, y, z)\n" +
+                "        if isinstance(_sonuc, str):\n" +
+                "            raise RobotHatasi(_sonuc)\n" +
+                "        return _sonuc\n"
               : "") +
             "robot = _Robot()\n",
           { globals: namespace },
         );
       }
 
-      await pyodide.runPythonAsync(code, { globals: namespace, filename: "<robotik-lab>" });
+      // Kullanıcı kodu DOĞRUDAN çalıştırılmıyor — Python içinde bir
+      // try/except'e sarılıyor ki hiçbir istisna (RobotHatasi veya
+      // kullanıcının kendi yazım hatası: NameError, SyntaxError, ...)
+      // `runPythonAsync`'in dışına, CPython'un tam "Traceback (most recent
+      // call last): ..." dökümüyle sızmasın. `RobotHatasi` için mesaj
+      // OLDUĞU GİBİ (tip öneki yok — zaten Türkçe ve öğretici); gerçek Python
+      // hataları için `traceback.format_exception_only` kullanılıyor — bu da
+      // yalnız "HataTürü: mesaj" verir, dahili dosya/satır çerçevesi vermez.
+      namespace.set("_kullanici_kodu", code);
+      await pyodide.runPythonAsync(
+        "import traceback as _traceback\n" +
+          "_hata_mesaji = None\n" +
+          "try:\n" +
+          '    exec(compile(_kullanici_kodu, "<robotik-lab>", "exec"), globals())\n' +
+          "except RobotHatasi as _e:\n" +
+          "    _hata_mesaji = str(_e)\n" +
+          "except BaseException as _e:\n" +
+          "    _hata_mesaji = ''.join(_traceback.format_exception_only(type(_e), _e)).strip()\n",
+        { globals: namespace },
+      );
+      const hataMesaji = namespace.get("_hata_mesaji");
+      if (typeof hataMesaji === "string") errorMessage = hataMesaji;
     } finally {
       namespace.destroy();
     }

@@ -193,6 +193,15 @@ test("movej yanlış sayıda eklem açısı için öğretici bir hata verir, rob
   await page.getByRole("button", { name: "Çalıştır" }).click();
   await expect(page.getByText(/2 eklemli olduğu için movej\(\) 2 eklem açısı bekliyor/)).toBeVisible({ timeout: 30_000 });
   await expect(page.locator("pre")).not.toContainText("bu satıra hiç ulaşılmamalı");
+  // Mesaj TEMİZ olmalı — CPython'un ürettiği ham "Traceback (most recent
+  // call last): ..." dökümü veya Pyodide'in dahili JsException sarmalaması
+  // sızmamalı (bkz. docs/durum-codex.md — Kod Akademisi'nde boş movej([])
+  // ile yakalanan regresyonun kök nedeni buydu, düzeltme pyodideWorker.ts'te
+  // sistemik — bu test Hat D üzerinde de aynı düzeltmeyi doğruluyor).
+  const preText = await page.locator("pre").textContent();
+  expect(preText).not.toContain("Traceback");
+  expect(preText).not.toContain("pyodide.ffi");
+  expect(preText).not.toContain("_pyodide/_base.py");
 });
 
 test("fonksiyonla tanımlanan hareket dizisi çalışır ve predicate'i kanıtlar", async ({ page }) => {
@@ -278,6 +287,52 @@ test("Kod Akademisi: Değeri değiştir modülü doğru düzeltmeyle predicate'i
     event.verification === "registry-predicate" &&
     event.predicateId === "koda-temel-degisken-degistir-v1",
   )).toBe(true);
+});
+
+test("Kod Akademisi: robot.movej([]) boş listeyle çalıştırılınca ham traceback değil, öğretici mesaj gösterir", async ({ page }) => {
+  // Regresyon testi: bu senaryo (Parametre gönder modülünün kendi başlangıç
+  // kodu — boş robot.movej([])) daha önce CPython'un tam "Traceback (most
+  // recent call last): ..." dökümünü, pyodide.ffi.JsException dahili
+  // detaylarıyla birlikte ekrana döküyordu. Kök neden pyodideWorker.ts'te
+  // (JS callback throw ettiğinde Pyodide bunu Python istisnası olarak
+  // sarıp geri fırlatıyor, CPython da tam traceback formatlıyordu) — sistemik
+  // bir düzeltmeydi, yalnız bu modüle özel değil (bkz. Hat D testindeki aynı
+  // kontrol, satır ~198).
+  await page.goto("/kod-akademisi/temel/koda-temel-parametre-gonder");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText(/2 eklemli olduğu için movej\(\) 2 eklem açısı bekliyor/)).toBeVisible({ timeout: 30_000 });
+
+  const preText = await page.locator("pre").textContent();
+  expect(preText).not.toContain("Traceback");
+  expect(preText).not.toContain("pyodide.ffi");
+  expect(preText).not.toContain("_pyodide/_base.py");
+  expect(preText).not.toContain("eval_code_async");
+
+  const kanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(kanit.some((event: { lessonId?: string; stage?: string }) =>
+    event.lessonId === "koda-temel-parametre-gonder" && event.stage === "passed",
+  )).toBe(false);
+
+  // İlk çalıştırma bittiğinde dar viewport'ta "Sonuç" sekmesine otomatik
+  // geçilir ("Kod" paneli o an gizli) — gerçek kullanıcı gibi önce geri dön.
+  const kodSekmesi = page.getByRole("tab", { name: "Kod" });
+  if (await kodSekmesi.isVisible()) await kodSekmesi.click();
+
+  // Doğru düzeltmeyle çalıştırma hâlâ predicate'i geçirmeli — hata yolunu
+  // temizlemek başarı yolunu bozmamalı.
+  await page.getByLabel("Python kodu").fill("robot.movej([45, -30])");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tamamlandı ✓", { exact: true })).toBeVisible({ timeout: 30_000 });
+});
+
+test("Kod Akademisi: gerçek Python yazım hatası (NameError) da ham traceback göstermez", async ({ page }) => {
+  await page.goto("/kod-akademisi/temel/koda-temel-parametre-gonder");
+  await page.getByLabel("Python kodu").fill("robott.movej([45, -30])");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText(/NameError.*robott/)).toBeVisible({ timeout: 30_000 });
+  const preText = await page.locator("pre").textContent();
+  expect(preText).not.toContain("Traceback");
+  expect(preText).not.toContain("_pyodide/_base.py");
 });
 
 test("Kod Akademisi: ipucu açma Evidence'a hintLevel ile kaydedilir", async ({ page }) => {

@@ -1907,3 +1907,92 @@ gerçek kullanıcıların da etkileneceği bir hataydı.
   yan yana bölünmüş görünüm + 3D sahne gerçekten render oluyor, kod
   çalıştırma gerçekten robotu hareket ettiriyor, predicate gerçekten
   pass/fail ayrımı yapıyor, ipucu sistemi gerçekten kademeli açılıyor.
+
+### 2026-08-19 · İkinci inceleme buldu: ham Python traceback sızıntısı (düzeltildi)
+
+Merge öncesi ikinci bir incelemede, "Parametre gönder" modülünün kendi
+başlangıç kodu (`robot.movej([])`, kasıtlı olarak boş — öğrenci
+doldurması gerekiyor) çalıştırıldığında ekrana öğretici mesaj yerine
+CPython'un tam `Traceback (most recent call last): ...` dökümünün
+(`_pyodide/_base.py`, `eval_code_async` gibi dahili çerçeveler dahil)
+düştüğü bulundu, ekran görüntüsüyle doğrulandı. Bu, modülün kendi
+metninin verdiği sözle ("hata mesajı sana kaç sayı eksik olduğunu
+söyler") ve `docs/15-kod-akademisi.md`'nin "sunucusuz, öğretici hata"
+ilkesiyle çelişiyordu.
+
+**Kök neden (Kod Akademisi'ne özel değil, sistemik):** `lib/workers/
+pyodideWorker.ts`'in `_movej`/`_movel`/`_forward_kinematics`/
+`_inverse_kinematics`/`_eklem_ac` callback'leri, `pythonBridge.ts`'in
+doğrulama hatasını `throw new Error(mesaj)` ile fırlatıyordu. Bu JS
+hatası, Python tarafındaki `robot.movej(...)` çağrısından geri
+dönerken Pyodide tarafından `pyodide.ffi.JsException` olarak
+sarmalanıp yeniden fırlatılıyor; `runPythonAsync` bunu yakalayamadan
+dışarı sızdığında CPython KENDİ `Traceback (most recent call last):`
+dökümünü üretiyor ve bu ham metin `error.message` olarak worker
+sonucuna yazılıyordu. Bu, boş listeye özel bir davranış DEĞİL —
+`pyodide.runPythonAsync` içinden geçmemiş dışarı sızan HER istisna
+için geçerli, mekanik bir sonuç. Mevcut Hat D testi
+(`d-lise-degiskenlerle-hareket`, "movej yanlış sayıda eklem açısı")
+bunu yakalayamamıştı çünkü `getByText(/regex/)` `<pre>` bloğunun TÜM
+metni içinde bir ALT DİZE arıyordu — öğretici mesaj tam traceback'in
+İÇİNDE bir yerde geçtiği için assertion teknik olarak "geçiyordu",
+ama ekranda hâlâ ham döküm vardı. Yani bu regresyon YENİ değildi,
+var olan test onu hiç yakalayamıyordu.
+
+**Düzeltme (`lib/workers/pyodideWorker.ts`):** Callback'ler artık
+hata durumunda THROW ETMİYOR, temiz bir string DÖNDÜRÜYOR. Enjekte
+edilen Python `_Robot` sarmalayıcısı bu string'i görüp kendi
+`RobotHatasi` istisna sınıfını `raise` ediyor. Kullanıcı kodu artık
+DOĞRUDAN çalıştırılmıyor — Python içinde bir `try/except`'e sarılıyor:
+`RobotHatasi` yakalanırsa mesaj OLDUĞU GİBİ (tip öneki yok) kullanılıyor;
+gerçek bir Python hatası (NameError, SyntaxError, ...) yakalanırsa
+`traceback.format_exception_only` ile yalnız "HataTürü: mesaj" alınıyor
+— ikisi de traceback ÇERÇEVELERİNİ (dosya/satır) hiç içermiyor. Bu,
+yalnız Kod Akademisi'ni değil `pyodideWorker.ts`'i paylaşan HER
+CodeRunner kullanımını (tüm Hat D dersleri dahil) düzeltiyor — kök
+neden paylaşılan motor kodundaydı.
+
+**Kapsam taraması (kullanıcının 4. maddesi):** `content-kod-akademisi/`
+altındaki 3 modül elle incelendi. Yalnız `koda-temel-parametre-gonder`
+kasıtlı bir hata tetikleme senaryosu taşıyor (boş `movej([])`);
+`koda-temel-ilk-calistirma` ve `koda-temel-degisken-degistir`'in
+başlangıç kodu her zaman geçerli çalışıyor (ikincisinde düzeltilmemiş
+hâli bile hatasız çalışıp yalnızca predicate'i geçmiyor — istisna
+yolu hiç tetiklenmiyor). Düzeltme worker seviyesinde olduğu için
+gelecekte `movel`/`forward_kinematics`/`inverse_kinematics`/`eklem_ac`
+kullanan bir modül eklenirse de aynı korumaya otomatik sahip olacak.
+
+**Referans bulundu:** Kullanıcının "Mert'in orijinal planı, 13. bölüm"
+referansı gerçek — `docs/guncel-fikirler.md` "13. Altı ayrıntılı kod
+laboratuvarı", Lab 2 ("Python: tahmin et, izle, düzelt") satırında
+"geçersiz joint index kontrollü hata" açıkça test gereksinimi olarak
+listeleniyor. Bu, şu an uygulanan basit Kod Akademisi (docs/15) ile
+AYNI değil — çok daha ayrıntılı, 6 laboratuvarlı ayrı bir plan
+(`İlk uygulama dalgası yalnız Lab 1, 2 ve 4'tür` notuyla, henüz
+başlamamış). İki plan arasındaki ilişki bu düzeltmenin kapsamı dışında
+bırakıldı; iş burada yalnız bulunan spesifik hatayı gidermekti.
+
+**Test (test-first, 3 yeni/güçlendirilmiş):**
+- `movej yanlış sayıda eklem açısı için öğretici bir hata verir, robotu
+  bozmaz` (Hat D, mevcut) — artık ayrıca `Traceback`/`pyodide.ffi`/
+  `_pyodide/_base.py` metinlerinin YOKLUĞUNU da doğruluyor (önceki
+  zayıf alt-dize assertion'ı güçlendirildi).
+- `Kod Akademisi: robot.movej([]) boş listeyle çalıştırılınca ham
+  traceback değil, öğretici mesaj gösterir` (yeni) — bildirilen
+  senaryonun birebir regresyon testi; negatif→pozitif akış (düzeltmeden
+  önce temiz hata + predicate geçmez, düzeltmeyle predicate geçer).
+- `Kod Akademisi: gerçek Python yazım hatası (NameError) da ham
+  traceback göstermez` (yeni) — düzeltmenin RobotHatasi dışındaki genel
+  Python hatalarını da kapsadığının kanıtı.
+
+**Doğrulama:** `tsc`/`lint`/`vitest` (643/643) temiz. Yeni/güçlendirilmiş
+3 test + tüm Kod Akademisi testleri tek worker'la (paralel CPU
+çakışmasını dışlayarak) 12/12 geçti. Tam e2e paketi paralel çalıştırıldığında
+6 farklı, ilgisiz test (ör. `TransformOrderLab` — pyodideWorker.ts'e hiç
+dokunmuyor) aynı jenerik 30s zaman aşımıyla başarısız oldu; bunlar tek
+worker'la yeniden koşulduğunda 12/12 geçti (3.6–6.1s aralığında) —
+bu oturumda daha önce iki kez tespit edilmiş, ortama özgü CPU
+çakışması imzasıyla birebir eşleşiyor, düzeltmeyle ilgisi yok.
+Ekran görüntüsüyle kanıtlandı: `robot.movej([])` artık yalnız "Bu robot
+2 eklemli olduğu için movej() 2 eklem açısı bekliyor.\n\nÖrnek:\n
+robot.movej([0, 0])" gösteriyor, hiçbir dahili çerçeve yok.
