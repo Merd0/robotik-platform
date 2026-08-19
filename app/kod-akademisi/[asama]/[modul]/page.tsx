@@ -15,6 +15,7 @@ import { computeModuleHash } from "@/lib/kodAkademisiArtifact";
 import { EVIDENCE_PREDICATES } from "@/lib/evidence";
 import { LessonEvidenceProvider } from "@/components/lesson/LessonEvidenceProvider";
 import { KodAkademisiCodeLab } from "@/components/kod-akademisi/KodAkademisiCodeLab";
+import { Quiz } from "@/components/interactive/Quiz";
 
 export function generateStaticParams() {
   return getPublicModules().map((mod) => ({ asama: mod.frontmatter.asama, modul: mod.slug }));
@@ -44,7 +45,12 @@ export default async function KodAkademisiModulePage({ params }: ModulePageProps
 
   const { content } = await compileMDX({
     source: mod.body,
-    options: { parseFrontmatter: false, mdxOptions: { remarkPlugins: [remarkGfm] } },
+    // Kod Akademisi modülleri de content/ dersleri gibi birinci taraf,
+    // sürüm kontrollü içerik — blockJS varsayılanı (obje/array prop'larını
+    // sessizce siler) burada da kapatılıyor, aynı gerekçe:
+    // app/ders/[slug]/page.tsx'teki compileMDX çağrısına bkz.
+    components: { Quiz },
+    options: { parseFrontmatter: false, blockJS: false, mdxOptions: { remarkPlugins: [remarkGfm] } },
   });
 
   const siradaki = getPublicModulesByAsama(mod.frontmatter.asama);

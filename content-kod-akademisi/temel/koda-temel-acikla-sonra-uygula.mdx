@@ -1,0 +1,36 @@
+---
+id: koda-temel-acikla-sonra-uygula
+baslik: Açıkla, sonra uygula
+asama: temel
+sira: 4
+kazanimlar:
+  - Bir komutun ne yaptığını okuyup, aynı komutu sıfırdan doğru sözdizimiyle yazabilme
+ipuclari:
+  - "Robotu hareket ettiren komut robot ile başlıyor — hangi metodu çağırman gerektiğini yukarıda okudun."
+  - "movej() köşeli parantez içinde bir açı LİSTESİ bekler: robot.movej([J1, J2])."
+  - "Hedef J1=90°, J2=-60° — robot.movej([90, -60]) yaz, Çalıştır'a bas."
+cozum: |
+  robot.movej([90, -60])
+initialCode: |
+  # Buraya kendi kodunu yaz.
+robot: generic-2dof
+skillId: koda-temel-acikla-sonra-uygula
+expectedFinalDegrees: [90, -60]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Ne oldu
+
+`robot.movej()` bir açı listesi alır ve robotun her eklemini sırayla o
+açılara döndürür. Kaç sayı yazman gerektiği robotun eklem sayısına bağlı —
+bu robotun iki eklemi var, yani liste tam olarak iki sayı taşımalı:
+`robot.movej([J1, J2])`.
+
+Önceki modüllerde bu kod hazır geliyordu, sen ya değeri değiştiriyordun ya
+da boş bir yeri dolduruyordun. Bu sefer editör tamamen boş.
+
+## Görev
+
+Robotun birinci eklemini **90 derece**ye, ikinci eklemini **-60 derece**ye
+getirecek kodu sıfırdan yaz.

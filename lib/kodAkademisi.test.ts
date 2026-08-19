@@ -3,13 +3,19 @@ import { EVIDENCE_PREDICATES } from "./evidence";
 import { getAdjacentModules, getPublicModuleBySlug, getPublicModules, getPublicModulesByAsama } from "./kodAkademisi";
 
 describe("Kod Akademisi içerik yükleyicisi", () => {
-  it("Temel aşamadaki 3 dikey dilim modülünü sıra ile döndürür", () => {
+  it("Temel aşamadaki 4 modülü sıra ile döndürür (dikey dilim + açıkla-sonra-uygula)", () => {
     const modules = getPublicModulesByAsama("temel");
     expect(modules.map((module) => module.slug)).toEqual([
       "koda-temel-ilk-calistirma",
       "koda-temel-degisken-degistir",
       "koda-temel-parametre-gonder",
+      "koda-temel-acikla-sonra-uygula",
     ]);
+  });
+
+  it("Orta aşamadaki hata avcılığı modülünü döndürür", () => {
+    const modules = getPublicModulesByAsama("orta");
+    expect(modules.map((module) => module.slug)).toEqual(["koda-orta-hata-avcisi"]);
   });
 
   it("slug ile tek bir modülü bulur", () => {
@@ -29,8 +35,11 @@ describe("Kod Akademisi içerik yükleyicisi", () => {
     expect(next?.slug).toBe("koda-temel-degisken-degistir");
   });
 
-  it("son modülün sonraki komşusu yok", () => {
-    const son = getPublicModuleBySlug("koda-temel-parametre-gonder")!;
+  it("Temel'in yeni son modülü (açıkla-sonra-uygula) sonraki komşusu yok, öncekine parametre-gönder bağlı", () => {
+    const uctuncu = getPublicModuleBySlug("koda-temel-parametre-gonder")!;
+    expect(getAdjacentModules(uctuncu).next?.slug).toBe("koda-temel-acikla-sonra-uygula");
+
+    const son = getPublicModuleBySlug("koda-temel-acikla-sonra-uygula")!;
     const { next } = getAdjacentModules(son);
     expect(next).toBeNull();
   });
@@ -58,5 +67,28 @@ describe("Kod Akademisi içerik yükleyicisi", () => {
     for (const found of getPublicModules()) {
       expect(found.frontmatter.ipuclari, found.slug).toHaveLength(3);
     }
+  });
+
+  it("açıkla-sonra-uygula modülü boş bir başlangıç kodu ve davranışsal hedef taşır", () => {
+    const found = getPublicModuleBySlug("koda-temel-acikla-sonra-uygula")!;
+    expect(found.frontmatter.initialCode.trim()).not.toContain("robot.movej");
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([90, -60]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+  });
+
+  it("hata avcılığı modülünün başlangıç kodu bilerek bozuk (eksik parametre)", () => {
+    const found = getPublicModuleBySlug("koda-orta-hata-avcisi")!;
+    // Bozukluk: aci_2 tanımlı ama movej()'in listesinde kullanılmamış —
+    // string eşleşmesiyle DEĞİL, davranışsal predicate'le doğrulanır (aşağıdaki test).
+    expect(found.frontmatter.initialCode).toContain("aci_2");
+    expect(found.frontmatter.initialCode).toMatch(/robot\.movej\(\[aci_1\]\)/);
+    expect(found.frontmatter.expectedFinalDegrees).toEqual([90, -45]);
+    expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+  });
+
+  it("hata avcılığı modülü gövdesinde modül sonu 'neden' Quiz sorusu var", () => {
+    const found = getPublicModuleBySlug("koda-orta-hata-avcisi")!;
+    expect(found.body).toContain("<Quiz");
+    expect(found.body).toContain("soru:");
   });
 });
