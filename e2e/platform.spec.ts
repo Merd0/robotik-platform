@@ -522,6 +522,106 @@ test("Kod Akademisi: Değişken gölgeleme modülü bozuk kodla yanlış hedefte
   await expect(page.getByText(/^Doğru\./)).toBeVisible();
 });
 
+test("Kod Akademisi: Fonksiyon tanımlama modülü pass ile geçmez, gövde tamamlanınca predicate'i kanıtlar", async ({ page }) => {
+  await page.goto("/kod-akademisi/ileri/koda-ileri-fonksiyon-tanimla");
+  await expect(page.getByRole("heading", { name: "Kendi hareket fonksiyonunu yaz" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tekrar dene", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const kodSekmesi = page.getByRole("tab", { name: "Kod" });
+  if (await kodSekmesi.isVisible()) await kodSekmesi.click();
+
+  await page.getByLabel("Python kodu").fill(
+    "def git(j1, j2):\n    robot.movej([j1, j2])\n\ngit(90, -60)",
+  );
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tamamlandı ✓", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const kanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(kanit.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "koda-ileri-fonksiyon-tanimla-v1",
+  )).toBe(true);
+});
+
+test("Kod Akademisi: Fonksiyon ve döngüyü birleştir modülü boş gövdeyle geçmez, tamamlanınca predicate'i kanıtlar", async ({ page }) => {
+  await page.goto("/kod-akademisi/ileri/koda-ileri-fonksiyonla-liste");
+  await expect(page.getByRole("heading", { name: "Fonksiyon ve döngüyü birleştir" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tekrar dene", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const kodSekmesi = page.getByRole("tab", { name: "Kod" });
+  if (await kodSekmesi.isVisible()) await kodSekmesi.click();
+
+  await page.getByLabel("Python kodu").fill(
+    "def rotayi_izle(noktalar):\n    for aci in noktalar:\n        robot.movej(aci)\n\nrotayi_izle([[15, -5], [45, -25], [80, -55]])",
+  );
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tamamlandı ✓", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const kanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(kanit.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "koda-ileri-fonksiyonla-liste-v1",
+  )).toBe(true);
+});
+
+test("Kod Akademisi: Güvenli bölge kontrolü modülü boş editörle açılır, sıfırdan yazılan fonksiyon predicate'i geçirir", async ({ page }) => {
+  await page.goto("/kod-akademisi/ileri/koda-ileri-kosullu-fonksiyon");
+  await expect(page.getByRole("heading", { name: "Güvenli bölge kontrolü" })).toBeVisible();
+  await expect(page.getByLabel("Python kodu")).toHaveValue(/^# Buraya kendi kodunu yaz\.?\s*$/);
+
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tekrar dene", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const kodSekmesi = page.getByRole("tab", { name: "Kod" });
+  if (await kodSekmesi.isVisible()) await kodSekmesi.click();
+
+  await page.getByLabel("Python kodu").fill(
+    "def guvenli_git(j1):\n    if -90 <= j1 <= 90:\n        robot.movej([j1, -30])\n    else:\n        robot.movej([0, 0])\n\nguvenli_git(120)",
+  );
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tamamlandı ✓", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const kanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(kanit.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "koda-ileri-kosullu-fonksiyon-v1",
+  )).toBe(true);
+});
+
+test("Kod Akademisi: İleri hata avcılığı modülü parametre yerine dış değişken kullanan bozuk kodla yanlış hedefte kalır, düzeltilince predicate'i geçirir ve Quiz doğru geri bildirim verir", async ({ page }) => {
+  await page.goto("/kod-akademisi/ileri/koda-ileri-hata-avcisi");
+  await expect(page.getByRole("heading", { name: "Hata avcılığı: parametre mi, dış değişken mi?" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tekrar dene", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const kodSekmesi = page.getByRole("tab", { name: "Kod" });
+  if (await kodSekmesi.isVisible()) await kodSekmesi.click();
+
+  await page.getByLabel("Python kodu").fill(
+    "varsayilan_j1 = 0\n\ndef git(j1, j2):\n    robot.movej([j1, j2])\n\ngit(70, -40)",
+  );
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText("Tamamlandı ✓", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const kanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(kanit.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
+    event.stage === "passed" &&
+    event.verification === "registry-predicate" &&
+    event.predicateId === "koda-ileri-hata-avcisi-v1",
+  )).toBe(true);
+
+  await page.getByRole("button", { name: /Fonksiyonun içindeki movej\(\) çağrısı/ }).click();
+  await expect(page.getByText(/^Doğru\./)).toBeVisible();
+});
+
 test("Kod Akademisi: ipucu açma Evidence'a hintLevel ile kaydedilir", async ({ page }) => {
   await page.goto("/kod-akademisi/temel/koda-temel-degisken-degistir");
   await page.getByRole("button", { name: /İpucu göster/ }).click();

@@ -2749,3 +2749,34 @@ Kod Akademisi modülü SSG), check-performance-budget (bütçe içinde),
 `content-kod-akademisi/`, `lib/evidence.ts`, `lib/*.test.ts`,
 `e2e/platform.spec.ts` gösterdi) — docs/09 §7 otomatik geçit
 uygulanabilir, dal `main`'e merge edildi.
+
+## Kod Akademisi — İleri aşaması tamamlandı (2026-08-19, aynı otonom oturum)
+
+Aynı `/loop` oturumu, yeni dal: `feat/kod-akademisi-ileri-asama`. docs/15
+müfredat planındaki 4 İleri modülünün tamamı, aynı disiplinle
+(test-first, `poseMatches` predicate, gerçek e2e):
+
+1. `koda-ileri-fonksiyon-tanimla` (Tamamla) — `def git(j1, j2):` iskeleti,
+   gövde `pass`. İlk kez fonksiyon tanımı.
+2. `koda-ileri-fonksiyonla-liste` (kısmi serbest yazım) — fonksiyon
+   İMZASI ve çağrısı hazır, gövde TAMAMEN boş; öğrenci içine bir döngü
+   yazıyor. Predicate `traceSteps >= 3` ister (fonksiyonun listenin
+   TAMAMINI gezdiğini kanıtlamak için — Orta'daki aynı desenin fonksiyon
+   içinde tekrarı).
+3. `koda-ileri-kosullu-fonksiyon` (Açıkla-sonra-uygula) — editör boş,
+   "güvenli bölge" (`-90° ≤ j1 ≤ 90°`) kontrolü yapan bir fonksiyon
+   sıfırdan yazılıyor; çağrı bilerek güvenli bölge DIŞINDA bir değer
+   kullanıyor (120°) ki else dalı gerçekten test edilsin.
+4. `koda-ileri-hata-avcisi` (Hata avcılığı + Quiz) — fonksiyonun kendi
+   parametresi (`j1`) yerine dışarıda tanımlı, adı benzer bir değişkeni
+   (`varsayilan_j1`) kullanması hatası. Bu, Orta'daki "değişken
+   gölgeleme"nin TERSİ bir hata sınıfı: orada iç değişken dışarıyı
+   eziyordu, burada gövde kendi parametresini hiç kullanmıyor.
+
+İleri aşaması artık 4/4 modülle tamamlandı. Kontrol paketi main'e göre
+tam çalıştı (tsc/lint/vitest 704/704/check-content(94)/graph(94)/
+quiz-dagilimi(139)/mdx-guvenlik(94)/sensitive-terms(108 modül+19
+doküman)/review-debt(bilgi)/review-integrity(temiz)/build/
+perf-budget/audit(0)/e2e `--workers=4` 195/195, 12 skip) — hepsi
+temiz. Governance dosyası değişmedi, docs/09 §7 otomatik geçit
+uygulandı, `main`'e merge edildi.

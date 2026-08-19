@@ -1,0 +1,47 @@
+---
+id: koda-ileri-fonksiyonla-liste
+baslik: Fonksiyon ve döngüyü birleştir
+asama: ileri
+sira: 2
+kazanimlar:
+  - Fonksiyon ve döngüyü birlikte kullanarak, parametre olarak verilen bir nokta listesini sırayla gezen tekrar kullanılabilir bir hareket fonksiyonu yazabilme
+ipuclari:
+  - "noktalar parametresi bir liste — her elemanını sırayla işlemek için hangi yapıyı kullanman gerektiğini önceki modüllerden hatırlıyor musun?"
+  - "for aci in noktalar: ile listenin üzerinde gez, gövdede robot.movej(aci) çağır."
+  - "pass satırını sil, yerine iki satırlık bir for döngüsü yaz: for aci in noktalar: / robot.movej(aci)."
+cozum: |
+  def rotayi_izle(noktalar):
+      for aci in noktalar:
+          robot.movej(aci)
+
+  rotayi_izle([[15, -5], [45, -25], [80, -55]])
+initialCode: |
+  def rotayi_izle(noktalar):
+      # Buraya, 'noktalar' listesindeki her açı çiftini sırayla
+      # robota gönderecek kodu yaz.
+      pass
+
+  rotayi_izle([[15, -5], [45, -25], [80, -55]])
+robot: generic-2dof
+skillId: koda-ileri-fonksiyonla-liste
+expectedFinalDegrees: [80, -55]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Ne oldu
+
+`rotayi_izle` fonksiyonu bir `noktalar` parametresi alıyor — herhangi
+bir uzunlukta bir liste olabilir. Fonksiyonun işi, bu listedeki HER
+noktayı sırayla robota göndermek. Bunun için önceki modüllerde gördüğün
+iki kavramı birlikte kullanacaksın: fonksiyon ve döngü.
+
+Çağrı satırı (`rotayi_izle([[15, -5], [45, -25], [80, -55]])`) zaten
+hazır — üç noktalık bir liste gönderiyor. Şu an fonksiyonun gövdesi boş
+(`pass`), bu yüzden robot hiç hareket etmiyor.
+
+## Görev
+
+`rotayi_izle` fonksiyonunun gövdesini yaz: parametre olarak aldığı
+`noktalar` listesindeki HER açı çiftini sırayla robota gönderecek kodu
+ekle. Çağrı satırına dokunma.

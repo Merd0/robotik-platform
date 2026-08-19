@@ -354,6 +354,67 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     }),
   },
   {
+    // İleri müfredat planı (docs/15 "Müfredat planı — Orta/İleri/Usta").
+    id: "koda-ileri-fonksiyon-tanimla-v1",
+    lessonId: "koda-ileri-fonksiyon-tanimla",
+    skillId: "koda-ileri-fonksiyon-tanimla",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-ileri-fonksiyon-tanimla" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
+    // Fonksiyon + döngü birlikte: traceSteps>=3 fonksiyonun listenin
+    // TAMAMINI gezdiğini ister (koda-orta-donguyle-uc-nokta-v1 ile aynı desen).
+    id: "koda-ileri-fonksiyonla-liste-v1",
+    lessonId: "koda-ileri-fonksiyonla-liste",
+    skillId: "koda-ileri-fonksiyonla-liste",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-ileri-fonksiyonla-liste" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true &&
+        typeof event.metrics?.traceSteps === "number" &&
+        event.metrics.traceSteps >= 3,
+      ),
+      metrics: { requiredTraceSteps: 3 },
+    }),
+  },
+  {
+    id: "koda-ileri-kosullu-fonksiyon-v1",
+    lessonId: "koda-ileri-kosullu-fonksiyon",
+    skillId: "koda-ileri-kosullu-fonksiyon",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-ileri-kosullu-fonksiyon" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
+    id: "koda-ileri-hata-avcisi-v1",
+    lessonId: "koda-ileri-hata-avcisi",
+    skillId: "koda-ileri-hata-avcisi",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-ileri-hata-avcisi" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
     id: "movel-donguyle-rota-v1",
     lessonId: "d-lise-donguyle-cok-nokta",
     skillId: "movel-donguyle-rota",
