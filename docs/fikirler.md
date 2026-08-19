@@ -51,3 +51,12 @@ değiştirilmeden korunur.
 - İki paylaşım bağlantısındaki robot programını “motion diff” olarak açıp hangi
   waypoint'in, sürenin veya limit payının değiştiğini öğretmen/öğrenci için
   görselleştirme.
+
+## Kod Akademisi — iki plan arasında uzlaştırma kararı (2026-08-19)
+
+docs/15 (Kod Akademisi, 4 aşamalı) uygulandı ve main'de.
+docs/guncel-fikirler.md §13'te farklı, daha büyük kapsamlı (6
+laboratuvar) bir alternatif Kod Akademisi planı var, uygulanmadı.
+İkisi arasında ileride bir uzlaştırma/genişletme kararı gerekebilir —
+docs/15'in devamı olarak mı büyütülür, yoksa §13 ayrı bir faz mı olur,
+netleştirilmeli.
