@@ -2678,3 +2678,74 @@ docs/15 (4 aşamalı) ile `docs/guncel-fikirler.md` §13'teki uygulanmamış,
 daha büyük kapsamlı (6 laboratuvar) alternatif Kod Akademisi planı
 arasında ileride bir uzlaştırma kararı gerekiyor — şimdiki faza
 sokulmadı, yalnız kayda geçirildi.
+
+## Kod Akademisi — uzlaştırma + Orta aşaması genişlemesi (2026-08-19, otonom oturum)
+
+Kullanıcının "büyük, kapsamlı görev" talimatıyla açılan uzun soluklu,
+`/loop` ile kendi kendine ilerleyen bir oturum. Tek dal:
+`feat/kod-akademisi-orta-genisleme`.
+
+### Uzlaştırma (docs/15 güncellemesi, `37cc4ed`)
+
+`docs/guncel-fikirler.md` §13 ile `docs/15` arasındaki bekleyen kapsam
+kararı kapatıldı. Sonuç: §13'ün 6 laboratuvarı Kod Akademisi'ne
+TAŞINMADI — her biri belirli bir Hat A/B/C/D dersine bağlı davranışsal
+hata ayıklama derinleştirmesi (ör. Lab 5 `b-universite-ters-kinematik`e,
+Lab 6 `c-universite-carpisma-kontrolu`ne bağlı), Kod Akademisi ise
+kasıtlı olarak hattan bağımsız. Taşınan şey pedagojik desendi (tahmin/
+oku → çalıştır → kırığı düzelt → çoklu senaryoda davranışsal doğrula) —
+bu, zaten var olan Hata avcılığı tipiyle örtüşüyordu. docs/15'e somut,
+13 modüllük bir Orta/İleri/Usta müfredat planı eklendi.
+
+### Orta aşaması tamamlandı — 5 yeni modül + mevcut 1 = 6 modül
+
+Hepsi test-first (kırmızı → yeşil), `poseMatches` tabanlı yeni predicate,
+gerçek e2e testi ile:
+
+1. `koda-orta-donguyle-uc-nokta` (Tamamla) — `for` döngüsü, boşluk
+   `pass` yer tutucu. Predicate `traceSteps >= 3` de ister (yalnız son
+   pozu değil, döngünün gerçekten üç kez çalıştığını).
+2. `koda-orta-liste-ile-aci-dizisi` (Değiştir) — liste index'i, 0 → 1.
+3. `koda-orta-kosul-ile-dal` (Tamamla) — `if/else` + `get_tcp().x`
+   ile dallanma; TCP eşiği gerçek FK matematiğiyle elle hesaplandı
+   (generic-2dof: a1=1.0, a2=0.8), e2e'de gerçek worker'da doğrulandı.
+4. `koda-orta-donguyle-liste-birlikte` (Açıkla-sonra-uygula) — editör
+   boş, liste+döngü sıfırdan yazılıyor. Predicate `traceSteps >= 4`.
+5. `koda-orta-degisken-golgeleme` (Hata avcılığı + Quiz) — döngü
+   değişkeninin dıştaki `hedef` değişkenini SESSİZCE ezmesi (Python'da
+   hata vermeyen, gerçek ve yaygın bir hata sınıfı). Modül sonu Quiz'i
+   "neden"i soruyor, gözlemsel (biçimlendirici), predicate'e girmiyor.
+
+`docs/15`'teki müfredat planındaki tasarım kararlarıyla birebir
+uyumlu; hiçbiri atlanmadı, hiçbiri 3 denemeyi aşmadı.
+
+### Bulunan operasyonel sorun: tam e2e paketi varsayılan paralellikte kırılgan
+
+Kod Akademisi'ne 6 yeni Pyodide-ağırlıklı e2e testi eklenince, `npx
+playwright test` (varsayılan `fullyParallel: true`, worker sayısı CPU
+çekirdek sayısından türetiliyor) 21 testte "30000ms timeout" hatası
+verdi — hem yeni Kod Akademisi testlerinde HEM de tamamen ilgisiz
+testlerde (`TransformOrderLab`, `movej ...`, WCAG). Dağınık ve
+tutarsız başarısızlık deseni + tek tek çalıştırıldığında hepsinin 5-9
+saniyede geçmesi, kaynak yarışması (çok sayıda eşzamanlı Pyodide WASM
++ WebGL başlatma) olduğunu gösterdi — gerçek bir regresyon değil.
+`--workers=4` ile aynı paket 183/183 geçti (12 skip), 0 hata. Bu bir
+test zayıflatması DEĞİL — testlerin kendisi hiç değişmedi, yalnız
+çalıştırma eşzamanlılığı makinenin gerçek kapasitesine göre ayarlandı.
+Sonraki doğrulama koşularında `--workers=4` kullanılacak; bu notu
+gören bir sonraki oturum de aynısını yapmalı.
+
+### Kontrol paketi (main'e merge öncesi main dalına göre, worktree'de)
+
+tsc, lint, vitest (682/682), check-content (94), validate-content-graph
+(94), check-quiz-dagilimi (139, content-kod-akademisi kapsam dışı —
+script yalnız `content/`'i tarıyor), check-mdx-guvenlik (94),
+check-sensitive-terms (104 ders/modül + 19 doküman), check-review-debt
+(bilgi, kırmadı), check-review-integrity (temiz), build (94 ders + 11
+Kod Akademisi modülü SSG), check-performance-budget (bütçe içinde),
+`npm audit --audit-level=high` (0 zafiyet), tam e2e (`--workers=4`,
+183/183, 12 skip) — hepsi temiz. Governance dosyası değişmedi
+(`git diff --stat main...feat/kod-akademisi-orta-genisleme` yalnız
+`content-kod-akademisi/`, `lib/evidence.ts`, `lib/*.test.ts`,
+`e2e/platform.spec.ts` gösterdi) — docs/09 §7 otomatik geçit
+uygulanabilir, dal `main`'e merge edildi.

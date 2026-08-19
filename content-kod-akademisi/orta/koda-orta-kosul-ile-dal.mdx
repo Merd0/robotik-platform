@@ -1,0 +1,47 @@
+---
+id: koda-orta-kosul-ile-dal
+baslik: Konuma göre dallan
+asama: orta
+sira: 4
+kazanimlar:
+  - if/else ile robotun mevcut durumuna (TCP konumuna) göre farklı bir hedefe dallanabilme
+ipuclari:
+  - "robot.movej([50, -20]) çalıştıktan sonra get_tcp().x hangi değer olur, tahmin et — sonra pass'in olduğu dalın çalışıp çalışmadığını sonuç panelinden gözlemle."
+  - "if/else'in İÇİNDEKİ pass, o dal çalıştığında hiçbir şey yapmaz — gerçek bir komutla değiştirilmeli."
+  - "pass satırını robot.movej([90, -60]) ile değiştir."
+cozum: |
+  robot.movej([50, -20])
+  tcp = robot.get_tcp()
+
+  if tcp.x > 1.0:
+      robot.movej([90, -60])
+  else:
+      robot.movej([10, 60])
+initialCode: |
+  robot.movej([50, -20])
+  tcp = robot.get_tcp()
+
+  if tcp.x > 1.0:
+      pass  # Bu dala robotu (90, -60) derecelerine götürecek satırı ekle.
+  else:
+      robot.movej([10, 60])
+robot: generic-2dof
+skillId: koda-orta-kosul-ile-dal
+expectedFinalDegrees: [90, -60]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Ne oldu
+
+Kod önce robotu (50°, -20°) açılarına götürüyor, sonra `robot.get_tcp()`
+ile uç noktanın (x, y, z) konumunu okuyor. `tcp.x` o anki x koordinatını
+verir — bu robotun BULUNDUĞU yere bağlı, sabit bir sayı değil.
+
+`if tcp.x > 1.0:` bu koordinata göre iki yoldan birini seçiyor. Şu an
+`if` dalının içi boş (`pass`) — kod çalışır ama o dal hiçbir şey yapmaz.
+
+## Görev
+
+`pass` satırını, robotu (90°, -60°) açılarına götürecek satırla değiştir.
+`else` dalına dokunma — o zaten tam.

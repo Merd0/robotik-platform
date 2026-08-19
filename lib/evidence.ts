@@ -273,6 +273,87 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     }),
   },
   {
+    // Orta müfredat planı (docs/15 "Müfredat planı — Orta/İleri/Usta").
+    // movel-donguyle-rota-v1'le aynı desen: poseMatches YETMEZ, döngünün
+    // gerçekten üç kere çalıştığını (traceSteps >= 3) da ister — aksi halde
+    // öğrenci pass'ı silip tek bir movej([90, -60]) yazarak da geçebilirdi.
+    id: "koda-orta-donguyle-uc-nokta-v1",
+    lessonId: "koda-orta-donguyle-uc-nokta",
+    skillId: "koda-orta-donguyle-uc-nokta",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-orta-donguyle-uc-nokta" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true &&
+        typeof event.metrics?.traceSteps === "number" &&
+        event.metrics.traceSteps >= 3,
+      ),
+      metrics: { requiredTraceSteps: 3 },
+    }),
+  },
+  {
+    id: "koda-orta-liste-ile-aci-dizisi-v1",
+    lessonId: "koda-orta-liste-ile-aci-dizisi",
+    skillId: "koda-orta-liste-ile-aci-dizisi",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-orta-liste-ile-aci-dizisi" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
+    id: "koda-orta-kosul-ile-dal-v1",
+    lessonId: "koda-orta-kosul-ile-dal",
+    skillId: "koda-orta-kosul-ile-dal",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-orta-kosul-ile-dal" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
+    // Açıkla-sonra-uygula: editör boş, öğrenci liste + döngüyü sıfırdan
+    // yazar. koda-orta-donguyle-uc-nokta-v1 ile aynı desen — traceSteps >= 4
+    // döngünün gerçekten dört kez çalıştığını ister, tek movej yetmez.
+    id: "koda-orta-donguyle-liste-birlikte-v1",
+    lessonId: "koda-orta-donguyle-liste-birlikte",
+    skillId: "koda-orta-donguyle-liste-birlikte",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-orta-donguyle-liste-birlikte" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true &&
+        typeof event.metrics?.traceSteps === "number" &&
+        event.metrics.traceSteps >= 4,
+      ),
+      metrics: { requiredTraceSteps: 4 },
+    }),
+  },
+  {
+    id: "koda-orta-degisken-golgeleme-v1",
+    lessonId: "koda-orta-degisken-golgeleme",
+    skillId: "koda-orta-degisken-golgeleme",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-orta-degisken-golgeleme" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
     id: "movel-donguyle-rota-v1",
     lessonId: "d-lise-donguyle-cok-nokta",
     skillId: "movel-donguyle-rota",

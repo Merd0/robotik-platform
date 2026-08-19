@@ -683,6 +683,9 @@ describe.each([
   ["koda-temel-parametre-gonder-v1", "koda-temel-parametre-gonder", "koda-temel-parametre-gonder"],
   ["koda-temel-acikla-sonra-uygula-v1", "koda-temel-acikla-sonra-uygula", "koda-temel-acikla-sonra-uygula"],
   ["koda-orta-hata-avcisi-v1", "koda-orta-hata-avcisi", "koda-orta-hata-avcisi"],
+  ["koda-orta-liste-ile-aci-dizisi-v1", "koda-orta-liste-ile-aci-dizisi", "koda-orta-liste-ile-aci-dizisi"],
+  ["koda-orta-kosul-ile-dal-v1", "koda-orta-kosul-ile-dal", "koda-orta-kosul-ile-dal"],
+  ["koda-orta-degisken-golgeleme-v1", "koda-orta-degisken-golgeleme", "koda-orta-degisken-golgeleme"],
 ] as const)("robot-python-api rollout (%s): golden + negatif predicate testleri", (predicateId, lessonId, skillId) => {
   const predicate = EVIDENCE_PREDICATES.find((item) => item.id === predicateId)!;
   const run = (
@@ -736,6 +739,76 @@ describe("movel-donguyle-rota-v1: golden + negatif predicate testleri", () => {
 
   it("negatif: assessed olmayan gözlem olayı başarı üretmez", () => {
     expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 3 }, "observed")]).passed).toBe(false);
+  });
+});
+
+describe("koda-orta-donguyle-uc-nokta-v1: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "koda-orta-donguyle-uc-nokta-v1")!;
+  const run = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+    stage: EvidenceEvent["stage"] = "assessed",
+  ) => event(stage, result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "kod-akademisi-module-v1",
+  });
+
+  it("predicate doğru lessonId/skillId'ye kayıtlı", () => {
+    expect(predicate.lessonId).toBe("koda-orta-donguyle-uc-nokta");
+    expect(predicate.skillId).toBe("koda-orta-donguyle-uc-nokta");
+  });
+
+  it("golden: üç adımlık döngü izi ve poz testi geçen koşu geçer", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 3 })]).passed).toBe(true);
+  });
+
+  it("negatif: doğru poza ulaşmayan koşu geçmez", () => {
+    expect(predicate.evaluate([run("retry", { poseMatches: false, traceSteps: 3 })]).passed).toBe(false);
+  });
+
+  it("negatif: döngü tamamlanmadan (üçten az iz) geçmez — örn. pass bırakılıp sadece son satır elle çalıştırılırsa", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 1 })]).passed).toBe(false);
+  });
+
+  it("negatif: assessed olmayan gözlem olayı başarı üretmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 3 }, "observed")]).passed).toBe(false);
+  });
+});
+
+describe("koda-orta-donguyle-liste-birlikte-v1: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "koda-orta-donguyle-liste-birlikte-v1")!;
+  const run = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+    stage: EvidenceEvent["stage"] = "assessed",
+  ) => event(stage, result, {
+    lessonId: predicate.lessonId,
+    skillId: predicate.skillId,
+    metrics,
+    contentVersion: "kod-akademisi-module-v1",
+  });
+
+  it("predicate doğru lessonId/skillId'ye kayıtlı", () => {
+    expect(predicate.lessonId).toBe("koda-orta-donguyle-liste-birlikte");
+    expect(predicate.skillId).toBe("koda-orta-donguyle-liste-birlikte");
+  });
+
+  it("golden: dört adımlık iz ve poz testi geçen koşu geçer", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 4 })]).passed).toBe(true);
+  });
+
+  it("negatif: doğru poza ulaşmayan koşu geçmez", () => {
+    expect(predicate.evaluate([run("retry", { poseMatches: false, traceSteps: 4 })]).passed).toBe(false);
+  });
+
+  it("negatif: dört noktanın hepsi gezilmeden (dörtten az iz) geçmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 1 })]).passed).toBe(false);
+  });
+
+  it("negatif: assessed olmayan gözlem olayı başarı üretmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 4 }, "observed")]).passed).toBe(false);
   });
 });
 

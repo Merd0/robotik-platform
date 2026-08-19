@@ -1,0 +1,68 @@
+---
+id: koda-orta-degisken-golgeleme
+baslik: "Hata avcılığı: değişken gölgeleme"
+asama: orta
+sira: 6
+kazanimlar:
+  - Döngü değişkeninin dışarıdaki bir değişkenle aynı isme sahip olmasının (gölgeleme) neden hataya yol açtığını bulup düzeltebilme
+ipuclari:
+  - "Çalıştır'a bas — robot hedef olarak yazılan (90, -60) yerine başka bir yere gidiyor. hedef değişkeninin SON değeri ne?"
+  - "for hedef in ara_noktalar: satırı, döngünün her adımında hedef'i YENİDEN tanımlıyor — üstteki hedef = [90, -60] atamasının üzerine yazıyor."
+  - "Döngü değişkenine farklı bir isim ver (örn. ara), ya da üstteki hedef değişkenini farklı bir isimle tanımla — aynı ismin iki yerde de kullanılmaması yeterli."
+cozum: |
+  hedef = [90, -60]
+
+  ara_noktalar = [[20, -10], [50, -30]]
+
+  for ara in ara_noktalar:
+      robot.movej(ara)
+
+  robot.movej(hedef)
+initialCode: |
+  hedef = [90, -60]
+
+  ara_noktalar = [[20, -10], [50, -30]]
+
+  for hedef in ara_noktalar:
+      robot.movej(hedef)
+
+  robot.movej(hedef)
+robot: generic-2dof
+skillId: koda-orta-degisken-golgeleme
+expectedFinalDegrees: [90, -60]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Bu kod bozuk
+
+Kod önce `hedef` değişkenini (90°, -60°) olarak tanımlıyor. Sonra iki ara
+noktadan geçip en son `robot.movej(hedef)` ile "hedefe" gitmeyi
+amaçlıyor. Ama `for hedef in ara_noktalar:` satırı da AYNI ismi
+kullanıyor — döngü, `hedef` değişkenini her adımda yeniden tanımlayıp
+üstteki atamanın üzerine yazıyor. Python bunda hata vermez, sessizce
+üzerine yazar.
+
+## Görev
+
+Çalıştır'a bas, robotun nereye gittiğini gözlemle, kodu düzelt. Robot
+son olarak (90°, -60°) açılarında olmalı. Düzeltmenin tek bir doğru
+yazılışı yok — isim çakışmasını çözen her düzeltme kabul edilir.
+
+## Neden
+
+<Quiz
+  sorular={[
+    {
+      soru: "Robot neden (90°, -60°) yerine son ara noktada kaldı?",
+      secenekler: [
+        "robot.movej() ikinci kez çağrılınca çalışmıyor.",
+        "for döngüsü, hedef değişkenini her adımda yeniden tanımlayıp üstteki [90, -60] atamasının üzerine yazdı.",
+        "ara_noktalar listesi ters sıralanmıştı.",
+        "Robotun eklem limiti aşılmıştı.",
+      ],
+      dogru: 1,
+      aciklama: "Python'da for döngüsünün değişkeni, döngüden önce aynı isimde bir değişken varsa onu SESSİZCE üzerine yazar — hata fırlatmaz, bu yüzden fark etmesi zor. Döngü bitince o isim döngünün son değerini taşır, öncesindeki değeri değil.",
+    },
+  ]}
+/>
