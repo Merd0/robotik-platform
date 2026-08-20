@@ -472,6 +472,73 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     }),
   },
   {
+    // İkinci derinlik turu (docs/15 "Teşhis modu"): modül önce bir günlük/
+    // çalışma izi anomalisi gösterir, öğrenci nedeni Quiz'le tahmin eder,
+    // SONRA kodu görüp düzeltir. Predicate mekanizması hata avcılığı
+    // modülleriyle birebir aynı (poseMatches) — yeni olan sadece anlatı
+    // sırası, davranışsal doğrulama değil.
+    id: "koda-orta-teshis-modu-v1",
+    lessonId: "koda-orta-teshis-modu",
+    skillId: "koda-orta-teshis-modu",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-orta-teshis-modu" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
+    id: "koda-ileri-teshis-modu-v1",
+    lessonId: "koda-ileri-teshis-modu",
+    skillId: "koda-ileri-teshis-modu",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-ileri-teshis-modu" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
+    // İkinci derinlik turu (docs/15 "Kod incelemesi"): doğru poza ulaşmak
+    // YETMEZ, çözüm de sadeleştirilmiş olmalı — en fazla tek robot.movej()
+    // çağrısı (traceSteps <= 1). Var olan traceSteps>=N (alt sınır) deseninin
+    // TERSİ — aynı mekanizmanın (poseMatches + traceSteps) genişlemesi.
+    id: "koda-orta-kod-incelemesi-v1",
+    lessonId: "koda-orta-kod-incelemesi",
+    skillId: "koda-orta-kod-incelemesi",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-orta-kod-incelemesi" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true &&
+        typeof event.metrics?.traceSteps === "number" &&
+        event.metrics.traceSteps <= 1,
+      ),
+      metrics: { maxTraceSteps: 1 },
+    }),
+  },
+  {
+    id: "koda-ileri-kod-incelemesi-v1",
+    lessonId: "koda-ileri-kod-incelemesi",
+    skillId: "koda-ileri-kod-incelemesi",
+    evaluate: (events) => ({
+      passed: events.some((event) =>
+        event.skillId === "koda-ileri-kod-incelemesi" &&
+        event.stage === "assessed" &&
+        event.result === "success" &&
+        event.metrics?.poseMatches === true,
+      ),
+      metrics: { requiresMovejPoseMatch: true },
+    }),
+  },
+  {
     id: "movel-donguyle-rota-v1",
     lessonId: "d-lise-donguyle-cok-nokta",
     skillId: "movel-donguyle-rota",

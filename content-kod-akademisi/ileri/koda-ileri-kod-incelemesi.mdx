@@ -1,0 +1,75 @@
+---
+id: koda-ileri-kod-incelemesi
+baslik: "Kod incelemesi: sınır durumu"
+asama: ileri
+sira: 6
+kazanimlar:
+  - Sınır (boundary) hatası içeren görünüşte doğru bir çözümü fark edip düzeltebilme
+ipuclari:
+  - "Görev 'ikisi de dahil' diyor — j1 tam olarak -90 veya tam olarak 90 olduğunda hangi dala girmesi gerekiyor?"
+  - "< işareti sınır değerini DIŞARIDA bırakır, <= sınır değerini İÇERİDE tutar. Görev hangisini istiyor?"
+  - "if -90 < j1 < 90: satırındaki her iki < işaretini de <= yap."
+cozum: |
+  def guvenli_git(j1):
+      if -90 <= j1 <= 90:
+          robot.movej([j1, -30])
+      else:
+          robot.movej([0, 0])
+
+  guvenli_git(90)
+initialCode: |
+  def guvenli_git(j1):
+      if -90 < j1 < 90:
+          robot.movej([j1, -30])
+      else:
+          robot.movej([0, 0])
+
+  guvenli_git(90)
+robot: generic-2dof
+skillId: koda-ileri-kod-incelemesi
+expectedFinalDegrees: [90, -30]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Kod incelemesi
+
+Bir üretim hücresinde görev şu: **güvenli bölge -90° ile 90° arasında,
+İKİSİ DE DAHİL.** Aşağıdaki dört yazım arasında hangisi bu kuralı tam
+karşılıyor?
+
+## Neden
+
+<Quiz
+  sorular={[
+    {
+      soru: "j1=90 gibi tam sınırdaki bir çağrı için hangi çözüm doğru davranır?",
+      secenekler: [
+        "if -90 <= j1 <= 90:\n    robot.movej([j1, -30])\nelse:\n    robot.movej([0, 0])",
+        "if -90 < j1 < 90:\n    robot.movej([j1, -30])\nelse:\n    robot.movej([0, 0])",
+        "if j1 <= 90:\n    robot.movej([j1, -30])\nelse:\n    robot.movej([0, 0])",
+        "if -90 <= j1 or j1 <= 90:\n    robot.movej([j1, -30])\nelse:\n    robot.movej([0, 0])",
+      ],
+      dogru: 0,
+      aciklama: "<= sınır değerlerini (-90 ve 90) DAHİL eder — görevin istediği tam olarak bu. İkinci seçenek < kullandığı için sınırları dışarıda bırakıyor. Üçüncüsü alt sınırı hiç kontrol etmiyor. Dördüncüsü 'or' kullandığı için her sayı için doğru çıkıyor — pratikte hiçbir zaman else'e düşmüyor.",
+    },
+    {
+      soru: "`-90 < j1 < 90` neden j1=90 için yanlış dala giriyor?",
+      secenekler: [
+        "< işareti sınır değerini (90'ın kendisini) dışarıda bırakıyor, oysa görev 90'ın DAHİL olmasını istiyor.",
+        "movej() ikinci parametreyi görmezden geliyor.",
+        "guvenli_git() çağrılırken parametre unutulmuş.",
+        "Robotun eklem limiti gerçekten aşılmış.",
+      ],
+      dogru: 0,
+      aciklama: "j1=90 için `90 < 90` ifadesi False'tur — 90, 90'dan küçük değildir. Kod bu yüzden koşulu sağlamadığını düşünüp else dalına, güvenli sıfır konumuna gider. Sınır değerlerle çalışırken < ile <= arasındaki fark, kodun en sık kaçırılan ayrıntılarından biridir.",
+    },
+  ]}
+/>
+
+## Şimdi kendin uygula
+
+Aşağıdaki kod ilk (yanlış) çözümün ta kendisi. `guvenli_git(90)` ile
+çağrıldığında j1=90 tam sınırda olduğu için güvenli bölgenin DIŞINDA
+sayılıp yanlış dala gidiyor. Kodu düzelt — `guvenli_git(90)` çağrıldığında
+robot (90°, -30°) açılarına gitmeli.

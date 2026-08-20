@@ -20,6 +20,8 @@ describe("Kod Akademisi içerik yükleyicisi", () => {
       "koda-ileri-fonksiyonla-liste",
       "koda-ileri-kosullu-fonksiyon",
       "koda-ileri-hata-avcisi",
+      "koda-ileri-teshis-modu",
+      "koda-ileri-kod-incelemesi",
     ]);
   });
 
@@ -41,6 +43,8 @@ describe("Kod Akademisi içerik yükleyicisi", () => {
       "koda-orta-kosul-ile-dal",
       "koda-orta-donguyle-liste-birlikte",
       "koda-orta-degisken-golgeleme",
+      "koda-orta-teshis-modu",
+      "koda-orta-kod-incelemesi",
     ]);
   });
 
@@ -215,5 +219,64 @@ describe("Kod Akademisi içerik yükleyicisi", () => {
     expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
     expect(found.body).toContain("<Quiz");
     expect(found.body).toContain("soru:");
+  });
+
+  describe("İkinci derinlik turu — kişisel optimizasyon retrofiti (Usta 'Yaz' modülleri)", () => {
+    it("Usta ilk modülü ve koşullu hareket modülü optimizasyonMetrigi taşır, hata avcılığı finali taşımaz", () => {
+      expect(getPublicModuleBySlug("koda-usta-uc-nokta-sirayla")!.frontmatter.optimizasyonMetrigi).toBe(true);
+      expect(getPublicModuleBySlug("koda-usta-kosullu-hareket")!.frontmatter.optimizasyonMetrigi).toBe(true);
+      expect(getPublicModuleBySlug("koda-usta-hata-avcisi-final")!.frontmatter.optimizasyonMetrigi).toBeUndefined();
+    });
+
+    it("optimizasyonMetrigi taşımayan mevcut modüller etkilenmedi (varsayılan undefined)", () => {
+      expect(getPublicModuleBySlug("koda-temel-ilk-calistirma")!.frontmatter.optimizasyonMetrigi).toBeUndefined();
+      expect(getPublicModuleBySlug("koda-orta-hata-avcisi")!.frontmatter.optimizasyonMetrigi).toBeUndefined();
+    });
+  });
+
+  describe("İkinci derinlik turu — Teşhis modu", () => {
+    it("orta teşhis modülü, günlük+Quiz kodu göstermeden ÖNCE gelir, sonra bozuk kodu düzeltmeyi ister", () => {
+      const found = getPublicModuleBySlug("koda-orta-teshis-modu")!;
+      expect(found.frontmatter.initialCode).toMatch(/robot\.movej\(\[hedef_j1, 0\]\)/);
+      expect(found.frontmatter.expectedFinalDegrees).toEqual([90, -60]);
+      expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+      expect(found.body).toContain("<Quiz");
+      expect(found.body).toContain("soru:");
+      // Günlük/Quiz bölümü, kodu düzeltmeyi isteyen bölümden ÖNCE gelmeli.
+      expect(found.body.indexOf("## Günlük")).toBeLessThan(found.body.indexOf("## Şimdi kodu gör"));
+      expect(found.body.indexOf("<Quiz")).toBeLessThan(found.body.indexOf("## Şimdi kodu gör"));
+    });
+
+    it("ileri teşhis modülü, fonksiyon içindeki ters sıra hatasını önce günlükle, sonra kodla gösterir", () => {
+      const found = getPublicModuleBySlug("koda-ileri-teshis-modu")!;
+      expect(found.frontmatter.initialCode).toContain("def git(j1, j2):");
+      expect(found.frontmatter.initialCode).toMatch(/robot\.movej\(\[j2, j1\]\)/);
+      expect(found.frontmatter.initialCode).toContain("git(90, -30)");
+      expect(found.frontmatter.expectedFinalDegrees).toEqual([90, -30]);
+      expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+      expect(found.body).toContain("<Quiz");
+      expect(found.body.indexOf("## Günlük")).toBeLessThan(found.body.indexOf("## Şimdi kodu gör"));
+    });
+  });
+
+  describe("İkinci derinlik turu — Kod incelemesi", () => {
+    it("orta kod incelemesi modülü çok satırlı kod şıkları taşır ve sadeleştirme görevi ister", () => {
+      const found = getPublicModuleBySlug("koda-orta-kod-incelemesi")!;
+      expect(found.frontmatter.initialCode).toContain("robot.movej(duraklar[0])");
+      expect(found.frontmatter.initialCode).toContain("robot.movej(duraklar[2])");
+      expect(found.frontmatter.expectedFinalDegrees).toEqual([85, -55]);
+      expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+      // Kod incelemesi şıkları çok satırlı olmalı (JS string içinde \n) — QuizSorusu bunu font-mono/pre-wrap ile ayırt eder.
+      expect(found.body).toContain("duraklar[-1])\",");
+      expect(found.body).toContain("\\n");
+    });
+
+    it("ileri kod incelemesi modülü sınır (boundary) hatası içeren bir çözümü düzeltmeyi ister", () => {
+      const found = getPublicModuleBySlug("koda-ileri-kod-incelemesi")!;
+      expect(found.frontmatter.initialCode).toMatch(/if -90 < j1 < 90:/);
+      expect(found.frontmatter.expectedFinalDegrees).toEqual([90, -30]);
+      expect(EVIDENCE_PREDICATES.some((predicate) => predicate.lessonId === found.slug)).toBe(true);
+      expect(found.body).toContain("<Quiz");
+    });
   });
 });

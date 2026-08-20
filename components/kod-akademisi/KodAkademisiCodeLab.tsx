@@ -31,8 +31,20 @@ interface KodAkademisiCodeLabProps {
   skillId: string;
   expectedFinalDegrees?: number[];
   toleranceDegrees?: number;
+  /** İkinci derinlik turu (docs/15 "Kod incelemesi") — bkz. lib/codeLab.ts CodeLabExpectation. */
+  maxTraceSteps?: number;
   ipuclari: readonly string[];
   cozum: string;
+  /** İkinci derinlik turu (docs/15 "Kişisel optimizasyon") — rekabetsiz, yalnız bilgilendirici. */
+  showOptimizationMetric?: boolean;
+}
+
+/** Boş satırları ve yalnız yorum olan satırları saymaz — "Çözümün: N satır" bunun üzerinden hesaplanır. */
+function countMeaningfulLines(code: string): number {
+  return code
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith("#")).length;
 }
 
 function durumMetni(state: "hazir" | "yukleniyor" | "calisiyor" | "bitti", testPassed: boolean | null): string {
@@ -52,10 +64,12 @@ export function KodAkademisiCodeLab({
   skillId,
   expectedFinalDegrees,
   toleranceDegrees,
+  maxTraceSteps,
   ipuclari,
   cozum,
+  showOptimizationMetric = false,
 }: KodAkademisiCodeLabProps) {
-  const engine = useCodeRunnerEngine({ initialCode, robot: robotId, expectedFinalDegrees, toleranceDegrees, skillId });
+  const engine = useCodeRunnerEngine({ initialCode, robot: robotId, expectedFinalDegrees, toleranceDegrees, maxTraceSteps, skillId });
   const {
     editorId,
     robot,
@@ -225,6 +239,13 @@ export function KodAkademisiCodeLab({
                 className={`rounded-lg border p-3 text-sm font-semibold ${testPassed ? "border-success-border bg-success-surface text-success-ink" : "border-warning-border bg-warning-surface text-warning-ink"}`}
               >
                 {testPassed ? "Otomatik test geçti. Çıktı ve robot duruşu görevle uyuşuyor." : "Otomatik test henüz geçmedi. Çıktıyı veya son eklem açılarını görevle karşılaştır."}
+              </p>
+            )}
+
+            {showOptimizationMetric && testPassed === true && (
+              <p className="rounded-lg border border-site-border bg-site-soft p-3 text-sm text-site-muted" data-testid="optimization-metric">
+                Çözümün: {countMeaningfulLines(code)} satır, {jointTrace.length} robot hareketi. Karşılaştırma yok
+                — bu yalnız kendi çözümün hakkında bilgi.
               </p>
             )}
           </div>
