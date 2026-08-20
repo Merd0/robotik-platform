@@ -1,0 +1,69 @@
+---
+id: koda-orta-kod-incelemesi
+baslik: "Kod incelemesi: en iyisini seç"
+asama: orta
+sira: 8
+kazanimlar:
+  - Doğru çalışan birden fazla çözüm arasında en sade/verimli olanı seçip nedenini açıklayabilme
+ipuclari:
+  - "Listenin SON elemanına doğrudan erişmenin bir yolu var — index'i baştan mı sondan mı sayacağını sen seçebilirsin."
+  - "Python'da negatif index sondan sayar: duraklar[-1] son elemanı, duraklar[-2] sondan ikinciyi verir."
+  - "Üç ayrı robot.movej() çağrısını sil, yerine tek satır yaz: robot.movej(duraklar[-1])."
+cozum: |
+  duraklar = [[15, -5], [50, -25], [85, -55]]
+
+  robot.movej(duraklar[-1])
+initialCode: |
+  duraklar = [[15, -5], [50, -25], [85, -55]]
+
+  robot.movej(duraklar[0])
+  robot.movej(duraklar[1])
+  robot.movej(duraklar[2])
+robot: generic-2dof
+skillId: koda-orta-kod-incelemesi
+expectedFinalDegrees: [85, -55]
+toleranceDegrees: 1
+maxTraceSteps: 1
+durum: yayinda
+---
+
+## Kod incelemesi
+
+Görev şu: **kolun sadece SON durağa gitmesi yeterli, ara duraklara
+uğramasına gerek yok.** Üç geliştirici bunu farklı yazmış — hangisi
+doğru VE en sade?
+
+## Neden
+
+<Quiz
+  sorular={[
+    {
+      soru: "Görev 'sadece son durağa git' — aşağıdaki üç çözümden hangisi bunu doğru VE en sade şekilde karşılıyor?",
+      secenekler: [
+        "duraklar = [[15, -5], [50, -25], [85, -55]]\nrobot.movej(duraklar[-1])",
+        "duraklar = [[15, -5], [50, -25], [85, -55]]\nrobot.movej(duraklar[0])\nrobot.movej(duraklar[1])\nrobot.movej(duraklar[2])",
+        "duraklar = [[15, -5], [50, -25], [85, -55]]\nrobot.movej(duraklar[-2])",
+      ],
+      dogru: 0,
+      aciklama: "duraklar[-1] listenin son elemanına doğrudan gider — tek hareket, doğru sonuç. İkinci çözüm de doğru noktada bitirir ama üç gereksiz hareket ekler. Üçüncüsü -2 ile sondan İKİNCİ durağa gider — yanlış sonuç.",
+    },
+    {
+      soru: "İlk çözüm (doğrudan son elemana gitme), ikinciden neden daha iyi?",
+      secenekler: [
+        "Sonuç ikisinde de doğru, ama ikincisi gereksiz yere iki ekstra hareket yapıyor — üretim hattında zaman ve enerji kaybı demek.",
+        "İkinci çözüm sözdizimi hatası içeriyor, hiç çalışmıyor.",
+        "İkinci çözüm yanlış durakta duruyor.",
+        "İkinci çözüm robotun eklem limitini aşıyor.",
+      ],
+      dogru: 0,
+      aciklama: "İkinci çözüm ÇALIŞIR — sonuçta robot doğru yerde durur. Ama gerçek bir üretim hattında her gereksiz hareket zaman ve enerji maliyeti demektir. 'Doğru sonuç' ile 'iyi çözüm' aynı şey değil.",
+    },
+  ]}
+/>
+
+## Şimdi kendin uygula
+
+Aşağıdaki kod ikinci çözümün ta kendisi — üç ayrı `robot.movej()`
+çağrısıyla tüm duraklara sırayla uğruyor. Onu, ilk çözüm gibi TEK bir
+çağrıya indir. Robot yine son durakta (85°, -55°) bitmeli, ama artık
+tek hareketle.

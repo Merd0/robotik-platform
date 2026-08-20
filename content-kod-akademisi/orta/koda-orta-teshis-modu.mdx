@@ -1,0 +1,62 @@
+---
+id: koda-orta-teshis-modu
+baslik: "Teşhis modu: günlüğü oku"
+asama: orta
+sira: 7
+kazanimlar:
+  - Bir çalışma izi/günlük çıktısından koddaki hatayı önce tahmin edip sonra doğrulayabilme
+ipuclari:
+  - "Günlükte J1 hedefine ulaşmış ama J2 hep sıfırda kalmış — bu, J2'nin movej() çağrısına hiç ulaşmadığını gösterir."
+  - "Kodun içinde hedef_j2 diye bir değişken var ama movej() çağrısında ikinci sırada sabit bir 0 yazılı olabilir."
+  - "movej([hedef_j1, 0]) içindeki 0'ı hedef_j2 ile değiştir."
+cozum: |
+  hedef_j1 = 90
+  hedef_j2 = -60
+
+  robot.movej([hedef_j1, hedef_j2])
+initialCode: |
+  hedef_j1 = 90
+  hedef_j2 = -60
+
+  robot.movej([hedef_j1, 0])
+robot: generic-2dof
+skillId: koda-orta-teshis-modu
+expectedFinalDegrees: [90, -60]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Günlük
+
+Bir depo kolunun vardiya sonu çalışma izi şöyle görünüyor — kodu henüz
+görmüyorsun, önce günlüğe bak:
+
+```
+[calisma-izi] Hedef:        J1=90.0°  J2=-60.0°
+[calisma-izi] Gerçekleşen:  J1=90.0°  J2=0.0°
+```
+
+J1 tam hedefine ulaşmış. J2 hiç kıpırdamamış, sıfırda kalmış.
+
+## Neden
+
+<Quiz
+  sorular={[
+    {
+      soru: "J2 neden hedefine gitmeyip hep sıfırda kalıyor olabilir?",
+      secenekler: [
+        "Kodda bir hedef_j2 değişkeni var ama movej()'e verilen listenin ikinci sırasına, o değişken yerine sabit bir 0 yazılmış.",
+        "Robotun ikinci ekleminin hareket limiti aşılmış.",
+        "hedef_j1 ve hedef_j2 aynı satırda tanımlanmadığı için ikincisi okunamıyor.",
+        "movej() ikinci parametreyi yalnızca kodun ilk defa yürütülmesinde okuyor.",
+      ],
+      dogru: 0,
+      aciklama: "Bir değişkenin var olması, kullanılması demek değil. movej()'e verilen listenin İÇİNDEKİ her sayı ayrı ayrı doğru olmalı — biri sabit bırakılırsa, o eklem o sabite gider, değişkenin taşıdığı değere değil.",
+    },
+  ]}
+/>
+
+## Şimdi kodu gör, düzelt
+
+Bu günlüğü üreten kod aşağıda. Çalıştır'a bas, tahminini doğrula, sonra
+düzelt. Robot son olarak (90°, -60°) açılarında olmalı.

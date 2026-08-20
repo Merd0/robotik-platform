@@ -91,8 +91,10 @@ export default async function KodAkademisiModulePage({ params }: ModulePageProps
               skillId={mod.frontmatter.skillId}
               expectedFinalDegrees={mod.frontmatter.expectedFinalDegrees}
               toleranceDegrees={mod.frontmatter.toleranceDegrees}
+              maxTraceSteps={mod.frontmatter.maxTraceSteps}
               ipuclari={mod.frontmatter.ipuclari}
               cozum={mod.frontmatter.cozum}
+              showOptimizationMetric={mod.frontmatter.optimizasyonMetrigi === true}
             />
           </div>
 

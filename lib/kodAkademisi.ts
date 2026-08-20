@@ -43,6 +43,15 @@ export interface KodAkademisiModuleFrontmatter {
   /** Verilirse modül davranışsal olarak değerlendirilir (Değiştir/Tamamla/Yaz); yoksa Gözlem tipi — çalıştırmak yeterli. */
   expectedFinalDegrees?: number[];
   toleranceDegrees?: number;
+  /** İkinci derinlik turu (docs/15 "Kod incelemesi") — bkz. lib/codeLab.ts CodeLabExpectation. */
+  maxTraceSteps?: number;
+  /**
+   * İkinci derinlik turu (docs/15 "Kişisel optimizasyon"): true ise, test
+   * geçtikten SONRA rekabetsiz bir bilgi kutusu gösterilir (satır/hareket
+   * sayısı). Geçme/kalma durumunu etkilemez, contentVersion hash'ine de
+   * girmez (bkz. lib/kodAkademisiArtifact.ts) — salt sunumsal bir anahtar.
+   */
+  optimizasyonMetrigi?: boolean;
   durum: KodAkademisiDurum;
 }
 

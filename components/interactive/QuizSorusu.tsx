@@ -40,13 +40,20 @@ export function QuizSorusu({ soru, secenekler, dogru, aciklama }: QuizSorusuProp
       <div className="flex flex-col gap-2">
         {gosterilenSecenekler.map((secenek, index) => {
           const isSelected = selected === index;
+          // Kod incelemesi tipi sorularda (docs/15 "İkinci derinlik turu")
+          // şıklar çok satırlı kod bloğu olabilir — biçimi korumak için
+          // monospace + whitespace-pre-wrap'e geçilir. Tek satırlık düz
+          // metin şıklarda bu görsel olarak hiçbir şey değiştirmez.
+          const isCodeBlock = secenek.includes("\n");
           return (
             <button
               key={index}
               type="button"
               onClick={() => choose(index)}
               aria-pressed={isSelected}
-              className={`min-h-11 rounded-md border px-4 py-2 text-left text-sm ${
+              className={`min-h-11 whitespace-pre-wrap rounded-md border px-4 py-2 text-left ${
+                isCodeBlock ? "font-mono text-xs" : "text-sm"
+              } ${
                 isSelected
                   ? isCorrect
                     ? "border-ortaokul-accent bg-ortaokul-accent/10"

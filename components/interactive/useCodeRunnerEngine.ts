@@ -30,6 +30,8 @@ export interface CodeRunnerEngineProps {
   expectedOutput?: string;
   expectedFinalDegrees?: number[];
   toleranceDegrees?: number;
+  /** bkz. lib/codeLab.ts CodeLabExpectation — opsiyonel, verilmezse davranış değişmez. */
+  maxTraceSteps?: number;
   skillId?: string;
 }
 
@@ -60,6 +62,7 @@ export function useCodeRunnerEngine({
   expectedOutput,
   expectedFinalDegrees,
   toleranceDegrees = 0.5,
+  maxTraceSteps,
   skillId = "python-robot-programming",
 }: CodeRunnerEngineProps) {
   const record = useEvidenceRecorder();
@@ -210,7 +213,7 @@ export function useCodeRunnerEngine({
         );
       }
       const { outputMatches, poseMatches, hasAutomaticTest, passed } = evaluateCodeLab(
-        { expectedOutput, expectedFinalDegrees, toleranceDegrees },
+        { expectedOutput, expectedFinalDegrees, toleranceDegrees, maxTraceSteps },
         result,
       );
       setTestPassed(hasAutomaticTest ? passed : null);

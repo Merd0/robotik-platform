@@ -1,0 +1,64 @@
+---
+id: koda-ileri-teshis-modu
+baslik: "Teşhis modu: sıra karışıklığı"
+asama: ileri
+sira: 5
+kazanimlar:
+  - Bir fonksiyon çağrısının günlüğünden, parametrelerin fonksiyon içinde ters sırada kullanıldığını teşhis edip düzeltebilme
+ipuclari:
+  - "git(90, -30) çağrıldığında j1=90, j2=-30 olarak fonksiyonun içine geçer — ama günlükte robot tam tersi açılarda duruyor."
+  - "Fonksiyonun içindeki movej() çağrısına bak: [j1, j2] mi yazıyor, yoksa [j2, j1] mi?"
+  - "movej([j2, j1]) satırındaki j2 ve j1'in yerini değiştir: movej([j1, j2])."
+cozum: |
+  def git(j1, j2):
+      robot.movej([j1, j2])
+
+  git(90, -30)
+initialCode: |
+  def git(j1, j2):
+      robot.movej([j2, j1])
+
+  git(90, -30)
+robot: generic-2dof
+skillId: koda-ileri-teshis-modu
+expectedFinalDegrees: [90, -30]
+toleranceDegrees: 1
+durum: yayinda
+---
+
+## Günlük
+
+Bir elektronik montaj hattındaki fonksiyon `git(90, -30)` olarak çağrıldı
+— J1=90°, J2=-30° beklenir. Ama çalışma izi başka bir şey gösteriyor:
+
+```
+[calisma-izi] Çağrı:        git(90, -30)
+[calisma-izi] Gerçekleşen:  J1=-30.0°  J2=90.0°
+```
+
+J1 ve J2 birbirinin yerine geçmiş gibi duruyor. Kodu henüz görmeden,
+bunun neden olabileceğini düşün.
+
+## Neden
+
+<Quiz
+  sorular={[
+    {
+      soru: "Günlükteki bu yer değişimi (J1 ve J2'nin birbirinin değerini alması) hangi hatayla açıklanır?",
+      secenekler: [
+        "Fonksiyonun içindeki movej() çağrısı j1 ve j2'yi ters sırada listeye yazmış: movej([j2, j1]).",
+        "git() çağrılırken parametreler ters sırada verilmiş, git(-30, 90) yazılması gerekiyordu.",
+        "Robotun eklemleri fiziksel olarak ters bağlı.",
+        "movej() listedeki son elemanı her zaman göz ardı ediyor.",
+      ],
+      dogru: 0,
+      aciklama: "Çağrı (git(90, -30)) doğruydu — j1=90, j2=-30 olarak fonksiyonun içine doğru geçti. Hata çağrıda değil, fonksiyonun GÖVDESİNDE: movej()'e verilen listenin sırası, parametrelerin sırasıyla eşleşmiyordu.",
+    },
+  ]}
+/>
+
+## Şimdi kodu gör, düzelt
+
+Bu günlüğü üreten kod aşağıda. Çalıştır'a bas, tahminini doğrula, sonra
+fonksiyonun gövdesini düzelt — çağrıya (`git(90, -30)`) dokunma. Robot
+son olarak (90°, -30°) açılarında olmalı.

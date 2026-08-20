@@ -1344,3 +1344,74 @@ describe("ThresholdViewer rollout: golden + negatif predicate testleri", () => {
     ]).passed).toBe(false);
   });
 });
+
+describe.each([
+  ["koda-orta-teshis-modu-v1", "koda-orta-teshis-modu", "koda-orta-teshis-modu"],
+  ["koda-ileri-teshis-modu-v1", "koda-ileri-teshis-modu", "koda-ileri-teshis-modu"],
+  ["koda-ileri-kod-incelemesi-v1", "koda-ileri-kod-incelemesi", "koda-ileri-kod-incelemesi"],
+] as const)("İkinci derinlik turu — Teşhis modu / Kod incelemesi (%s): golden + negatif predicate testleri", (predicateId, lessonId, skillId) => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === predicateId)!;
+  const run = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+    stage: EvidenceEvent["stage"] = "assessed",
+  ) => event(stage, result, { lessonId, skillId, metrics, contentVersion: "kod-akademisi-module-v1" });
+
+  it("predicate doğru lessonId/skillId'ye kayıtlı", () => {
+    expect(predicate.lessonId).toBe(lessonId);
+    expect(predicate.skillId).toBe(skillId);
+  });
+
+  it("golden: otomatik poz testi geçen koşu geçer", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 1 })]).passed).toBe(true);
+  });
+
+  it("negatif: poza ulaşmayan koşu geçmez", () => {
+    expect(predicate.evaluate([run("retry", { poseMatches: false, traceSteps: 1 })]).passed).toBe(false);
+  });
+
+  it("negatif: assessed olmayan gözlem olayı başarı üretmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 1 }, "observed")]).passed).toBe(false);
+  });
+});
+
+describe("koda-orta-kod-incelemesi-v1: golden + negatif predicate testleri", () => {
+  // Kod incelemesi: doğru poza ulaşmak yetmez, çözüm de SADELEŞTİRİLMİŞ
+  // olmalı — tek robot.movej() çağrısıyla (traceSteps <= 1). Başlangıç kodu
+  // üç ayrı çağrıyla (traceSteps 3) aynı poza ulaşır ama bu predicate'i
+  // geçmez; bu YENİ bir davranışsal ölçüt (var olan alt-sınır traceSteps>=N
+  // desenlerinin tersi, üst-sınır) — aynı mekanizmanın (poseMatches +
+  // traceSteps) genişlemesi, yeni bir doğrulama sistemi değil.
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "koda-orta-kod-incelemesi-v1")!;
+  const run = (
+    result: EvidenceEvent["result"],
+    metrics: Record<string, number | string | boolean>,
+    stage: EvidenceEvent["stage"] = "assessed",
+  ) => event(stage, result, {
+    lessonId: "koda-orta-kod-incelemesi",
+    skillId: "koda-orta-kod-incelemesi",
+    metrics,
+    contentVersion: "kod-akademisi-module-v1",
+  });
+
+  it("predicate doğru lessonId/skillId'ye kayıtlı", () => {
+    expect(predicate.lessonId).toBe("koda-orta-kod-incelemesi");
+    expect(predicate.skillId).toBe("koda-orta-kod-incelemesi");
+  });
+
+  it("golden: tek hareketle doğru poza ulaşan sadeleştirilmiş çözüm geçer", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 1 })]).passed).toBe(true);
+  });
+
+  it("negatif: doğru poza ulaşsa bile üç ayrı harekete (sadeleştirilmemiş) geçmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 3 })]).passed).toBe(false);
+  });
+
+  it("negatif: poza ulaşmayan koşu geçmez", () => {
+    expect(predicate.evaluate([run("retry", { poseMatches: false, traceSteps: 1 })]).passed).toBe(false);
+  });
+
+  it("negatif: assessed olmayan gözlem olayı başarı üretmez", () => {
+    expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 1 }, "observed")]).passed).toBe(false);
+  });
+});
