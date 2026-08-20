@@ -153,6 +153,34 @@ test("seviye, hat ve yayınlı ders rotası erişilebilir", async ({ page }) => 
   await expect(page.locator("main h1")).toBeVisible();
 });
 
+test("sözlük ↔ ders çift yönlü bağlantı: karıştırılan terim ve derse geri bağlantı çalışır", async ({ page }) => {
+  // Sözlük → sözlük: "sıkça karıştırılır" notu gerçek bir çift yönlü bağa açılır.
+  await page.goto("/sozluk/ters-kinematik");
+  await expect(page.getByRole("heading", { name: "ters kinematik", exact: true })).toBeVisible();
+  const karisanBolge = page.getByRole("region", { name: /Sıkça karıştırılır/ });
+  const karisanLink = karisanBolge.getByRole("link", { name: "ileri kinematik" });
+  await expect(karisanLink).toBeVisible();
+  await karisanLink.click();
+  await expect(page).toHaveURL(/\/sozluk\/ileri-kinematik$/);
+  await expect(page.getByRole("heading", { name: "ileri kinematik", exact: true })).toBeVisible();
+  // Karşı yönde de aynı not var (iki taraflı çift).
+  await expect(page.getByRole("region", { name: /Sıkça karıştırılır/ }).getByRole("link", { name: "ters kinematik" })).toBeVisible();
+
+  // Ders → sözlük: Faz 4'ün asıl eklediği GERİ bağlantı yönü.
+  await page.goto("/ders/b-universite-jacobian");
+  const relatedTerms = page.getByRole("region", { name: "İlgili terimler" });
+  await expect(relatedTerms).toBeVisible();
+  const jacobianLink = relatedTerms.getByRole("link", { name: "Jacobian matrisi" });
+  await expect(jacobianLink).toBeVisible();
+  await jacobianLink.click();
+  await expect(page).toHaveURL(/\/sozluk\/jacobian-matrisi$/);
+  await expect(page.getByRole("heading", { name: "Jacobian matrisi" })).toBeVisible();
+
+  // Ve sözlük sayfası, o dersi zaten "İlgili dersler" altında (hat üzerinden) listeliyor —
+  // iki yön birlikte döngüyü tamamlıyor.
+  await expect(page.getByRole("link", { name: /Jacobian matrisi/ })).toBeVisible();
+});
+
 /*
  * Bu testin eski hâli "review borcu yeşil insan incelemesi gibi sunulmaz"
  * adıyla, makbuzu olmayan derste bir UYARI rozeti arıyordu. O rozet
@@ -1305,7 +1333,7 @@ test("CspaceLab fiziksel sınıf çiftini kanıtlar ve state'i paylaşır", asyn
 });
 
 test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
-  // On altı ayrı sayfada tam Axe taraması, tam paralel CI yükünde varsayılan
+  // On sekiz ayrı sayfada tam Axe taraması, tam paralel CI yükünde varsayılan
   // 30 saniyeyi aşabiliyor; uygulama bekleme sınırlarını değil bu denetimi uzat.
   test.setTimeout(60_000);
   const denetlenen = [
@@ -1317,6 +1345,7 @@ test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
     "/ders/a-universite-robot-mimarileri",
     "/ders/a-universite-homojen-donusum",
     "/ders/b-lise-ileri-kinematik",
+    "/ders/b-universite-jacobian",
     "/laboratuvar/robot-hucresi",
     "/kod-akademisi",
     "/kod-akademisi/temel/koda-temel-ilk-calistirma",
@@ -1325,6 +1354,7 @@ test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
     "/ogretmen",
     "/ogretmen/hat-c",
     "/ogretmen/kod-akademisi",
+    "/sozluk/ters-kinematik",
   ];
   for (const url of denetlenen) {
     await page.goto(url);

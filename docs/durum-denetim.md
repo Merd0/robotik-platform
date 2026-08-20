@@ -3253,3 +3253,76 @@ Governance dosyası değişmedi (yalnız `app/ogretmen/page.tsx`,
 `components/teacher/TeacherPilotSwitcher.tsx`, `e2e/platform.spec.ts`,
 `lib/teacherPilot.ts`, `lib/teacherPilot.test.ts`, `docs/durum-denetim.md`),
 docs/09 §7 otomatik geçit uygulanacak, `main`'e merge edilecek.
+
+## Faz 4 — Sözlük/SEO derinleştirme — 2026-08-21
+
+12 en yüksek arama niyetli terim seçildi (72'lik sözlükten): ters/ileri
+kinematik, tekillik, manipülabilite, Jacobian matrisi, Denavit-Hartenberg
+parametreleri, serbestlik derecesi, konfigürasyon uzayı, çalışma uzayı,
+el-göz/kamera kalibrasyonu, alet merkez noktası (TCP). `lib/sozluk.ts`teki
+`SEO_ANCHOR_TERM_SLUGS` tek gerçek kaynak — hem "karışan terim" notunun
+hem geri bağlantının hangi terimlerde göründüğünü bu liste belirliyor.
+
+**1. Yaygın karıştırılan terim notları.** `Terim` tipine opsiyonel
+`karisan: { terim, fark, slug? }` eklendi; 12 terimin hepsine (çoğu
+karşılıklı çift: ters↔ileri kinematik, tekillik↔manipülabilite,
+konfigürasyon↔çalışma uzayı, kamera↔el-göz kalibrasyonu) yazıldı.
+`app/sozluk/[slug]/page.tsx`e "Sıkça karıştırılır" kutusu eklendi — karışan
+terim de sözlükteyse (`slug` varsa) ona bağlantı veriyor, değilse (TCP↔flanş
+gibi) düz metin kalıyor.
+
+**2. Geriye dönük bağlantı — elle eşleme DEĞİL, metinden türetilen.**
+Önceden yalnız sözlük→ders yönü vardı (terim sayfası, aynı HAT'taki tüm
+dersleri listeliyordu). `getSeoAnchorTermsInText(text)` bir ders gövdesinde
+GEÇEN 12 terimi bulur — `lib/interactionManifest.ts`teki
+`extractUsedComponents`le aynı felsefe: elle tutulan ders→terim eşlemesi
+zamanla eskir/yanlışlaşır, gerçek kaynak metnin kendisidir. Basit alt dize
+eşleşmesi kullanır; yanlış pozitif üretmez ama Türkçe ünsüz yumuşaması gibi
+çekim değişimlerini (tekillik→tekilliğe) kaçırabilir — bilinçli bir
+ödünleşim, dokümante edildi. Yeni `components/lesson/LessonRelatedTerms.tsx`
+bunu ders sayfasında "İlgili terimler" bloğu olarak çiziyor (boşsa hiç
+render etmiyor); 94 dersin 35'inde en az bir eşleşme var.
+
+**Bulunan ve düzeltilen gerçek bir eşleşme boşluğu:** DH parametreleri
+dersinin gövdesi terimi HİÇ tam adıyla ("Denavit-Hartenberg parametreleri")
+yazmıyor, yalnız kısaltmasıyla ("DH parametreleri") — tam ad sadece
+frontmatter başlığında geçiyor, gövde onun parçası değil. `getSeoAnchor
+TermsInText`e (a) parantez içi kısaltmaları ("... (DH) ...") boşlukla
+değiştirip öbek eşleşmesini bozmaması ve (b) bu tek terim için küçük bir
+`ANCHOR_TERM_ALIASES` takma-ad haritası (editoryal içerik değil, saf
+eşleştirme detayı — `content/sozluk.json`a değil koda ait) eklendi.
+
+**Bulunan ve düzeltilen, ilgisiz bir gerçek WCAG hatası:** Yeni
+`/sozluk/[slug]` taramasını WCAG listesine eklerken `app/sozluk/[slug]/
+page.tsx`teki "İlgili dersler" seviye başlığının (`text-ortaokul-ink/60`)
+kontrastı 4.25 ölçüldü (AA sınırı 4.5) — sayfa daha önce hiç WCAG
+taramasında yoktu, bu yüzden fark edilmemişti. Komşu öğelerin hepsi `/65`
+ile `/75` arasında kullanıyordu; `/60` tek başına düşük kalan istisnaydı.
+`/70`ye çekildi, tarama şimdi temiz.
+
+**3. Örnekleri zenginleştir.** En thin iki tanım genişletildi: "çalışma
+uzayı" tek cümlelikten (iki bağlantı uzunluğunun izin verdiği halka
+biçimli bölge örneğiyle) somutlaştırıldı; "Denavit-Hartenberg
+parametreleri" dört parametrenin ADLARINI (a, α, d, θ) da tanıma ekledi —
+DH dersindeki gerçek `JointSpec.dhParams` alan adlarıyla birebir.
+
+**Test-first.** `lib/sozluk.test.ts`e 14 yeni test: her anchor slug'ın
+gerçek terime karşılık geldiği, `karisan.slug` varsa gerçek bir terime
+işaret ettiği, karşılıklı çiftlerin GERÇEKTEN iki yönlü olduğu, metin
+eşleştirmenin doğru/yanlış pozitif üretmediği, parantez/kısaltma
+regresyonu ve gerçek DH dersi üzerinde regresyon testi. `e2e/
+platform.spec.ts`e sözlük↔ders çift yönlü akışı uçtan uca doğrulayan 1
+yeni test + WCAG taramasına 2 yeni sayfa (`/ders/b-universite-jacobian`,
+`/sozluk/ters-kinematik`) eklendi (bu tarama WCAG hatasını da yakaladı).
+
+**Kontrol paketi tam çalıştı:** tsc/lint(temiz)/vitest(777/777)/
+check-content(94)/mdx-guvenlik(94)/sensitive-terms(115+19)/build(temiz —
+72 sözlük sayfası + 94 ders yeniden üretildi)/perf-budget(bütçe içinde)/
+audit(0 zafiyet). e2e `--workers=4`: 231/231 (18 skip, +3 yeni test
+instance'ı).
+
+Governance dosyası değişmedi (yalnız `app/ders/[slug]/page.tsx`,
+`app/sozluk/[slug]/page.tsx`, `components/lesson/LessonRelatedTerms.tsx`,
+`content/sozluk.json`, `e2e/platform.spec.ts`, `lib/sozluk.ts`,
+`lib/sozluk.test.ts`, `docs/durum-denetim.md`), docs/09 §7 otomatik geçit
+uygulanacak, `main`'e merge edilecek.

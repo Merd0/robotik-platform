@@ -17,6 +17,8 @@ import { LessonEvidenceProvider } from "@/components/lesson/LessonEvidenceProvid
 import { LessonCompletionPanel } from "@/components/lesson/LessonCompletionPanel";
 import { LessonTrustPanel } from "@/components/lesson/LessonTrustPanel";
 import { LessonPrerequisiteNotice } from "@/components/lesson/LessonPrerequisiteNotice";
+import { LessonRelatedTerms } from "@/components/lesson/LessonRelatedTerms";
+import { getSeoAnchorTermsInText } from "@/lib/sozluk";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { computeTeachingHash } from "@/lib/lessonArtifact";
 import { computeLessonContentVersion } from "@/lib/interactionManifest";
@@ -90,6 +92,7 @@ export default async function DersPage({ params }: DersPageProps) {
   const seviye = lesson.frontmatter.seviye;
   const theme = SEVIYE_THEME[seviye];
   const jsonLd = lessonJsonLd(lesson, prerequisites.map((prerequisite) => prerequisite.slug));
+  const relatedTerms = getSeoAnchorTermsInText(lesson.body);
 
   return (
     <main id="ana-icerik" data-seviye={seviye} className={`min-h-screen ${theme.page}`}>
@@ -107,6 +110,7 @@ export default async function DersPage({ params }: DersPageProps) {
               <LessonPrerequisiteNotice prerequisites={prerequisites} seviye={seviye} />
               <article className="ders-icerik mt-8 flex min-w-0 flex-col gap-5">{content}</article>
               <div className="mt-10"><LessonCompletionPanel seviye={seviye} /></div>
+              <LessonRelatedTerms terms={relatedTerms} />
               <LessonNav previous={previous} next={next} seviye={seviye} />
             </div>
             <LessonTrustPanel lesson={lesson} />

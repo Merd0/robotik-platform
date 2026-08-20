@@ -82,6 +82,22 @@ export default async function SozlukTerimPage({ params }: SozlukTerimPageProps) 
           <p className="mt-8 max-w-2xl text-lg leading-8 text-ortaokul-ink/85">{terim.tanim}</p>
         </article>
 
+        {terim.karisan && (
+          <section aria-labelledby="siklikla-karisir" className="mt-10 max-w-2xl rounded-2xl border border-warning-border bg-warning-surface p-6">
+            <h2 id="siklikla-karisir" className="font-heading text-lg font-semibold text-warning-ink">
+              Sıkça karıştırılır:{" "}
+              {terim.karisan.slug ? (
+                <Link href={`/sozluk/${terim.karisan.slug}`} className="underline underline-offset-4">
+                  {terim.karisan.terim}
+                </Link>
+              ) : (
+                terim.karisan.terim
+              )}
+            </h2>
+            <p className="mt-2 leading-7 text-warning-ink/90">{terim.karisan.fark}</p>
+          </section>
+        )}
+
         <section aria-labelledby="ilgili-dersler" className="mt-12 border-t border-ortaokul-ink/15 pt-8">
           <h2 id="ilgili-dersler" className="font-heading text-2xl font-semibold">İlgili dersler</h2>
           {ilgiliDersler.length > 0 ? (
@@ -91,7 +107,7 @@ export default async function SozlukTerimPage({ params }: SozlukTerimPageProps) 
                 if (dersler.length === 0) return null;
                 return (
                   <div key={seviye}>
-                    <h3 className="text-sm font-semibold uppercase tracking-wide text-ortaokul-ink/60">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-ortaokul-ink/70">
                       {SEVIYE_ETIKET[seviye]}
                     </h3>
                     <ul className="mt-3 space-y-3">
