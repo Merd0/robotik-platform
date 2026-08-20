@@ -45,6 +45,58 @@ test("öğretmen pilotu görev, mobil ve baskı yüzeylerini birlikte korur", as
   await expect(page.locator("body > footer")).toBeHidden();
 });
 
+test("öğretmen pilotu · Hat C görev bağlantısı önceden ayarlanmış dar-koridor sahnesini açar", async ({ page }) => {
+  await page.goto("/ogretmen/hat-c");
+  await expect(page.getByRole("heading", { name: "Aynı koridor, üç planlayıcı." })).toBeVisible();
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+
+  const taskLink = page.getByRole("link", { name: /robotik-platform\.vercel\.app\/ders\/c-universite-algoritma-karsilastirma-deneyi/ });
+  const taskHref = await taskLink.getAttribute("href");
+  expect(taskHref).not.toBeNull();
+  const taskHash = new URL(taskHref!).hash;
+
+  await page.goto(`/ders/c-universite-algoritma-karsilastirma-deneyi${taskHash}`);
+  await expect(page.getByText("Şu an 2 engel var.", { exact: false })).toBeVisible();
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+
+  await page.goto("/ogretmen/hat-c");
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByRole("heading", { name: "Ölç, karşılaştır, seç." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Aynı koridor, üç planlayıcı." })).toBeHidden();
+  await expect(page.locator("body > header")).toBeHidden();
+  await expect(page.locator("body > footer")).toBeHidden();
+});
+
+test("öğretmen pilotu · Kod Akademisi üç modül bağlantısı da yayında modüllere gider", async ({ page }) => {
+  await page.goto("/ogretmen/kod-akademisi");
+  await expect(page.getByRole("heading", { name: "Okumadan önce çalıştır." })).toBeVisible();
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+
+  for (const slug of ["koda-temel-ilk-calistirma", "koda-temel-degisken-degistir", "koda-temel-acikla-sonra-uygula"]) {
+    const link = page.getByRole("link", { name: new RegExp(`robotik-platform\\.vercel\\.app/kod-akademisi/temel/${slug}$`) });
+    await expect(link).toBeVisible();
+    const href = await link.getAttribute("href");
+    expect(href).toBe(`https://robotik-platform.vercel.app/kod-akademisi/temel/${slug}`);
+  }
+
+  await page.goto("/ogretmen/kod-akademisi");
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByRole("heading", { name: "İzle, değiştir, yaz." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Okumadan önce çalıştır." })).toBeHidden();
+  await expect(page.locator("body > header")).toBeHidden();
+  await expect(page.locator("body > footer")).toBeHidden();
+});
+
+test("öğretmen pilotu anahtarlayıcısı üç sayfa arasında gezinir", async ({ page }) => {
+  await page.goto("/ogretmen");
+  await page.getByRole("link", { name: "Hat C · Planlayıcı karşılaştırması" }).click();
+  await expect(page).toHaveURL(/\/ogretmen\/hat-c$/);
+  await page.getByRole("link", { name: "Kod Akademisi · Giriş" }).click();
+  await expect(page).toHaveURL(/\/ogretmen\/kod-akademisi$/);
+  await page.getByRole("link", { name: "Hat B · Ters kinematik" }).click();
+  await expect(page).toHaveURL(/\/ogretmen$/);
+});
+
 test("Pyodide cold-load süresi kullanıcı kodu zaman aşımına karışmaz", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-1440", "Cold-load sözleşmesi tek gerçek Chromium yüzeyinde yeterli.");
   let firstRuntimeRequest = true;
@@ -1253,7 +1305,7 @@ test("CspaceLab fiziksel sınıf çiftini kanıtlar ve state'i paylaşır", asyn
 });
 
 test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
-  // Dokuz ayrı sayfada tam Axe taraması, tam paralel CI yükünde varsayılan
+  // On altı ayrı sayfada tam Axe taraması, tam paralel CI yükünde varsayılan
   // 30 saniyeyi aşabiliyor; uygulama bekleme sınırlarını değil bu denetimi uzat.
   test.setTimeout(60_000);
   const denetlenen = [
@@ -1270,6 +1322,9 @@ test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
     "/kod-akademisi/temel/koda-temel-ilk-calistirma",
     "/kod-akademisi/temel/koda-temel-acikla-sonra-uygula",
     "/kod-akademisi/orta/koda-orta-hata-avcisi",
+    "/ogretmen",
+    "/ogretmen/hat-c",
+    "/ogretmen/kod-akademisi",
   ];
   for (const url of denetlenen) {
     await page.goto(url);

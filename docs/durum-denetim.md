@@ -3185,3 +3185,71 @@ Governance dosyası değişmedi (yalnız `app/ders/[slug]/page.tsx`,
 `lib/lessonArtifact.ts` (kod yorumu, sözleşme değil), `lib/quiz.ts`,
 `docs/durum-denetim.md`), docs/09 §7 otomatik geçit uygulanacak, `main`'e
 merge edilecek.
+
+## Faz 3 — Öğretmen sayfası genişletme — 2026-08-21
+
+`/ogretmen`deki desen (40 dakikalık akış, yazdırılabilir çalışma kâğıdı,
+hazır görev linki, Kanıt Okuyucu rehberi) icat edilmeden iki yeni alana
+uygulandı: **Hat C** (planlama/karşılaştırma) ve **Kod Akademisi**
+(temel modüllere giriş) — ikisi de görevin önerdiği adaylardı.
+
+**Yeniden kullanılan, İCAT EDİLMEYEN parçalar:** `TeacherPilotActions`
+(kopyala/yazdır düğmeleri — Kod Akademisi'nin 3 modül bağlantısı için
+`showPrint` opsiyonel prop'u eklendi, geri kalan API aynı),
+`app/ogretmen/page.module.css` (üç sayfa da AYNI dosyayı `../page.module.css`
+göreli yoluyla import ediyor — üçüncü bir kopya yok), çalışma kâğıdı/
+kanıt-okuyucu-rehberi/gizlilik-sınırı bölüm iskeleti (aynı 3-sütun
+tahmin-gözlem-sonuç deseni, aynı 3 adımlı Kanıt Okuyucu talimatı).
+
+**Yeni:** `components/teacher/TeacherPilotSwitcher.tsx` — üç pilot
+sayfası arasında gezinme (docs/05 "her an nerede olduğunu bil" ilkesi);
+ekran-öncesi sarmalayıcının içinde olduğu için yazdırma görünümünde
+otomatik gizleniyor, ayrı bir print-CSS kuralı gerekmedi.
+
+**Hat C pilotu** `c-universite-algoritma-karsilastirma-deneyi` dersine
+bağlanıyor (zaten PredictionPrompt + PlannerRace(allowObstacleEdit) +
+TransferChallenge üçlüsünü taşıyan, mevcut e2e'de de kullanılan ders).
+Engel düzeni ve seed **uydurulmadı** — `PlannerRace.tsx`nin kendi dahili
+`CHALLENGE_INITIAL_OBSTACLES`/`CHALLENGE_SEED` sabitlerinin (pilot=
+"planner-comparison" meydan okumasında zaten kullanılan, ayarlanmış dar-
+koridor düzeni) birebir kopyası `lib/teacherPilot.ts`e taşındı.
+
+**Kod Akademisi pilotu** Hat B/C'nin tek-URL modelini KOPYALAMADI, bilinçli
+olarak uyarladı: üç modül (`koda-temel-ilk-calistirma` → gözlem,
+`koda-temel-degisken-degistir` → ilk düzenleme+kanıt, `koda-temel-acikla-
+sonra-uygula` → sıfırdan yaz+kanıt) sıralı üç bağlantı olarak sunuluyor,
+çünkü her modülün kendi sabit `initialCode`'u zaten var — Hat B/C'deki gibi
+bir `#lab=` URL fragment'ına ihtiyaç yok. 3. modül (parametre gönder) 40
+dakikaya sığdırmak için bilinçli atlandı.
+
+**Test-first.** `lib/teacherPilot.test.ts`e her yeni sabit için: gerçek
+ders/modülün var VE yayında olduğunu doğrulayan testler (uydurma bir
+slug'a işaret etmediğinin kanıtı), Hat C `labState`in `decodeLabState`den
+round-trip geçtiğinin testi. `e2e/platform.spec.ts`e 3 yeni test (Hat C
+görev bağlantısı gerçek sahneyi açıyor mu, Kod Akademisi'nin 3 linki de
+gerçek/yayında modüllere gidiyor mu, switcher üç sayfa arasında geziniyor
+mu) + mevcut "ana sayfa ve ders kritik WCAG ihlali üretmez" testinin
+taranan sayfa listesine üç yeni sayfa eklendi (icat edilen ayrı bir WCAG
+testi değil, var olanın kapsamı genişletildi).
+
+**Kontrol paketi tam çalıştı:** tsc/lint(temiz)/vitest(766/766)/
+check-content(94)/graph(94)/quiz-dagilimi(139)/mdx-guvenlik(94)/
+sensitive-terms(115+19)/review-debt(bilgi)/review-integrity(temiz)/
+build(temiz — `/ogretmen/hat-c` ve `/ogretmen/kod-akademisi` statik
+sayfa olarak üretildi)/perf-budget(bütçe içinde)/audit(0 zafiyet).
+e2e `--workers=4`: 228/228 (18 skip, +9 yeni test instance'ı — 3 yeni
+test × 3 proje).
+
+**Bilinçli olarak yapılmayan:** Gerçek öğretmenlere ulaşmak/duyurmak
+görevin kendisinde açıkça kapsam dışı bırakılmıştı ("Gerçek öğretmenlere
+ulaşmak benim işim, senin değil") — yalnız sayfalar hazırlandı, navbar/
+footer'daki mevcut "Öğretmen" linki zaten `/ogretmen`e gidiyor ve oradaki
+yeni switcher diğer ikisini keşfedilebilir kılıyor; ayrıca bir duyuru/
+pazarlama adımı atılmadı.
+
+Governance dosyası değişmedi (yalnız `app/ogretmen/page.tsx`,
+`app/ogretmen/hat-c/page.tsx`, `app/ogretmen/kod-akademisi/page.tsx`,
+`components/teacher/TeacherPilotActions.tsx`,
+`components/teacher/TeacherPilotSwitcher.tsx`, `e2e/platform.spec.ts`,
+`lib/teacherPilot.ts`, `lib/teacherPilot.test.ts`, `docs/durum-denetim.md`),
+docs/09 §7 otomatik geçit uygulanacak, `main`'e merge edilecek.

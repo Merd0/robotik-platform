@@ -20,7 +20,7 @@ async function copyText(value: string): Promise<void> {
   if (!copied) throw new Error("clipboard-unavailable");
 }
 
-export function TeacherPilotActions({ taskUrl }: { taskUrl: string }) {
+export function TeacherPilotActions({ taskUrl, showPrint = true }: { taskUrl: string; showPrint?: boolean }) {
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
 
   async function copyTaskUrl() {
@@ -41,19 +41,23 @@ export function TeacherPilotActions({ taskUrl }: { taskUrl: string }) {
       >
         Görev bağlantısını kopyala
       </button>
-      <button
-        type="button"
-        onClick={() => window.print()}
-        className="inline-flex min-h-11 items-center rounded-xl border border-site-border bg-site-surface px-4 py-2 text-sm font-semibold text-site-ink"
-      >
-        Çalışma kâğıdını yazdır
-      </button>
+      {showPrint && (
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="inline-flex min-h-11 items-center rounded-xl border border-site-border bg-site-surface px-4 py-2 text-sm font-semibold text-site-ink"
+        >
+          Çalışma kâğıdını yazdır
+        </button>
+      )}
       <p role="status" aria-live="polite" className="text-xs text-site-muted">
         {copyStatus === "copied"
           ? "Bağlantı panoya kopyalandı."
           : copyStatus === "error"
             ? "Pano kullanılamadı; aşağıdaki bağlantıyı elle kopyalayabilirsin."
-            : "İki işlem de yalnız bu tarayıcıda gerçekleşir."}
+            : showPrint
+              ? "İki işlem de yalnız bu tarayıcıda gerçekleşir."
+              : "Kopyalama yalnız bu tarayıcıda gerçekleşir."}
       </p>
     </div>
   );
