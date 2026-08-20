@@ -254,3 +254,35 @@ modüle çıkarır. Bu bir üst sınır değil, kuruluş taahhüdü — ileride
 daha fazla modül eklenebilir, ama bu görev bu 18'i bitirmeyi hedefler.
 Bir modül 3 denemeden sonra çözülemezse atlanır, `docs/durum-denetim.md`'ye
 net not düşülür, sonraki modüle geçilir.
+
+## İkinci derinlik turu (2026-08 kararı)
+
+Üç yeni desen, mevcut 6 alıştırma tipine ek:
+
+- Teşhis modu: modül, kod görünmeden önce gerçekçi bir log/hata çıktısı
+  (traceback, sensör okuması, çalışma izi anomalisi) gösterir. Önce
+  "ne oldu, neden" (Quiz ile, mevcut "neden" deseni), sonra kodu göster
+  ve düzeltme iste (hata avcılığı deseni). İki var olan mekanizmanın
+  birleşimi, yeni motor gerekmiyor.
+- Kod incelemesi: 2-3 aday çözüm gösterilir (biri doğru, biri/ikisi
+  incelikle şekilde yanlış veya verimsiz — okunabilirlik/performans
+  farkı gibi). Kullanıcı en iyisini seçer VE nedenini kısaca işaretler
+  (Quiz'in radio-select desenine benzer ama seçenekler kod bloğu).
+  Yargı becerisi ölçer, tek doğru sözdizimi değil.
+- Kişisel optimizasyon (rekabetsiz): "Yaz" tipi alıştırmalarda,
+  kullanıcının çözümü geçtikten SONRA bilgilendirici bir metrik göster
+  ("Çözümün: 4 satır, 6 robot hareketi") — geçme/kalma durumunu
+  ETKİLEMEZ, sadece bilgi. Başkalarıyla kıyaslama YOK (docs/00'ın
+  rekabetsizlik ilkesi), sadece kullanıcının kendi çözümü hakkında.
+
+Ertelenenler (docs/fikirler.md'de dursun): zincirleme proje anlatısı
+(az önce bitirdiğimiz senaryo çeşitliliği turuyla çelişiyor — komşu
+modüllerin farklı bağlam kullanması bilinçli bir karardı, sürekli tek
+anlatı bunu geri sarar; ileride YENİ bir aşamada, mevcut 17 modüle
+dokunmadan denenebilir).
+
+Uygulama: mevcut 17 modüle YENİ ÖRNEKLER olarak ekle (en az: 2 Teşhis
+modu, 2 Kod incelemesi, ve mevcut Usta "Yaz" modüllerine kişisel
+optimizasyon metriği retrofit). Var olan modüllerin predicate/behavioral
+mantığına dokunma, sadece yeni modüller ekle veya (optimizasyon metriği
+için) bilgilendirici bir ek katman koy.
