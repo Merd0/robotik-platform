@@ -2821,6 +2821,89 @@ modül sayfası dahil)/perf-budget(bütçe içinde)/audit(0 zafiyet)/
 e2e(`--workers=4`, 204/204, 12 skip) — hepsi temiz. Governance dosyası
 değişmedi, docs/09 §7 otomatik geçit uygulandı, `main`'e merge edildi.
 
+## Kod Akademisi — yazarlık kalitesi ve çeşitlilik turu, 17/17 modül (2026-08-20)
+
+docs/11-yazarlik-kalitesi.md'nin 89 derse yaptığı turun Kod Akademisi
+versiyonu. Dal: `kod-akademisi-yazarlik-cesitliligi`. Kapsam yalnız metin —
+görev tanımı, "Ne oldu"/"Bu kod bozuk" açıklamaları, ipuçları, quiz metni.
+`initialCode`/`cozum`/`expectedFinalDegrees`/`robot`/`baslik` hiçbirine
+dokunulmadı — bunlar `lib/kodAkademisi.test.ts` ve `e2e/platform.spec.ts`
+içinde exact-match/regex ile test ediliyor (özellikle 4 quiz'in doğru
+cevap metni ve `koda-orta-hata-avcisi`'nin soru metni e2e'de tıklanan
+buton adıyla eşleşiyor); bu yüzden düzenlemeden önce hangi alanların
+davranışsal olarak kilitli olduğu testler taranarak çıkarıldı, sadece
+gerçekten serbest olan alanlar (ipuclari, kazanimlar, gövde metni, quiz
+çeldiricileri/açıklaması) değiştirildi.
+
+**Bulgu — en büyük tekrar sorunu.** 17 modülün 17'si de `robot:
+generic-2dof` ve neredeyse tamamı soyut "robotu (J1°, J2°) açılarına
+götür" çerçevesiyle yazılmıştı — docs/11'in "3 eklem 6 eklem hep aynı,
+koymak için konulmuş" şikayetiyle birebir aynı desen, kod tarafında da.
+Robot spec'i (ve dolayısıyla predicate/FK hesabı) değiştirmeden düzeltmenin
+tek yolu ANLATIM bağlamı: aynı iki eklemli kol artık modülden modüle farklı
+bir sektörde çalışıyormuş gibi çerçeveleniyor — montaj hattı, depo/lojistik
+durakları, kalite kontrol istasyonu, gıda paketleme, ilaç dolum hattı,
+otomotiv kaynak hattı, elektronik montaj, üretim hücresi güvenli bölge
+kontrolü. Aynı aşama içinde ardışık modüller aynı sektörü tekrar etmiyor
+(docs/04'teki kanca çeşitliliği kuralının senaryo karşılığı). Saf hata
+avcılığı modülleri (4 tanesi) bilinçli olarak nötr bırakıldı — onların
+"senaryosu" zaten kendi hata türü (eksik parametre / değişken gölgeleme /
+parametre-dış değişken karışıklığı / ikisi birden), bu dörtte gerçek bir
+sektör-çerçeveleme dayatmak yapaylaşırdı.
+
+**Örnek — önce/sonra (`koda-orta-kosul-ile-dal`):**
+- Önce: "Kod önce robotu (50°, -20°) açılarına götürüyor, sonra
+  `robot.get_tcp()` ile uç noktanın (x, y, z) konumunu okuyor... `if
+  tcp.x > 1.0:` bu koordinata göre iki yoldan birini seçiyor."
+- Sonra: "Bir kalite kontrol istasyonunda kol önce ölçüm konumuna, (50°,
+  -20°) açılarına gidiyor... `if tcp.x > 1.0:` bu ölçüme göre iki yoldan
+  birini seçiyor: parça kabul edilirse bir hedefe, edilmezse başka bir
+  hedefe." Aynı kod, aynı predicate — ama artık "if/else" soyut bir dil
+  alıştırması değil, gerçek bir karar noktası.
+
+**Formülcü geçiş temizliği.** docs/11'in yasakladığı "Bu bizi şu soruya
+getirir" / "Şimdi gelelim" kalıplarının hiçbiri orijinal 17 modülde yoktu
+(Kod Akademisi'nin "Ne oldu"/"Görev" iskeleti zaten bu tuzağa düşmemişti),
+ama tekrarlanan başka bir kalıp vardı: neredeyse her "Görev" paragrafı
+doğrudan "Robotun X eklemini Y dereceye getir" emriyle açılıyordu. Sonraki
+sürümde açılış cümlesi modülden modüle değişiyor — bazen senaryo cümlesi
+önce geliyor, bazen bir gözlem, bazen doğrudan komut; aynı emir kalıbı iki
+modül art arda tekrarlamıyor.
+
+**Quiz çeldiricileri.** 3 zayıf çeldirici güçlendirildi (ör.
+`koda-orta-hata-avcisi`'nde "robot.movej() fonksiyonu bozuktu" →
+"movej() eksik değeri otomatik olarak 0 kabul edip yine de çalıştı" —
+docs/15'teki "eklem limiti aşılmıştı" örneğiyle aynı aileden, gerçek
+hatayla karıştırılabilecek, teknik kulağa doğru gelen ama yanlış bir
+açıklama). Doğru cevap metinleri hiç değiştirilmedi (e2e kilidi).
+
+**Hata avcılığı çeşitliliği.** İncelemede zaten üç farklı kök neden
+olduğu görüldü (eksik parametre / değişken gölgeleme / parametre yerine
+dış değişken kullanımı / usta finalde ikisinin birleşimi) — docs/11'in
+işaret ettiği "hep eksik parametre" şikayeti kısmen zaten çözülmüştü.
+Bug MEKANİZMASI değiştirilmedi (initialCode kilitli); "ters sıra" veya
+"yanlış veri tipi" gibi yeni bir kök neden eklemek `initialCode`'u
+değiştirmeyi gerektirdiği ve bu görevin "predicate/davranışsal
+değerlendirmeye dokunma" kısıtıyla çeliştiği için bilinçli olarak
+yapılmadı; mevcut 3 kök neden + 1 birleşim yeterli çeşitlilik sayıldı.
+
+**İpuçları.** 3 kademeli yapı (genel → yönlendirici → neredeyse cevap)
+17 modülde de korundu, ama ifade tarzı modülden modüle değişti — tier 3
+her zaman "X satırını Y ile değiştir" kalıbında bitmiyor artık, bazen
+"En altta, girintisiz bir satırda fonksiyonu çağır" gibi farklı bir
+komut biçimi kullanıyor.
+
+**Kontrol paketi main'e göre tam çalıştı:** tsc/lint/vitest(723/723)/
+check-content(94)/graph(94)/quiz-dagilimi(139)/mdx-guvenlik(94)/
+sensitive-terms(111+19)/review-debt(bilgi)/review-integrity(temiz)/
+build(17 Kod Akademisi modül sayfası dahil)/perf-budget(bütçe içinde)/
+e2e(`--workers=4`, 204/204, 12 skip)/audit(0 zafiyet) — hepsi temiz,
+özellikle e2e'nin 204/204 geçmesi 4 quiz'in doğru cevap metninin ve
+`koda-orta-hata-avcisi`'nin soru metninin korunduğunu davranışsal olarak
+doğruladı. Governance dosyası değişmedi (yalnız `content-kod-akademisi/`
+altında 17 `.mdx`), docs/09 §7 otomatik geçit uygulandı, `main`'e
+merge edildi.
+
 ### Görev özeti (AŞAMA 1 uzlaştırma + AŞAMA 2 içerik genişletme)
 
 Kullanıcının "büyük, kapsamlı görev" talimatı tamamen bitti:

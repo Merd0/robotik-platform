@@ -6,8 +6,8 @@ sira: 1
 kazanimlar:
   - Parametre alan bir fonksiyon tanımlayıp gövdesini tamamlayarak robotu hareket ettirebilme
 ipuclari:
-  - "Fonksiyonun parametreleri j1 ve j2 — bunlar birer sayı, ama movej() bir LİSTE bekler."
-  - "j1 ve j2'yi bir liste içine al: [j1, j2]."
+  - "j1 ve j2 tek başlarına birer sayı — ama movej() sayı değil, bir LİSTE bekler."
+  - "İkisini bir liste içine al: [j1, j2]."
   - "pass satırını robot.movej([j1, j2]) ile değiştir."
 cozum: |
   def git(j1, j2):
@@ -28,12 +28,15 @@ durum: yayinda
 
 ## Ne oldu
 
-`def git(j1, j2):` bir fonksiyon TANIMLIYOR — ama tanımlamak, çağırmak
-değildir. Fonksiyon yalnız `git(90, -60)` satırıyla ÇAĞRILDIĞINDA
-çalışır; o an `j1 = 90`, `j2 = -60` olarak fonksiyonun içine geçer.
+Bir otomotiv kaynak hattında aynı hareket onlarca kez tekrarlanır — her
+seferinde açıları elle yazmak yerine, bir fonksiyona isim vermek işe
+yarar. `def git(j1, j2):` tam olarak bunu yapıyor: bir fonksiyon
+TANIMLIYOR. Ama tanımlamak, çağırmak değildir. Fonksiyon yalnız
+`git(90, -60)` satırıyla ÇAĞRILDIĞINDA çalışır; o an `j1 = 90`,
+`j2 = -60` olarak fonksiyonun içine geçer.
 
-Şu an gövde sadece `pass` — fonksiyon çağrılıyor ama içi boş olduğu için
-robot hiç hareket etmiyor.
+Gövde şu an sadece `pass` — fonksiyon çağrılıyor ama içi boş olduğu için
+robot yerinden kımıldamıyor.
 
 ## Görev
 

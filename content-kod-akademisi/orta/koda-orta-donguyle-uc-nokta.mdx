@@ -6,8 +6,8 @@ sira: 2
 kazanimlar:
   - "for döngüsüyle bir liste üzerindeki her elemanı sırayla işleyip robotu birden çok noktaya götürebilme"
 ipuclari:
-  - "pass satırı bir yer tutucu — Python'da boş bir gövde olamaz, ama sen onu gerçek bir komutla değiştireceksin."
-  - "Listedeki her eleman zaten iki sayılık bir açı çifti: aci = [J1, J2]. movej() doğrudan bu listeyi kabul eder."
+  - "pass sadece bir yer tutucu — Python'da boş bir döngü gövdesi olamaz, ama içini gerçek bir komutla dolduracaksın."
+  - "aci zaten iki sayılık bir açı çifti: [J1, J2]. movej() bu listeyi olduğu gibi kabul eder."
   - "pass satırını robot.movej(aci) ile değiştir."
 cozum: |
   noktalar = [[30, -20], [60, -40], [90, -60]]
@@ -28,16 +28,16 @@ durum: yayinda
 
 ## Ne oldu
 
-`noktalar` üç açı çiftinden oluşan bir liste. `for aci in noktalar:`
-listedeki her elemanı sırayla `aci` değişkenine atayıp döngü gövdesini
-çalıştırır — üç eleman var, gövde üç kere çalışır.
+Bir gıda paketleme hattında kol üç istasyonu sırayla ziyaret etmeli.
+`noktalar` bu üç istasyonun açılarını tutan bir liste; `for aci in
+noktalar:` listedeki her elemanı sırayla `aci`'ye atayıp döngü gövdesini
+çalıştırır — üç eleman, üç çalıştırma.
 
-Şu an gövdede sadece `pass` var — Python'da "burada hiçbir şey yapma"
-anlamına gelen bir yer tutucu. Kodu olduğu gibi çalıştırırsan robot hiç
-hareket etmez.
+Gövdede şu an sadece `pass` var: Python'da "burada hiçbir şey yapma"
+demek. Kodu olduğu gibi çalıştırırsan robot hiç kıpırdamaz.
 
 ## Görev
 
 `pass` satırını, robotu o anki `aci` açısına götürecek satırla değiştir.
-Döngü bittiğinde robot son noktada (90°, -60°) olmalı — ama bu üç
-hareketin ÜÇÜNÜN de gerçekleştiğini çalışma izinden görebileceksin.
+Döngü bittiğinde robot son istasyonda (90°, -60°) olmalı — üç hareketin
+üçünün de gerçekleştiğini çalışma izinden göreceksin.

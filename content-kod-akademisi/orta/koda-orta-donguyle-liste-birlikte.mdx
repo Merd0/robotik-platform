@@ -6,8 +6,8 @@ sira: 5
 kazanimlar:
   - Bir liste ve for döngüsünü birlikte kullanarak robotu birden çok noktadan oluşan bir rotada gezdirebilme
 ipuclari:
-  - "Önce bir liste oluştur: her eleman iki sayılık bir açı çifti — [[J1, J2], [J1, J2], ...] şeklinde."
-  - "Sonra for ile listenin üzerinde gez: for aci in rota:"
+  - "Önce bir liste kur: her eleman iki sayılık bir açı çifti — [[J1, J2], [J1, J2], ...] şeklinde."
+  - "Sonra for ile bu listenin üzerinde gez: for aci in rota:"
   - "Döngü gövdesinde her adımda robot.movej(aci) çağır."
 cozum: |
   rota = [[10, -5], [40, -25], [70, -45], [95, -65]]
@@ -25,15 +25,14 @@ durum: yayinda
 
 ## Ne oldu
 
-İki önceki modülde iki ayrı şey gördün: bir listeyi `for` ile gezmeyi,
-ve bir listedeki elemana index ile erişmeyi. Bu modülde ikisini
-birlikte, sıfırdan sen kuracaksın: kendi rotanı bir liste olarak
-tanımlayıp döngüyle gezdireceksin.
+Önceki iki modülde iki ayrı şey gördün: bir listeyi `for` ile gezmeyi, ve
+bir listedeki elemana index ile erişmeyi. Bu modülde ikisini birlikte,
+sıfırdan sen kuracaksın.
 
 ## Görev
 
-Aşağıdaki 4 noktayı SIRAYLA ziyaret eden bir rota yaz — bir liste ve bir
-`for` döngüsü kullan:
+Bir ilaç dolum hattındaki kol, dört doldurma noktasını SIRAYLA ziyaret
+etmeli. Bu rotayı kendin yaz — bir liste ve bir `for` döngüsü kullan:
 
 1. (10°, -5°)
 2. (40°, -25°)

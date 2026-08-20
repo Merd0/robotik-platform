@@ -6,8 +6,8 @@ sira: 4
 kazanimlar:
   - if/else ile robotun mevcut durumuna (TCP konumuna) göre farklı bir hedefe dallanabilme
 ipuclari:
-  - "robot.movej([50, -20]) çalıştıktan sonra get_tcp().x hangi değer olur, tahmin et — sonra pass'in olduğu dalın çalışıp çalışmadığını sonuç panelinden gözlemle."
-  - "if/else'in İÇİNDEKİ pass, o dal çalıştığında hiçbir şey yapmaz — gerçek bir komutla değiştirilmeli."
+  - "robot.movej([50, -20]) çalıştıktan sonra get_tcp().x kaç çıkar, önce tahmin et — sonra pass'in olduğu dalın gerçekten çalışıp çalışmadığını sonuç panelinden kontrol et."
+  - "if/else'in İÇİNDEKİ pass, o dal seçildiğinde hiçbir şey yapmaz — yerine gerçek bir komut gelmeli."
   - "pass satırını robot.movej([90, -60]) ile değiştir."
 cozum: |
   robot.movej([50, -20])
@@ -34,12 +34,14 @@ durum: yayinda
 
 ## Ne oldu
 
-Kod önce robotu (50°, -20°) açılarına götürüyor, sonra `robot.get_tcp()`
-ile uç noktanın (x, y, z) konumunu okuyor. `tcp.x` o anki x koordinatını
-verir — bu robotun BULUNDUĞU yere bağlı, sabit bir sayı değil.
+Bir kalite kontrol istasyonunda kol önce ölçüm konumuna, (50°, -20°)
+açılarına gidiyor, sonra `robot.get_tcp()` ile kendi uç noktasının (x, y,
+z) konumunu okuyor. `tcp.x` o anki x koordinatı — robotun BULUNDUĞU yere
+bağlı, kodda sabit yazılmış bir sayı değil.
 
-`if tcp.x > 1.0:` bu koordinata göre iki yoldan birini seçiyor. Şu an
-`if` dalının içi boş (`pass`) — kod çalışır ama o dal hiçbir şey yapmaz.
+`if tcp.x > 1.0:` bu ölçüme göre iki yoldan birini seçiyor: parça kabul
+edilirse bir hedefe, edilmezse başka bir hedefe. Şu an `if` dalının içi
+boş (`pass`) — kod çöküp durmuyor, sadece o dal hiçbir şey yapmıyor.
 
 ## Görev
 

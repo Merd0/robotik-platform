@@ -6,9 +6,9 @@ sira: 6
 kazanimlar:
   - Döngü değişkeninin dışarıdaki bir değişkenle aynı isme sahip olmasının (gölgeleme) neden hataya yol açtığını bulup düzeltebilme
 ipuclari:
-  - "Çalıştır'a bas — robot hedef olarak yazılan (90, -60) yerine başka bir yere gidiyor. hedef değişkeninin SON değeri ne?"
-  - "for hedef in ara_noktalar: satırı, döngünün her adımında hedef'i YENİDEN tanımlıyor — üstteki hedef = [90, -60] atamasının üzerine yazıyor."
-  - "Döngü değişkenine farklı bir isim ver (örn. ara), ya da üstteki hedef değişkenini farklı bir isimle tanımla — aynı ismin iki yerde de kullanılmaması yeterli."
+  - "Çalıştır'a bas — robot (90, -60) yerine başka bir yerde duruyor. Kodun en sonunda hedef değişkeninin değeri gerçekte ne?"
+  - "for hedef in ara_noktalar: satırı, döngünün her adımında hedef'i YENİDEN tanımlıyor — üstteki hedef = [90, -60] atamasının üzerine yazarak."
+  - "Döngü değişkenine farklı bir isim ver (örn. ara), ya da üstteki hedef değişkenini farklı bir isimle tanımla — tek gereken, aynı ismin iki yerde birden kullanılmaması."
 cozum: |
   hedef = [90, -60]
 
@@ -36,18 +36,17 @@ durum: yayinda
 
 ## Bu kod bozuk
 
-Kod önce `hedef` değişkenini (90°, -60°) olarak tanımlıyor. Sonra iki ara
-noktadan geçip en son `robot.movej(hedef)` ile "hedefe" gitmeyi
-amaçlıyor. Ama `for hedef in ara_noktalar:` satırı da AYNI ismi
-kullanıyor — döngü, `hedef` değişkenini her adımda yeniden tanımlayıp
-üstteki atamanın üzerine yazıyor. Python bunda hata vermez, sessizce
-üzerine yazar.
+Kod önce `hedef` değişkenini (90°, -60°) olarak tanımlıyor. Amaç, iki ara
+noktadan geçtikten sonra en son `robot.movej(hedef)` ile o hedefe
+varmak. Ama `for hedef in ara_noktalar:` satırı AYNI ismi kullanıyor —
+döngü her adımda `hedef`i yeniden tanımlayıp üstteki atamanın üzerine
+yazıyor. Python bunda hata vermez, sessizce üzerine yazar.
 
 ## Görev
 
-Çalıştır'a bas, robotun nereye gittiğini gözlemle, kodu düzelt. Robot
-son olarak (90°, -60°) açılarında olmalı. Düzeltmenin tek bir doğru
-yazılışı yok — isim çakışmasını çözen her düzeltme kabul edilir.
+Çalıştır'a bas, robotun gerçekte nereye gittiğini gözlemle, sonra kodu
+düzelt. Robot son olarak (90°, -60°) açılarında olmalı. Düzeltmenin tek
+bir doğru yazılışı yok — isim çakışmasını çözen her düzeltme kabul edilir.
 
 ## Neden
 
@@ -56,7 +55,7 @@ yazılışı yok — isim çakışmasını çözen her düzeltme kabul edilir.
     {
       soru: "Robot neden (90°, -60°) yerine son ara noktada kaldı?",
       secenekler: [
-        "robot.movej() ikinci kez çağrılınca çalışmıyor.",
+        "Son satırdaki robot.movej(hedef) yanlışlıkla döngünün içine yazılmıştı, hiç ayrı çalışmadı.",
         "for döngüsü, hedef değişkenini her adımda yeniden tanımlayıp üstteki [90, -60] atamasının üzerine yazdı.",
         "ara_noktalar listesi ters sıralanmıştı.",
         "Robotun eklem limiti aşılmıştı.",

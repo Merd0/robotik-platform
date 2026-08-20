@@ -6,8 +6,8 @@ sira: 3
 kazanimlar:
   - Bir listedeki elemana doğru index ile erişip robotu o hedefe yönlendirebilme
 ipuclari:
-  - "Python'da liste index'leri 0'dan başlar — duraklar[0] BİRİNCİ elemanı, duraklar[1] İKİNCİ elemanı verir."
-  - "İkinci durak listenin index 1'inde: duraklar[1]."
+  - "Python'da liste sayımı 0'dan başlar — duraklar[0] BİRİNCİ elemanı, duraklar[1] İKİNCİ elemanı verir."
+  - "İkinci durağı istiyorsan index 1 gerekir: duraklar[1]."
   - "hedef = duraklar[0] satırındaki 0'ı 1 yap."
 cozum: |
   duraklar = [[20, -10], [70, -50]]
@@ -28,12 +28,12 @@ durum: yayinda
 
 ## Ne oldu
 
-`duraklar` iki açı çiftinden oluşan bir liste — her eleman kendi başına
-bir açı listesi. `duraklar[0]` listenin BİRİNCİ elemanını, `duraklar[1]`
-İKİNCİ elemanını verir. Python'da sayma 0'dan başlar, bu yüzden "ikinci"
-demek index 1 demektir — kolayca karışan bir ayrıntı.
+Bir depo kolunun rotasında iki durak var, `duraklar` listesinde tutuluyor
+— her eleman kendi başına bir açı çifti. `duraklar[0]` BİRİNCİ durağı,
+`duraklar[1]` İKİNCİ durağı verir. Python'da sayma 0'dan başladığı için
+"ikinci" demek index 1 demektir; kolayca karışan bir ayrıntı.
 
-Şu an kod `duraklar[0]`'ı seçiyor, yani robotu BİRİNCİ durağa götürüyor.
+Kod şu an `duraklar[0]`'ı seçmiş, yani robotu BİRİNCİ durağa gönderiyor.
 
 ## Görev
 

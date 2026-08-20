@@ -6,7 +6,7 @@ sira: 4
 kazanimlar:
   - Bir fonksiyonun kendi parametresi yerine yanlışlıkla dışarıdaki bir değişkeni kullanmasından kaynaklanan hatayı bulup düzeltebilme
 ipuclari:
-  - "Çalıştır'a bas — robot j1=70 yerine başka bir açıya gidiyor. movej() içindeki İLK değer gerçekten fonksiyonun j1 parametresi mi?"
+  - "Çalıştır'a bas — robot j1=70 yerine başka bir açıda duruyor. movej() içindeki İLK değer, fonksiyonun gerçekten j1 parametresi mi?"
   - "Fonksiyonun DIŞINDA tanımlanan varsayilan_j1, fonksiyonun İÇİNDEKİ j1 parametresiyle aynı şey değil — isimleri bile farklı."
   - "movej([varsayilan_j1, j2]) içindeki varsayilan_j1'i j1 ile değiştir."
 cozum: |
@@ -32,18 +32,18 @@ durum: yayinda
 
 ## Bu kod bozuk
 
-`git` fonksiyonu iki parametre alıyor: `j1` ve `j2`. Ama gövdenin
-içinde `movej([varsayilan_j1, j2])` çağrısı — `j1` parametresi hiç
-kullanılmıyor, onun yerine fonksiyonun DIŞINDA tanımlı `varsayilan_j1`
-değişkeni kullanılıyor. `git(70, -40)` çağrıldığında `j1 = 70` olarak
-gelse bile, fonksiyon onu görmezden geliyor.
+`git` fonksiyonu iki parametre alıyor: `j1` ve `j2`. Ama gövdesindeki
+`movej([varsayilan_j1, j2])` çağrısı `j1` parametresini hiç
+kullanmıyor — onun yerine fonksiyonun DIŞINDA tanımlı `varsayilan_j1`
+değişkenine bakıyor. `git(70, -40)` çağrıldığında `j1 = 70` olarak gelse
+bile, fonksiyon bu değeri görmezden geliyor.
 
 ## Görev
 
-Çalıştır'a bas, robotun nereye gittiğini gözlemle, kodu düzelt. Robot
-son olarak (70°, -40°) açılarında olmalı — çağrıda verilen değerler.
-Düzeltmenin tek bir doğru yazılışı yok, isim karışıklığını çözen her
-düzeltme kabul edilir.
+Çalıştır'a bas, robotun nereye gittiğini gözlemle, sonra kodu düzelt.
+Robot son olarak (70°, -40°) açılarında olmalı — çağrıda verilen
+değerler. Düzeltmenin tek bir doğru yazılışı yok, isim karışıklığını
+çözen her düzeltme kabul edilir.
 
 ## Neden
 
