@@ -3028,3 +3028,72 @@ bu, ilk "Kod incelemesi" test hatasının teşhisini bir tur geciktirdi.
 Governance dosyası değişmedi (yalnız `content-kod-akademisi/`, `lib/`,
 `components/`, `app/kod-akademisi/`, `e2e/`), docs/09 §7 otomatik geçit
 uygulandı, `main`'e merge edildi.
+
+## Faz 1 — Görünürlük ilkesi retrofit: CodeRunner (Hat D) — 2026-08-21
+
+`docs/15`te not düşülen borç kapatıldı: Kod Akademisi'nde kurulan split/
+sticky-panel (masaüstü) + sekme (mobil) yerleşimi, `useCodeRunnerEngine.ts`teki
+2026-08-18 tarihli "extract hook" yorumunun kendisinin işaret ettiği gibi, artık
+mevcut `CodeRunner` kullanan TÜM Hat D (+ E/G/A) derslerine de uygulanıyor —
+motor mantığı KOPYALANMADI, aynı hook paylaşılıyor.
+
+**Bulunan gerçek fark — breakpoint kopyalanamazdı, yeniden ölçülmesi gerekti.**
+`CodeRunner`, Kod Akademisi'nin kendi sayfasından farklı bir bağlamda yaşıyor:
+`/ders/[slug]` sayfası `lg:grid-cols-[minmax(0,1fr)_320px]` bir güven panosu
+yan paneli taşıyor (`app/ders/[slug]/page.tsx`), Kod Akademisi'nin kendi
+`max-w-7xl` kapsayıcısında böyle bir yan panel yok. Kod Akademisi'nin ölçtüğü
+`lg:` (1024px) eşiği doğrudan kopyalanınca ders sayfası bağlamında ana sütun
+yalnız ~616px'e düşüyor — Kod Akademisi'nin kendi 1024px ölçümündeki rahat
+genişlikten (51 karakter/satır, 256px sahne) çok uzak.
+
+Varsayımla ilerlemek yerine gerçek DOM ölçüldü: `next dev` ayağa kaldırılıp
+Playwright ile (`page.setViewportSize`, geçici script — kalıcı depoya
+eklenmedi) `d-universite-python-fk-ik` dersinde 768-1920px arası 9 genişlikte
+gerçek `<textarea>` genişliği, sahne yüksekliği ve `[role=tablist]`
+görünürlüğü ölçüldü:
+
+| Viewport | textarea genişliği | sahne yüksekliği | sekmeli mi |
+|---|---|---|---|
+| 768-1152px | 582-818px (TEK sütun, bölünmemiş) | — | evet |
+| **1280px ve üzeri** | **411px (SABİT — `max-w-7xl` tavanı + 320px panel nedeniyle 1920px'te bile büyümüyor)** | **231px (sabit)** | **hayır** |
+
+1280px ve üstünde sabitlenen 411px sütun genişliği, Kod Akademisi'nin kendi
+tablosundaki "900px konteyner → 44 karakter/satır, 221px sahne" satırına
+(kabul edilebilir bulunan alt sınıra) neredeyse birebir denk düşüyor. Sonuç:
+CodeRunner'ın masaüstü eşiği bilerek `xl:` (1280px) — Kod Akademisi'nin `lg:`
+(1024px) eşiğinden FARKLI. 1024-1279px aralığında (ki hiçbir mevcut Playwright
+projesi bu aralıkta değil) sekmeli kalıyor; `xl:` altında hiçbir yerde bölünmüş
+görünüm oluşmuyor, taşma (`scrollWidth > clientWidth`) hiçbir genişlikte yok.
+Gerekçe kod içinde de belgeli: `components/interactive/CodeRunner.tsx` başlığı.
+
+**Paylaşılan/tekilleştirilen kod:** `durumMetni` (durum pili metni) artık
+`KodAkademisiCodeLab.tsx`de yerel kopya değil, `useCodeRunnerEngine.ts`ten
+`codeRunnerStatusText` olarak dışa aktarılıp iki bileşen tarafından da
+kullanılıyor — iki yerde birbirinden bağımsız sürüklenen aynı metin riski
+kapandı. `components/ui/Tabs`/`TabPanel` (zaten paylaşılan bileşen) aynen
+yeniden kullanıldı, yeni bir sekme deseni yazılmadı.
+
+**Test-first, mevcut testler kırılmadı.** `e2e/platform.spec.ts`teki 8 Hat D
+CodeRunner testi (movej/movel/fonksiyon/koşullu/FK-IK-round-trip/paylaşım
+geri yükleme + `a-universite-homojen-donusum`deki TransformOrderLab testi)
+hiçbiri değiştirilmedi — hepsi varsayılan "kod" sekmesinden başlayıp
+`Çalıştır`a bastığı ve `useEffect`teki otomatik "sonuç"a geçiş (Kod
+Akademisi'yle birebir aynı desen) tetiklendiği için tabsız/sekmeli fark
+etmeksizin geçti. Buna ek olarak Kod Akademisi'nin kendi 3 viewport testinin
+CodeRunner karşılığı olan 3 yeni test eklendi: mobilde otomatik sekme geçişi
+(mobile-390), 1152px'de (xl eşiğinin altında, `page.setViewportSize` ile elle
+— hiçbir mevcut proje bu aralığı temsil etmediği için) hâlâ sekmeli olduğu,
+1280px'de sekmesiz/ikisi-birden-görünür olduğu.
+
+**Kontrol paketi tam çalıştı:** tsc/lint(temiz)/vitest(748/748)/
+check-content(94)/graph(94)/quiz-dagilimi(139)/mdx-guvenlik(94)/
+sensitive-terms(115+19)/review-debt(bilgi)/review-integrity(temiz)/
+build(temiz, 94 ders + 21 Kod Akademisi modülü)/perf-budget(bütçe içinde)/
+audit(0 zafiyet). e2e `--workers=4`: önce 216/216 (12 skip, yeni testler
+eklenmeden), yeni 3 test eklendikten sonra tam koşu 219/219 (18 skip).
+
+Governance dosyası değişmedi (yalnız `components/interactive/CodeRunner.tsx`,
+`components/interactive/useCodeRunnerEngine.ts`,
+`components/kod-akademisi/KodAkademisiCodeLab.tsx`, `e2e/platform.spec.ts`,
+`docs/durum-denetim.md`), docs/09 §7 otomatik geçit uygulanacak, `main`'e
+merge edilecek.

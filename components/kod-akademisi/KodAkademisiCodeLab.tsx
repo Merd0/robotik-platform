@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { ExperimentShareButton } from "@/components/interactive/LabChallengeUi";
-import { roundPose, useCodeRunnerEngine } from "@/components/interactive/useCodeRunnerEngine";
+import { codeRunnerStatusText, roundPose, useCodeRunnerEngine } from "@/components/interactive/useCodeRunnerEngine";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/Tabs";
 
@@ -45,17 +45,6 @@ function countMeaningfulLines(code: string): number {
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0 && !line.startsWith("#")).length;
-}
-
-function durumMetni(state: "hazir" | "yukleniyor" | "calisiyor" | "bitti", testPassed: boolean | null): string {
-  if (state === "yukleniyor") return "Python yükleniyor…";
-  if (state === "calisiyor") return "Çalışıyor…";
-  if (state === "bitti") {
-    if (testPassed === true) return "Tamamlandı ✓";
-    if (testPassed === false) return "Tekrar dene";
-    return "Tamamlandı";
-  }
-  return "Hazır";
 }
 
 export function KodAkademisiCodeLab({
@@ -125,7 +114,7 @@ export function KodAkademisiCodeLab({
   return (
     <div className="flex flex-col gap-4">
       <p role="status" aria-live="polite" className="inline-flex min-h-11 w-fit items-center rounded-full border border-site-border bg-site-soft px-4 text-sm font-semibold text-site-ink">
-        {durumMetni(state, testPassed)}
+        {codeRunnerStatusText(state, testPassed)}
       </p>
 
       <Tabs

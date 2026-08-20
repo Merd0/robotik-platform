@@ -42,6 +42,18 @@ export function roundPose(value: number): number {
   return Object.is(rounded, -0) ? 0 : rounded;
 }
 
+/** Sekmeli/dikey her iki yerleşimde de aynı durum metnini üretir — CodeRunner ve KodAkademisiCodeLab paylaşır. */
+export function codeRunnerStatusText(state: RunState, testPassed: boolean | null): string {
+  if (state === "yukleniyor") return "Python yükleniyor…";
+  if (state === "calisiyor") return "Çalışıyor…";
+  if (state === "bitti") {
+    if (testPassed === true) return "Tamamlandı ✓";
+    if (testPassed === false) return "Tekrar dene";
+    return "Tamamlandı";
+  }
+  return "Hazır";
+}
+
 function changedJointIndex(trace: number[][], traceIndex: number, jointCount: number): number {
   const current = trace[traceIndex];
   if (!current) return Math.max(0, jointCount - 1);

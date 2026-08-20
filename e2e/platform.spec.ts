@@ -259,6 +259,49 @@ test("Python FK/IK round-trip aynı TCP noktasına ulaşır ve predicate'i kanı
   )).toBe(true);
 });
 
+test("CodeRunner: mobilde çalıştırma sonrası otomatik Sonuç sekmesine geçer", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-390", "Sekme davranışı yalnız xl: eşiğinin altında var.");
+  await page.goto("/ders/d-lise-degiskenlerle-hareket");
+  const kodSekmesi = page.getByRole("tab", { name: "Kod" });
+  const sonucSekmesi = page.getByRole("tab", { name: "Sonuç" });
+  await expect(kodSekmesi).toHaveAttribute("aria-selected", "true");
+  await expect(sonucSekmesi).toHaveAttribute("aria-selected", "false");
+
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(sonucSekmesi).toHaveAttribute("aria-selected", "true", { timeout: 30_000 });
+  await expect(page.getByText(/Otomatik test geçti/)).toBeVisible();
+});
+
+/*
+ * CodeRunner'ın masaüstü eşiği (`xl:`, 1280px) Kod Akademisi'nin kendi eşiğinden
+ * (`lg:`, 1024px) BİLEREK farklı — bkz. components/interactive/CodeRunner.tsx
+ * başlığındaki not ve docs/durum-denetim.md ölçümü. `/ders/[slug]` sayfasının
+ * kendi 320px güven panosu yan paneli main sütunu 1024px viewport'ta ~616px'e
+ * düşürüyor; Kod Akademisi'nin rahat 1024px ölçümü burada geçerli değil. Bu iki
+ * test viewport'u projeden değil elle (setViewportSize) veriyor çünkü mevcut
+ * projelerin hiçbiri 1024-1279 aralığını temsil etmiyor — asıl kanıtlanmak
+ * istenen tam bu aralıkta (Kod Akademisi'nde split, burada hâlâ sekmeli).
+ */
+test("CodeRunner: 1152px'de (xl eşiğinin altında) hâlâ sekmeli görünüm var", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "Elle viewport veriliyor; tek Chromium yüzeyinde yeterli.");
+  await page.setViewportSize({ width: 1152, height: 900 });
+  await page.goto("/ders/d-lise-degiskenlerle-hareket");
+  await expect(page.getByRole("tablist", { name: "Kod çalıştırma görünümü" })).toBeVisible();
+  await expect(page.getByLabel("Python kodu")).toBeVisible();
+  await expect(page.locator("#coderunner-panel-panel-sonuc")).toBeHidden();
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+});
+
+test("CodeRunner: 1280px'de (xl) kod ve sonuç aynı anda görünür, sekme yok", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1440", "Elle viewport veriliyor; tek Chromium yüzeyinde yeterli.");
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/ders/d-lise-degiskenlerle-hareket");
+  await expect(page.getByRole("tablist", { name: "Kod çalıştırma görünümü" })).toBeHidden();
+  await expect(page.getByLabel("Python kodu")).toBeVisible();
+  await expect(page.locator("#coderunner-panel-panel-sonuc")).toBeVisible();
+  expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
+});
+
 test("Kod Akademisi: Değeri değiştir modülü doğru düzeltmeyle predicate'i kanıtlar, düzeltmeden geçmez", async ({ page }) => {
   await page.goto("/kod-akademisi/temel/koda-temel-degisken-degistir");
   await expect(page.getByRole("heading", { name: "Değeri değiştir" })).toBeVisible();
