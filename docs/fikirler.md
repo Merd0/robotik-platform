@@ -60,3 +60,17 @@ laboratuvar) bir alternatif Kod Akademisi planı var, uygulanmadı.
 İkisi arasında ileride bir uzlaştırma/genişletme kararı gerekebilir —
 docs/15'in devamı olarak mı büyütülür, yoksa §13 ayrı bir faz mı olur,
 netleştirilmeli.
+
+## Kod Akademisi — zincirleme proje anlatısı (2026-08-20, ertelendi)
+
+docs/15'in "İkinci derinlik turu" kararı sırasında değerlendirildi:
+modüller tek bir uzun anlatıya bağlanır ("aynı depo robotunun bir
+haftası" gibi), her modül önceki modülün devamı olur. Bilinçli olarak
+ERTELENDİ — bir gün önce bitirilen senaryo çeşitliliği turuyla (bkz.
+docs/durum-denetim.md, 2026-08-20 "Kod Akademisi — yazarlık kalitesi
+ve çeşitlilik turu") doğrudan çelişiyor: o turda komşu modüllerin FARKLI
+sektör bağlamı kullanması bilinçli bir karardı ("hep aynı robot,
+koymak için konulmuş" şikayetine cevaben). Sürekli tek anlatı bu kararı
+geri sarar. İleride denenmek istenirse, mevcut 17+ modüle dokunmadan,
+YENİ bir aşama veya paralel bir "hikaye modu" olarak ele alınmalı —
+var olan modüllerin senaryo çeşitliliğini bozmadan.
