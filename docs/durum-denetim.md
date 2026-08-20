@@ -2919,3 +2919,112 @@ Kullanıcının "büyük, kapsamlı görev" talimatı tamamen bitti:
   kullanmalı.
 - `/loop`, `TaskCreate`/`TaskUpdate` ile 15 görevlik bir plan takip
   edildi, hepsi `completed`.
+
+## Kod Akademisi — ikinci derinlik turu: Teşhis modu, Kod incelemesi, kişisel optimizasyon (2026-08-20)
+
+docs/15-kod-akademisi.md'nin "İkinci derinlik turu" kararının uygulanması.
+Dal: `kod-akademisi-derinlik-turu`. Üç yeni desen, hiçbiri var olan 17
+modülün `initialCode`/`cozum`/`expectedFinalDegrees`/predicate'ine
+dokunmadan eklendi — ya YENİ modül olarak (Teşhis modu, Kod incelemesi)
+ya da opsiyonel, geriye uyumlu bir katman olarak (kişisel optimizasyon).
+
+**1. Teşhis modu — 2 yeni modül (`koda-orta-teshis-modu`,
+`koda-ileri-teshis-modu`).** Var olan iki mekanizmanın (Quiz + hata
+avcılığı) birleşimi — yeni motor yok. Modül önce sahte bir çalışma izi
+gösterir ("Gerçekleşen: J1=90.0° J2=0.0°"), Quiz'le neden teşhis
+edilmesi istenir, ANCAK SONRA kod gösterilip düzeltme istenir. Bu sırayı
+`lib/kodAkademisi.test.ts`teki yeni testler `body.indexOf("## Günlük") <
+body.indexOf("## Şimdi kodu gör")` ile doğruluyor.
+
+İki modül aynı zamanda iki YENİ hata türü tanıttı — önceki oturumda
+(yazarlık kalitesi turu) hata avcılığı modüllerinin bug MEKANİZMASINI
+değiştirmekten kaçınılmıştı (predicate/initialCode kilitliydi); burada
+YENİ modüller olduğu için bu kısıt yok:
+- `koda-orta-teshis-modu`: "sabit değerle örtme" — `hedef_j2` tanımlı
+  ama `movej([hedef_j1, 0])` onu hiç kullanmıyor, sabit 0 yazılı.
+- `koda-ileri-teshis-modu`: "fonksiyon içinde ters sıra" — `movej([j2,
+  j1])`, parametreler doğru geçmiş ama listeye ters sırada yazılmış.
+
+**2. Kod incelemesi — 2 yeni modül (`koda-orta-kod-incelemesi`,
+`koda-ileri-kod-incelemesi`).** Çok satırlı kod şıklarıyla iki soruluk
+Quiz ("en iyisini seç" + "nedenini işaretle"), ardından kullanıcı kendi
+çözümünü yazar. `koda-ileri-kod-incelemesi` bir "sınır (boundary) hatası"
+öğretiyor — `-90 < j1 < 90` (dışlayıcı) ile `-90 <= j1 <= 90` (kapsayıcı)
+arasındaki farkı, j1=90 tam sınır değeriyle somutlaştırıyor.
+
+`components/interactive/QuizSorusu.tsx` çok satırlı şıklar için
+`whitespace-pre-wrap` + (yalnız `\n` içeren şıklarda) `font-mono text-xs`
+desteği kazandı — tek satırlık mevcut 137 soruda görsel fark sıfır
+(regresyon testi: `lib/codeLab.test.ts`, `lib/kodAkademisi.test.ts`).
+
+**Bulunan ve düzeltilen gerçek bir tasarım hatası:** `koda-orta-kod-
+incelemesi` başta yalnız `EVIDENCE_PREDICATES`'e `traceSteps <= 1` şartı
+ekleyerek "sadeleştirilmemiş çözüm geçmesin" istedi — ama e2e testi
+gösterdi ki CodeRunner'ın "Tamamlandı ✓" / "Tekrar dene" banner'ı
+`lib/codeLab.ts`teki `evaluateCodeLab`'dan geliyor, o da yalnız
+`poseMatches`/`outputMatches` biliyor, `EVIDENCE_PREDICATES`'ten
+tamamen bağımsız. Sonuç: kullanıcı üç ayrı `movej()` çağrısıyla (doğru
+ama sadeleştirilmemiş) çözse bile ekranda "Tamamlandı ✓" görüyordu, ama
+arka planda "passed" kanıtı hiç kaydolmuyordu — sessiz, görünmez bir
+tutarsızlık. Düzeltme: `lib/codeLab.ts`teki `CodeLabExpectation`'a
+opsiyonel `maxTraceSteps` eklendi, `useCodeRunnerEngine`/
+`KodAkademisiCodeLab` üzerinden threadlendi. Verilmediğinde (Hat D'nin
+`CodeRunner.tsx` dahil TÜM mevcut kullanım) davranış birebir aynı —
+`lib/codeLab.test.ts`teki "geriye uyumlu" testi bunu kanıtlıyor.
+
+**3. Kişisel optimizasyon (rekabetsiz) — 2 modüle retrofit.**
+`koda-usta-uc-nokta-sirayla` ve `koda-usta-kosullu-hareket` (`docs/15`nin
+"Yaz" tipi iki modülü) `optimizasyonMetrigi: true` frontmatter alanı
+kazandı. Test geçtikten SONRA "Çözümün: N satır, M robot hareketi"
+bilgi kutusu görünür — `KodAkademisiCodeLab`teki `countMeaningfulLines`
+(boş/yorum satırı saymaz) ve var olan `jointTrace.length`ten hesaplanır.
+Geçme/kalma durumunu ETKİLEMEZ, başkasıyla kıyaslama YOK ("Karşılaştırma
+yok — bu yalnız kendi çözümün hakkında bilgi" metni sabit). Bilerek
+`koda-usta-hata-avcisi-final`e eklenmedi (o "Yaz" değil, Hata avcılığı) —
+e2e testi bunu `toHaveCount(0)` ile doğruluyor. Alan `computeModuleHash`
+payload'una bilerek eklenmedi (salt sunumsal, davranışsal değil — mevcut
+`expectedFinalDegrees`/`toleranceDegrees` da zaten hash'e girmiyor, aynı
+emsal).
+
+**Önce/sonra — `koda-orta-kod-incelemesi` (yeni modül, örnek):**
+```
+initialCode (öğrenciye verilen, "doğru ama verbose"):
+  duraklar = [[15, -5], [50, -25], [85, -55]]
+  robot.movej(duraklar[0])
+  robot.movej(duraklar[1])
+  robot.movej(duraklar[2])
+
+Beklenen çözüm:
+  duraklar = [[15, -5], [50, -25], [85, -55]]
+  robot.movej(duraklar[-1])
+```
+Verbose hali ÖNCE poseMatches=true olduğu için (yanlışlıkla) "Tamamlandı
+✓" gösteriyordu; `maxTraceSteps: 1` eklendikten SONRA doğru şekilde
+"Tekrar dene" gösteriyor, yalnız tek çağrıya indirilince geçiyor.
+
+**Kontrol paketi main'e göre tam çalıştı:** tsc/lint/vitest(748/748,
+test-first — her yeni predicate ve `maxTraceSteps` önce kırmızı test
+yazılıp doğrulandı, sonra implementasyon eklendi)/check-content(94)/
+graph(94)/quiz-dagilimi(139)/mdx-guvenlik(94)/sensitive-terms(115+19)/
+review-debt(bilgi)/review-integrity(temiz)/build(21 Kod Akademisi modül
+sayfası dahil — 17+4)/perf-budget(bütçe içinde)/audit(0 zafiyet).
+e2e `--workers=4`: 216/216 geçti (12 skip) — ilk tam koşuda tamamen
+ilgisiz bir Hat D testi (`CodeRunner state'i doğrulanmış paylaşım
+bağlantısıyla geri yüklenir`) tek başına kırıldı, izole `--workers=1`
+koşusunda anında geçti ve ikinci tam koşu 216/216 temiz çıktı — kaynak
+yarışması kaynaklı kırılganlık (önceki oturumdaki notla aynı sınıf),
+gerçek regresyon değil.
+
+**Süreçte yakalanan iki test hatası (kendi testlerimde, düzeltildi):**
+Playwright'in `getByRole('button', {name: 'Çalıştır'})` TAM eşleşme
+değil ALT DİZE eşleşmesi yapıyor — `koda-orta-teshis-modu`nun ilk
+taslağındaki bir quiz çeldiricisi ("...ilk çalıştırmasında okuyor")
+"çalıştır" alt dizesini içerdiği için "Çalıştır" butonuyla çakışıp
+strict-mode ihlali üretti; "yürütülmesinde" ile değiştirildi. Ayrıca
+Playwright statik dışa aktarımı (`out/`) test ediyor — içerik dosyası
+düzenlemesi `npm run build` ile yeniden derlenmeden e2e'ye yansımıyor;
+bu, ilk "Kod incelemesi" test hatasının teşhisini bir tur geciktirdi.
+
+Governance dosyası değişmedi (yalnız `content-kod-akademisi/`, `lib/`,
+`components/`, `app/kod-akademisi/`, `e2e/`), docs/09 §7 otomatik geçit
+uygulandı, `main`'e merge edildi.
