@@ -6,7 +6,7 @@ sira: 4
 kazanimlar:
   - Bir komutun ne yaptığını okuyup, aynı komutu sıfırdan doğru sözdizimiyle yazabilme
 ipuclari:
-  - "Robotu hareket ettiren komut robot ile başlıyor — hangi metodu çağırman gerektiğini yukarıda okudun."
+  - "Yukarıda hangi metodu çağırman gerektiğini zaten okudun — robot ile başlayan o komutu hatırla."
   - "movej() köşeli parantez içinde bir açı LİSTESİ bekler: robot.movej([J1, J2])."
   - "Hedef J1=90°, J2=-60° — robot.movej([90, -60]) yaz, Çalıştır'a bas."
 cozum: |
@@ -20,17 +20,17 @@ toleranceDegrees: 1
 durum: yayinda
 ---
 
-## Ne oldu
+## Fark şu
 
 `robot.movej()` bir açı listesi alır ve robotun her eklemini sırayla o
-açılara döndürür. Kaç sayı yazman gerektiği robotun eklem sayısına bağlı —
-bu robotun iki eklemi var, yani liste tam olarak iki sayı taşımalı:
-`robot.movej([J1, J2])`.
+açılara döndürür. Liste tam olarak eklem sayısı kadar sayı taşımalı — bu
+robotta iki eklem var, yani `robot.movej([J1, J2])`.
 
-Önceki modüllerde bu kod hazır geliyordu, sen ya değeri değiştiriyordun ya
-da boş bir yeri dolduruyordun. Bu sefer editör tamamen boş.
+Önceki üç modülde kod zaten yazılıydı; sen ya bir değeri değiştirdin ya da
+boş bırakılan bir yeri doldurdun. Bu sefer editör tamamen boş — kalıp
+yok, sadece sonuç var.
 
 ## Görev
 
 Robotun birinci eklemini **90 derece**ye, ikinci eklemini **-60 derece**ye
-getirecek kodu sıfırdan yaz.
+götürecek kodu sıfırdan yaz.

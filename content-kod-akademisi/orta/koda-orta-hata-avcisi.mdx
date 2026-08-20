@@ -6,8 +6,8 @@ sira: 1
 kazanimlar:
   - Bir hata mesajını okuyup kod içindeki eksik/yanlış kısmı bulup düzeltebilme
 ipuclari:
-  - "Çalıştır'a bas, hata mesajını oku — kaç eklem açısı beklendiğini söylüyor mu?"
-  - "aci_2 değişkeni tanımlı ama movej()'in içindeki listede hiç kullanılmamış."
+  - "Çalıştır'a bas, hata mesajını oku — kaç eklem açısı beklendiğini açıkça söylüyor."
+  - "aci_2 bir yerde tanımlı ama movej()'e verilen listenin içinde hiç görünmüyor."
   - "Listeye aci_2'yi de ekle: robot.movej([aci_1, aci_2])."
 cozum: |
   aci_1 = 90
@@ -26,14 +26,15 @@ durum: yayinda
 
 ## Bu kod bozuk
 
-Aşağıdaki kod çalışmıyor. `aci_1` ve `aci_2` iki değişken olarak tanımlı,
-ama `robot.movej()` çağrısı ikisini de kullanmıyor.
+Aşağıdaki kod çalışmıyor. `aci_1` ve `aci_2` iki ayrı değişken olarak
+tanımlı, ama `robot.movej()` çağrısı ikisini birden kullanmıyor.
 
 ## Görev
 
-Çalıştır'a bas, hata mesajını oku, kodu düzelt. Robotun birinci eklemi 90
-dereceye, ikinci eklemi -45 dereceye gitmeli. Düzeltmenin tek bir doğru
-yazılışı yok — hata mesajını anladığını gösteren her düzeltme kabul edilir.
+Çalıştır'a bas, hata mesajının ne söylediğine dikkatle bak, kodu düzelt.
+Robotun birinci eklemi 90 dereceye, ikinci eklemi -45 dereceye gitmeli.
+Düzeltmenin tek bir doğru yazılışı yok — hata mesajını gerçekten anladığını
+gösteren her düzeltme kabul edilir.
 
 ## Neden
 
@@ -42,10 +43,10 @@ yazılışı yok — hata mesajını anladığını gösteren her düzeltme kabu
     {
       soru: "Hata mesajı 'movej() 2 eklem açısı bekliyor' diyordu. Bunun gerçek nedeni neydi?",
       secenekler: [
-        "robot.movej() fonksiyonu bozuktu.",
+        "movej() eksik değeri otomatik olarak 0 kabul edip yine de çalıştı.",
         "aci_2 değişkeni tanımlanmıştı ama movej()'e verilen listenin içine hiç yazılmamıştı.",
         "Robotun eklem limiti aşılmıştı.",
-        "aci_1 ve aci_2 aynı değeri taşıyordu.",
+        "aci_1 ve aci_2 ters sırada tanımlanmıştı.",
       ],
       dogru: 1,
       aciklama: "movej() listenin İÇİNDEKİ eleman sayısına bakar — bir değişkenin bir yerde tanımlanmış olması yetmez, o değişkenin listenin içine de yazılmış olması gerekir.",

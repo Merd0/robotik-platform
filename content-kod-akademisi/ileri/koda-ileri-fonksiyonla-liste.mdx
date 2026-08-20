@@ -6,7 +6,7 @@ sira: 2
 kazanimlar:
   - Fonksiyon ve döngüyü birlikte kullanarak, parametre olarak verilen bir nokta listesini sırayla gezen tekrar kullanılabilir bir hareket fonksiyonu yazabilme
 ipuclari:
-  - "noktalar parametresi bir liste — her elemanını sırayla işlemek için hangi yapıyı kullanman gerektiğini önceki modüllerden hatırlıyor musun?"
+  - "noktalar bir liste — bunun her elemanını sırayla işlemek için hangi yapıyı önceki modüllerde kullanmıştın?"
   - "for aci in noktalar: ile listenin üzerinde gez, gövdede robot.movej(aci) çağır."
   - "pass satırını sil, yerine iki satırlık bir for döngüsü yaz: for aci in noktalar: / robot.movej(aci)."
 cozum: |
@@ -31,14 +31,15 @@ durum: yayinda
 
 ## Ne oldu
 
-`rotayi_izle` fonksiyonu bir `noktalar` parametresi alıyor — herhangi
-bir uzunlukta bir liste olabilir. Fonksiyonun işi, bu listedeki HER
-noktayı sırayla robota göndermek. Bunun için önceki modüllerde gördüğün
-iki kavramı birlikte kullanacaksın: fonksiyon ve döngü.
+Bir elektronik montaj hattında her devre kartı aynı noktalardan geçiyor
+— ama kart sayısı değişebilir. `rotayi_izle` fonksiyonu tam bunun için:
+bir `noktalar` parametresi alıyor, herhangi bir uzunlukta bir liste
+olabilir. İşi, bu listedeki HER noktayı sırayla robota göndermek — önceki
+modüllerde ayrı ayrı gördüğün fonksiyon ve döngüyü burada birleştireceksin.
 
 Çağrı satırı (`rotayi_izle([[15, -5], [45, -25], [80, -55]])`) zaten
-hazır — üç noktalık bir liste gönderiyor. Şu an fonksiyonun gövdesi boş
-(`pass`), bu yüzden robot hiç hareket etmiyor.
+hazır, üç noktalık bir liste gönderiyor. Fonksiyonun gövdesi şu an boş
+(`pass`), bu yüzden robot yerinden kımıldamıyor.
 
 ## Görev
 

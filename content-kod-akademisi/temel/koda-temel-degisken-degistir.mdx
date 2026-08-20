@@ -6,8 +6,8 @@ sira: 2
 kazanimlar:
   - Kod içindeki bir sayısal değişkeni değiştirip sonucu robotta gözlemleyebilme
 ipuclari:
-  - "Yalnızca aci_1 değerini değiştirmen yeterli, kodun geri kalanına dokunma."
-  - "Hedef: robotun birinci eklemini 60 dereceye getirmek."
+  - "Kodun geri kalanına dokunmana gerek yok — değişecek olan tek şey aci_1'in değeri."
+  - "Robotun birinci eklemi şu an 30 derecede. Hedef 60 derece."
   - "aci_1 = 60 yaz, Çalıştır'a bas."
 cozum: |
   aci_1 = 60
@@ -26,8 +26,9 @@ durum: yayinda
 
 ## Görev
 
-Bu kodda iki değişken var: `aci_1` ve `aci_2`. Robot bu iki açıya göre
-hareket ediyor.
+Bir montaj hattındaki bu kolu, iki sayı yönetiyor: `aci_1` ve `aci_2`.
+Robot her çalıştırmada bu iki açıya göre hareket ediyor — sayıyı
+değiştirirsen, hedefi değiştirmiş olursun.
 
 `aci_1` değerini **60** yap, Çalıştır'a bas. Robotun birinci ekleminin
-nasıl değiştiğine bak.
+nasıl döndüğüne bak.

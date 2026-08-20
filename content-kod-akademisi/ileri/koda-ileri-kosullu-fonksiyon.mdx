@@ -7,8 +7,8 @@ kazanimlar:
   - Fonksiyon içinde if/else kullanarak, bir hedefin güvenli sınırlar içinde olup olmadığını kontrol edip robotu ona göre yönlendirebilme
 ipuclari:
   - "Önce fonksiyonu tanımla: def guvenli_git(j1):"
-  - "İçinde if -90 <= j1 <= 90: ile aralığı kontrol et, movej([j1, -30]) çağır; else: dalında movej([0, 0]) çağır."
-  - "En altta fonksiyonu çağır: guvenli_git(120)."
+  - "Gövdede if -90 <= j1 <= 90: ile aralığı kontrol et, movej([j1, -30]) çağır; else: dalında movej([0, 0]) çağır."
+  - "En altta, girintisiz bir satırda fonksiyonu çağır: guvenli_git(120)."
 cozum: |
   def guvenli_git(j1):
       if -90 <= j1 <= 90:
@@ -28,10 +28,10 @@ durum: yayinda
 
 ## Ne oldu
 
-Gerçek robot hücrelerinde her hedef güvenli değildir — bazı açılar
-robotu bir engele veya çalışma alanının dışına götürebilir. Bu yüzden
-robotu hareket ettirmeden önce hedefi KONTROL ETMEK yaygın bir desen:
-"bu hedef güvenli mi? Öyleyse git, değilse güvenli bir konuma çekil."
+Bir üretim hücresinde her hedef güvenli sayılmaz — bazı açılar robotu
+bir engele veya çalışma alanının dışına götürebilir. Bu yüzden robotu
+hareket ettirmeden önce hedefi KONTROL ETMEK yaygın bir desen: "bu hedef
+güvenli mi? Öyleyse git, değilse güvenli bir konuma çekil."
 
 ## Görev
 

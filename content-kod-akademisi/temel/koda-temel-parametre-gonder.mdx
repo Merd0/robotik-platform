@@ -6,8 +6,8 @@ sira: 3
 kazanimlar:
   - "robot.movej() fonksiyonuna doğru sayıda ve doğru sırada parametre geçebilme"
 ipuclari:
-  - "robot.movej() içine kaç sayı yazman gerekiyor? Robotun kaç eklemi var?"
-  - "movej bir liste alır: robot.movej([J1_derece, J2_derece]) şeklinde."
+  - "robot.movej() kaç sayı bekliyor olabilir? İpucu: robotun eklem sayısına bak."
+  - "movej bir açı LİSTESİ alır: robot.movej([J1_derece, J2_derece]) şeklinde."
   - "Hedef J1=45°, J2=-30° — köşeli parantezin içine bu iki sayıyı sırayla yaz."
 cozum: |
   robot.movej([45, -30])
@@ -23,9 +23,10 @@ durum: yayinda
 
 ## Görev
 
-`robot.movej()` bir açı listesi bekler. Aşağıdaki çağrı boş — robotun
+Bir kalite kontrol istasyonundaki kol, ölçüm noktasına gitmek için
+`robot.movej()` çağrısını bekliyor — ama parantez şu an boş. Robotun
 birinci eklemini 45 dereceye, ikinci eklemini -30 dereceye götürecek
 şekilde köşeli parantezin içini doldur.
 
-Boş bırakıp çalıştırırsan ne olacağını da görebilirsin — hata mesajı sana
-kaç sayı eksik olduğunu söyler.
+Boş haliyle çalıştırmayı da deneyebilirsin: hata mesajı, kaç sayı eksik
+olduğunu doğrudan söyler.

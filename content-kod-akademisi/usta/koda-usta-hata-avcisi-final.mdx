@@ -6,8 +6,8 @@ sira: 3
 kazanimlar:
   - Birden fazla, birbirinden bağımsız hatayı adım adım bulup düzelterek çok parçalı bir kodu çalışır hale getirebilme
 ipuclari:
-  - "Çalıştır'a bas — ilk hata neyi söylüyor? İlk satırdaki ısınma hareketini düzeltmeden geri kalanını göremezsin."
-  - "İlk hatayı düzelttikten sonra tekrar çalıştır — robot son noktaya gitmiyor. Döngü içindeki movej() çağrısına dikkatlice bak: her adımda GERÇEKTEN 'aci' değişkenini mi kullanıyor?"
+  - "Çalıştır'a bas — ilk hata neyi söylüyor? Isınma hareketindeki satırı düzeltmeden geri kalanını göremezsin."
+  - "İlk hatayı düzeltip tekrar çalıştır — robot son noktaya gitmiyor. Döngü içindeki movej() çağrısına dikkatlice bak: her adımda GERÇEKTEN 'aci' değişkenini mi kullanıyor?"
   - "noktalar[0][0] her zaman İLK noktanın açısını verir, döngüdeki O ANKİ 'aci'yi değil — bunu aci[0] ile (ya da doğrudan aci ile) değiştir."
 cozum: |
   def rotayi_yap(noktalar):
@@ -34,9 +34,10 @@ durum: yayinda
 
 ## Bu kod bozuk — İKİ hata var
 
-Bu kod bir "ısınma hareketi" ile başlıyor, sonra üç noktalık bir listeyi
-gezmesi gerekiyor. Ama iki bağımsız hata içeriyor. İlkini düzeltmeden
-ikincisini göremezsin — kod ilk hatada duruyor.
+Bu son modülde iki hata birden karşına çıkıyor. Kod bir "ısınma
+hareketi" ile başlayıp üç noktalık bir listeyi gezmesi gerekiyor, ama
+iki bağımsız hata taşıyor. İlkini düzeltmeden ikincisini göremezsin —
+kod ilk hatada duruyor.
 
 ## Görev
 
