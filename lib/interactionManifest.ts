@@ -9,6 +9,7 @@ import matter from "gray-matter";
 import type { Node } from "unist";
 import { EVIDENCE_PREDICATES } from "./evidence";
 import { IZINLI_BILESEN_ADLARI } from "./izinliBilesenler";
+import { computeEvidenceVersionRoot } from "./lessonArtifact";
 
 /**
  * Sprint 2 "Kanıt Dikey Dilimi" — bağımlılık manifesti.
@@ -125,6 +126,18 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
   FourLensTraceLab: {
     componentFile: "components/interactive/FourLensTraceLab.tsx",
     engineFiles: ["lib/robotics/fourLensTrace.ts"],
+  },
+  Quiz: {
+    componentFile: "components/interactive/Quiz.tsx",
+    engineFiles: ["components/interactive/QuizSorusu.tsx", "lib/quiz.ts"],
+  },
+  PredictionPrompt: {
+    componentFile: "components/interactive/PredictionPrompt.tsx",
+    engineFiles: [],
+  },
+  TransferChallenge: {
+    componentFile: "components/interactive/TransferChallenge.tsx",
+    engineFiles: ["lib/quiz.ts"],
   },
   KodAkademisiCodeLab: {
     componentFile: "components/kod-akademisi/KodAkademisiCodeLab.tsx",
@@ -267,4 +280,35 @@ export function computePredicateHash(lessonId: string): string {
     .sort();
   const payload = JSON.stringify({ schema: "predicate-manifest/v1", lessonId, predicateIds });
   return `sha256:${createHash("sha256").update(payload, "utf8").digest("hex")}`;
+}
+
+/**
+ * Bir dersin MDX gövdesinden kullanılan bileşenleri ve (varsa) `robot`
+ * prop'undaki robot id'lerini çıkarıp `interactionHash`i üretir. `robot`
+ * prop'u olmayan bileşenler için `extractComponentStringProp` boş dizi
+ * döner — hata değildir, sadece o bileşenin robot spec'i yoktur.
+ */
+export function computeLessonInteractionHash(lessonBody: string): string {
+  const usedComponents = extractUsedComponents(lessonBody);
+  const robotIds = usedComponents.flatMap((component) => extractComponentStringProp(lessonBody, component, "robot"));
+  return computeInteractionHash(usedComponents, robotIds);
+}
+
+/**
+ * Sprint 2'nin bağladığı üçüncü ve son parça: canlı ders sayfasının
+ * `LessonEvidenceProvider`a verdiği GERÇEK `contentVersion`. `teachingHash`
+ * çağırana bırakılır (zaten `computeTeachingHash(lesson)`den geliyor,
+ * burada tekrar hesaplamaya gerek yok); `interactionHash` ve
+ * `predicateHash` MDX gövdesinden ve `lessonId`den bu fonksiyonda üretilir.
+ * Önceki durumla farkı: `lib/lessonArtifact.ts`teki
+ * `computeEvidenceVersionRoot` üç kökü birleştiren SAF fonksiyondu ama hiçbir
+ * çağıran onu gerçek `interactionHash`/`predicateHash` ile beslemiyordu —
+ * bu fonksiyon o eksik bağlantıyı kurar (bkz. docs/durum-denetim.md "Faz 2").
+ */
+export function computeLessonContentVersion(lessonId: string, lessonBody: string, teachingHash: string): string {
+  return computeEvidenceVersionRoot({
+    teachingHash,
+    interactionHash: computeLessonInteractionHash(lessonBody),
+    predicateHash: computePredicateHash(lessonId),
+  });
 }

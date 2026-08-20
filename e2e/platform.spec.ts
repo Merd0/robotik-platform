@@ -1319,6 +1319,11 @@ test("FourLensTraceLab dört senkron örneği kanıtlar ve state'i paylaşır", 
   await expect(lab.getByText(/Tahminin ölçümle uyuştu/)).toBeVisible();
   await expect(lab.getByRole("img", { name: /Örnek 3: uç nokta/ })).toBeVisible();
   await expect(lab.locator('[aria-current="step"]')).toContainText("q[0] = 75");
+  // Faz 2 hardening: predicate artık aynı sayfadaki TransferChallenge'ın da
+  // (challengeRevision doğrulamalı) doğru cevaplanmasını istiyor — bkz.
+  // lib/evidence.ts "four-lens-fk-trace-v2". Şık metni sabit, karıştırılmış
+  // sırada göründüğü konum değil.
+  await page.getByRole("button", { name: "Birinci bağlantının dünya yönü" }).click();
   expect(await page.locator("html").evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(false);
   const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
   expect(evidence.some((event: { predicateId?: string; stage?: string }) => event.stage === "passed" && event.predicateId === "four-lens-fk-trace-v2")).toBe(true);

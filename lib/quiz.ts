@@ -78,3 +78,33 @@ export function karistir(secenekler: string[], dogru: number, anahtar: string): 
     dogru: sira.indexOf(dogru),
   };
 }
+
+export interface ChallengeDefinition {
+  prompt: string;
+  options: readonly string[];
+  correct: number;
+  hint: string;
+  explanation: string;
+}
+
+/**
+ * TransferChallenge'ın içerik kimliği — prompt/seçenekler/doğru cevap/ipucu/
+ * açıklamanın kararlı özeti (bkz. docs/durum-denetim.md "Faz 2 — Kanıt
+ * zincirindeki eksik bağlantı"). Kaydedilen `assessed` olayına eklenir;
+ * predicate bunu dersteki GÜNCEL tanımdan yeniden hesaplayıp karşılaştırır —
+ * böylece bir challenge sonradan düzeltilirse (yanlış `correct` index'i,
+ * yeni seçenek metni), eski içeriğe ait "success" olayı yeni içeriği
+ * doğrulamış SAYILMAZ. `fnv1a` zaten `karistir`'in kullandığı bağımlılıksız,
+ * tarayıcıda da çalışan dize karması — yeni bir hash bağımlılığı eklenmedi.
+ */
+export function computeChallengeRevision(definition: ChallengeDefinition): string {
+  const payload = JSON.stringify({
+    schema: "transfer-challenge-revision/v1",
+    prompt: definition.prompt,
+    options: definition.options,
+    correct: definition.correct,
+    hint: definition.hint,
+    explanation: definition.explanation,
+  });
+  return `fnv1a:${fnv1a(payload).toString(16).padStart(8, "0")}`;
+}

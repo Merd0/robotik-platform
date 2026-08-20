@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
-import { karistir } from "@/lib/quiz";
+import { computeChallengeRevision, karistir, karistirmaSirasi } from "@/lib/quiz";
 
 interface TransferChallengeProps {
   skillId: string;
@@ -18,9 +18,18 @@ export function TransferChallenge({ skillId, prompt, options, correct, hint, exp
   const [selected, setSelected] = useState<number | null>(null);
   const [passed, setPassed] = useState(false);
   const record = useEvidenceRecorder();
+  const seedKey = `transfer:${skillId}:${prompt}`;
   const { secenekler: displayedOptions, dogru: displayedCorrect } = useMemo(
-    () => karistir(options, correct, `transfer:${skillId}:${prompt}`),
-    [correct, options, prompt, skillId],
+    () => karistir(options, correct, seedKey),
+    [correct, options, seedKey],
+  );
+  // Kaydedilen kimlik GÖRÜNTÜLENEN (karıştırılmış) index değil, orijinal
+  // sıradaki index olmalı — predicate bunu dersteki sabit `correct` değeriyle
+  // karşılaştırabilsin diye (bkz. lib/evidence.ts'teki hardening notu).
+  const originalIndexOrder = useMemo(() => karistirmaSirasi(seedKey, options.length), [options.length, seedKey]);
+  const challengeRevision = useMemo(
+    () => computeChallengeRevision({ prompt, options, correct, hint, explanation }),
+    [correct, explanation, hint, options, prompt],
   );
 
   function choose(index: number) {
@@ -30,7 +39,17 @@ export function TransferChallenge({ skillId, prompt, options, correct, hint, exp
     setAttempts(nextAttempts);
     setSelected(index);
     setPassed(success);
-    record({ skillId, stage: "assessed", result: success ? "success" : "retry", attempts: nextAttempts, metrics: { selected: index } });
+    record({
+      skillId,
+      stage: "assessed",
+      result: success ? "success" : "retry",
+      attempts: nextAttempts,
+      metrics: {
+        challengeRevision,
+        selectedOriginalIndex: originalIndexOrder[index],
+        correctOriginalIndex: correct,
+      },
+    });
   }
 
   return (

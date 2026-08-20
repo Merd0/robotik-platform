@@ -172,11 +172,12 @@ export function computeLessonSubjectHashes(lesson: LessonInput): LessonSubjectHa
  * Bilinçli olarak SAF: fs'e dokunmaz, üç hash'i girdi olarak alır. Kim
  * çağırdığı (script, test, ileride bir sayfa) önemli değil.
  *
- * Kapsam notu: bu kök şu an `lib/evidence.ts`'e verilen gerçek
- * `contentVersion` DEĞİL — canlı ders sayfası hâlâ `teachingHash` kullanıyor.
- * Bu fonksiyon, motor/state kodu değiştiğinde kanıtın da eskiyebilmesi için
- * hazır, test edilmiş bir yapı taşı; sayfaya bağlanması ayrı bir entegrasyon
- * adımıdır (bkz. docs/02-mimari.md).
+ * Bağlandı (Faz 2, bkz. docs/durum-denetim.md): canlı `/ders/[slug]` sayfası
+ * artık bu kökü `lib/interactionManifest.ts`teki `computeLessonContentVersion`
+ * üzerinden `LessonEvidenceProvider`a veriyor — `teachingHash` tek başına
+ * kullanılmıyor. `docs/02-mimari.md`deki "kapsam notu" bu geçişten önce
+ * yazıldığı için hâlâ eski durumu anlatıyor; docs güncellemesi governance
+ * dosyası olduğu için ayrı, insan onaylı bir adım (docs/09-ai-muhendisligi.md §7).
  */
 export function computeEvidenceVersionRoot(input: {
   teachingHash: string;

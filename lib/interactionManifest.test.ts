@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   computeInteractionHash,
+  computeLessonContentVersion,
   computePredicateHash,
   extractComponentStringProp,
   extractUsedComponents,
@@ -8,6 +9,7 @@ import {
   readDependencyDigests,
 } from "./interactionManifest";
 import { getLessonBySlug } from "./content";
+import { IZINLI_BILESEN_ADLARI } from "./izinliBilesenler";
 
 describe("extractUsedComponents — MDX AST'den gerçek bileşen kullanımı", () => {
   it("frontmatter'a değil gövdeye bakar, izinli bileşenleri bulur", () => {
@@ -204,8 +206,38 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["FourLensTraceLab"])).not.toThrow();
   });
 
-  it("pilot kapsamı dışındaki bir bileşen için açıkça hata fırlatır", () => {
-    expect(() => computeInteractionHash(["Quiz"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
+  it("Quiz bileşeni, QuizSorusu ve karıştırma motorunu interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.Quiz).toEqual({
+      componentFile: "components/interactive/Quiz.tsx",
+      engineFiles: ["components/interactive/QuizSorusu.tsx", "lib/quiz.ts"],
+    });
+    expect(() => computeInteractionHash(["Quiz"])).not.toThrow();
+  });
+
+  it("PredictionPrompt bileşenini interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.PredictionPrompt).toEqual({
+      componentFile: "components/interactive/PredictionPrompt.tsx",
+      engineFiles: [],
+    });
+    expect(() => computeInteractionHash(["PredictionPrompt"])).not.toThrow();
+  });
+
+  it("TransferChallenge bileşeni ile karıştırma/challengeRevision motorunu interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.TransferChallenge).toEqual({
+      componentFile: "components/interactive/TransferChallenge.tsx",
+      engineFiles: ["lib/quiz.ts"],
+    });
+    expect(() => computeInteractionHash(["TransferChallenge"])).not.toThrow();
+  });
+
+  it("kayıtlı olmayan bir bileşen için açıkça hata fırlatır", () => {
+    expect(() => computeInteractionHash(["OlmayanBilesen"])).toThrow(/LAB_DEPENDENCY_REGISTRY/);
+  });
+
+  it("MDX'te izinli HER bileşen LAB_DEPENDENCY_REGISTRY'de kayıtlı — canlı sayfa contentVersion'ı hesaplarken sürpriz throw olmasın", () => {
+    for (const name of IZINLI_BILESEN_ADLARI) {
+      expect(LAB_DEPENDENCY_REGISTRY[name], `${name} LAB_DEPENDENCY_REGISTRY'de kayıtlı değil`).toBeDefined();
+    }
   });
 
   it("bilinmeyen robot id için açıkça hata fırlatır", () => {
@@ -298,5 +330,41 @@ describe("computePredicateHash — dersin predicate sürüm imzası", () => {
   it("FourLensTraceLab dersini v2 dört-örnek predicate sürümüne bağlar", () => {
     expect(computePredicateHash("b-lise-ileri-kinematik"))
       .not.toBe(computePredicateHash("hic-boyle-bir-ders-yok"));
+  });
+});
+
+describe("computeLessonContentVersion — Faz 2: canlı sayfanın gerçek contentVersion'ı", () => {
+  const lesson = getLessonBySlug("b-ortaokul-eklemleri-oynat")!;
+  const teachingHash = "sha256:sabit-teaching-hash";
+
+  it("aynı ders gövdesi için deterministik", () => {
+    const a = computeLessonContentVersion(lesson.slug, lesson.body, teachingHash);
+    const b = computeLessonContentVersion(lesson.slug, lesson.body, teachingHash);
+    expect(a).toBe(b);
+    expect(a).toMatch(/^sha256:[0-9a-f]{64}$/);
+  });
+
+  it("teachingHash aynı kalsa bile MDX gövdesindeki bir kod-seviyesi değişiklik (kullanılan bileşen kümesi) kökü değiştirir", () => {
+    // "Kaynak kodu değişikliği simülasyonu": ders METNİ aynı kalsa bile
+    // (teachingHash sabit tutuluyor), gövdeye ekstra bir bileşen eklenmesi
+    // interactionHash'i, dolayısıyla birleşik kökü değiştirmeli — önceden
+    // yalnız teachingHash'e bağlı olan contentVersion bunu YAKALAYAMIYORDU.
+    const original = computeLessonContentVersion(lesson.slug, lesson.body, teachingHash);
+    const degisenGovde = lesson.body + '\n<Quiz sorular={[]} />\n';
+    const degisen = computeLessonContentVersion(lesson.slug, degisenGovde, teachingHash);
+    expect(degisen).not.toBe(original);
+  });
+
+  it("teachingHash değişince de kök değişir (mevcut davranış korunuyor)", () => {
+    const original = computeLessonContentVersion(lesson.slug, lesson.body, teachingHash);
+    const degisen = computeLessonContentVersion(lesson.slug, lesson.body, "sha256:degisen-teaching-hash");
+    expect(degisen).not.toBe(original);
+  });
+
+  it("farklı bir dersin predicate kümesi farklıysa (predicateHash farklı) kök de farklı olur", () => {
+    const digerDers = getLessonBySlug("b-lise-geometrik-ters-kinematik")!;
+    const a = computeLessonContentVersion(lesson.slug, lesson.body, teachingHash);
+    const b = computeLessonContentVersion(digerDers.slug, digerDers.body, teachingHash);
+    expect(a).not.toBe(b);
   });
 });

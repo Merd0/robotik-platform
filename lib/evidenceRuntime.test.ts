@@ -1,5 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createFourLensTrace } from "./robotics/fourLensTrace";
+import { computeChallengeRevision, type ChallengeDefinition } from "./quiz";
+import { FOUR_LENS_FK_TRANSFER_CHALLENGE, PLANNER_COMPARISON_TRANSFER_CHALLENGE } from "./evidence";
+
+/** Bir `TransferChallenge` sabitinden hardened predicate'in beklediği doğru metrics'i üretir (bkz. evidence.test.ts). */
+const transferChallengeMetrics = (challenge: ChallengeDefinition) => ({
+  challengeRevision: computeChallengeRevision(challenge),
+  selectedOriginalIndex: challenge.correct,
+  correctOriginalIndex: challenge.correct,
+});
 
 function fakeWindow(initial: Record<string, string> = {}, failWrites = false) {
   const values = new Map(Object.entries(initial));
@@ -38,7 +47,7 @@ describe("Evidence v2 çalışma zamanı", () => {
     }
     expect(evidence.summarizeEvidence(evidence.getEvidenceEvents(), base.lessonId, base.contentVersion).passed).toBe(false);
 
-    evidence.appendEvidence({ ...base, skillId: "planner-comparison", stage: "assessed" });
+    evidence.appendEvidence({ ...base, skillId: "planner-comparison", stage: "assessed", metrics: transferChallengeMetrics(PLANNER_COMPARISON_TRANSFER_CHALLENGE) });
     const events = evidence.getEvidenceEvents();
     expect(evidence.summarizeEvidence(events, base.lessonId, base.contentVersion).passed).toBe(true);
     expect(events.at(-1)).toMatchObject({
@@ -127,6 +136,12 @@ describe("Evidence v2 saklama politikası (kör 1000-olay FIFO yerine semantik k
         previousX: Number(trace[2].end.x.toFixed(3)),
         finalX: Number(trace[3].end.x.toFixed(3)),
       },
+    });
+    evidence.appendEvidence({
+      ...fourLens,
+      stage: "assessed",
+      result: "success",
+      metrics: transferChallengeMetrics(FOUR_LENS_FK_TRANSFER_CHALLENGE),
     });
     expect(evidence.summarizeEvidence(evidence.getEvidenceEvents(), fourLens.lessonId, contentVersion).passed).toBe(true);
 

@@ -3097,3 +3097,91 @@ Governance dosyası değişmedi (yalnız `components/interactive/CodeRunner.tsx`
 `components/kod-akademisi/KodAkademisiCodeLab.tsx`, `e2e/platform.spec.ts`,
 `docs/durum-denetim.md`), docs/09 §7 otomatik geçit uygulanacak, `main`'e
 merge edilecek.
+
+## Faz 2 — Kanıt zincirindeki eksik bağlantı — 2026-08-21
+
+Üç bağımsız iş, hepsi `docs/03-yol-haritasi.md`daki "bir sonraki sprint"
+maddesinin kapsamıydı.
+
+**1. `contentVersion` artık `computeEvidenceVersionRoot` kullanıyor.**
+`lib/lessonArtifact.ts:153`teki not ("bu kök şu an gerçek contentVersion
+DEĞİL... sayfaya bağlanması ayrı bir entegrasyon adımı") kapatıldı.
+`lib/interactionManifest.ts`e iki yeni saf-ama-fs-okuyan fonksiyon eklendi:
+`computeLessonInteractionHash` (MDX gövdesinden `extractUsedComponents` +
+her bileşenin `robot` prop'unu çıkarıp `computeInteractionHash`e verir) ve
+`computeLessonContentVersion` (bunu `computePredicateHash` ve çağırana
+bırakılan `teachingHash` ile birleştirir). `app/ders/[slug]/page.tsx` artık
+`LessonEvidenceProvider`a `computeTeachingHash(lesson)` yerine
+`computeLessonContentVersion(lesson.slug, lesson.body, computeTeachingHash(lesson))`
+veriyor. Bunun çalışabilmesinin ön koşulu madde 3'tü (aşağıda) — aksi halde
+Quiz/PredictionPrompt/TransferChallenge kullanan (yani hemen hemen her)
+ders `computeInteractionHash`ten fırlatılan hatayla derlenemezdi.
+
+**2. TransferChallenge sertleştirildi (8 laboratuvar predicate'i).**
+Önceki hâli `hasSuccessfulAssessment` ile yalnız `result === "success"`e
+bakıyordu — bileşenin kendi hesapladığı bir sonuca körü körüne güvenmek.
+`lib/quiz.ts`e `computeChallengeRevision` eklendi (mevcut `fnv1a`yı
+kullanır, yeni bağımlılık yok); `TransferChallenge.tsx` artık her `assessed`
+olayına `challengeRevision` + ORİJİNAL (karıştırılmamış) `selectedOriginalIndex`/
+`correctOriginalIndex` ekliyor — görüntülenen (karıştırılmış) index artık
+hiçbir yerde kaydedilmiyor. `lib/evidence.ts`teki yeni
+`hasVerifiedTransferChallenge` üç şeyi birlikte ister: güncel challenge
+tanımından hesaplanan `challengeRevision` eşleşmeli, kaydedilen seçim
+ORİJİNAL index'te `correct`e eşit olmalı, VE `correctOriginalIndex` de
+bağımsız olarak tutarlı olmalı. 8 dersin tam `ChallengeDefinition`ı
+(`evidence.ts`e MDX'teki prop'ların birebir kopyası olarak, export edilmiş
+sabitler halinde) `evidence.ts`e eklendi — tek gerçek kaynak burası,
+`evidence.test.ts`/`evidenceRuntime.test.ts` de aynı sabitleri import edip
+test olayı üretiyor (üçüncü bir kopya yok). Yan bulgu: `b-lise-ileri-kinematik`
+dersinin (`four-lens-fk-trace-v2`) predicate'i TransferChallenge'ının hiç
+cevaplanmasını istemiyordu (aynı skillId'yi paylaşan FourLensTraceLab'ın
+kendi assessed olayı yeterliydi) — bu da düzeltildi, artık ikisi de zorunlu
+(bir e2e testi + component test güncellemesi gerektirdi).
+
+**3. Quiz, PredictionPrompt, TransferChallenge interaction manifest'e
+eklendi.** `LAB_DEPENDENCY_REGISTRY`deki 19 izinli MDX bileşeninin
+tamamı artık kayıtlı (yeni bir regresyon testi bunu doğruluyor:
+`IZINLI_BILESEN_ADLARI`deki her ad `LAB_DEPENDENCY_REGISTRY`de var mı).
+Bu, madde 1'in ön koşuluydu — Quiz hemen hemen HER derste kullanıldığı
+için kayıtsız kalması `computeInteractionHash`i her ders için
+fırlatırdı.
+
+**Test-first, mevcut testler kırılmadı — ama çoğu güncellenmesi
+GEREKTİ.** Hardening, `hasSuccessfulAssessment(events, skillId)` çağıran
+7 predicate'in `evaluate` gövdesini değiştirdiği için, o predicate'leri
+`assessment("success")` gibi eski (metrics'siz) olaylarla çağıran ~15
+vitest testi (evidence.test.ts + evidenceRuntime.test.ts, "controlled
+pilot predicates", "DlsTraceLab/CspaceLab/JacobianViz rollout" describe
+blokları) artık geçmiyordu — bunlar test-first ruhuyla YENİ beklenen
+davranışa göre güncellendi (metrics'e doğru `challengeRevision`/index
+eklendi), zayıflatılmadı/atlanmadı. Ayrıca yeni hardening'i doğrudan
+kanıtlayan negatif testler eklendi: eski/stale `challengeRevision`,
+"uydurma" success (yanlış index ama result:"success"), ve
+`challengeRevision`siz legacy olay — üçü de artık geçmiyor. Bir e2e testi
+de (`FourLensTraceLab dört senkron örneği...`) artık TransferChallenge'ı
+gerçekten cevaplıyor.
+
+**Kontrol paketi tam çalıştı:** tsc/lint(temiz)/vitest(760/760, +18 yeni
+test)/check-content(94)/graph(94)/quiz-dagilimi(139)/mdx-guvenlik(94)/
+sensitive-terms(115+19)/review-debt(bilgi)/review-integrity(temiz)/
+build(temiz — 94 dersin TAMAMI `computeLessonContentVersion`ı hatasız
+üretti, bu en riskli adımdı)/perf-budget(bütçe içinde)/audit(0 zafiyet).
+e2e `--workers=4`: 219/219 (18 skip) — ilk koşuda `FourLensTraceLab dört
+senkron örneği...` testi 3 projede de kırıldı (beklenen: madde 2'nin yan
+bulgusu), test düzeltildikten sonra tam koşu 219/219 temiz.
+
+**Bilinçli olarak yapılmayan/ertelenmiş:** `docs/02-mimari.md`deki
+"kapsam notu" ("computeEvidenceVersionRoot şu an canlı sayfaya
+BAĞLANMADI") artık yanlış — ama `docs/02-mimari.md` bir governance
+dosyası (docs/09 §7), otomatik geçitin dışında. `lib/lessonArtifact.ts`teki
+kod yorumu güncellendi ve docs/02'nin bu noktada insan onaylı bir
+düzeltmeye ihtiyacı olduğunu not düşüyor; docs güncellemesi bu turda
+YAPILMADI, ayrı onay bekliyor.
+
+Governance dosyası değişmedi (yalnız `app/ders/[slug]/page.tsx`,
+`components/interactive/TransferChallenge.tsx`, `e2e/platform.spec.ts`,
+`lib/evidence.ts`, `lib/evidence.test.ts`, `lib/evidenceRuntime.test.ts`,
+`lib/interactionManifest.ts`, `lib/interactionManifest.test.ts`,
+`lib/lessonArtifact.ts` (kod yorumu, sözleşme değil), `lib/quiz.ts`,
+`docs/durum-denetim.md`), docs/09 §7 otomatik geçit uygulanacak, `main`'e
+merge edilecek.

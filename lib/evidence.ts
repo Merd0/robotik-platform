@@ -1,4 +1,5 @@
 import { createFourLensTrace } from "./robotics/fourLensTrace";
+import { computeChallengeRevision, type ChallengeDefinition } from "./quiz";
 
 // `as const` dizileri: hem tip (aşağıda türetilir) hem çalışma zamanı
 // doğrulaması (bkz. lib/evidenceImport.ts) AYNI kaynaktan gelsin diye.
@@ -81,6 +82,116 @@ interface EvidencePredicate {
 const hasSuccessfulAssessment = (events: readonly EvidenceEvent[], skillId: string) =>
   events.some((event) => event.stage === "assessed" && event.skillId === skillId && event.result === "success");
 
+/**
+ * `TransferChallenge`in sertleştirilmiş doğrulaması (Faz 2 — bkz.
+ * docs/durum-denetim.md "Kanıt zincirindeki eksik bağlantı"). Önceki hâli
+ * (`hasSuccessfulAssessment`) yalnız `result === "success"`e bakıyordu — bu,
+ * bileşenin KENDİ hesapladığı bir sonuca körü körüne güvenmek demekti ve
+ * challenge sonradan düzeltilirse (yanlış `correct` index'i, değişen
+ * seçenek metni) eski içeriğe ait bir "success" olayı yeni içeriği de
+ * doğrulanmış gösterebilirdi. Bu fonksiyon üç şeyi birlikte ister:
+ * (1) olay bu dersteki GÜNCEL challenge tanımından hesaplanan
+ * `challengeRevision` ile eşleşmeli, (2) kaydedilen seçim ORİJİNAL
+ * (karıştırılmamış) index'te `correct`e eşit olmalı — component'in
+ * `result` alanına değil, ham index'e bakılır, (3) `correctOriginalIndex`
+ * de bağımsız olarak `correct`i doğrulamalı (event kendi içinde tutarlı mı).
+ */
+/**
+ * Bu 8 sabit, ilgili derslerdeki `<TransferChallenge>` JSX prop'larının
+ * BİREBİR aynısı — tek gerçek kaynak burası, `evidence.test.ts` da aynı
+ * sabitleri import edip test olaylarını üretir (üçüncü bir kopya yok). Bir
+ * ders MDX'inde challenge metni/doğru cevabı değişirse buradaki sabit de
+ * güncellenmeli — aksi halde hardened predicate hiçbir zaman geçmez (bu
+ * kasıtlı: içerik ile predicate arasında sessiz sapma istenmiyor).
+ */
+export const FORWARD_KINEMATICS_TRANSFER_CHALLENGE: ChallengeDefinition = {
+  prompt: "Seradaki hedef sağ üstteyken uç yanlış yerde kaldı. Hedefi doğrudan sürüklemeden neyi değiştirebilirsin?",
+  options: ["Robotun iki eklem açısını", "Hedefin rengini", "Kol parçalarının çizgi kalınlığını"],
+  correct: 0,
+  hint: "Bu deneyde kontrol edebildiğin iki kaydırıcıyı düşün.",
+  explanation: "İleri kinematikte giriş eklem açıları, sonuç uç konumudur.",
+};
+
+export const MULTIPLE_IK_SOLUTIONS_TRANSFER_CHALLENGE: ChallengeDefinition = {
+  prompt: "Dirsek-yukarı duruşu bir rafa çarpıyor. Hedef konumunu koruyarak ilk hangi çözümü sınarsın?",
+  options: ["Dirsek-aşağı çözümünü", "Robotun kolunu uzatmayı", "Hedefi silmeyi"],
+  correct: 0,
+  hint: "Aynı uç konumunu veren ikinci duruşu deneyebilirsin.",
+  explanation: "Ters kinematiğin çoklu çözümleri, hedefi değiştirmeden çarpışmadan kaçma seçeneği sunar.",
+};
+
+export const GEOMETRIC_IK_TRANSFER_CHALLENGE: ChallengeDefinition = {
+  prompt: "Formülde cos(θ2) için hesaplanan değer 1.2 çıkarsa doğru mühendislik yorumu nedir?",
+  options: ["Gerçek açılı çözüm yok; hedef erişim dışında", "θ2 = 1.2°", "İki çözüm de güvenlidir"],
+  correct: 0,
+  hint: "Gerçek bir açının kosinüsü hangi aralıkta olabilir?",
+  explanation: "cos değeri [−1, 1] dışında kalıyorsa hedef, verilen bağlantı uzunluklarıyla erişilemez.",
+};
+
+export const JACOBIAN_SINGULARITY_TRANSFER_CHALLENGE: ChallengeDefinition = {
+  prompt: "Kol tam açıkken uçtan kol doğrultusunda anlık hız isteniyor; kontrolör ne beklemeli?",
+  options: ["O yönde hız üretilemeyebilir; sönümlü ters veya yeniden duruş gerekir", "Her eklemi iki kat hızlı döndürmek yeterlidir", "Jacobian konumdan bağımsızdır"],
+  correct: 0,
+  hint: "Daralan elipsin kısa ekseni hangi hız yönünün kaybolduğunu anlatır.",
+  explanation: "Tekillikte Jacobian rank kaybeder; bazı Kartezyen hızlar sonlu eklem hızlarıyla üretilemez.",
+};
+
+export const DLS_CONVERGENCE_TRANSFER_CHALLENGE: ChallengeDefinition = {
+  prompt: "Aynı hedefte λ büyütülünce hangi sonuç her zaman doğrudur?",
+  options: [
+    "İterasyon sayısı mutlaka azalır",
+    "Eklem güncellemeleri daha fazla bastırılır; yakınsama hızı ayrıca ölçülmelidir",
+    "Eklem limitleri artık otomatik olarak garanti edilir",
+  ],
+  correct: 1,
+  hint: "λ, J·Jᵀ matrisinin köşegenine eklenen terimi değiştirir; başarıyı tek başına garanti etmez.",
+  explanation: "Daha büyük sönümleme güncellemeleri küçültür; hedefe ulaşma ve iterasyon sayısı deneysel sonuçtur.",
+};
+
+export const CONFIGURATION_SPACE_TRANSFER_CHALLENGE: ChallengeDefinition = {
+  prompt: "Altı dönel eklemli bir robot kolunun konfigürasyon uzayındaki tek nokta kaç açı bileşeni taşır?",
+  options: [
+    "İki; çünkü ekran iki boyutlu",
+    "Üç; çünkü iş uzayı üç boyutlu",
+    "Altı; her dönel eklem bir açı bileşeni ekler",
+  ],
+  correct: 2,
+  hint: "C-space boyutu, sahnenin çizim boyutundan değil bağımsız eklem değişkenlerinden gelir.",
+  explanation: "Altı bağımsız dönel eklem, konfigürasyonu altı açıyla tanımlar; iki boyutlu harita yalnız bu dersteki 2-DOF örneğine aittir.",
+};
+
+export const PLANNER_COMPARISON_TRANSFER_CHALLENGE: ChallengeDefinition = {
+  prompt: "RRT bir kez 8 ms, dokuz kez başarısız; A* on kez 22 ms ve başarılı. Dar koridor görevi için savunulabilir seçim hangisi?",
+  options: ["Sadece en düşük süreye bakıp RRT", "Başarı oranını gerekçe gösterip A*", "Ölçümleri yok sayıp rastgele seçim"],
+  correct: 1,
+  hint: "Başarısız koşuların görevi tamamlamadığını metrik hesabına kat.",
+  explanation: "Bu görevde güvenilir başarı, tek bir uç hız ölçümünden daha değerlidir; seçim ölçülen görev ölçütüne dayanır.",
+};
+
+export const FOUR_LENS_FK_TRANSFER_CHALLENGE: ChallengeDefinition = {
+  prompt: "q₁ sabitken q₂ değiştirildiğinde hangi bilgi doğrudan aynı kalır?",
+  options: ["Birinci bağlantının dünya yönü", "Uç noktanın x konumu", "T₀₂ matrisinin tüm elemanları"],
+  correct: 0,
+  hint: "İlk bağlantının yönünü hangi eklem belirliyor?",
+  explanation: "q₁ sabitse ilk bağlantının dünya yönü sabit kalır; ikinci bağlantı ve uç poz değişir.",
+};
+
+const hasVerifiedTransferChallenge = (
+  events: readonly EvidenceEvent[],
+  skillId: string,
+  challenge: ChallengeDefinition,
+) => {
+  const expectedRevision = computeChallengeRevision(challenge);
+  return events.some((event) =>
+    event.stage === "assessed" &&
+    event.skillId === skillId &&
+    event.result === "success" &&
+    event.metrics?.challengeRevision === expectedRevision &&
+    event.metrics?.correctOriginalIndex === challenge.correct &&
+    event.metrics?.selectedOriginalIndex === challenge.correct,
+  );
+};
+
 const hasObservedJoints = (events: readonly EvidenceEvent[], required: readonly number[]) => {
   const joints = new Set(
     events
@@ -108,7 +219,9 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
     lessonId: "b-ortaokul-eklemleri-oynat",
     skillId: "forward-kinematics",
     evaluate: (events) => ({
-      passed: hasObservedJoints(events, [1, 2]) && hasSuccessfulAssessment(events, "forward-kinematics"),
+      passed:
+        hasObservedJoints(events, [1, 2]) &&
+        hasVerifiedTransferChallenge(events, "forward-kinematics", FORWARD_KINEMATICS_TRANSFER_CHALLENGE),
       metrics: { requiredJoints: 2 },
     }),
   },
@@ -133,7 +246,12 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
           .map((event) => event.metrics?.elbow)
           .filter((elbow): elbow is string => typeof elbow === "string"),
       );
-      return { passed: elbows.size >= 2 && hasSuccessfulAssessment(events, "multiple-ik-solutions"), metrics: { observedElbows: elbows.size } };
+      return {
+        passed:
+          elbows.size >= 2 &&
+          hasVerifiedTransferChallenge(events, "multiple-ik-solutions", MULTIPLE_IK_SOLUTIONS_TRANSFER_CHALLENGE),
+        metrics: { observedElbows: elbows.size },
+      };
     },
   },
   {
@@ -152,7 +270,7 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
         passed:
           ikEvents.some((event) => event.result === "success") &&
           ikEvents.some((event) => event.metrics?.unreachable === true) &&
-          hasSuccessfulAssessment(events, "geometric-ik"),
+          hasVerifiedTransferChallenge(events, "geometric-ik", GEOMETRIC_IK_TRANSFER_CHALLENGE),
         metrics: { requiresReachableAndUnreachable: true },
       };
     },
@@ -174,7 +292,7 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
           typeof event.metrics?.manipulability === "number" &&
           event.metrics.manipulability < 0.001,
         ) &&
-        hasSuccessfulAssessment(events, "jacobian-singularity"),
+        hasVerifiedTransferChallenge(events, "jacobian-singularity", JACOBIAN_SINGULARITY_TRANSFER_CHALLENGE),
       metrics: { singularityObserved: true },
     }),
   },
@@ -776,7 +894,9 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
           .filter((algorithm): algorithm is string => typeof algorithm === "string"),
       );
       return {
-        passed: ["astar", "rrt", "rrt_star"].every((algorithm) => successfulAlgorithms.has(algorithm)) && hasSuccessfulAssessment(events, "planner-comparison"),
+        passed:
+          ["astar", "rrt", "rrt_star"].every((algorithm) => successfulAlgorithms.has(algorithm)) &&
+          hasVerifiedTransferChallenge(events, "planner-comparison", PLANNER_COMPARISON_TRANSFER_CHALLENGE),
         metrics: { comparedAlgorithms: successfulAlgorithms.size },
       };
     },
@@ -859,7 +979,9 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
         low.metrics!.targetY === damped.metrics!.targetY,
       ));
       return {
-        passed: compared && hasSuccessfulAssessment(events, "dls-convergence"),
+        passed:
+          compared &&
+          hasVerifiedTransferChallenge(events, "dls-convergence", DLS_CONVERGENCE_TRANSFER_CHALLENGE),
         metrics: { comparedDampingBands: compared ? 2 : 0 },
       };
     },
@@ -894,7 +1016,9 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
         (safe.metrics!.q1 !== collision.metrics!.q1 || safe.metrics!.q2 !== collision.metrics!.q2),
       ));
       return {
-        passed: compared && hasSuccessfulAssessment(events, "configuration-space"),
+        passed:
+          compared &&
+          hasVerifiedTransferChallenge(events, "configuration-space", CONFIGURATION_SPACE_TRANSFER_CHALLENGE),
         metrics: { observedConfigurationClasses: compared ? 2 : 0 },
       };
     },
@@ -979,8 +1103,14 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
         typeof event.metrics?.finalX === "number" &&
         event.metrics.finalX < event.metrics.previousX,
       );
+      // Faz 2 hardening: bu dersteki TransferChallenge de AYNI skillId'yi
+      // paylaşıyor (yukarıdaki assessedFinal, FourLensTraceLab'ın kendi olayı
+      // — farklı metrics şekli sayesinde birbirine karışmıyorlar) ama önceden
+      // predicate TransferChallenge'ın hiç cevaplanmasını istemiyordu. Artık
+      // ikisi de zorunlu.
+      const transferChallengeVerified = hasVerifiedTransferChallenge(events, "four-lens-forward-kinematics", FOUR_LENS_FK_TRANSFER_CHALLENGE);
       return {
-        passed: [0, 1, 2, 3].every((sampleIndex) => samples.has(sampleIndex)) && assessedFinal,
+        passed: [0, 1, 2, 3].every((sampleIndex) => samples.has(sampleIndex)) && assessedFinal && transferChallengeVerified,
         metrics: { observedSamples: samples.size, requiredSamples: 4, requiredFinalSample: 3 },
       };
     },

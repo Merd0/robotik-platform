@@ -1,6 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { EVIDENCE_PREDICATES, migrateLegacyEvidence, summarizeEvidence, type EvidenceEvent } from "./evidence";
+import {
+  CONFIGURATION_SPACE_TRANSFER_CHALLENGE,
+  DLS_CONVERGENCE_TRANSFER_CHALLENGE,
+  EVIDENCE_PREDICATES,
+  FORWARD_KINEMATICS_TRANSFER_CHALLENGE,
+  FOUR_LENS_FK_TRANSFER_CHALLENGE,
+  GEOMETRIC_IK_TRANSFER_CHALLENGE,
+  JACOBIAN_SINGULARITY_TRANSFER_CHALLENGE,
+  migrateLegacyEvidence,
+  MULTIPLE_IK_SOLUTIONS_TRANSFER_CHALLENGE,
+  PLANNER_COMPARISON_TRANSFER_CHALLENGE,
+  summarizeEvidence,
+  type EvidenceEvent,
+} from "./evidence";
 import { createFourLensTrace } from "./robotics/fourLensTrace";
+import { computeChallengeRevision, type ChallengeDefinition } from "./quiz";
+
+/** Bir `TransferChallenge` sabitinden hardened predicate'in beklediği doğru metrics'i üretir. */
+const transferChallengeMetrics = (challenge: ChallengeDefinition) => ({
+  challengeRevision: computeChallengeRevision(challenge),
+  selectedOriginalIndex: challenge.correct,
+  correctOriginalIndex: challenge.correct,
+});
 
 const event = (
   stage: EvidenceEvent["stage"],
@@ -114,7 +135,7 @@ describe("controlled pilot predicates", () => {
         dampingBand: "sonumlu", damping: 0.08, targetX: 1.15, targetY: 0.65,
         converged: true, iterations: 20, traceLength: 21, initialError: 0.8, finalError: 0.0007,
       }),
-      pilotEvent(predicate.lessonId, predicate.skillId, "assessed", {}),
+      pilotEvent(predicate.lessonId, predicate.skillId, "assessed", transferChallengeMetrics(DLS_CONVERGENCE_TRANSFER_CHALLENGE)),
     ];
     expect(predicate.evaluate(events).passed).toBe(true);
   });
@@ -130,7 +151,7 @@ describe("controlled pilot predicates", () => {
         configuration: "collision", collides: true, q1: 20, q2: 0, robotId: "generic-2dof",
         obstacleX: 0.72, obstacleY: 0.28, obstacleRadius: 0.24,
       }),
-      pilotEvent(predicate.lessonId, predicate.skillId, "assessed", {}),
+      pilotEvent(predicate.lessonId, predicate.skillId, "assessed", transferChallengeMetrics(CONFIGURATION_SPACE_TRANSFER_CHALLENGE)),
     ];
     expect(predicate.evaluate(events).passed).toBe(true);
   });
@@ -167,6 +188,7 @@ describe("controlled pilot predicates", () => {
     const assessment = event("assessed", "success", {
       lessonId: predicate.lessonId,
       skillId: predicate.skillId,
+      metrics: transferChallengeMetrics(PLANNER_COMPARISON_TRANSFER_CHALLENGE),
       contentVersion: "pilot-v1",
     });
     const threeFailedRuns = [failedRun("astar"), failedRun("rrt"), failedRun("rrt_star"), assessment];
@@ -219,25 +241,43 @@ describe("controlled pilot predicates", () => {
     },
     contentVersion: "pilot-v1",
   });
+  // Faz 2 hardening: bu dersteki TransferChallenge AYNI skillId'yi kullanıyor
+  // ama farklı metrics şekli taşıyor (fourLensAssessment ile karışmaz) — artık
+  // predicate ikisini de zorunlu kılıyor.
+  const fourLensTransferChallengeAssessment = () => event("assessed", "success", {
+    lessonId: fourLensPredicate.lessonId,
+    skillId: fourLensPredicate.skillId,
+    metrics: transferChallengeMetrics(FOUR_LENS_FK_TRANSFER_CHALLENGE),
+    contentVersion: "pilot-v1",
+  });
 
   it("four-lens golden: four synchronized samples and measured direction pass", () => {
-    expect(fourLensPredicate.evaluate([0, 1, 2, 3].map((index) => fourLensSample(index)).concat(fourLensAssessment())).passed).toBe(true);
+    expect(
+      fourLensPredicate.evaluate(
+        [0, 1, 2, 3].map((index) => fourLensSample(index)).concat(fourLensAssessment(), fourLensTransferChallengeAssessment()),
+      ).passed,
+    ).toBe(true);
+  });
+
+  it("four-lens negative: samples and prediction correct but TransferChallenge never answered never passes", () => {
+    const samples = [0, 1, 2, 3].map((index) => fourLensSample(index));
+    expect(fourLensPredicate.evaluate([...samples, fourLensAssessment()]).passed).toBe(false);
   });
 
   it("four-lens negative: skipping an intermediate sample never passes", () => {
-    expect(fourLensPredicate.evaluate([fourLensSample(0), fourLensSample(2), fourLensSample(3), fourLensAssessment()]).passed).toBe(false);
+    expect(fourLensPredicate.evaluate([fourLensSample(0), fourLensSample(2), fourLensSample(3), fourLensAssessment(), fourLensTransferChallengeAssessment()]).passed).toBe(false);
   });
 
   it("four-lens negative: scene and matrix mismatch never passes", () => {
     const events = [0, 1, 2, 3].map((index) => fourLensSample(index));
     events[2] = fourLensSample(2, { matrixX: 99 });
-    expect(fourLensPredicate.evaluate([...events, fourLensAssessment()]).passed).toBe(false);
+    expect(fourLensPredicate.evaluate([...events, fourLensAssessment(), fourLensTransferChallengeAssessment()]).passed).toBe(false);
   });
 
   it("four-lens negative: retry or a false direction claim never passes", () => {
     const samples = [0, 1, 2, 3].map((index) => fourLensSample(index));
-    expect(fourLensPredicate.evaluate([...samples, fourLensAssessment("retry")]).passed).toBe(false);
-    expect(fourLensPredicate.evaluate([...samples, fourLensAssessment("success", { directionMatches: false })]).passed).toBe(false);
+    expect(fourLensPredicate.evaluate([...samples, fourLensAssessment("retry"), fourLensTransferChallengeAssessment()]).passed).toBe(false);
+    expect(fourLensPredicate.evaluate([...samples, fourLensAssessment("success", { directionMatches: false }), fourLensTransferChallengeAssessment()]).passed).toBe(false);
   });
 
   it("planner comparison: partial success (2/3 algorithms) never passes", () => {
@@ -248,7 +288,7 @@ describe("controlled pilot predicates", () => {
       metrics: { algorithm, seed: 1 },
       contentVersion: "pilot-v1",
     });
-    const assessment = event("assessed", "success", { lessonId: predicate.lessonId, skillId: predicate.skillId, contentVersion: "pilot-v1" });
+    const assessment = event("assessed", "success", { lessonId: predicate.lessonId, skillId: predicate.skillId, metrics: transferChallengeMetrics(PLANNER_COMPARISON_TRANSFER_CHALLENGE), contentVersion: "pilot-v1" });
     expect(predicate.evaluate([run("astar", "success"), run("rrt", "success"), run("rrt_star", "retry"), assessment]).passed).toBe(false);
   });
 
@@ -276,6 +316,7 @@ describe("Sprint 2 pilot laboratuvarları: golden + negative predicate testleri"
     const assessment = (result: EvidenceEvent["result"]) => event("assessed", result, {
       lessonId: predicate.lessonId,
       skillId: predicate.skillId,
+      metrics: result === "success" ? transferChallengeMetrics(FORWARD_KINEMATICS_TRANSFER_CHALLENGE) : undefined,
       contentVersion: "pilot-v1",
     });
 
@@ -294,6 +335,42 @@ describe("Sprint 2 pilot laboratuvarları: golden + negative predicate testleri"
     it("negatif: iki eklem commit edilmiş ama kavram kontrolü yanlış cevaplanmışsa passed olmaz", () => {
       expect(predicate.evaluate([observedJoint(1), observedJoint(2), assessment("retry")]).passed).toBe(false);
     });
+
+    // Faz 2 hardening (bkz. docs/durum-denetim.md "Kanıt zincirindeki eksik
+    // bağlantı"): predicate artık yalnız result:"success"e değil, olayın
+    // taşıdığı challengeRevision/index kimliğine de bakıyor.
+    it("negatif (hardening): eski/stale bir challengeRevision ile kaydedilmiş success artık geçmez", () => {
+      const staleAssessment = event("assessed", "success", {
+        lessonId: predicate.lessonId,
+        skillId: predicate.skillId,
+        metrics: { challengeRevision: "fnv1a:00000000", selectedOriginalIndex: 0, correctOriginalIndex: 0 },
+        contentVersion: "pilot-v1",
+      });
+      expect(predicate.evaluate([observedJoint(1), observedJoint(2), staleAssessment]).passed).toBe(false);
+    });
+
+    it("negatif (hardening): result:success ama seçilen index doğru cevapla uyuşmuyorsa (uydurma success) geçmez", () => {
+      const forgedAssessment = event("assessed", "success", {
+        lessonId: predicate.lessonId,
+        skillId: predicate.skillId,
+        metrics: {
+          challengeRevision: computeChallengeRevision(FORWARD_KINEMATICS_TRANSFER_CHALLENGE),
+          selectedOriginalIndex: 1,
+          correctOriginalIndex: 0,
+        },
+        contentVersion: "pilot-v1",
+      });
+      expect(predicate.evaluate([observedJoint(1), observedJoint(2), forgedAssessment]).passed).toBe(false);
+    });
+
+    it("negatif (hardening): challengeRevision hiç taşımayan eski/legacy bir success olayı geçmez", () => {
+      const legacyAssessment = event("assessed", "success", {
+        lessonId: predicate.lessonId,
+        skillId: predicate.skillId,
+        contentVersion: "pilot-v1",
+      });
+      expect(predicate.evaluate([observedJoint(1), observedJoint(2), legacyAssessment]).passed).toBe(false);
+    });
   });
 
   describe("multiple-ik-solutions-v2 (IkTarget — dirsek değiştirme)", () => {
@@ -307,6 +384,7 @@ describe("Sprint 2 pilot laboratuvarları: golden + negative predicate testleri"
     const assessment = (result: EvidenceEvent["result"]) => event("assessed", result, {
       lessonId: predicate.lessonId,
       skillId: predicate.skillId,
+      metrics: result === "success" ? transferChallengeMetrics(MULTIPLE_IK_SOLUTIONS_TRANSFER_CHALLENGE) : undefined,
       contentVersion: "pilot-v1",
     });
 
@@ -348,6 +426,7 @@ describe("Sprint 2 pilot laboratuvarları: golden + negative predicate testleri"
     const assessment = (result: EvidenceEvent["result"]) => event("assessed", result, {
       lessonId: predicate.lessonId,
       skillId: predicate.skillId,
+      metrics: result === "success" ? transferChallengeMetrics(GEOMETRIC_IK_TRANSFER_CHALLENGE) : undefined,
       contentVersion: "pilot-v1",
     });
 
@@ -445,6 +524,7 @@ describe("DlsTraceLab rollout: golden + negatif predicate testleri", () => {
   const assessment = () => event("assessed", "success", {
     lessonId: predicate.lessonId,
     skillId: predicate.skillId,
+    metrics: transferChallengeMetrics(DLS_CONVERGENCE_TRANSFER_CHALLENGE),
     contentVersion: "dls-trace-v2",
   });
   const low = {
@@ -520,6 +600,7 @@ describe("CspaceLab rollout: golden + negatif predicate testleri", () => {
   const assessment = () => event("assessed", "success", {
     lessonId: predicate.lessonId,
     skillId: predicate.skillId,
+    metrics: transferChallengeMetrics(CONFIGURATION_SPACE_TRANSFER_CHALLENGE),
     contentVersion: "cspace-v2",
   });
   const safe = {
@@ -1159,6 +1240,7 @@ describe("JacobianViz rollout: golden + negatif predicate testleri", () => {
   const assessment = (result: EvidenceEvent["result"] = "success") => event("assessed", result, {
     lessonId: predicate.lessonId,
     skillId: predicate.skillId,
+    metrics: result === "success" ? transferChallengeMetrics(JACOBIAN_SINGULARITY_TRANSFER_CHALLENGE) : undefined,
     contentVersion: "jacobian-v2",
   });
 
