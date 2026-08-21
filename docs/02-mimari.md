@@ -299,13 +299,17 @@ olarak SAF (fs'e dokunmaz) — `interactionHash`in kendisi fs okuduğu için ayr
 bir modülde yaşıyor, tıpkı `computeLessonSubjectHashes`'in saf kalıp
 `scripts/git-lesson.ts`'in fs/git tarafını üstlenmesi gibi.
 
-**Pilot kapsamı ve durumu:** yalnız üç laboratuvar (`JointSliders`,
-`PlannerRace`, `IkTarget`) `LAB_DEPENDENCY_REGISTRY`'de tanımlı; kayıtlı
-olmayan bir bileşen için `computeInteractionHash` açıkça hata fırlatır.
-`computeEvidenceVersionRoot` şu an canlı ders sayfasına (`app/ders/[slug]/page.tsx`,
-`contentVersion={computeTeachingHash(lesson)}`) BAĞLANMADI — bu bilinçli bir
-kapsam sınırı: Sprint 2 yalnız motor/state katmanını teslim etti, sayfa
-entegrasyonu ayrı bir adımdır.
+**Kapsam ve durum (güncellendi — bkz. docs/durum-denetim.md "Faz 2 — Kanıt
+zincirindeki eksik bağlantı"):** Sprint 2'de yalnız üç pilot laboratuvar
+kayıtlıyken, artık MDX'te izinli 19 bileşenin TAMAMI `LAB_DEPENDENCY_REGISTRY`'de
+tanımlı (`lib/interactionManifest.test.ts` bunu regresyona karşı doğruluyor);
+kayıtlı olmayan bir bileşen için `computeInteractionHash` hâlâ açıkça hata
+fırlatır. `computeEvidenceVersionRoot` artık canlı ders sayfasına BAĞLI:
+`app/ders/[slug]/page.tsx`, `lib/interactionManifest.ts`teki
+`computeLessonContentVersion(lessonId, lessonBody, teachingHash)` üzerinden
+`LessonEvidenceProvider`a `contentVersion={computeTeachingHash(lesson)}`
+değil, üç kökün birleşimini veriyor — bileşen/motor/predicate kodu
+değiştiğinde eski kanıt artık otomatik eskiyor.
 
 ### 7. Python↔robot köprüsü (Pyodide)
 
