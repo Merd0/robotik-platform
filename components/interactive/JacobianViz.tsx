@@ -18,6 +18,7 @@ import {
   ExperimentShareButton,
   useSharedLabState,
 } from "@/components/interactive/LabChallengeUi";
+import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
 
 interface JacobianVizProps {
   robot: string;
@@ -134,11 +135,22 @@ export function JacobianViz({ robot: robotId, pilot }: JacobianVizProps) {
           bazı yönlerde hızlanamaz — Jacobian bu yönde tersinemez hale gelir.
         </p>
       )}
-      <p className="text-xs text-universite-ink/70">
-        Renkli çizgiler: her eklemin birim hızının uç noktada ürettiği hız yönü (Jacobian
-        sütunları). Gri elips: tüm birim eklem hızı kombinasyonlarının süpürdüğü uç hız alanı
-        (manipülabilite elipsi) — elips daralıp çizgiye dönüştüğünde tekillik yaklaşıyor demektir.
-      </p>
+
+      <NasilHesaplandi
+        ozet="Çizgiler ve elips, eklem hızlarından uç hıza nasıl gidildiğini gösteriyor."
+        className="border-universite-ink/10 bg-universite-bg text-universite-ink"
+      >
+        <p>
+          Renkli çizgiler: her eklemin birim hızının uç noktada ürettiği hız yönü (Jacobian
+          sütunları). Gri elips: tüm birim eklem hızı kombinasyonlarının süpürdüğü uç hız alanı
+          (manipülabilite elipsi) — elips daralıp çizgiye dönüştüğünde tekillik yaklaşıyor demektir.
+        </p>
+        <p className="mt-2 font-mono text-xs">
+          manipülabilite = √det(J·Jᵀ) — <code>computeJacobian</code> içindeki{" "}
+          <code>manipulabilityOf</code> fonksiyonunun ürettiği sayı, yukarıdaki &ldquo;Manipülabilite&rdquo;
+          satırında gösterilen değerin ta kendisi.
+        </p>
+      </NasilHesaplandi>
 
       <ExperimentShareButton
         seviye="universite"

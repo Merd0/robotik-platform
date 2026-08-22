@@ -1158,6 +1158,31 @@ test("JacobianViz gerçek tekillik commit'iyle kanıtlanır ve state'i paylaşı
   await expect(page.getByText("Tekillik:", { exact: false })).toBeVisible();
 });
 
+test("NasilHesaplandi paneli varsayılan kapalı, açılınca teknik detayı gösterir (Faz 2 — JacobianViz)", async ({ page }) => {
+  await page.goto("/ders/b-universite-tekillik");
+  const panel = page.locator("details").filter({ hasText: "Nasıl hesaplandı?" });
+  await expect(panel).toBeVisible();
+  // Kapalıyken teknik formül (manipülabilite tanımı) DOM'da görünür değil.
+  await expect(panel.getByText("manipülabilite = √det", { exact: false })).toBeHidden();
+  await panel.locator("summary").click();
+  await expect(panel.getByText("manipülabilite = √det", { exact: false })).toBeVisible();
+});
+
+test("NasilHesaplandi paneli DLS formülünü gösterir, mevcut iterasyon izini gizlemez (Faz 2 — DlsTraceLab)", async ({ page }) => {
+  await page.goto("/ders/b-universite-ters-kinematik");
+  // DlsTraceLab'ın kendi tasarım amacı (JSDoc: "her iterasyonu göster,
+  // gizleme") korunuyor mu: iz tablosu paneller olmadan, çalıştırma
+  // sonrası doğrudan görünür kalmalı.
+  await page.getByRole("button", { name: "80 adıma kadar çöz" }).click();
+  await expect(page.getByText(/^Adım \d+$/)).toBeVisible();
+
+  const panel = page.locator("details").filter({ hasText: "Nasıl hesaplandı?" });
+  await expect(panel).toBeVisible();
+  await expect(panel.getByText("Δθ = J", { exact: false })).toBeHidden();
+  await panel.locator("summary").click();
+  await expect(panel.getByText("Δθ = J", { exact: false })).toBeVisible();
+});
+
 test("ScanPath iki tamamlanmış yoğunluğu kanıtlar ve state'i paylaşır", async ({ page }) => {
   await page.goto("/ders/f-universite-tarama-yolu-uretimi");
   const rows = page.getByRole("slider");

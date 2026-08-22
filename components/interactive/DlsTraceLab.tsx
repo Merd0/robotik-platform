@@ -7,6 +7,7 @@ import {
   ExperimentShareButton,
   useSharedLabState,
 } from "@/components/interactive/LabChallengeUi";
+import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
 import { forwardKinematics, inverseKinematicsNumerical, type NumericalIkResult } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
 
@@ -125,6 +126,23 @@ export function DlsTraceLab() {
           <table className="mt-2 w-full"><thead><tr><th className="text-left">Eklem</th><th className="text-right">Açı</th></tr></thead><tbody>{iteration?.angles.map((angle, index) => <tr key={index}><td>θ{index + 1}</td><td className="text-right font-mono">{round(toDegrees(angle), 2)}°</td></tr>)}</tbody></table>
         </div>
       </div>}
+
+      <NasilHesaplandi
+        ozet="Her adımda hata, Jacobian'ın sönümlü tersinden gelen bir düzeltmeyle küçültülüyor."
+        className="mt-4 border-universite-ink/10 bg-universite-bg text-universite-ink"
+      >
+        <p className="font-mono text-xs">Δθ = Jᵀ (J Jᵀ + λ²I)⁻¹ · hata</p>
+        <p className="mt-2">
+          <code>J</code> her adımda mevcut eklem açılarından yeniden hesaplanan Jacobian, <code>λ</code>{" "}
+          yukarıdaki sönümleme kaydırıcısı. λ küçüldükçe ham düzeltme büyür (tekillik yakınında
+          J·Jᵀ terslenmesi zorlaşır) — ama robot aniden sıçramaz, çünkü her adımdaki gerçek açı
+          değişimi ayrıca sabit bir üst sınırla kırpılır; küçük λ bu yüzden sıçrama değil, daha
+          çok iterasyonda kararsız/yalpalayan bir yakınsama olarak görünür. λ büyüdükçe düzeltme
+          küçülür, yakınsama yavaşlar ama düzgünleşir — sağdaki hata eğrisinde bunu λ değerini
+          değiştirerek gözlemleyebilirsin. Kaynak kodu: <code>lib/robotics/kinematics.ts</code>{" "}
+          içindeki <code>inverseKinematicsNumerical</code>.
+        </p>
+      </NasilHesaplandi>
 
       <ExperimentShareButton
         seviye="universite"

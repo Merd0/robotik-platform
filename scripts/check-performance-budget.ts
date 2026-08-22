@@ -62,7 +62,13 @@ const surfaces: SurfaceConfig[] = [
   // bırakıldı. Bütçe, mevcut gerçek maliyeti dürüstçe yansıtacak ve küçük
   // içerik eklemelerinde tekrar tekrar kırılmayacak şekilde makul bir
   // paylı ile güncellendi.
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 265 * KIB, brotli: 245 * KIB } },
+  //
+  // 2026-08-22: docs/16 madde 55/3/4 için eklenen paylaşılan
+  // `NasilHesaplandi.tsx` (JacobianViz/DlsTraceLab'ın kullandığı
+  // progressive-disclosure paneli) aynı paylaşılan route chunk'ına girdiği
+  // için brotli 245.0 → 245.4 KiB'e çıktı — kök neden yukarıdaki notla
+  // aynı, yeni bir sorun değil. 246 KiB'e çekildi.
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 265 * KIB, brotli: 246 * KIB } },
   { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 480 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];

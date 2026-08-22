@@ -134,10 +134,10 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["PixelToWorld"])).not.toThrow();
   });
 
-  it("JacobianViz bileşeni, kinematik motoru ve robot spec'ini interactionHash'e bağlar", () => {
+  it("JacobianViz bileşeni, paylaşılan NasilHesaplandi panelini, kinematik motoru ve robot spec'ini interactionHash'e bağlar", () => {
     expect(LAB_DEPENDENCY_REGISTRY.JacobianViz).toEqual({
       componentFile: "components/interactive/JacobianViz.tsx",
-      engineFiles: ["lib/robotics/kinematics.ts"],
+      engineFiles: ["components/interactive/NasilHesaplandi.tsx", "lib/robotics/kinematics.ts"],
     });
     expect(() => computeInteractionHash(["JacobianViz"], ["generic-2dof"])).not.toThrow();
   });
@@ -174,10 +174,10 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["TransformOrderLab"])).not.toThrow();
   });
 
-  it("DlsTraceLab bileşeni, sayısal IK motoru ve robot spec'ini interactionHash'e bağlar", () => {
+  it("DlsTraceLab bileşeni, paylaşılan NasilHesaplandi panelini, sayısal IK motoru ve robot spec'ini interactionHash'e bağlar", () => {
     expect(LAB_DEPENDENCY_REGISTRY.DlsTraceLab).toEqual({
       componentFile: "components/interactive/DlsTraceLab.tsx",
-      engineFiles: ["lib/robotics/kinematics.ts"],
+      engineFiles: ["components/interactive/NasilHesaplandi.tsx", "lib/robotics/kinematics.ts"],
     });
     expect(() => computeInteractionHash(["DlsTraceLab"], ["generic-2dof"])).not.toThrow();
   });
