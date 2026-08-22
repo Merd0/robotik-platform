@@ -3629,3 +3629,35 @@ derste geçen bir terime (ör. "TCP", "Jacobian") tıklandığında kullanıcıy
 `/sozluk` sayfasına göndermek yerine context içinde mini bir açıklama
 açmak.
 
+
+---
+
+## Faz 3 (inline glossary) — TAMAMLANDI (2026-08-22, commit 839603c)
+
+docs/16-urun-denetimi.md öncelik #3 (madde 38). Yeni `<Terim ad="...">`
+MDX bileşeni: `Terim.tsx` bilinçli olarak sunucu bileşeni (fs ile
+`content/sozluk.json` okuyor, 72 terim asla tarayıcıya gitmiyor);
+`TerimInline.tsx` yalnız eşleşen TEK terimin metnini taşıyan client
+parçası (açılıp-kapanma state'i). Floating popover değil, satır-içi akışa
+metin ekleyen bir tasarım — mobilde kenar taşması hesabı gerekmiyor.
+
+İki pilot yerleştirme: `a-lise-calisma-uzayi.mdx` (TCP), `b-universite-
+jacobian.mdx` (tekillik, sonraki dersi önizleyen cümlede). **Önemli
+bulgu:** e-haberlesme hattındaki "TCP" (TCP/IP) ile robotik "TCP"si (Tool
+Center Point) AYNI KISALTMA farklı kavram — o derslere bilinçli
+dokunulmadı, yanlış terime bağlanma riski taşırdı.
+
+`ad` sözlükte yoksa Terim.tsx derleme zamanı açıkça hata fırlatıyor
+(computeInteractionHash'in kayıtsız-bileşen felsefesiyle aynı).
+
+Tam kontrol paketi temiz (792 unit, 273 e2e, WCAG 20 sayfa).
+
+**Sırada — Faz 4 (docs/16 öncelik #4): "Neden?" bileşeni (madde 33).**
+Açıklayıcı metin şu an dağınık (JacobianViz'in tekillik paragrafı,
+pythonBridge hata mesajları, NasilHesaplandi panelleri) — hedef, bunu tek
+tekrar kullanılabilir bir "Neden?" deseninde toplamak. Not: Faz 2'de
+kurulan `NasilHesaplandi` ile örtüşme riski var — Faz 4'e başlarken önce
+ikisinin farkını netleştirmek gerekecek (NasilHesaplandi: her zaman aynı,
+statik teknik detay; "Neden?" muhtemelen: DURUMA BAĞLI, anlık bir değerin
+yanında "bu sayı neden bu" açıklaması — ör. "J3: 142° — Neden?").
+
