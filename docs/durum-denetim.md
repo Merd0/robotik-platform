@@ -3326,3 +3326,104 @@ Governance dosyası değişmedi (yalnız `app/ders/[slug]/page.tsx`,
 `content/sozluk.json`, `e2e/platform.spec.ts`, `lib/sozluk.ts`,
 `lib/sozluk.test.ts`, `docs/durum-denetim.md`), docs/09 §7 otomatik geçit
 uygulanacak, `main`'e merge edilecek.
+
+---
+
+## Faz 1 (ders sayfası iskeleti çeşitlendirme) — taksonomi analizi (2026-08-22)
+
+`docs/16-urun-denetimi.md` madde 7'nin uygulama fazı. Kapsam: docs/04'teki
+6 bölümlük İÇERİK yapısı (Kanca/Sahne/Ne oldu/Gerçek dünyada/Dene/Sonraki)
+aynen kalıyor — `kaynaklar`, `kazanımlar`, predicate/evidence mantığına
+dokunulmuyor. Değişen tek şey: bu içeriğin SUNUM şablonu, dersin doğal
+türüne göre farklılaşabilecek.
+
+### Yöntem
+
+94 dersin MDX gövdesinde hangi etkileşimli bileşenin (veya bileşen
+kombinasyonunun) kullanıldığı programatik olarak tarandı (`grep -oE`,
+elle okuma değil — 94 dosyanın tamamı kapsandı). Bileşen kombinasyonu,
+dersin zaten hangi ANLATI yapısına (tahmin-önce mi, görev mi, karşılaştırma
+mı, kod-laboratuvarı mı, sahnesiz referans mı, düz keşif mi) sahip
+olduğunun dolaylı ama güvenilir bir göstergesi — çünkü `PredictionPrompt`,
+`TransferChallenge`, `PlannerRace` gibi bileşenler zaten belirli bir
+anlatı şeklini teknik olarak gerektiriyor.
+
+### Bulunan taksonomi — 6 doğal şablon
+
+| # | Şablon | Ölçüt | Ders sayısı | % |
+|---|---|---|---|---|
+| A | **Tahmin-Önce + Görev** | `PredictionPrompt` + `TransferChallenge` birlikte | 5 | %5 |
+| B | **Görev/Meydan Okuma** | `TransferChallenge` var, `PredictionPrompt` yok | 3 | %3 |
+| C | **Karşılaştırma** | `PlannerRace` (algoritma yarışı) veya `RobotSelectionTable` | 13 | %14 |
+| D | **Kod Laboratuvarı** | `CodeRunner` veya `BlockEditor` | 16 | %17 |
+| E | **Referans/Karşılaştırma Metni** | hiç etkileşimli sahne yok (yalnız metin + Quiz) | 11 | %12 |
+| F | **Keşif / Doğrusal (mevcut varsayılan)** | tek sahne (JointSliders/IkTarget/JacobianViz-tek/SignalTimeline/PixelToWorld/ThresholdViewer/ScanPath/SafetyZone/CspaceLab-tek/TransformOrderLab/DlsTraceLab-tek/FourLensTraceLab-tek), tahmin/görev yok | 46 | %49 |
+
+Toplam 94/94 eşleşti (bir dosya, `a-universite-homojen-donusum.mdx`,
+hem `CodeRunner` hem `TransformOrderLab` taşıyor — D'ye sayıldı, notu
+aşağıda).
+
+**Doğrulanan asıl bulgu:** Dersin YARISI (46/94) hâlâ F — "tek sahne,
+düz anlatı" — kategorisinde ve docs/16 madde 7'nin işaret ettiği tekrar
+sorununun ağırlık merkezi burası. Öte yandan A/B/C/D (%39, 37 ders)
+zaten farklı bir anlatı yapısına SAHİP ama MDX'in sabit 5 başlığı
+(`## Kanca / ## Ne oldu / ## Gerçek dünyada / ## Dene / ## Sonraki`) bu
+farkı sunumda hiç yansıtmıyor — görev-önce bir ders de, düz keşif dersi
+de ekranda birebir aynı iskelette görünüyor. E kategorisi (11 ders, hiç
+sahnesi yok) en can sıkıcı uyumsuzluk: bu dersler zaten var olmayan bir
+"sahne" beklentisiyle aynı şablona zorlanıyor.
+
+### Şablon başına sunum farkı (İÇERİK aynı kalır, SIRA/ÇERÇEVE değişir)
+
+- **F (Keşif, varsayılan, değişmez):** mevcut doğrusal sıra korunur —
+  Kanca → Sahne → Ne oldu → Gerçek dünyada → Dene → Sonraki. Bu, en büyük
+  grup olduğu için bilinçli olarak "temel" şablon kalıyor; değiştirilmiyor.
+- **A/B (Görev):** Dene bölümündeki görev tanımı erken plana alınıyor —
+  Kanca hemen ardından bir "Görev" çerçevesi (mevcut `TransferChallenge`
+  zaten bunu render ediyor), Sahne bu görevi denemek için var, Ne
+  oldu/Gerçek dünyada görevden SONRAKİ değerlendirme oluyor. İçerik
+  metni taşınmıyor, yalnız hangi bölümün üstte render edildiği değişiyor.
+- **C (Karşılaştırma):** Sahne zaten yan yana/çoklu görselleştirme
+  (`PlannerRace` birden fazla algoritmayı aynı sahnede yarıştırıyor);
+  "Ne oldu" metni açık şekilde bir karşılaştırma çerçevesinde yazılıyor
+  ("A yöntemi X, B yöntemi Y sonucunu verdi, fark şu").
+  `RobotSelectionTable` da aynı ailede.
+- **D (Kod Laboratuvarı):** `CodeRunner`'ın kendi split/sticky yerleşimi
+  zaten farklı (docs/05 "Görünürlük ilkesi" retrofiti) — MDX prose
+  çerçevesi buna uyacak şekilde "Kanca" bir kodlama görevi gibi,
+  "Ne oldu" kodun/robotun ne yaptığının izini sürme gibi yazılıyor.
+- **E (Referans, sahnesiz):** "Sahne" boş bir slot olmaktan çıkarılıyor —
+  bu derslerde zaten yok, zorla var gösterilmiyor. Yerine metin-temelli
+  bir karşılaştırma yerleşimi (ör. RAPID/KRL/ROS2 için yan yana sözdizim
+  panelleri, ISO maddeleri için tablo) kullanılabilir. Bu şablon en çok
+  teknik iş gerektiren, çünkü yeni bir sunum bileşeni ister.
+
+### Uygulama planı (teknik, düşük risk)
+
+- Yeni, opsiyonel `sablon?: string` frontmatter alanı (`lib/content.ts`
+  `DersFrontmatter`) — değerler: `"kesif"` (varsayılan, F), `"gorev"`
+  (A/B), `"karsilastirma"` (C), `"kod-lab"` (D), `"referans"` (E).
+  Belirtilmezse `"kesif"` varsayılır — **94 dersin hiçbiri bugün kırılmaz**.
+- Bu alan `lib/lessonArtifact.ts`'teki `PRESENTATION_FIELDS`'e eklenir
+  (`presentationHash` kapsamına) — kasıtlı seçim: bu alan zaten "yayın
+  durumu ve sunum metadatası" için var, hiçbir inceleme kapsamını
+  eskitmiyor (bkz. `lib/lessonArtifact.ts:51`). `sourceHash`/`teachingHash`
+  DOKUNULMUYOR → mevcut Review Receipt'ler ve öğrenci `evidence` kaydı
+  (contentVersion `teachingHash`'e bağlı) geçersizleşmiyor. Bu,
+  `RobotSpec`/`PlanResult`/`Planner` sözleşmelerinden biri DEĞİL — kök
+  `CLAUDE.md`'deki "dur ve sor" eşiğinin altında, ama `docs/02-mimari.md`
+  Review Receipt v2 tablosu (Bölüm 4) yeni alanı yansıtacak şekilde
+  güncellenecek (dokümantasyon güncellemesi, sözleşme değişikliği değil).
+- `app/ders/[slug]/page.tsx` render sırası `sablon` değerine göre dallanır;
+  MDX gövdesinin kendisi (başlıklar, metin) DEĞİŞMEZ — sadece hangi
+  bölümün önce/nasıl çerçevelendiği render katmanında kararlaştırılır.
+  Böylece `docs/04-icerik-rehberi.md`'deki 6 bölümlük şablon sözü
+  tutulmuş olur (içerik aynı), ama ekranda 5 farklı düzen mümkün olur.
+
+### Sırada
+
+Bu taksonomi onay için sunuldu. Onay/geri bildirim sonrası: önce F
+(varsayılan) ile aynı davranan bir "no-op" `sablon="kesif"` implementasyonu
++ testler → sonra en yüksek kanıtlı grup olan A/B (Görev, 8 ders,
+zaten `TransferChallenge` kullanıyor) pilot olarak uygulanacak.
+
