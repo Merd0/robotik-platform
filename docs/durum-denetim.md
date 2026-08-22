@@ -3522,3 +3522,68 @@ nedeniyle otomatik merge edilemedi, Mert'in onayını bekliyor (bkz. yukarıdaki
 
 Sıradaki loop turu C (Karşılaştırma) tasarımıyla devam edecek.
 
+
+### Faz 1 KAPANDI (2026-08-22, commit d4b1c85 ile)
+
+**Taksonomi düzeltmesi (önemli, kayda geçiyorum):** İlk analizde "C —
+Karşılaştırma" grubunu 13 ders sanmıştım (yalnız `PlannerRace`/
+`RobotSelectionTable` bileşen adına bakarak). Gerçek `algorithms={[...]}`
+prop değerlerini taradığımda bunların 8'i TEK algoritma kullanıyor —
+`PlannerRace` bileşeni tek-algoritma modunda da çalışıyor, bu bir
+karşılaştırma değil. Gerçek çoklu-algoritma karşılaştırması 5 derste var.
+Ders: component adına bakan bir taksonomi, component'in GERÇEKTEN NASIL
+KULLANILDIĞINA bakmadan yanıltıcı olabiliyor — ileride benzer analiz
+yapılırsa prop/parametre düzeyine inmek gerekiyor.
+
+**Uygulanan (2 gerçek sunum şablonu, 10 ders):**
+
+- **`sablon: gorev`** (7 ders) — "Dene" dilimi Kanca'nın hemen ardına
+  taşınır, görev-önce çerçevesi.
+- **`sablon: karsilastirma`** (3 ders) — sıra değişmez, "Ne oldu" ayrı
+  bir karşılaştırma çerçevesinde vurgulanır.
+
+**Bilinçli olarak UYGULANMADI, gerekçesiyle:**
+
+- **D — Kod Laboratuvarı (16 ders, `CodeRunner`/`BlockEditor`):**
+  İncelendi (`content/d-programlama/lise/d-lise-hareket-komutlari.mdx`
+  örnek alındı). Sonuç: bu grup zaten yeterince farklılaşmış —
+  `CodeRunner` kendi split/sticky (masaüstünde yan yana, mobilde sekmeli)
+  yerleşimine sahip (docs/05 "Görünürlük ilkesi" retrofiti), MDX
+  seviyesinde bölüm taşımanın/kutulamanın ekleyeceği somut bir fark yok.
+  Yeni bir `sablon` icat etmek burada gerçek bir problemi çözmeyen,
+  sadece kod ekleyen bir iş olurdu — docs/09 "yeni bir componentı gerçek
+  problem çözmüyorsa ekleme" ilkesine aykırı düşerdi. **Karar: D grubu
+  "kesif" kalıyor, bu bir eksiklik değil.**
+- **E — Referans/sahnesiz (11 ders, `d-universite-abb-rapid` örnek
+  alındı):** Bu derslerde `etkilesimli: []` — hiç sahne yok, Kanca salt
+  metin. Anlamlı bir "karşılaştırma" sunumu (ör. RAPID/KRL/ROS2 yan yana
+  sözdizim panelleri) için gerekli veri BU DERSLERDE YOK — her dil ayrı
+  bir derste anlatılıyor (`d-universite-abb-rapid`, `d-universite-kuka-krl`,
+  `d-universite-fanuc-karsilastirma` üç ayrı dosya), tek bir ders
+  içinde yeniden düzenlenecek çoklu-dil karşılaştırma verisi yok. Bunu
+  gerçek anlamda çözmek MEVCUT İÇERİĞİ YENİDEN DÜZENLEMEK değil, YENİ
+  İÇERİK YAZMAK (diller arası çapraz referans) gerektirir — bu, Mert'in
+  Faz 1 kapsamına koyduğu "kaynak/kazanım/predicate mantığına dokunma,
+  içerik aynı kalsın" sınırının dışında. **Karar: E grubu "kesif" kalıyor;
+  gerçek düzeltme ayrı bir içerik-yazım projesi (gelecekteki bir faz/
+  fikir), bu fazın kapsamı değil.** `docs/fikirler.md`'ye not düşülebilir.
+- **F — Keşif (46 ders):** zaten hiç değişmiyor, varsayılan.
+
+**Faz 1 özeti:** 6 commit (`d5414ef`, `f05161c`, `5d4bb54`, `a97310e`,
+`1a2909f`, `8ea6d41`, `d4b1c85`), her biri tam kontrol paketiyle `main`'e
+merge edildi. 94 dersin 10'u artık iki farklı, gerçek sunum şablonundan
+birini kullanıyor; 84'ü bilinçli olarak "kesif" — ya zaten farklılaşmış
+(D, kendi component yerleşimiyle) ya da gerçek çözümü bu fazın kapsamı
+dışında (E, yeni içerik gerektiriyor). docs/04'ün 6 bölümlük İÇERİK
+sözleşmesi hiçbir derste değişmedi; `kaynaklar`/`kazanımlar`/predicate
+mantığına dokunulmadı.
+
+**Hâlâ bekleyen tek onay:** `docs/02-mimari.md` Bölüm 4'teki
+`presentationHash` alan listesine `sablon` eklenmesi (tek satır,
+governance istisnası — yukarıdaki "adım 1" notuna bkz.).
+
+**Sırada — Faz 2 (docs/16-urun-denetimi.md'deki öncelik #2): "nasıl
+hesaplandı" ortak paneli.** `DlsTraceLab.tsx` ve `JacobianViz.tsx`'in
+zaten ayrı ayrı yaptığı iterasyon/residual/neden-açıklaması gösterimini
+tek, tekrar kullanılabilir bir bileşene çıkarmak.
+
