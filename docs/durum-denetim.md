@@ -3693,3 +3693,43 @@ joint-açısı/zaman çizgi grafiği + açılıp kapanabilen telemetry paneli
 tasarlamak gerekecek. Faz 1-4'ten daha büyük bir tasarım kararı — dikkatli
 başlanmalı.
 
+
+---
+
+## Faz 5 (telemetry + zaman grafiği) — TAMAMLANDI, kapsam bilinçli daraltıldı (2026-08-22, commit 8e481b6)
+
+docs/16-urun-denetimi.md öncelik #5 (madde 26/27). En riskli faz olarak
+işaretlenmişti; gerçek kod incelemesi kapsamı netleştirdi:
+
+- **Madde 27 (zaman grafiği):** Platformda GERÇEKTEN zaman-parametreli
+  hareket verisi olan TEK yer `/oyun-alani`'nın öğret-ve-oynat programı
+  (`lib/robotics/customRobotMotion.ts`teki `JointTrajectory` — sıfır
+  uç-hızlı kübik profil, gerçek `startTimeSeconds`/`durationSeconds`).
+  DlsTraceLab'ın "iterasyon" ekseni zaman DEĞİL; PlannerRace'in yolları
+  zaman-parametreli değil. Grafiği başka bir yere zorlamak madde 52'yi
+  ("gerçekte hesaplamadığımızı hesaplıyormuş gibi gösterme") ihlal
+  ederdi — bu yüzden kapsam yalnız oyun-alanına daraltıldı, bilinçli.
+  Yeni `JointTimeChart.tsx`: chart kütüphanesi eklemeden elle SVG
+  (TransformOrderLab/JacobianViz presedanı).
+- **Madde 26 (telemetry paneli):** Kod incelemesinde CustomRobotPlayground'ın
+  "Eklemleri sür" sekmesinde ZATEN canlı bir TCP x/y telemetri satırı
+  olduğu görüldü (satır ~1018-1022) — bu maddeyi baştan sıfırdan
+  inşa etmek gerekmedi, zaten kısmen karşılanıyormuş. Faz 4'teki IkTarget
+  eklem açısı gösterimiyle birlikte, platformun "değer göster" tarafı artık
+  daha tam.
+
+Test-first: `sampleTrajectoryOverTime` için 2 yeni birim testi, e2e'de
+mevcut motion-teaching testine 3 eklemli grafiği doğrulayan yeni
+assertion'lar eklendi. Tam kontrol paketi temiz (795 unit, 276 e2e).
+
+**Sırada — Faz 6 (docs/16 öncelik #6): RobotSpec metadata genişletme —
+DURDU, Mert'in onayı gerekiyor.** Bu madde `RobotSpec` sözleşmesini
+(manufacturer, maxReach, toolFrame gibi alanlar) genişletmeyi içeriyor —
+kök CLAUDE.md'nin "Sadece şu 4 durumda dur ve sor" listesindeki 1. madde
+BİREBİR bu: "RobotSpec/PlanResult/Planner gibi docs/02'deki çekirdek
+sözleşmelerden birini değiştirmen gerekiyorsa." Loop bu fazı OTONOM
+uygulamıyor — docs/02-mimari.md güncellemesi + hangi alanların gerçekten
+gerekli olduğu kararı insan onayı bekliyor. Loop Faz 7'ye (complexity
+layer) geçiyor; Faz 7-8 bitince veya başka bir engelle karşılaşırsa
+duracak, Faz 6 açık madde olarak Mert'e raporlanacak.
+
