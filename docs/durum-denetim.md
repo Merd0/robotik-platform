@@ -3451,3 +3451,27 @@ atamak — pilot. Bu adım MDX gövdesini DEĞİŞTİRMEZ (docs/04'ün 6 bölüm
 aynı kalır), yalnız frontmatter'a `sablon: gorev` satırı eklenir ve
 render sırası değişir.
 
+
+### Faz 1 — adım 2 tamamlandı (2026-08-22, commit f05161c)
+
+`lib/lessonSections.ts` eklendi: docs/04'ün 5 sabit H2 başlığına göre ham
+MDX gövdesini AST tabanlı dilimleyen saf fonksiyon. Henüz hiçbir yerde
+çağrılmıyor — sıfır görünür davranış değişikliği, tam kontrol paketi temiz
+(detay commit mesajında). 94 dersin 90'ı bölünebiliyor, 4'ü (şablon-dışı
+ekstra başlık taşıyan dersler) güvenlik ağı gereği bölünmeden kalıyor —
+bu beklenen ve doğru davranış.
+
+**Sırada (adım 3, henüz yapılmadı):** `app/ders/[slug]/page.tsx`'e
+`sablon` dallanması eklemek. Plan: `splitLessonBody` null dönerse (veya
+`sablon === "kesif"` ise) mevcut tek-blok render aynen kalır — bu, 94
+dersin 90'ı için de "kesif" varsayılanıyla davranışın DEĞİŞMEDİĞİNİ
+doğrulayan bir görsel/e2e regresyon adımı gerektiriyor. Ardından pilot:
+A/B kategorisindeki 8 derse (zaten `TransferChallenge` kullanan) `sablon:
+gorev` atanacak ve o dallanma (Dene dilimini Kanca'nın hemen ardına alan
+render sırası) eklenecek.
+
+**Hâlâ bekleyen onay:** yukarıdaki "adım 1 tamamlandı" notundaki
+docs/02-mimari.md tek satırlık düzeltmesi (presentationHash alan listesine
+`sablon` eklenmesi) — governance istisnası nedeniyle otomatik merge
+edilmedi, Mert'in onayını bekliyor.
+
