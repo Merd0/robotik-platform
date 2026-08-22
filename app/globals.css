@@ -494,6 +494,18 @@ select {
   max-width: 46rem;
 }
 
+/*
+  "gorev" şablonu (bkz. app/ders/[slug]/page.tsx, lib/lessonSections.ts):
+  taşınan "Dene" dilimi bir çerçeve kutusunun içinde, yani .ders-icerik'in
+  torunu (doğrudan çocuğu değil) oluyor -- yukarıdaki `>` seçici onu
+  kapsamaz. Aynı genişlik sınırını burada ayrıca tanımlamak, kutunun içeriğinin
+  sayfanın geri kalanından daha geniş görünmesini (tutarsız bir okuma
+  genişliği) önler.
+*/
+.ders-gorev-kutusu > :is(p, h2, h3, ul, ol, blockquote, pre, .ders-tablo-scroll) {
+  max-width: 46rem;
+}
+
 /* Uzun formüller mobil sayfayı genişletmez; odaklanabilir kod kutusu yatay kayar. */
 .ders-icerik pre {
   min-width: 0;

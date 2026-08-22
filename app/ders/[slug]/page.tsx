@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
@@ -8,8 +9,10 @@ import {
   getPublicLessonBySlug,
   getPublicLessons,
   hatEtiket,
+  resolveLessonSablon,
   SEVIYE_ETIKET,
 } from "@/lib/content";
+import { splitLessonBody, type LessonSectionName } from "@/lib/lessonSections";
 import { mdxComponents } from "@/components/interactive";
 import { LessonNav } from "@/components/ui/LessonNav";
 import { SEVIYE_THEME } from "@/lib/seviyeTheme";
@@ -66,31 +69,76 @@ export async function generateMetadata({ params }: DersPageProps): Promise<Metad
   };
 }
 
-export default async function DersPage({ params }: DersPageProps) {
-  const { slug } = await params;
-  const lesson = getPublicLessonBySlug(slug);
-  if (!lesson) notFound();
-
+/**
+ * Bir MDX kaynağını (tam ders gövdesi ya da `lib/lessonSections.ts`teki
+ * tek bir dilim) derler. `blockJS` varsayılanı MDX'teki tüm JS ifadelerini
+ * (obje/array prop'ları dahil) siler — bu, üçüncü taraf/kullanıcı girdisi
+ * MDX'i için bir güvenlik varsayılanı. Bizim içeriğimiz kullanıcı girdisi
+ * değil; sürüm kontrollü depo içeriği ve MDX güvenlik kontrolünden geçiyor,
+ * o yüzden kapatıyoruz. `blockDangerousJS` varsayılan açık kalır (eval vb.
+ * hâlâ engellenir).
+ */
+async function compileLessonSection(source: string) {
   const { content } = await compileMDX({
-    source: lesson.body,
+    source,
     components: mdxComponents,
-    // blockJS varsayılanı MDX'teki tüm JS ifadelerini (obje/array prop'ları
-    // dahil) siler — bu, üçüncü taraf/kullanıcı girdisi MDX'i için bir
-    // güvenlik varsayılanı. Bizim içeriğimiz kullanıcı girdisi değil;
-    // sürüm kontrollü depo içeriği ve MDX güvenlik kontrolünden geçiyor, o
-    // yüzden kapatıyoruz. blockDangerousJS varsayılan açık kalır (eval vb.
-    // hâlâ engellenir).
     options: {
       parseFrontmatter: false,
       blockJS: false,
       mdxOptions: { remarkPlugins: [remarkGfm] },
     },
   });
+  return content;
+}
+
+export default async function DersPage({ params }: DersPageProps) {
+  const { slug } = await params;
+  const lesson = getPublicLessonBySlug(slug);
+  if (!lesson) notFound();
+
+  const seviye = lesson.frontmatter.seviye;
+  const theme = SEVIYE_THEME[seviye];
+
+  // "kesif" (varsayılan) İÇİN DAVRANIŞ HİÇ DEĞİŞMEZ: tek compileMDX çağrısı,
+  // docs/04'ün 6 bölümü yazıldığı sırayla render edilir — bu dal 94 dersin
+  // bugün hepsinde çalışan, önceki koddan birebir aynı yol.
+  //
+  // "gorev" şablonu İÇİN: docs/04'ün İÇERİĞİ (başlıklar, metin, predicate
+  // bağlı bileşenler) DEĞİŞMEZ — yalnız "Dene" dilimi (görev tanımı, varsa
+  // TransferChallenge) Kanca'nın hemen ardına alınır; Ne oldu/Gerçek
+  // dünyada/Sonraki aynı sırada, görevden SONRA gelir (bkz. docs/durum-
+  // denetim.md "Faz 1" taksonomisi, madde A/B). `splitLessonBody` docs/04'ün
+  // 5 sabit başlığıyla eşleşmeyen bir gövdede (bkz. o dosyanın güvenlik ağı
+  // notu) `null` döner — bu durumda da "kesif" yoluna (bölünmemiş render)
+  // düşülür, sayfa asla çökmez.
+  const sablon = resolveLessonSablon(lesson.frontmatter.sablon);
+  const sections = sablon === "gorev" ? splitLessonBody(lesson.body) : null;
+
+  let content: ReactNode;
+
+  if (sections) {
+    const sira: LessonSectionName[] = ["Kanca", "Dene", "Ne oldu", "Gerçek dünyada", "Sonraki"];
+    const [kanca, dene, neOldu, gercekDunyada, sonraki] = await Promise.all(
+      sira.map((baslik) => compileLessonSection(sections[baslik])),
+    );
+    content = (
+      <>
+        {kanca}
+        <div className={`ders-gorev-kutusu rounded-xl border-2 ${theme.border} ${theme.surface} p-4`}>
+          <p className={`font-mono text-xs font-bold uppercase tracking-[0.14em] ${theme.accentText}`}>Önce dene</p>
+          {dene}
+        </div>
+        {neOldu}
+        {gercekDunyada}
+        {sonraki}
+      </>
+    );
+  } else {
+    content = await compileLessonSection(lesson.body);
+  }
 
   const prerequisites = getPrerequisites(lesson);
   const { previous, next } = getAdjacentLessons(lesson);
-  const seviye = lesson.frontmatter.seviye;
-  const theme = SEVIYE_THEME[seviye];
   const jsonLd = lessonJsonLd(lesson, prerequisites.map((prerequisite) => prerequisite.slug));
   const relatedTerms = getSeoAnchorTermsInText(lesson.body);
 
