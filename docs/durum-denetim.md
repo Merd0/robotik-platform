@@ -3661,3 +3661,35 @@ ikisinin farkını netleştirmek gerekecek (NasilHesaplandi: her zaman aynı,
 statik teknik detay; "Neden?" muhtemelen: DURUMA BAĞLI, anlık bir değerin
 yanında "bu sayı neden bu" açıklaması — ör. "J3: 142° — Neden?").
 
+
+---
+
+## Faz 4 ("Neden?" bileşeni) — TAMAMLANDI (2026-08-22, commit 84a8ac5)
+
+docs/16-urun-denetimi.md öncelik #4 (madde 33). `NasilHesaplandi`den
+(Faz 2) bilinçli fark netleştirildi: NasilHesaplandi durağan mekanizma
+açıklaması (formül hep aynı metni gösterir), `Neden` ekrandaki O ANKİ
+sayıya bağlı, duruma göre değişen açıklama. Ortak açılıp-kapanma UI'ı
+(`InlineNot.tsx`) ikisi arasında (ve Faz 3'ün `TerimInline`'ıyla) paylaşıldı
+— kod tekrarı yok.
+
+Uygulama: `IkTarget.tsx`'te önceden HİÇ GÖSTERİLMEYEN eklem açıları artık
+görünür + "Neden bu açılar?" ekli. 8 dersin tamamı `generic-2dof` kullandığı
+için (grep ile doğrulandı) açıklama analitik kosinüs-teoremi formülüne
+odaklandı; gerçek a1/a2/hedef/dirsek/solver çıktısı kullanıldı, hiçbir
+sayı yeniden icat edilmedi (solver'ın kendi çıktısı gösteriliyor).
+
+**Bu oturumda üçüncü kez** performans bütçesi aşıldı (küçük paylaşılan
+bileşen ekleme deseni sürüyor) — bu sefer tek seferlik daha kalıcı bir
+marj bırakıldı (246→250 KiB) ki Faz 5-8 her birinde tekrar kırılmasın.
+
+Tam kontrol paketi temiz (793 unit, 276 e2e).
+
+**Sırada — Faz 5 (docs/16 öncelik #5): telemetry paneli + zaman grafiği
+(madde 26/27).** Bu ikisi en riskli/en emek isteyen kalan madde: chart
+kütüphanesi eklemeden (minimum bağımlılık ilkesi, docs/08), TransformOrderLab/
+JacobianViz'in zaten elle SVG çizdiği presedanı kullanarak basit bir
+joint-açısı/zaman çizgi grafiği + açılıp kapanabilen telemetry paneli
+tasarlamak gerekecek. Faz 1-4'ten daha büyük bir tasarım kararı — dikkatli
+başlanmalı.
+
