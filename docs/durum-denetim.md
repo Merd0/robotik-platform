@@ -3587,3 +3587,45 @@ hesaplandı" ortak paneli.** `DlsTraceLab.tsx` ve `JacobianViz.tsx`'in
 zaten ayrı ayrı yaptığı iterasyon/residual/neden-açıklaması gösterimini
 tek, tekrar kullanılabilir bir bileşene çıkarmak.
 
+
+---
+
+## Faz 2 (ortak "nasıl hesaplandı" paneli) — TAMAMLANDI (2026-08-22, commit 2067aad)
+
+docs/16-urun-denetimi.md öncelik #2. Kod incelemesi şunu gösterdi:
+`DlsTraceLab`'ın iterasyon `trace`'i (`NumericalIkResult.trace`) başka
+HİÇBİR bileşen tarafından kullanılmıyor (grep ile doğrulandı) — yani
+DlsTraceLab ve JacobianViz arasında paylaşılabilecek ortak bir "trace veri
+yapısı" yoktu. Bu yüzden çıkarılan ortak parça bir trace-panel değil,
+genel bir **progressive-disclosure kabı** (`NasilHesaplandi.tsx`, native
+`<details>/<summary>`) oldu — docs/16 madde 4'ün ("Basit Açıklama"→
+"Teknik Detay" kademeli açılım) doğrudan karşılığı.
+
+- **JacobianViz:** var olan açıklama paragrafı artık varsayılan kapalı;
+  üstüne YENİ içerik eklendi (manipülabilite formülünün kod karşılığına
+  açık referans).
+- **DlsTraceLab:** kendi JSDoc'undaki tasarım amacı ("her iterasyonu
+  göster, gizleme") KORUNDU, dokunulmadı — bunun yerine ayrı, yeni bir
+  panelde DLS formülü + λ'nın gerçek `maxStep` kırpma davranışına sadık
+  bir açıklaması eklendi (yanlış "adım patlar" iddiası yerine doğru
+  "kırpma var, sıçramaz ama kararsız yakınsar" açıklaması — kod okunarak
+  doğrulandı).
+
+`lib/interactionManifest.ts` her iki registry girdisine yeni dosyayı
+ekledi (Quiz→QuizSorusu presedanı) — interactionHash artık bu dosya
+değişince de eskir. Performans bütçesi küçük bir payla (245→246 KiB
+brotli, "3D'siz ders") güncellendi, kök neden docs/05'teki mevcut
+ödünleşimle aynı.
+
+**Kapsam dışı bırakılan (bilinçli):** `NasilHesaplandi`'yi CspaceLab,
+FourLensTraceLab, TransformOrderLab gibi diğer labs'a da yaymak — docs/16
+madde 2'nin orijinal kapsamı yalnız DlsTraceLab+JacobianViz'di, bu
+tamamlandı. Diğer labs'a yayma değerli olabilir ama ayrı bir karar/faz;
+zorla genişletilmedi.
+
+**Sırada — Faz 3 (docs/16 öncelik #3): inline glossary (madde 38).**
+`content/sozluk.json`'daki 72 terim zaten veri olarak hazır; hedef,
+derste geçen bir terime (ör. "TCP", "Jacobian") tıklandığında kullanıcıyı
+`/sozluk` sayfasına göndermek yerine context içinde mini bir açıklama
+açmak.
+
