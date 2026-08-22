@@ -101,22 +101,23 @@ export default async function DersPage({ params }: DersPageProps) {
 
   // "kesif" (varsayılan) İÇİN DAVRANIŞ HİÇ DEĞİŞMEZ: tek compileMDX çağrısı,
   // docs/04'ün 6 bölümü yazıldığı sırayla render edilir — bu dal 94 dersin
-  // bugün hepsinde çalışan, önceki koddan birebir aynı yol.
+  // çoğunda bugün de çalışan, önceki koddan birebir aynı yol.
   //
-  // "gorev" şablonu İÇİN: docs/04'ün İÇERİĞİ (başlıklar, metin, predicate
-  // bağlı bileşenler) DEĞİŞMEZ — yalnız "Dene" dilimi (görev tanımı, varsa
-  // TransferChallenge) Kanca'nın hemen ardına alınır; Ne oldu/Gerçek
-  // dünyada/Sonraki aynı sırada, görevden SONRA gelir (bkz. docs/durum-
-  // denetim.md "Faz 1" taksonomisi, madde A/B). `splitLessonBody` docs/04'ün
-  // 5 sabit başlığıyla eşleşmeyen bir gövdede (bkz. o dosyanın güvenlik ağı
-  // notu) `null` döner — bu durumda da "kesif" yoluna (bölünmemiş render)
-  // düşülür, sayfa asla çökmez.
+  // "gorev"/"karsilastirma" şablonları İÇİN: docs/04'ün İÇERİĞİ (başlıklar,
+  // metin, predicate bağlı bileşenler) DEĞİŞMEZ — yalnız derlenmiş React
+  // node'larının render sırası/çerçevesi değişir (bkz. docs/durum-denetim.md
+  // "Faz 1" taksonomisi). `splitLessonBody` docs/04'ün 5 sabit başlığıyla
+  // eşleşmeyen bir gövdede (bkz. o dosyanın güvenlik ağı notu) `null` döner —
+  // bu durumda "kesif" yoluna (bölünmemiş render) düşülür, sayfa asla çökmez.
   const sablon = resolveLessonSablon(lesson.frontmatter.sablon);
-  const sections = sablon === "gorev" ? splitLessonBody(lesson.body) : null;
+  const sections = sablon === "gorev" || sablon === "karsilastirma" ? splitLessonBody(lesson.body) : null;
 
   let content: ReactNode;
 
-  if (sections) {
+  if (sections && sablon === "gorev") {
+    // "Dene" dilimi (görev tanımı, varsa TransferChallenge) Kanca'nın hemen
+    // ardına alınır; Ne oldu/Gerçek dünyada/Sonraki aynı sırada, görevden
+    // SONRA gelir (taksonomi madde A/B).
     const sira: LessonSectionName[] = ["Kanca", "Dene", "Ne oldu", "Gerçek dünyada", "Sonraki"];
     const [kanca, dene, neOldu, gercekDunyada, sonraki] = await Promise.all(
       sira.map((baslik) => compileLessonSection(sections[baslik])),
@@ -130,6 +131,27 @@ export default async function DersPage({ params }: DersPageProps) {
         </div>
         {neOldu}
         {gercekDunyada}
+        {sonraki}
+      </>
+    );
+  } else if (sections && sablon === "karsilastirma") {
+    // Sıra DEĞİŞMEZ (Sahne zaten PlannerRace/RobotSelectionTable ile yan
+    // yana karşılaştırma gösteriyor — taşınacak bir "görev" yok, taksonomi
+    // madde C). Yalnız "Ne oldu" — algoritmalar/adaylar arası farkın
+    // anlatıldığı bölüm — ayrı bir karşılaştırma çerçevesinde vurgulanır.
+    const sira: LessonSectionName[] = ["Kanca", "Ne oldu", "Gerçek dünyada", "Dene", "Sonraki"];
+    const [kanca, neOldu, gercekDunyada, dene, sonraki] = await Promise.all(
+      sira.map((baslik) => compileLessonSection(sections[baslik])),
+    );
+    content = (
+      <>
+        {kanca}
+        <div className={`ders-karsilastirma-kutusu rounded-xl border-2 ${theme.border} ${theme.surface} p-4`}>
+          <p className={`font-mono text-xs font-bold uppercase tracking-[0.14em] ${theme.accentText}`}>Karşılaştırma</p>
+          {neOldu}
+        </div>
+        {gercekDunyada}
+        {dene}
         {sonraki}
       </>
     );

@@ -495,14 +495,15 @@ select {
 }
 
 /*
-  "gorev" şablonu (bkz. app/ders/[slug]/page.tsx, lib/lessonSections.ts):
-  taşınan "Dene" dilimi bir çerçeve kutusunun içinde, yani .ders-icerik'in
-  torunu (doğrudan çocuğu değil) oluyor -- yukarıdaki `>` seçici onu
-  kapsamaz. Aynı genişlik sınırını burada ayrıca tanımlamak, kutunun içeriğinin
-  sayfanın geri kalanından daha geniş görünmesini (tutarsız bir okuma
+  "gorev"/"karsilastirma" şablonları (bkz. app/ders/[slug]/page.tsx,
+  lib/lessonSections.ts): vurgulanan dilim bir çerçeve kutusunun içinde,
+  yani .ders-icerik'in torunu (doğrudan çocuğu değil) oluyor -- yukarıdaki
+  `>` seçici onu kapsamaz. Aynı genişlik sınırını burada ayrıca tanımlamak,
+  kutunun içeriğinin sayfanın geri kalanından daha geniş görünmesini (tutarsız bir okuma
   genişliği) önler.
 */
-.ders-gorev-kutusu > :is(p, h2, h3, ul, ol, blockquote, pre, .ders-tablo-scroll) {
+.ders-gorev-kutusu > :is(p, h2, h3, ul, ol, blockquote, pre, .ders-tablo-scroll),
+.ders-karsilastirma-kutusu > :is(p, h2, h3, ul, ol, blockquote, pre, .ders-tablo-scroll) {
   max-width: 46rem;
 }
 

@@ -192,6 +192,24 @@ for (const slug of [
   });
 }
 
+// "karsilastirma" şablonu (taksonomi madde C — çoklu algoritma PlannerRace
+// dersleri): SIRA DEĞİŞMEZ (docs/04'ün 5 başlığı aynı sırada), yalnız
+// "Ne oldu" ayrı bir çerçevede vurgulanır. a-universite-robot-mimarileri
+// (RobotSelectionTable) BİLİNÇLİ OLARAK dışarıda: docs/04 dışı ekstra
+// başlığı var, splitLessonBody null döner, "kesif"e düşer.
+for (const slug of [
+  "c-ortaokul-en-kisa-yol-her-zaman-en-iyi-mi",
+  "c-universite-optimallik-hiz-odunlesimi",
+  "c-universite-rrt-rrt-star-prm",
+]) {
+  test(`karsilastirma şablonu (${slug}): başlık sırası değişmez, Ne oldu vurgulanır`, async ({ page }) => {
+    await page.goto(`/ders/${slug}`);
+    const baslikSirasi = await page.locator(".ders-icerik h2").allTextContents();
+    expect(baslikSirasi).toEqual(["Kanca", "Ne oldu", "Gerçek dünyada", "Dene", "Sonraki"]);
+    await expect(page.locator(".ders-karsilastirma-kutusu").getByRole("heading", { name: "Ne oldu" })).toBeVisible();
+  });
+}
+
 test("sözlük ↔ ders çift yönlü bağlantı: karıştırılan terim ve derse geri bağlantı çalışır", async ({ page }) => {
   // Sözlük → sözlük: "sıkça karıştırılır" notu gerçek bir çift yönlü bağa açılır.
   await page.goto("/sozluk/ters-kinematik");
