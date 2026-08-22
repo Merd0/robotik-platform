@@ -3733,3 +3733,36 @@ gerekli olduğu kararı insan onayı bekliyor. Loop Faz 7'ye (complexity
 layer) geçiyor; Faz 7-8 bitince veya başka bir engelle karşılaşırsa
 duracak, Faz 6 açık madde olarak Mert'e raporlanacak.
 
+
+---
+
+## Faz 7 (complexity layer) — DEĞERLENDİRİLDİ, insan kararı gerekiyor (2026-08-22)
+
+docs/16-urun-denetimi.md öncelik #7 (madde 10/5, "en riskli, son sırada"
+diye zaten işaretlenmişti). Faz 2-5'te kurulan `NasilHesaplandi`/`Neden`
+progressive-disclosure birincilleri, "complexity layer" fikrinin YEREL
+(bileşen-başına, kullanıcı isterse açar) bir versiyonunu zaten kısmen
+karşılıyor — bu iyi haber.
+
+Ama madde 10'un asıl istediği (Learn Mode ↔ Engineering Mode arası GLOBAL,
+kalıcı bir geçiş; tüm platformda tutarlı) daha büyük bir mimari karar:
+
+- Global bir "mod" state'i nerede tutulur (localStorage, URL, her ikisi)?
+- Mevcut seviye ekseniyle (ortaokul/lise/üniversite, zaten var olan ayrı
+  bir boyut) nasıl etkileşir — ikisi çakışır mı, birbirini mi tamamlar?
+- Varsayılan ne olmalı (yeni kullanıcı hangi modda başlar)?
+- Kaç bileşen dokunulmadan bırakılır, kaç bileşen bu global state'i
+  OKUMASI gerekir (potansiyel olarak `components/interactive/` altındaki
+  20'ye yakın dosyanın çoğu)?
+
+Bunların her biri **kök CLAUDE.md'nin 4. "dur ve sor" koşuluna** giriyor:
+"iki seçenek de makul ve sonuçları gerçekten farklıysa." Bu, Faz 1-6'daki
+kararlardan (ör. hangi 3 dersin karşılaştırma şablonuna uyduğu, hangi lab'a
+Neden ekleneceği) NİTELİKSEL olarak farklı — oradaki kararların hepsi TEK
+bir makul yol gösteriyordu, kanıtla doğrulanabiliyordu. Burada gerçekten
+birden fazla makul mimari var ve sonuçları (kaç bileşenin değişeceği, kaç
+saatlik iş olacağı) gerçekten farklı.
+
+**Karar: bu faz otonom uygulanmıyor, Mert'in tercih edeceği yaklaşımı
+bekliyor.** Loop Faz 8'e geçiyor.
+
