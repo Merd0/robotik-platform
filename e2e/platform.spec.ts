@@ -153,6 +153,24 @@ test("seviye, hat ve yayınlı ders rotası erişilebilir", async ({ page }) => 
   await expect(page.locator("main h1")).toBeVisible();
 });
 
+test("gorev şablonu: Dene bölümü Kanca'nın hemen ardına taşınır, içerik kaybolmaz (Faz 1 pilot)", async ({ page }) => {
+  // docs/durum-denetim.md "Faz 1" taksonomisi — b-ortaokul-eklemleri-oynat
+  // frontmatter'ında sablon: gorev taşıyan ilk (pilot) ders.
+  await page.goto("/ders/b-ortaokul-eklemleri-oynat");
+  const baslikSirasi = await page.locator(".ders-icerik h2").allTextContents();
+  expect(baslikSirasi).toEqual(["Kanca", "Dene", "Ne oldu", "Gerçek dünyada", "Sonraki"]);
+
+  // "Dene" (görev) kutusu Kanca ile Ne oldu arasında, kendi çerçevesinde.
+  const goreOnceKutusu = page.locator(".ders-gorev-kutusu");
+  await expect(goreOnceKutusu).toBeVisible();
+  await expect(goreOnceKutusu.getByRole("heading", { name: "Dene" })).toBeVisible();
+
+  // Taşınan içerik kaybolmadı: TransferChallenge (görev) hâlâ render ediliyor.
+  await expect(page.getByText("Seradaki hedef sağ üstteyken")).toBeVisible();
+  // Kanca'daki sahne (JointSliders) hâlâ orada, kutunun DIŞINDA/ÖNÜNDE.
+  await expect(page.getByText("Seradaki bir hasat kolunun ucunu")).toBeVisible();
+});
+
 test("sözlük ↔ ders çift yönlü bağlantı: karıştırılan terim ve derse geri bağlantı çalışır", async ({ page }) => {
   // Sözlük → sözlük: "sıkça karıştırılır" notu gerçek bir çift yönlü bağa açılır.
   await page.goto("/sozluk/ters-kinematik");
@@ -1333,7 +1351,7 @@ test("CspaceLab fiziksel sınıf çiftini kanıtlar ve state'i paylaşır", asyn
 });
 
 test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
-  // On sekiz ayrı sayfada tam Axe taraması, tam paralel CI yükünde varsayılan
+  // On dokuz ayrı sayfada tam Axe taraması, tam paralel CI yükünde varsayılan
   // 30 saniyeyi aşabiliyor; uygulama bekleme sınırlarını değil bu denetimi uzat.
   test.setTimeout(60_000);
   const denetlenen = [
@@ -1346,6 +1364,7 @@ test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
     "/ders/a-universite-homojen-donusum",
     "/ders/b-lise-ileri-kinematik",
     "/ders/b-universite-jacobian",
+    "/ders/b-ortaokul-eklemleri-oynat",
     "/laboratuvar/robot-hucresi",
     "/kod-akademisi",
     "/kod-akademisi/temel/koda-temel-ilk-calistirma",
