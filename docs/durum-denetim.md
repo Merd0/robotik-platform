@@ -3427,3 +3427,27 @@ Bu taksonomi onay için sunuldu. Onay/geri bildirim sonrası: önce F
 + testler → sonra en yüksek kanıtlı grup olan A/B (Görev, 8 ders,
 zaten `TransferChallenge` kullanıyor) pilot olarak uygulanacak.
 
+
+### Faz 1 — adım 1 tamamlandı (2026-08-22, commit d5414ef)
+
+`sablon` frontmatter altyapısı eklendi ve `main`'e merge edildi (tam kontrol
+paketi temiz — yukarıdaki taksonomi analizinin hemen altındaki plana göre).
+Detay commit mesajında.
+
+**Bekleyen onay (governance — docs/09 §7 gereği otomatik merge edilemez):**
+`docs/02-mimari.md` Bölüm 4'teki Review Receipt v2 tablosu, `presentationHash`
+kapsadığı alanlar satırını hâlâ "id, sure, sira, durum, legacy inceleme
+alanları" olarak listeliyor — kod artık `sablon`'u da bu kapsama ekledi
+ama BU dosyaya (docs/02, bir "kural dokümanı") dokunmadım, çünkü docs/09 §7
+"docs/ altındaki kural dokümanlarının kendisi" değiştiğinde otomatik merge
+istisnasını tetikliyor. Önerilen tek satırlık düzeltme: o satırı "id, sure,
+sira, durum, sablon, legacy inceleme alanları" yap. Küçük, geri alınabilir,
+ama kural gereği elle onay bekliyor — Mert'in ilk fırsatta bakması yeterli.
+
+Sıradaki adım (loop devam ederken): `app/ders/[slug]/page.tsx`'e `sablon`
+değerine göre render dallanması eklemek + taksonomideki "A/B: Görev"
+grubundaki 8 derse (`TransferChallenge` kullananlar) `sablon: gorev`
+atamak — pilot. Bu adım MDX gövdesini DEĞİŞTİRMEZ (docs/04'ün 6 bölümü
+aynı kalır), yalnız frontmatter'a `sablon: gorev` satırı eklenir ve
+render sırası değişir.
+
