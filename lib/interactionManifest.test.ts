@@ -222,6 +222,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["PredictionPrompt"])).not.toThrow();
   });
 
+  it("Terim bileşeni, paylaşılan TerimInline'ı ve sözlük veri erişimini interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.Terim).toEqual({
+      componentFile: "components/interactive/Terim.tsx",
+      engineFiles: ["components/interactive/TerimInline.tsx", "lib/sozluk.ts"],
+    });
+    expect(() => computeInteractionHash(["Terim"])).not.toThrow();
+  });
+
   it("TransferChallenge bileşeni ile karıştırma/challengeRevision motorunu interactionHash'e bağlar", () => {
     expect(LAB_DEPENDENCY_REGISTRY.TransferChallenge).toEqual({
       componentFile: "components/interactive/TransferChallenge.tsx",

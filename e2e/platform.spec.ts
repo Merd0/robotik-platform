@@ -210,6 +210,33 @@ for (const slug of [
   });
 }
 
+test("inline sözlük: ders içinde terime tıklayınca tanım context içinde açılır, sözlüğe gitmeyi zorlamaz (Faz 3)", async ({ page }) => {
+  await page.goto("/ders/a-lise-calisma-uzayi");
+  const terimDugmesi = page.getByRole("button", { name: "TCP", exact: true });
+  await expect(terimDugmesi).toBeVisible();
+  await expect(terimDugmesi).toHaveAttribute("aria-expanded", "false");
+
+  const not = page.getByRole("note");
+  await expect(not).toBeHidden();
+
+  await terimDugmesi.click();
+  await expect(terimDugmesi).toHaveAttribute("aria-expanded", "true");
+  await expect(not).toBeVisible();
+  await expect(not).toContainText("alet merkez noktası");
+  await expect(not).toContainText("tool center point");
+  // Sayfadan hiç ayrılmadı — mevcut URL hâlâ ders sayfası.
+  await expect(page).toHaveURL(/\/ders\/a-lise-calisma-uzayi$/);
+
+  // İsteyen kullanıcı için tam sözlük sayfasına bağlantı da var, zorunlu değil.
+  const sozlukteAc = not.getByRole("link", { name: "Sözlükte aç" });
+  await expect(sozlukteAc).toBeVisible();
+
+  // Tekrar tıklayınca kapanır.
+  await terimDugmesi.click();
+  await expect(terimDugmesi).toHaveAttribute("aria-expanded", "false");
+  await expect(not).toBeHidden();
+});
+
 test("sözlük ↔ ders çift yönlü bağlantı: karıştırılan terim ve derse geri bağlantı çalışır", async ({ page }) => {
   // Sözlük → sözlük: "sıkça karıştırılır" notu gerçek bir çift yönlü bağa açılır.
   await page.goto("/sozluk/ters-kinematik");
@@ -1415,7 +1442,7 @@ test("CspaceLab fiziksel sınıf çiftini kanıtlar ve state'i paylaşır", asyn
 });
 
 test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
-  // On dokuz ayrı sayfada tam Axe taraması, tam paralel CI yükünde varsayılan
+  // Yirmi ayrı sayfada tam Axe taraması, tam paralel CI yükünde varsayılan
   // 30 saniyeyi aşabiliyor; uygulama bekleme sınırlarını değil bu denetimi uzat.
   test.setTimeout(60_000);
   const denetlenen = [
@@ -1429,6 +1456,7 @@ test("ana sayfa ve ders kritik WCAG ihlali üretmez", async ({ page }) => {
     "/ders/b-lise-ileri-kinematik",
     "/ders/b-universite-jacobian",
     "/ders/b-ortaokul-eklemleri-oynat",
+    "/ders/a-lise-calisma-uzayi",
     "/laboratuvar/robot-hucresi",
     "/kod-akademisi",
     "/kod-akademisi/temel/koda-temel-ilk-calistirma",

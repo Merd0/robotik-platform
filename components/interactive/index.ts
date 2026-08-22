@@ -17,6 +17,7 @@ import { DlsTraceLab } from "./DlsTraceLab";
 import { CspaceLab } from "./CspaceLab";
 import { RobotSelectionTable } from "./RobotSelectionTable";
 import { FourLensTraceLab } from "./FourLensTraceLab";
+import { Terim } from "./Terim";
 import { AccessiblePre } from "@/components/lesson/AccessiblePre";
 import { AccessibleTable } from "@/components/lesson/AccessibleTable";
 import type { IZINLI_BILESEN_ADLARI } from "@/lib/izinliBilesenler";
@@ -52,6 +53,7 @@ const interactiveComponents = {
   CspaceLab,
   RobotSelectionTable,
   FourLensTraceLab,
+  Terim,
   // `satisfies`: anahtarların izinli liste ile birebir aynı olmasını derleme
   // zamanında zorlar, ama değer tiplerini geniştetmez (compileMDX bileşen
   // tiplerini görmeye devam eder).

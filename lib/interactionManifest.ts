@@ -127,6 +127,10 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
     componentFile: "components/interactive/FourLensTraceLab.tsx",
     engineFiles: ["lib/robotics/fourLensTrace.ts"],
   },
+  Terim: {
+    componentFile: "components/interactive/Terim.tsx",
+    engineFiles: ["components/interactive/TerimInline.tsx", "lib/sozluk.ts"],
+  },
   Quiz: {
     componentFile: "components/interactive/Quiz.tsx",
     engineFiles: ["components/interactive/QuizSorusu.tsx", "lib/quiz.ts"],
