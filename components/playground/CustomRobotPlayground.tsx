@@ -27,6 +27,7 @@ import {
   CUSTOM_ROBOT_MAX_WAYPOINTS,
   planJointTrajectory,
   sampleJointTrajectory,
+  sampleTrajectoryOverTime,
   sampleTrajectoryTcpPath,
   type AdaptiveMotionCaptureState,
   type JointTrajectory,
@@ -34,6 +35,7 @@ import {
 } from "@/lib/robotics/customRobotMotion";
 import { decodeLabState, encodeLabState, type CustomRobotLabState } from "@/lib/labState";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
+import { JointTimeChart } from "@/components/playground/JointTimeChart";
 
 const STORAGE_KEY = "robotik-platform:custom-robot:v1";
 const MAX_TRACE_POINTS = 160;
@@ -1183,6 +1185,13 @@ export function CustomRobotPlayground() {
                     <p className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{trajectoryPlan?.ok ? trajectoryPlan.trajectory.checkedSamples : "—"}</strong>ara kontrol</p>
                     <p className="bg-site-surface p-3"><strong className="block text-base text-site-ink">{trajectoryPlan?.ok ? `${round(trajectoryPlan.trajectory.tcpTravelMeters, 2)} m` : "—"}</strong>TCP yolu</p>
                   </div>
+
+                  {trajectoryPlan?.ok && (
+                    <div data-joint-time-chart className="rounded-xl border border-site-border bg-site-surface p-3">
+                      <p className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-site-muted">Eklem açısı / zaman</p>
+                      <JointTimeChart samples={sampleTrajectoryOverTime(trajectoryPlan.trajectory)} className="mt-1 text-site-ink" />
+                    </div>
+                  )}
 
                   <button type="button" onClick={playProgram} disabled={!trajectoryPlan?.ok || Boolean(playback)} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-site-strong px-4 py-3 text-sm font-bold text-site-on-strong hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45">
                     {playback ? "Program oynatılıyor…" : "Programı oynat"}

@@ -387,6 +387,27 @@ export function sampleJointTrajectory(trajectory: JointTrajectory, elapsedSecond
   return interpolateAngles(segment.startAngles, segment.endAngles, smoothstep(localTime));
 }
 
+export interface JointTimeSample {
+  tSeconds: number;
+  angles: number[];
+}
+
+/**
+ * docs/16-urun-denetimi.md madde 27 (zaman grafiği) için: `sampleJointTrajectory`'yi
+ * eşit aralıklarla çağırıp eklem açısı/zaman noktaları üretir — `sampleTrajectoryTcpPath`
+ * ile birebir aynı örnekleme deseni, farklı çıktı (TCP konumu yerine tüm eklem açıları).
+ * Grafik burada YENİ bir hesaplama icat etmiyor; zaten var olan, test edilmiş kübik
+ * profili görselleştirmek için örnekliyor — "gerçekte hesaplamadığımızı hesaplıyormuş
+ * gibi göstermeyelim" ilkesi (docs/16 madde 52) burada da geçerli.
+ */
+export function sampleTrajectoryOverTime(trajectory: JointTrajectory, samples = 40): JointTimeSample[] {
+  const count = Math.max(2, Math.min(240, Math.round(samples)));
+  return Array.from({ length: count }, (_, index) => {
+    const tSeconds = (trajectory.totalDurationSeconds * index) / (count - 1);
+    return { tSeconds, angles: sampleJointTrajectory(trajectory, tSeconds) };
+  });
+}
+
 export function sampleTrajectoryTcpPath(robot: RobotSpec, trajectory: JointTrajectory, samples = 80) {
   const count = Math.max(2, Math.min(240, Math.round(samples)));
   return Array.from({ length: count }, (_, index) => {

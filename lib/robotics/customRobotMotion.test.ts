@@ -7,6 +7,7 @@ import {
   captureAdaptiveMotionSample,
   planJointTrajectory,
   sampleJointTrajectory,
+  sampleTrajectoryOverTime,
 } from "./customRobotMotion";
 
 function planarRobot(linkCount: number): RobotSpec {
@@ -65,6 +66,39 @@ describe("öğretilmiş robot hareketinin fiziksel ön doğrulaması", () => {
       expect.closeTo(Math.PI / 4, 8),
       expect.closeTo(Math.PI / 8, 8),
     ]);
+  });
+
+  it("sampleTrajectoryOverTime — zaman grafiği için eşit aralıklı örnekler üretir (madde 27)", () => {
+    const robot = planarRobot(2);
+    const result = planJointTrajectory(robot, [[0, 0], [Math.PI / 2, Math.PI / 4]], 0.5);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const samples = sampleTrajectoryOverTime(result.trajectory, 10);
+    expect(samples).toHaveLength(10);
+    // İlk örnek t=0'da başlangıç açılarıyla, son örnek t=totalDuration'da bitiş açılarıyla eşleşir —
+    // sampleJointTrajectory'nin kendisiyle aynı garanti, yeniden icat edilmiş bir hesap değil.
+    expect(samples[0].tSeconds).toBe(0);
+    expect(samples[0].angles).toEqual([0, 0]);
+    expect(samples[9].tSeconds).toBeCloseTo(result.trajectory.totalDurationSeconds, 8);
+    expect(samples[9].angles).toEqual([
+      expect.closeTo(Math.PI / 2, 8),
+      expect.closeTo(Math.PI / 4, 8),
+    ]);
+    // Zaman kesinlikle artan (grafik x eksenine doğrudan verilebilir).
+    for (let i = 1; i < samples.length; i++) {
+      expect(samples[i].tSeconds).toBeGreaterThan(samples[i - 1].tSeconds);
+    }
+  });
+
+  it("sampleTrajectoryOverTime — örnek sayısı 2 ile 240 arasına kırpılır", () => {
+    const robot = planarRobot(2);
+    const result = planJointTrajectory(robot, [[0, 0], [Math.PI / 2, Math.PI / 4]], 0.5);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(sampleTrajectoryOverTime(result.trajectory, 0)).toHaveLength(2);
+    expect(sampleTrajectoryOverTime(result.trajectory, 1000)).toHaveLength(240);
   });
 
   it("limit dışı veya öz-çakışmalı öğretilmiş pozu oynatmaya hazırlamaz", () => {
