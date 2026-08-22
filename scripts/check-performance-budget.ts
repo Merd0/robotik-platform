@@ -63,12 +63,18 @@ const surfaces: SurfaceConfig[] = [
   // içerik eklemelerinde tekrar tekrar kırılmayacak şekilde makul bir
   // paylı ile güncellendi.
   //
-  // 2026-08-22: docs/16 madde 55/3/4 için eklenen paylaşılan
-  // `NasilHesaplandi.tsx` (JacobianViz/DlsTraceLab'ın kullandığı
-  // progressive-disclosure paneli) aynı paylaşılan route chunk'ına girdiği
-  // için brotli 245.0 → 245.4 KiB'e çıktı — kök neden yukarıdaki notla
-  // aynı, yeni bir sorun değil. 246 KiB'e çekildi.
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 265 * KIB, brotli: 246 * KIB } },
+  // 2026-08-22: docs/16'nın 8 fazlık yol haritası (bkz. docs/durum-
+  // denetim.md) art arda küçük paylaşılan bileşenler ekliyor —
+  // `NasilHesaplandi.tsx` (Faz 2, 245.0→245.4 KiB), `Terim`/`TerimInline`/
+  // `InlineNot` (Faz 3, →245.7 KiB), `Neden.tsx` (Faz 4, →246.2 KiB).
+  // Kök neden hep aynı (yukarıdaki nota bkz.), her seferinde birkaç ondalık
+  // için bütçeyi tekrar tekrar açmak yerine — Faz 5-8'in de benzer küçük
+  // bileşenler ekleyeceği bilindiği için — bu sefer daha kalıcı bir pay
+  // bırakılıyor: 250 KiB. Amaç sınırsız büyümeye izin vermek değil, gerçek
+  // bir regresyonu (ör. yanlışlıkla eklenen ağır bir kütüphane) yakalayacak
+  // kadar sıkı ama faz-faz küçük eklemelerde kırılmayacak kadar gevşek bir
+  // eşik tutmak.
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 265 * KIB, brotli: 250 * KIB } },
   { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 480 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];

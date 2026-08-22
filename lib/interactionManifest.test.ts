@@ -101,6 +101,19 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["PlannerRace"])).not.toThrow();
   });
 
+  it("IkTarget bileşeni, paylaşılan Neden/InlineNot panellerini ve IK motorlarını interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.IkTarget).toEqual({
+      componentFile: "components/interactive/IkTarget.tsx",
+      engineFiles: [
+        "components/interactive/Neden.tsx",
+        "components/interactive/InlineNot.tsx",
+        "lib/robotics/ikSolver.ts",
+        "lib/robotics/kinematics.ts",
+      ],
+    });
+    expect(() => computeInteractionHash(["IkTarget"], ["generic-2dof"])).not.toThrow();
+  });
+
   it("CodeRunner motor, Pyodide worker ve çalışma limitlerini interactionHash'e bağlar", () => {
     expect(LAB_DEPENDENCY_REGISTRY.CodeRunner).toMatchObject({
       componentFile: "components/interactive/CodeRunner.tsx",
@@ -222,10 +235,14 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
     expect(() => computeInteractionHash(["PredictionPrompt"])).not.toThrow();
   });
 
-  it("Terim bileşeni, paylaşılan TerimInline'ı ve sözlük veri erişimini interactionHash'e bağlar", () => {
+  it("Terim bileşeni, paylaşılan TerimInline/InlineNot panellerini ve sözlük veri erişimini interactionHash'e bağlar", () => {
     expect(LAB_DEPENDENCY_REGISTRY.Terim).toEqual({
       componentFile: "components/interactive/Terim.tsx",
-      engineFiles: ["components/interactive/TerimInline.tsx", "lib/sozluk.ts"],
+      engineFiles: [
+        "components/interactive/TerimInline.tsx",
+        "components/interactive/InlineNot.tsx",
+        "lib/sozluk.ts",
+      ],
     });
     expect(() => computeInteractionHash(["Terim"])).not.toThrow();
   });

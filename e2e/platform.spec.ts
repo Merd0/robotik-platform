@@ -1324,6 +1324,26 @@ test("iki eklemli kaydırıcı deneyi klavye ve pointer commit'iyle geçilebilir
   )).toBe(true);
 });
 
+test("IkTarget eklem açılarını gösterir, \"Neden?\" gerçek sayılarla dolu bir açıklama açar (Faz 4)", async ({ page }) => {
+  await page.goto("/ders/b-ortaokul-erisemedigi-noktalar");
+  // Faz 4 öncesi bu değer hiç gösterilmiyordu — yalnız uç nokta/çözücü metadatası vardı.
+  await expect(page.getByText(/Eklem açıları: θ1=.+° · θ2=.+°/)).toBeVisible();
+
+  const nedenDugmesi = page.getByRole("button", { name: "Neden bu açılar?" });
+  await expect(nedenDugmesi).toHaveAttribute("aria-expanded", "false");
+  const not = page.getByRole("note");
+  await expect(not).toBeHidden();
+
+  await nedenDugmesi.click();
+  await expect(nedenDugmesi).toHaveAttribute("aria-expanded", "true");
+  await expect(not).toBeVisible();
+  // Uydurma metin değil — gerçek bağlantı uzunlukları ve dirsek seçimiyle dolu.
+  await expect(not).toContainText("a1 =");
+  await expect(not).toContainText("a2 =");
+  await expect(not).toContainText("dirsek");
+  await expect(not).toContainText("inverseKinematicsAnalytical2Dof");
+});
+
 test("dirsek değiştirme deneyi iki gerçek çözülebilir duruşla geçilebilir (Sprint 2 doğruluk düzeltmesi)", async ({ page }) => {
   await page.goto("/ders/b-ortaokul-birden-fazla-yol");
   const toggle = page.getByRole("button", { name: /^Dirsek:/ });

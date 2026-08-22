@@ -63,7 +63,12 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
   },
   IkTarget: {
     componentFile: "components/interactive/IkTarget.tsx",
-    engineFiles: ["lib/robotics/ikSolver.ts", "lib/robotics/kinematics.ts"],
+    engineFiles: [
+      "components/interactive/Neden.tsx",
+      "components/interactive/InlineNot.tsx",
+      "lib/robotics/ikSolver.ts",
+      "lib/robotics/kinematics.ts",
+    ],
   },
   CodeRunner: {
     componentFile: "components/interactive/CodeRunner.tsx",
@@ -129,7 +134,11 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
   },
   Terim: {
     componentFile: "components/interactive/Terim.tsx",
-    engineFiles: ["components/interactive/TerimInline.tsx", "lib/sozluk.ts"],
+    engineFiles: [
+      "components/interactive/TerimInline.tsx",
+      "components/interactive/InlineNot.tsx",
+      "lib/sozluk.ts",
+    ],
   },
   Quiz: {
     componentFile: "components/interactive/Quiz.tsx",

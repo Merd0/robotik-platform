@@ -19,6 +19,7 @@ import { getRobotById } from "@/lib/robotics/robots";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SCENE_PALETTES } from "@/lib/theme";
+import { Neden } from "@/components/interactive/Neden";
 
 interface IkTargetProps {
   robot: string;
@@ -27,6 +28,7 @@ interface IkTargetProps {
 }
 
 const round = (value: number) => Math.round(value * 1000) / 1000;
+const toDegrees = (value: number) => round((value * 180) / Math.PI);
 
 /** Ders içine gömülen etkileşimli sahne: hedefi sürükle, robot ters kinematikle uzansın. */
 export function IkTarget({ robot: robotId, solver = "auto", pilot }: IkTargetProps) {
@@ -241,6 +243,32 @@ export function IkTarget({ robot: robotId, solver = "auto", pilot }: IkTargetPro
       <p className="text-xs text-lise-ink/70">
         Uç nokta: ({round(endEffector.x)}, {round(endEffector.y)}) · Çözücü: {solution.solver === "dls" ? "DLS sayısal" : "analitik"} · {solution.iterations} iterasyon · hata {Number.isFinite(solution.residual) ? round(solution.residual) : "—"} m
       </p>
+
+      {reachable && (
+        <p className="text-xs text-lise-ink/70">
+          Eklem açıları: {angles.map((angle, index) => `θ${index + 1}=${toDegrees(angle)}°`).join(" · ")}{" "}
+          <Neden etiket="Neden bu açılar?">
+            {solution.solver === "analytical" && robot.joints.length === 2 ? (
+              <>
+                Bu robotta iki bağlantı var: a1 = {round(robot.joints[0].dhParams.a)} m, a2 ={" "}
+                {round(robot.joints[1].dhParams.a)} m. Hedefin merkeze uzaklığının karesi r² = x² + y² ={" "}
+                {round(target.x * target.x + target.y * target.y)}. Kosinüs teoremiyle θ2 için iki çözüm
+                var (dirsek yukarı/aşağı); şu an dirsek &ldquo;{elbow === "up" ? "yukarı" : "aşağı"}&rdquo;{" "}
+                seçili olduğu için θ2 = {toDegrees(angles[1])}° bulundu, θ1 = {toDegrees(angles[0])}° bu
+                değerden geometriyle çıktı. Kaynak kodu:{" "}
+                <code>lib/robotics/kinematics.ts</code> içindeki{" "}
+                <code>inverseKinematicsAnalytical2Dof</code>.
+              </>
+            ) : (
+              <>
+                Bu robotta kapalı-form (analitik) formül yok; sayısal çözücü {solution.iterations} iterasyonda
+                hedefe {Number.isFinite(solution.residual) ? round(solution.residual) : "—"} m hatayla
+                yakınsadı.
+              </>
+            )}
+          </Neden>
+        </p>
+      )}
 
       {challengeActive && !challengeComplete && (
         <p className="rounded-lg border border-lise-ink/10 bg-lise-bg p-3 text-sm text-lise-ink" role="status">
