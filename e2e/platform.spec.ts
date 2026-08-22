@@ -171,6 +171,27 @@ test("gorev şablonu: Dene bölümü Kanca'nın hemen ardına taşınır, içeri
   await expect(page.getByText("Seradaki bir hasat kolunun ucunu")).toBeVisible();
 });
 
+// Faz 1'de "gorev" olarak işaretlenmiş TÜM derslerde (b-lise-ileri-kinematik
+// HARİÇ — o dersin docs/04 dışı ekstra başlıkları var, splitLessonBody
+// bilinçli olarak null döner ve "kesif"e düşer; bkz. docs/durum-denetim.md
+// "Faz 1" notu) aynı yapısal değişmez geçerli: reorder her derste tutarlı.
+for (const slug of [
+  "b-ortaokul-eklemleri-oynat",
+  "b-ortaokul-birden-fazla-yol",
+  "b-lise-geometrik-ters-kinematik",
+  "b-universite-jacobian",
+  "b-universite-ters-kinematik",
+  "c-universite-algoritma-karsilastirma-deneyi",
+  "c-universite-c-space",
+]) {
+  test(`gorev şablonu (${slug}): başlık sırası Kanca→Dene→Ne oldu→Gerçek dünyada→Sonraki`, async ({ page }) => {
+    await page.goto(`/ders/${slug}`);
+    const baslikSirasi = await page.locator(".ders-icerik h2").allTextContents();
+    expect(baslikSirasi).toEqual(["Kanca", "Dene", "Ne oldu", "Gerçek dünyada", "Sonraki"]);
+    await expect(page.locator(".ders-gorev-kutusu").getByRole("heading", { name: "Dene" })).toBeVisible();
+  });
+}
+
 test("sözlük ↔ ders çift yönlü bağlantı: karıştırılan terim ve derse geri bağlantı çalışır", async ({ page }) => {
   // Sözlük → sözlük: "sıkça karıştırılır" notu gerçek bir çift yönlü bağa açılır.
   await page.goto("/sozluk/ters-kinematik");
