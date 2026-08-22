@@ -67,6 +67,7 @@ export const PRESENTATION_FIELDS = [
   "durum",
   "incelendi_tarafindan",
   "incelendi_tarih",
+  "sablon",
 ] as const satisfies readonly (keyof DersFrontmatter)[];
 
 const PARTITIONED_FIELDS = new Set<string>([...SOURCE_FIELDS, ...TEACHING_FIELDS, ...PRESENTATION_FIELDS]);

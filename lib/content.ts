@@ -7,6 +7,23 @@ const CONTENT_DIR = path.join(process.cwd(), "content");
 export type Seviye = "ortaokul" | "lise" | "universite";
 export type DersDurum = "taslak" | "inceleme" | "yayinda";
 
+/**
+ * Ders sayfasının SUNUM şablonu — docs/04'teki 6 bölümlük içerik (Kanca/
+ * Sahne/Ne oldu/Gerçek dünyada/Dene/Sonraki) hiçbir şablonda değişmez;
+ * değişen yalnız bu bölümlerin render sırası/çerçevesi. bkz. docs/16
+ * madde 7, docs/durum-denetim.md "Faz 1" taksonomi analizi.
+ *
+ * - "kesif": varsayılan, mevcut doğrusal sıra (tek sahne, tahmin/görev yok).
+ * - "gorev": Dene'deki görev tanımı Kanca'nın hemen ardına alınır (tahmin
+ *   ve/veya meydan okuma önce, değerlendirme sahneden sonra).
+ * - "karsilastirma": Sahne çoklu/yan yana, Ne oldu açık karşılaştırma
+ *   çerçevesinde yazılır.
+ * - "kod-lab": Kanca bir kodlama görevi, Ne oldu kodun/robotun izini sürer.
+ * - "referans": Sahne yok; metin-temelli karşılaştırma yerleşimi.
+ */
+export type LessonSablon = "kesif" | "gorev" | "karsilastirma" | "kod-lab" | "referans";
+export const DEFAULT_LESSON_SABLON: LessonSablon = "kesif";
+
 export type SourceKind = "official-doc" | "software-doc" | "book" | "paper" | "standard" | "dataset" | "other";
 
 export interface SourceRef {
@@ -58,6 +75,15 @@ export interface DersFrontmatter {
   durum: DersDurum;
   incelendi_tarafindan?: string;
   incelendi_tarih?: string;
+  /** Belirtilmezse DEFAULT_LESSON_SABLON ("kesif") varsayılır. */
+  sablon?: LessonSablon;
+}
+
+export const LESSON_SABLON_DEGERLERI: readonly LessonSablon[] = ["kesif", "gorev", "karsilastirma", "kod-lab", "referans"];
+
+/** Frontmatter'daki `sablon` her zaman geçerli bir değere düşer — bilinmeyen/eksik değer sessizce "kesif"e döner. */
+export function resolveLessonSablon(sablon: string | undefined): LessonSablon {
+  return LESSON_SABLON_DEGERLERI.includes(sablon as LessonSablon) ? (sablon as LessonSablon) : DEFAULT_LESSON_SABLON;
 }
 
 export interface Lesson {

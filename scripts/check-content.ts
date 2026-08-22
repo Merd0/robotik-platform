@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
 import type { DersFrontmatter } from "../lib/content";
+import { LESSON_SABLON_DEGERLERI } from "../lib/content";
 import { findUnpartitionedFrontmatterKeys } from "../lib/lessonArtifact";
 import { reviewDebtBaseline } from "../lib/reviewDebt";
 
@@ -10,6 +11,7 @@ const LEGACY_REVIEW_BASELINE = reviewDebtBaseline;
 const REQUIRED_FIELDS = ["id", "baslik", "hat", "seviye", "sure"] as const;
 const SOURCE_KINDS = new Set(["official-doc", "software-doc", "book", "paper", "standard", "dataset", "other"]);
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const SABLON_DEGERLERI = new Set<string>(LESSON_SABLON_DEGERLERI);
 
 function findMdxFiles(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
@@ -57,6 +59,16 @@ function checkFile(filePath: string): string[] {
         errors.push(`${relativePath}: software-doc kaynağında version zorunlu.`);
       }
     });
+  }
+
+  // sablon opsiyonel — belirtilmezse render katmanı "kesif"e düşer
+  // (resolveLessonSablon) — ama BELİRTİLDİYSE yazım hatası render'ı sessizce
+  // yanlış şablona düşürmesin diye burada erken yakalanır.
+  if (data.sablon !== undefined && !SABLON_DEGERLERI.has(data.sablon)) {
+    errors.push(
+      `${relativePath}: "sablon" değeri geçersiz: "${data.sablon}" ` +
+        `(izinli: ${[...SABLON_DEGERLERI].join(", ")}).`,
+    );
   }
 
   // Her frontmatter alanı, ders sürüm köklerinden birine (kaynak / ders metni /

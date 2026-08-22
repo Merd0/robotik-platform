@@ -76,6 +76,13 @@ describe("ders sürüm kökleri", () => {
     expect(degisen.revisionRoot).not.toBe(hashes.revisionRoot);
   });
 
+  it("sablon değişimi yalnız presentationHash'i değiştirir (Faz 1 — sunum şablonu)", () => {
+    const farkliSablon = { frontmatter: { ...frontmatter, sablon: "gorev" as const }, body };
+    expect(computeSourceHash(farkliSablon)).toBe(computeSourceHash(lesson));
+    expect(computeTeachingHash(farkliSablon)).toBe(computeTeachingHash(lesson));
+    expect(computePresentationHash(farkliSablon)).not.toBe(computePresentationHash(lesson));
+  });
+
   it("alan bölümlemesi ayrık", () => {
     const buckets = [SOURCE_FIELDS, TEACHING_FIELDS, PRESENTATION_FIELDS].flat();
     expect(new Set(buckets).size).toBe(buckets.length);

@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  DEFAULT_LESSON_SABLON,
   getAllLessons,
   getLessonBySlug,
   getPublicLessonBySlug,
   getPublicLessons,
+  LESSON_SABLON_DEGERLERI,
+  resolveLessonSablon,
   taslakOnizlemeAcik,
 } from "./content";
 
@@ -122,5 +125,30 @@ describe("build-scope ders kataloğu", () => {
     expect(ilk).not.toBe(ikinci);
     expect(ikinci[0]).toBe(ornek);
     expect(getLessonBySlug(ornek.slug)).toBe(ornek);
+  });
+});
+
+describe("resolveLessonSablon (Faz 1 — sunum şablonu)", () => {
+  it("frontmatter'da sablon yoksa varsayılana (kesif) düşer", () => {
+    expect(resolveLessonSablon(undefined)).toBe("kesif");
+    expect(resolveLessonSablon(undefined)).toBe(DEFAULT_LESSON_SABLON);
+  });
+
+  it("bilinen bir şablon değerini olduğu gibi döndürür", () => {
+    expect(resolveLessonSablon("gorev")).toBe("gorev");
+    expect(resolveLessonSablon("karsilastirma")).toBe("karsilastirma");
+    expect(resolveLessonSablon("kod-lab")).toBe("kod-lab");
+    expect(resolveLessonSablon("referans")).toBe("referans");
+  });
+
+  it("bilinmeyen/bozuk bir değeri sessizce kesif'e düşürür (uydurma şablon render'ı çökertmesin)", () => {
+    expect(resolveLessonSablon("yazim-hatasi")).toBe("kesif");
+    expect(resolveLessonSablon("")).toBe("kesif");
+  });
+
+  it("94 gerçek dersin hepsi geçerli bir şablona çözülür", () => {
+    for (const lesson of getAllLessons()) {
+      expect(LESSON_SABLON_DEGERLERI).toContain(resolveLessonSablon(lesson.frontmatter.sablon));
+    }
   });
 });
