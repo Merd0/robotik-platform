@@ -3475,3 +3475,50 @@ docs/02-mimari.md tek satırlık düzeltmesi (presentationHash alan listesine
 `sablon` eklenmesi) — governance istisnası nedeniyle otomatik merge
 edilmedi, Mert'in onayını bekliyor.
 
+
+### Faz 1 — "Görev" şablonu tamamlandı (2026-08-22, commit 1a2909f)
+
+Taksonomideki A/B grubunun (Tahmin-Önce + Görev / Görev — `PredictionPrompt`/
+`TransferChallenge` kullanan 8 ders) 7'sine `sablon: gorev` uygulandı ve
+render dallanması gerçekten çalıştığı e2e ile kanıtlandı (h2 sırası
+Kanca→Dene→Ne oldu→Gerçek dünyada→Sonraki, "Dene" içeriği `.ders-gorev-
+kutusu` içinde). 1 ders (`b-lise-ileri-kinematik`) docs/04 dışı ekstra
+başlıklar taşıdığı için bilinçli olarak atlandı — `splitLessonBody`
+güvenlik ağı bu dersi zaten "kesif"e düşürürdü, `sablon: gorev` yazmak
+yanıltıcı olurdu. Bu, "3 denemeden sonra çözemediğin bir şey varsa atla,
+not düş, devam et" talimatının uygulandığı ilk yer: bu ders gelecekte
+kendi (docs/04 dışı özel başlıklı) bir şablon ailesine aday, şimdilik
+"kesif" olarak kalıyor, bu bir hata değil.
+
+**Bu oturumda tamamlanan adımlar (5 commit, hepsi tam kontrol paketiyle
+main'e merge edildi):**
+
+1. `d5414ef` — `sablon` frontmatter altyapısı (presentationHash kapsamı)
+2. `f05161c` — `lib/lessonSections.ts` AST tabanlı dilimleyici
+3. `5d4bb54` — `app/ders/[slug]/page.tsx` render dallanması
+4. `a97310e` — pilot ders (b-ortaokul-eklemleri-oynat)
+5. `1a2909f` — A/B grubunun kalanı (6 ders)
+
+**Hâlâ bekleyen onay:** `docs/02-mimari.md` Bölüm 4'teki `presentationHash`
+alan listesine `sablon` eklenmesi (tek satır) — governance istisnası
+nedeniyle otomatik merge edilemedi, Mert'in onayını bekliyor (bkz. yukarıdaki
+"adım 1 tamamlandı" notu).
+
+**Faz 1'in kalanı (taksonominin diğer grupları, henüz yapılmadı):**
+
+- **C — Karşılaştırma (13 ders, `PlannerRace`/`RobotSelectionTable`):**
+  Bu grup "gorev"den farklı bir tasarım gerektiriyor — `PlannerRace` zaten
+  kendi sahnesinde çoklu algoritma karşılaştırması yapıyor, MDX seviyesinde
+  taşınacak bir "görev" bloğu yok. Buradaki iş muhtemelen bölüm taşıma değil,
+  "Ne oldu" metninin karşılaştırma çerçevesinde render edildiği YENİ bir
+  görsel düzen (`sablon: karsilastirma`) — bir sonraki loop turunda tasarım
+  gerektiriyor, aceleyle uygulanmadı.
+- **D — Kod Laboratuvarı (16 ders, `CodeRunner`/`BlockEditor`):**
+  `CodeRunner`'ın kendi split/sticky yerleşimi zaten farklı; MDX prose
+  çerçevesinin buna nasıl uyacağı ayrıca düşünülmeli.
+- **E — Referans/sahnesiz (11 ders):** en çok teknik iş isteyen grup —
+  yeni bir metin-karşılaştırma sunum bileşeni gerektiriyor.
+- **F — Keşif (46 ders):** değişmiyor, zaten varsayılan.
+
+Sıradaki loop turu C (Karşılaştırma) tasarımıyla devam edecek.
+
