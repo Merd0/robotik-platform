@@ -4272,3 +4272,94 @@ faydası kalmamıştı, üstü main'de zaten daha eksiksiz haliyle duruyordu.
 **Sıradaki:** Faz B (telemetry/zaman grafikleri) — bu fazın onayına bağlı,
 ayrı bir görev olarak başlıyor.
 
+---
+
+## Faz B — Robot hücresi Yol provası'na zaman grafikleri (2026-08-23, commit 475a9f8)
+
+Mert'in talimatı: "Trajectory/hareket içeren laboratuvarlarda joint angle/
+velocity/TCP position vs time grafiği ekle. Grafikler GERÇEKTEN hesaplanan
+veriden olsun... Hafif bir chart kütüphanesi seç... Panel açılıp
+kapanabilsin."
+
+**Tarama — mevcut durum neydi:** `/oyun-alani` zaten Faz 5'te bir eklem
+açısı/zaman grafiği kazanmıştı (`components/playground/JointTimeChart.tsx`,
+el yapımı SVG, dış kütüphane yok). `DlsTraceLab` hata/iterasyon grafiği
+taşıyor ama ekseni zaman değil iterasyon sayısı. `FourLensTraceLab`/
+`TransformOrderLab` zaten her-zaman-açık matris/kod panelleriyle veriyi
+gösteriyor. Gerçek boşluk: `/laboratuvar/robot-hucresi`nin "Yol provası"
+sekmesi — MoveJ/MoveL karşılaştırması zaten `RobotCellMotionPlan.samples`
+(eklem açıları + TCP konumu, her ikisi de örnek başına) ve
+`estimatedDurationSeconds` üretiyordu ama hiçbir zaman ekseni grafiği yoktu,
+yalnız 3 skaler özet (TCP yolu, eklem yolu, teorik süre) ve 3B canlandırma.
+
+**Kütüphane kararı (docs/08 "50 satır kendimiz yazabilir miyiz" ilkesi):**
+Yeni bağımlılık eklenmedi. `JointTimeChart`'ın kanıtlanmış el yapımı SVG
+polyline deseni genelleştirilip (`components/lab/RobotCellMotionCharts.tsx`)
+yeniden kullanıldı — bu kod tabanındaki HER grafik zaten aynı yaklaşımı
+kullanıyor (DlsTraceLab, CspaceLab, JacobianViz, PlannerRace hepsi elle SVG
+çiziyor). "Hafif kütüphane seç" talimatının en hafif yorumu hiç kütüphane
+eklememekti — mevcut, test edilmiş desen zaten var.
+
+**Bulunan ve düzeltilen bir doğruluk sorunu (uygulamaya geçmeden):**
+`RobotCellMotionPlan`da zamana dönüştürülebilir tek şey `samples[].progress`
+(0–1, eşit aralıklı indeks) ve `estimatedDurationSeconds`'tı.
+`progress * estimatedDurationSeconds` ile zaman türetmek MoveJ için doğru
+olurdu (eklem uzayında doğrusal enterpolasyon → her segment sabit süreli)
+ama **MoveL için yanlış olurdu** — TCP doğrusal ilerlerken IK'nın ürettiği
+eklem adımı eğrisel yol boyunca değişken, yani eşit `progress` adımları eşit
+süreye karşılık gelmiyor. Bu, "gerçekten hesaplanan veriden olsun, yaklaşık
+değil" ilkesini ihlal ederdi. Çözüm: `durationFromJointLimits` (yalnız
+toplam süreyi döndüren, dahili bir fonksiyon) `cumulativeMotionTimesSeconds`
+olarak yeniden yazıldı — artık her örneğe kadar geçen KÜMÜLATİF süreyi
+döndürüyor, tek kaynak hem `estimatedDurationSeconds`i (son eleman) hem de
+yeni `RobotCellMotionPlan.sampleTimesSeconds` alanını besliyor. Segment
+süresi formülü DEĞİŞMEDİ (governing eklemin `maxVelocity * speedScale`
+sınırı) — yalnız artık her segment için ayrı ayrı, kümülatif olarak
+saklanıyor.
+
+**Hız grafiği için ayrı bir dürüstlük kararı:** Eklem hızı `RobotSpec`te
+hiçbir yerde doğrudan hesaplanmıyordu (yalnız `maxVelocity` bir ÜST SINIR).
+Uydurmak yerine, `jointVelocityProfile(plan)` ardışık örnek ÇİFTLERİ
+arasındaki gerçek açı farkını gerçek zaman farkına bölerek türetiyor —
+DlsTraceLab'ın Faz 7'de eklenen Δθ satırıyla aynı ilke ("gerçekte
+hesaplamadığımızı hesaplıyormuş gibi göstermeyelim"). Kritik detay: hız
+tek bir ÖRNEĞE değil, iki örnek arasındaki ARALIĞA (orta nokta zamanı)
+atanıyor — uç örneklere uydurma bir "anlık hız" yüklenmiyor. Bir özellik
+testi bunu doğruluyor: MoveJ'de (doğrusal enterpolasyon + eşit zaman
+adımları) tüm segmentlerin hızı birbirine eşit olmalı VE governing eklemin
+`maxVelocity * speedScale` sınırını hiçbir segmentte aşmamalı — ikisi de
+test ediliyor, ikisi de geçti.
+
+**Yerleşim:** `MotionResultCard`in (MoveJ ve MoveL için ayrı ayrı monteli)
+içine, `dl` özet tablosunun hemen altına, varsayılan KAPALI `<details>`
+olarak eklendi — bu, aynı bileşende zaten var olan "Modelin sınırları"
+panelinin BİREBİR aynı deseni. MoveJ kartını açmak MoveL kartını etkilemez
+(her ikisi bağımsız `<details>`) — kullanıcı istediği ikisini yan yana
+açıp karşılaştırabilir, hiçbiri zorla açılmaz (docs/16 "ekranı sürekli
+doldurma" uyarısına uyum).
+
+**Kapsam dışı bırakılan genişleme:** `/oyun-alani`daki mevcut
+`JointTimeChart`ı da hız/TCP grafiğiyle genişletmek düşünüldü ama
+yapılmadı — Mert'in talimatındaki asıl boşluk (hiç zaman grafiği olmayan
+laboratuvar) robot hücresiydi; oyun alanı zaten Faz 5'te bu ihtiyacı
+karşılıyordu. Kapsamı gereksiz büyütmek yerine burada durulup, istenirse
+ayrı bir görev olarak ele alınabilir.
+
+**Doğrulama ve teslim:** Test-first — 6 yeni birim testi
+(`lib/robotics/robotCellMotion.test.ts`) önce yazıldı,
+`jointVelocityProfile`/`sampleTimesSeconds` implementasyonsuz haliyle
+çalıştırılıp KIRMIZI olduğu doğrulandı, sonra implementasyon yazılıp
+YEŞİLE çevrildi (bir testin ilk varsayımı — IK hatasının ilk adımda
+oluşacağı — yanlış çıktı, gerçek davranışa göre düzeltildi, gevşetilmedi).
+Tam kontrol paketi: `tsc`, `lint`, 821 unit (63 dosya), içerik/graph/quiz/
+mdx/review/sensitive-terms kontrolleri, `build`, `check-performance-budget`
+(robot hücresi bütçe yüzeyleri listesinde değil, etkilenmedi), e2e 315/315
+(3 viewport — ilk koşuda 2 WCAG 60s taraması hatası, `--workers=1` izole
+tekrarda ikisi de geçti, önceden defalarca kayıtlı flake sınıfı, bu fazdan
+bağımsız), `npm audit` (0 zafiyet). `git branch -f main` yine reddedildi
+(worktree kilidi) — `git -C robotik-platform-python-editor merge --no-edit
+feat/python-code-editor` ile fast-forward, main commit `475a9f8`'e
+ilerledi. `main` push edilmedi.
+
+FAZ A ve FAZ B ikisi de tamamlandı ve `main`e alındı.
+
