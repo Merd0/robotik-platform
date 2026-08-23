@@ -417,6 +417,19 @@ test("Python editörü robot API çağrılarını klavyeyle tamamlar", async ({ 
   await expect(completions).toBeVisible();
   await expect(completions).toContainText("movej");
   await expect(completions).toContainText("movel");
+  // @codemirror/autocomplete'in acceptCompletion komutu (Enter'a Prec.highest
+  // ile bağlı), panel açıldıktan sonraki `interactionDelay` (varsayılan 75ms,
+  // bkz. node_modules/@codemirror/autocomplete/dist/index.js) içinde kasıtlı
+  // olarak hiçbir şey yapmaz — yanlışlıkla "fat-finger" kabul etmeyi önleyen
+  // kütüphane içi bir koruma, bizim kodumuzdaki bir hata değil. Yerel
+  // makinede tooltip görünürlüğü + iki toContainText + ArrowDown'a kadar
+  // geçen gerçek IPC gecikmesi genelde 75ms'yi zaten aşıyordu (testi
+  // "tesadüfen" geçiriyordu); CI'daki farklı zamanlama profilinde bu süre
+  // 75ms'nin altında kalabiliyor ve Enter sessizce yok sayılıyor (editör
+  // içeriği "robot.mov"da donuyor). Düzeltme ürün kodunu veya testin
+  // doğrulamasını gevşetmiyor — kütüphanenin belgelenmiş, kasıtlı süresine
+  // gerçekten uyuyor.
+  await page.waitForTimeout(150);
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await expect(editor).toContainText(/robot\.move[lj]\(/);
