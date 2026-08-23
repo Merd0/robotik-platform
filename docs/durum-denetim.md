@@ -4527,5 +4527,54 @@ viewport, 18 koşullu atlama, sıfır hata). `main` `git branch -f` ile
 (hiçbir worktree o an main'i tutmadığı için sorunsuz) commit `6cdcdfc`'e
 ilerletildi.
 
-**Sırada — Madde 20 (Meca500'ü bir derste/bileşende göster).**
+### Madde 20 (Meca500'ü gerçekten göster) — TAMAMLANDI (commit 69c94c4)
+
+`meca500-r4` RobotSpec'i (Codex'in kaynaklı preset'i) kataloğa girmişti
+ama hiçbir derste/bileşende `robot="meca500-r4"` kullanılmıyordu — sourced
+veri kimseye görünmüyordu. En doğal yer zaten vardı:
+`d-universite-mecademic-python.mdx`'teki `CodeRunner`ın `robot` prop'u
+`generic-6dof`'tan `meca500-r4`'e değiştirildi (dersin kendisi zaten yalnız
+Mecademic'i anlatıyor). İkinci, yapılandırılmış bir kaynak (Mecademic
+teknik veri sayfası) `kaynaklar`a eklendi — artık sahnedeki kolun
+GEOMETRİSİ de o kaynaktan geliyor, yalnız Python API metni değil.
+`RobotInfoLine` (Faz 6, JointSliders/IkTarget'ta zaten var olan desen)
+`CodeRunner`a da eklendi — kullanıcı artık gerçek marka/model + kaynak
+linkini görüyor. `lib/interactionManifest.ts`'teki `ROBOT_SPEC_FILES`
+kaydına `meca500-r4` eklendi (docs/02 "yeni robot preset'i ekleme"
+rehberinin 5. adımı).
+
+**Test-first bulgusu:** `RobotInfoLine`'ın "real" (metadata dolu) dalı bu
+işten önce HİÇBİR YERDE e2e ile doğrulanmamıştı (3 katalog robotu da
+jenerikti) — mevcut Faz 6 testi genişletildi, bu dal ilk kez uçtan uca
+kanıtlandı. İlk yazımda dar/tablet viewport'ta başarısız oldu: bilgi
+satırı `CodeRunner`ın "Sonuç" panelinde, `xl` eşiğinin altında bu panel
+sekmenin arkasında kalıyor (sekme çubuğunun kendisi `xl`de `xl:hidden`
+olduğu için orada koşulsuz tıklamak da patlardı) — test "Sonuç" sekmesi
+görünürse tıklayacak şekilde düzeltildi.
+
+**Paralel oturumla temiz entegrasyon:** Commit hazırlanırken `main`
+paralel oturumun kendi işiyle (`reachability`/`ReachabilityMap.tsx` —
+Madde 21! — ve yeni `ConceptSimulationCode` bileşeni — Madde 35!) ilerlemiş
+bulundu. `git branch -f` bu sefer main'i tutan worktree yüzünden reddetti;
+merge ana worktree'den (`main` o an oradaydı, temizdi) yapıldı —
+`lib/interactionManifest.ts`te otomatik (çakışmasız) birleşti, çünkü iki
+tarafın eklediği kayıtlar dosyanın farklı yerlerindeydi. Birleşik durum
+izole worktree'de `tsc` + temiz `build` ile ayrıca doğrulandı (paralel
+oturumun kendi işini tekrar tam e2e ile sınamak bu görevin kapsamı değil —
+sorumluluk kendilerinde; yalnız ENTEGRASYON kırılmadığı doğrulandı).
+
+Tam kontrol paketi (Madde 20'nin kendi izole dalı, birleşmeden ÖNCE):
+`tsc`, `lint`, 821 unit (`--no-file-parallelism` ile — paralel
+çalıştırmada `lib/sitemap.test.ts`te koddan bağımsız, izolasyonda %100
+kararlı bir yarış durumu bulundu, aynı oturumun port/önbellek
+bulgularıyla aynı aile), `check-content`, `check-mdx-guvenlik`,
+`check-sensitive-terms`, `validate-content-graph`, `check-quiz-dagilimi`,
+`check-review-debt`/`check-review-integrity`, `build` (temiz `.next`),
+`check-performance-budget` (3D'siz ders 268.0/268.0 KiB — sınırda ama
+geçti, payı yok, bir sonraki küçük eklemede bütçe büyütülmesi gerekebilir),
+`npm audit` (0 zafiyet), e2e **318/318** (3 viewport — ilk tam koşuda 2
+test tam paralel yükte zaman aşımına uğradı, izole tekrarda 6/6 geçti,
+bilinen flake sınıfı).
+
+**Sırada — Madde 33 ("Neden?" bileşenini IkTarget dışına yay).**
 
