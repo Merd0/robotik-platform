@@ -1604,6 +1604,24 @@ test("robot kimlik satırı jenerik robotlar için marka uydurmaz, geçerli oldu
   const ikInfo = page.getByTestId("robot-info-line");
   await expect(ikInfo).toContainText("jenerik örnek kol");
   await expect(ikInfo).toContainText("Hesaplanan azami erişim: 1.80 m");
+
+  // Madde 20: meca500-r4 — platformdaki İLK kaynaklı, gerçek marka/model
+  // metadata'sı taşıyan robot. "real" dalı burada ilk kez uçtan uca doğrulanıyor.
+  // Bilgi satırı CodeRunner'ın "Sonuç" panelinde — xl altında bu panel
+  // sekmenin arkasında (bkz. CodeRunner.tsx `xl:hidden` sekme çubuğu),
+  // xl'de sekme çubuğunun kendisi `xl:hidden` olduğu için tıklanabilir değil.
+  await page.goto("/ders/d-universite-mecademic-python");
+  const sonucSekmesi = page.getByRole("tab", { name: "Sonuç" });
+  if (await sonucSekmesi.isVisible()) await sonucSekmesi.click();
+  const meca500Info = page.getByTestId("robot-info-line");
+  await expect(meca500Info).toHaveAttribute("data-robot-metadata", "real");
+  await expect(meca500Info).toContainText("Mecademic Meca500 R4");
+  await expect(meca500Info).toContainText("maks. erişim 330 mm");
+  await expect(meca500Info).toContainText("azami yük 0.5 kg");
+  await expect(meca500Info.getByRole("link", { name: /kaynak: Mecademic/ })).toHaveAttribute(
+    "href",
+    "https://resources.mecademic.com/en/doc/MC-UM-MECA500/2026.B/manual/technical-specifications.html",
+  );
 });
 
 test("Öğren/Mühendislik modu (Faz 7 global toggle — IkTarget): site başlığındaki toggle Neden panelini otomatik açar, ek teknik satır gösterir ve kalıcıdır", async ({ page }) => {

@@ -14,6 +14,12 @@ kazanimlar:
   - Bu platformdaki simülasyonun neden gerçek bir robota ağ bağlantısı KURMADIĞINI açıklayabilme
 kaynaklar:
   - "github.com/Mecademic/mecademicpy — Mecademic'in resmi Python API deposu (\"the same function names and arguments as the robot's native text-based (TCP/IP) API\")"
+  - kind: official-doc
+    title: "MC-UM-MECA500 — Technical specifications, Table 7 and Figure 18"
+    publisher: "Mecademic"
+    url: "https://resources.mecademic.com/en/doc/MC-UM-MECA500/2026.B/manual/technical-specifications.html"
+    version: "2026.B.277"
+    accessedAt: "2026-08-23"
 incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
@@ -51,8 +57,13 @@ AÇMIYOR. Bu platform hiçbir zaman gerçek bir robota bağlanmaz (bkz.
 kendi bilgisayarında, `mecademicpy` kurulu, robotla aynı ağda
 çalıştırman gerekir.
 
+Sahnedeki kol da jenerik bir örnek değil: Mecademic'in kamuya açık
+teknik veri sayfasındaki bağlantı uzunlukları, eklem limitleri ve azami
+hızlarla tanımlı gerçek bir Meca500 R4. Sahnenin altındaki kimlik
+satırı kaynağı gösteriyor.
+
 <CodeRunner
-  robot="generic-6dof"
+  robot="meca500-r4"
   theme="universite"
   initialCode={`# Gerçek bir Meca500, bu satırları TCP/IP soketinden ASCII metin
 # olarak okur: "MoveJoints(j1,j2,j3,j4,j5,j6)" gibi. Burada soket
