@@ -200,6 +200,7 @@ const ROBOT_SPEC_FILES: Record<string, string> = {
   "generic-2dof": "lib/robotics/robots/genericTwoDof.ts",
   "generic-prismatic": "lib/robotics/robots/genericPrismatic.ts",
   "generic-6dof": "lib/robotics/robots/genericSixDof.ts",
+  "meca500-r4": "lib/robotics/robots/meca500R4.ts",
 };
 
 const IZINLI_BILESENLER = new Set<string>(IZINLI_BILESEN_ADLARI);

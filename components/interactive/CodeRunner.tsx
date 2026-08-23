@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { ExperimentShareButton } from "@/components/interactive/LabChallengeUi";
 import { LazyPythonCodeEditor } from "@/components/interactive/LazyPythonCodeEditor";
+import { RobotInfoLine } from "@/components/interactive/RobotInfoLine";
 import { codeRunnerStatusText, roundPose, useCodeRunnerEngine } from "@/components/interactive/useCodeRunnerEngine";
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/Tabs";
 
@@ -204,9 +205,12 @@ export function CodeRunner({
         <TabPanel id="sonuc" idPrefix={TAB_ID_PREFIX} ariaLabel="Sahne ve sonuç" className={`${resultVisibility} xl:sticky xl:top-20 xl:block xl:self-start`}>
           <div className="flex flex-col gap-3">
             {robot && (
-              <SahneAlani className={`aspect-video w-full overflow-hidden rounded-lg ${t.bg}`}>
-                <RobotArm robot={robot} jointAngles={jointAngles} activeJointIndex={activeJointIndex} />
-              </SahneAlani>
+              <>
+                <SahneAlani className={`aspect-video w-full overflow-hidden rounded-lg ${t.bg}`}>
+                  <RobotArm robot={robot} jointAngles={jointAngles} activeJointIndex={activeJointIndex} />
+                </SahneAlani>
+                <RobotInfoLine robot={robot} className={t.inkMuted} />
+              </>
             )}
             {toolPose?.orientation && (
               <p className={`font-mono text-xs ${t.inkMuted}`} data-testid="code-tool-pose">
