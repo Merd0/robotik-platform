@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { CommandPalette } from "@/components/ui/CommandPalette";
+import { ComplexityModeProvider } from "@/components/ui/ComplexityModeProvider";
 import { SiteFooter } from "@/components/ui/SiteFooter";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
@@ -38,11 +39,13 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-site-bg text-site-ink antialiased">
         <ThemeProvider>
-          <a href="#ana-icerik" className="sr-only z-[100] rounded bg-site-surface p-3 text-site-ink focus:not-sr-only focus:fixed focus:left-3 focus:top-3">Ana içeriğe geç</a>
-          <SiteHeader />
-          {children}
-          <SiteFooter />
-          <CommandPalette />
+          <ComplexityModeProvider>
+            <a href="#ana-icerik" className="sr-only z-[100] rounded bg-site-surface p-3 text-site-ink focus:not-sr-only focus:fixed focus:left-3 focus:top-3">Ana içeriğe geç</a>
+            <SiteHeader />
+            {children}
+            <SiteFooter />
+            <CommandPalette />
+          </ComplexityModeProvider>
         </ThemeProvider>
       </body>
     </html>

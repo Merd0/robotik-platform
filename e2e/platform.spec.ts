@@ -1262,7 +1262,7 @@ test("NasilHesaplandi paneli DLS formülünü gösterir, mevcut iterasyon izini 
   await expect(panel.getByText("Δθ = J", { exact: false })).toBeVisible();
 });
 
-test("Öğren/Mühendislik modu (Faz 7 yayılma — JacobianViz): sahne lazy-load eşiği bozulmadan panel otomatik açılır, Jacobian sütunları gösterilir", async ({ page }) => {
+test("Öğren/Mühendislik modu (Faz 7 global toggle — JacobianViz): sahne lazy-load eşiği bozulmadan panel otomatik açılır, Jacobian sütunları gösterilir", async ({ page }) => {
   await page.goto("/ders/b-universite-tekillik");
 
   // Kullanıcının açıkça istediği doğrulama: toggle'ın konumu bu sahnenin
@@ -1276,13 +1276,13 @@ test("Öğren/Mühendislik modu (Faz 7 yayılma — JacobianViz): sahne lazy-loa
   await expect(panel.getByText("manipülabilite = √det", { exact: false })).toBeHidden();
   await expect(page.getByTestId("engineering-detail")).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Mühendislik" }).click();
+  await page.getByRole("button", { name: "Mühendislik moduna geç" }).click();
   await expect(panel.getByText("manipülabilite = √det", { exact: false })).toBeVisible();
   await expect(page.getByTestId("engineering-detail")).toContainText("J col1");
   await expect(page.getByTestId("engineering-detail")).toContainText("J col2");
 });
 
-test("Öğren/Mühendislik modu (Faz 7 yayılma — DlsTraceLab): panel otomatik açılır, Δθ satırı gerçek iterasyon farkını gösterir (sahne yok, lazy-load riski yok)", async ({ page }) => {
+test("Öğren/Mühendislik modu (Faz 7 global toggle — DlsTraceLab): panel otomatik açılır, Δθ satırı gerçek iterasyon farkını gösterir (sahne yok, lazy-load riski yok)", async ({ page }) => {
   await page.goto("/ders/b-universite-ters-kinematik");
   // Bu sahnede hiç `SahneAlani`/3D yok (elle SVG) — bu test bunu doğrulayıp
   // kayıt altına alıyor: lazy-load regresyonu sınıfı burada uygulanamaz.
@@ -1295,7 +1295,7 @@ test("Öğren/Mühendislik modu (Faz 7 yayılma — DlsTraceLab): panel otomatik
   await expect(panel.getByText("Δθ = J", { exact: false })).toBeHidden();
   await expect(page.getByTestId("engineering-detail")).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Mühendislik" }).click();
+  await page.getByRole("button", { name: "Mühendislik moduna geç" }).click();
   await expect(panel.getByText("Δθ = J", { exact: false })).toBeVisible();
   // Adım 0'dayken önceki adım yok — dürüst "ilk adım" mesajı, uydurma sıfır değil.
   await expect(page.getByTestId("engineering-detail")).toContainText("ilk adım");
@@ -1460,25 +1460,53 @@ test("robot kimlik satırı jenerik robotlar için marka uydurmaz, geçerli oldu
   await expect(ikInfo).toContainText("Hesaplanan azami erişim: 1.80 m");
 });
 
-test("Öğren/Mühendislik modu (Faz 7 dikey dilim): Mühendislik Neden panelini otomatik açar, ek teknik satır gösterir ve kalıcıdır", async ({ page }) => {
+test("Öğren/Mühendislik modu (Faz 7 global toggle — IkTarget): site başlığındaki toggle Neden panelini otomatik açar, ek teknik satır gösterir ve kalıcıdır", async ({ page }) => {
   await page.goto("/ders/b-ortaokul-erisemedigi-noktalar");
 
-  const ogrenButton = page.getByRole("button", { name: "Öğren" });
-  const muhendislikButton = page.getByRole("button", { name: "Mühendislik" });
-  await expect(ogrenButton).toHaveAttribute("aria-pressed", "true");
+  const toggle = page.getByRole("button", { name: "Mühendislik moduna geç" });
+  await expect(toggle).toBeVisible();
 
   const not = page.getByRole("note");
   await expect(not).toBeHidden();
   await expect(page.getByTestId("engineering-detail")).toHaveCount(0);
 
-  await muhendislikButton.click();
-  await expect(muhendislikButton).toHaveAttribute("aria-pressed", "true");
+  await toggle.click();
+  await expect(page.getByRole("button", { name: "Öğren moduna geç" })).toBeVisible();
   await expect(not).toBeVisible();
   await expect(page.getByTestId("engineering-detail")).toContainText("cos θ2 =");
 
   await page.reload();
-  await expect(page.getByRole("button", { name: "Mühendislik" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Öğren moduna geç" })).toBeVisible();
   await expect(page.getByRole("note")).toBeVisible();
+});
+
+test("Öğren/Mühendislik toggle yalnız desteklenen sayfalarda görünür (Faz 7 global rollout)", async ({ page }) => {
+  // IkTarget/JacobianViz/DlsTraceLab kullanan sayfalarda görünür.
+  await page.goto("/ders/b-ortaokul-erisemedigi-noktalar");
+  await expect(page.getByRole("button", { name: /moduna geç$/ })).toBeVisible();
+
+  // Hiçbirini kullanmayan sıradan bir ders sayfasında YOK — kafa
+  // karıştıran, hiçbir şeyi değiştirmeyen bir kontrol gösterilmez.
+  await page.goto("/ders/a-ortaokul-robot-nedir");
+  await expect(page.getByRole("button", { name: /moduna geç$/ })).toHaveCount(0);
+});
+
+test("Öğren/Mühendislik modu farklı sekmeler arası anlık senkronlanır (Faz 7 storage event)", async ({ context }) => {
+  const pageA = await context.newPage();
+  const pageB = await context.newPage();
+  await pageA.goto("/ders/b-ortaokul-erisemedigi-noktalar");
+  await pageB.goto("/ders/b-universite-tekillik");
+
+  await expect(pageA.getByRole("button", { name: "Mühendislik moduna geç" })).toBeVisible();
+  await expect(pageB.getByRole("button", { name: "Mühendislik moduna geç" })).toBeVisible();
+
+  await pageA.getByRole("button", { name: "Mühendislik moduna geç" }).click();
+  await expect(pageA.getByRole("button", { name: "Öğren moduna geç" })).toBeVisible();
+  // pageB hiçbir kullanıcı eylemi almadı — yalnız "storage" olayıyla senkronlanmalı.
+  await expect(pageB.getByRole("button", { name: "Öğren moduna geç" })).toBeVisible();
+
+  await pageA.close();
+  await pageB.close();
 });
 
 test("dirsek değiştirme deneyi iki gerçek çözülebilir duruşla geçilebilir (Sprint 2 doğruluk düzeltmesi)", async ({ page }) => {
