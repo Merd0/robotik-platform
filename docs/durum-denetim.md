@@ -4116,3 +4116,73 @@ provider'ını taşıyor — localStorage paylaşıldığı için ayarlar sayfal
 arası kalıcı, ama aynı sayfada aynı anda birden fazla laboratuvar açıksa
 (nadir) her biri kendi mount'unda okur, canlı çapraz senkron yok.
 
+---
+
+## Faz 7 global toggle — ComplexityModeProvider kök layout'a taşındı (2026-08-23, merge commit 1f28ac1)
+
+Mert onay verdi ve iki ek şart koydu: (1) aynı sayfada/sekmede birden fazla
+bileşen anlık senkron olsun (React context + `storage` olayı), (2)
+toggle yalnız gerçekten desteklenen sayfalarda görünsün.
+
+**Uygulanan mimari:** `ComplexityModeProvider` kök `layout.tsx`ye taşındı,
+`ThemeProvider`la aynı seviyede monteli. İki senkron sorunu ayrı ayrı
+çözüldü:
+- **Aynı sayfa, birden fazla bileşen:** artık TEK paylaşılan context
+  örneği var (kök'te bir kez monteli) — otomatik, ekstra kod gerekmedi.
+- **Farklı sekme/pencere:** yeni bir `window.addEventListener("storage",
+  ...)` dinleyicisi eklendi. Kritik detay: `storage` olayı yalnız BAŞKA
+  bir dokümanın `localStorage.setItem` çağırdığında tetiklenir — AYNI
+  sekmenin kendi yazması bu olayı almaz (tarayıcı standardı). Bu yüzden
+  `setMode` hem localStorage'a yazıyor hem KENDİ state'ini de doğrudan
+  güncelliyor; `storage` dinleyicisi yalnız DIŞARIDAN gelen değişiklikleri
+  yakalıyor. Yeni bir e2e testi bunu iki gerçek `Page` nesnesiyle
+  (aynı `BrowserContext`, iki farklı ders sayfası) doğruluyor: birinde
+  tıklama, diğerinde hiçbir kullanıcı eylemi olmadan anlık güncelleme.
+
+**"Yalnız desteklenen sayfalarda görünür" nasıl çözüldü:** Global context'e
+bir referans sayacı eklendi (`registerSupport`/`unregisterSupport`, yeni
+`useDeclareComplexityModeSupport()` hook'u). IkTarget/JacobianViz/
+DlsTraceLab monte olduklarında sayacı artırıyor, unmount'ta azaltıyor.
+`SiteHeader`daki `ComplexityModeToggle`, sayaç sıfırsa `null` döner —
+render bile etmiyor. Next.js App Router'ın client-side navigasyonu
+sayesinde sayfa geçişlerinde bu doğru şekilde güncelleniyor (tam sayfa
+yenilemesi gerekmiyor). Lab-lokal segmented toggle butonları (Faz 7 dikey
+dilim/yayılmada eklenmişti) kaldırıldı — artık tek kontrol noktası
+başlıkta, ikisi birden göstermek kafa karıştırırdı.
+
+### Beklenmedik keşif: paralel bir worktree'de main öne geçmiş
+
+Bu fazın izole kontrol paketi bittiğinde `git branch -f main <commit>`
+komutu **ilk kez** reddetti: `fatal: cannot force update the branch 'main'
+used by worktree at '.../robotik-platform-python-editor'`. `git worktree
+list` başka bir worktree'nin (muhtemelen Mert'in kendisi veya başka bir
+oturum) `feat/python-code-editor`'daki yarım Python editörü işini ALIP
+ORADA TAMAMLADIĞINI ve `main`'e commit ettiğini gösterdi (`a365b94 feat:
+hafif Python kod editörü ekle`, `b741ac2 docs: kod editörü görsel
+kanıtlarını ekle`) — üstelik `origin/main`e zaten push edilmiş.
+
+Bu, önceki fazlarda "WIP'e dokunma, olduğu gibi bırak" kararının doğru
+olduğunu doğruluyor: dokunulmadan bırakılan iş başka biri tarafından
+düzgünce tamamlanabildi. Çözüm: `main`i kendi worktree'imden zorla
+taşımak yerine, DİĞER worktree'nin İÇİNDEN (`git -C
+.../robotik-platform-python-editor merge --no-edit
+feat/python-code-editor`) standart bir merge yapıldı — worktree kilidini
+doğal yoldan saygıyla geçen tek güvenli yöntem. Merge çakışmasız
+otomatikti (`e2e/platform.spec.ts` ve `check-performance-budget.ts`
+örtüşmeyen satırlarda). Birleşik sonuç o worktree'de `npm ci` ile
+bağımlılıklar tazelenip TAM kontrol paketiyle YENİDEN doğrulandı (iki
+özelliğin BİRLİKTE ilk gerçek testi): `tsc`, `lint`, 811 unit (61 dosya —
+Python editörünün 6 testi dahil), içerik/review kontrolleri, `build`,
+`check-performance-budget` (tüm yüzeyler bütçe içinde), `npm audit` (0
+zafiyet), e2e 305/306 (kalan tek hata — WCAG 60s taraması, tablet-768,
+tam paralel yükte — tek başına tekrar koşulduğunda 19-21 saniyede geçti,
+bilinen flake sınıfı, bu fazdan bağımsız).
+
+**`main`e push YAPILMADI** — Mert'in talimatı "merge et"ti, "push et"
+değil; `origin/main`i güncellemek ayrı, açık bir onay gerektirir (kök
+`CLAUDE.md` git güvenlik protokolü). Kendi worktree'imdeki
+(`C:\Users\hp\Desktop\robotik-platform`, `feat/python-code-editor` dalı)
+eski/artık gereksiz Python editörü WIP taslağı da dokunulmadan bırakıldı
+— bu worktree artık `main`in gerisinde ama hiçbir şey bozulmadı, hâlâ
+kendi haliyle duruyor.
+
