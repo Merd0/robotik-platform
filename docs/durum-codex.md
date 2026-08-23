@@ -2196,3 +2196,58 @@ geçti. Test/süre değiştirilmeden iki işçiyle yinelenen tam matris **318 ge
 
 Governance dosyası değişmedi. `content/sozluk.json`, robot katalog/presetleri,
 `Neden`/WhyButton, CodeMirror/editör ve telemetry panel dosyalarına dokunulmadı.
+
+### 2026-08-23 · Madde 35 Kavram → Simülasyon → Kod köprüsü
+
+Hat D'de gerçekten aynı Python fikrini, çalışan robot simülasyonunu ve yayımlı
+Kod Akademisi uygulamasını paylaşan dört ders seçildi. Yeni
+`ConceptSimulationCode` bölümü bu üç adımı sıralı, erişilebilir ve mobilde tek
+sütuna düşen bir akış olarak görünür kılıyor; ders metni React bileşenine
+gömülmedi, her eşleşmenin açıklaması ilgili MDX dosyasında kaldı.
+
+Seçilen üçlüler:
+
+- `d-lise-degiskenlerle-hareket` — isimli hedef açı değişkeni → `CodeRunner`
+  içinde aynı listenin `movej` ile eklem duruşu/TCP'ye uygulanması → Kod
+  Akademisi `koda-temel-degisken-degistir` modülünde değişkeni düzenleyip aynı
+  `generic-2dof` robotta çalıştırma;
+- `d-lise-donguyle-cok-nokta` — rota listesi üzerinde `for` döngüsü →
+  `CodeRunner` içinde `movel` hedeflerinin gerçek IK ve eklem iziyle sırayla
+  uygulanması → `koda-orta-donguyle-uc-nokta` modülünde aynı liste+döngü
+  yapısını `movej` eklem hedefleriyle tamamlama; komut farkı bölümde açıkça
+  belirtiliyor, iki komut özdeşmiş gibi sunulmuyor;
+- `d-lise-kosullu-robot-durumu` — ölçülen TCP durumuna göre `if/else` →
+  `CodeRunner` içinde `get_tcp` sonucunun eşikle karşılaştırılıp tek dalın
+  çalışması → `koda-orta-kosul-ile-dal` modülünde yine `get_tcp` ölçümüyle
+  eksik hareket dalını tamamlama;
+- `d-lise-fonksiyonla-hareket-dizisi` — parametreli, yeniden kullanılabilir
+  hareket tarifi → `CodeRunner` içinde fonksiyon çağrılarının ara iz ve son
+  duruşa dönüşmesi → `koda-ileri-fonksiyonla-liste` modülünde hedef listesini
+  alan fonksiyon gövdesini yazma.
+
+İleri/ters kinematik dersleri ile yalnız `movej` adını paylaşan başlangıç
+modülleri gibi kısmi benzerlikler eklenmedi: aynı kavramı uygulatan yayımlı Kod
+Akademisi görevi olmadığında görünürde ikna edici ama öğretim açısından uydurma
+bir bağ kurulmadı. Dört bağlantının hedef modülü katalogdan gerçekten çözülüyor
+ve tamamı aynı `generic-2dof` robot sözleşmesini kullanıyor.
+
+**Test-first kayıt:** Önce bileşen yokken render testi import aşamasında; dört
+derste yeni bölüm yokken eşleşme testi dört golden senaryoda kırmızı çalıştı.
+Uygulamadan sonra bileşenin sıralı üç öğesi, erişilebilir bölüm adı, gerçek linki,
+mevcut laboratuvar varlığı, hedef Kod Akademisi modülü/robotu ve uydurma IK
+eşleşmesinin yokluğu toplam 6 Vitest senaryosuyla sabitlendi. Playwright, dört
+dersin her birinde üç adımı ve gerçek modül navigasyonunu 390/768/1440
+viewportlarında doğruluyor.
+
+**Doğrulama:** `npm test` düşük eşzamanlılıkta 834/834, lint, 94 derslik bütün
+içerik/graph/quiz/MDX/review/hassas terim kapıları, `npm run build` (328 statik
+sayfa), performans bütçesi ve `npm audit --audit-level=high` temiz. İlk yüksek
+yükteki Vitest koşusunda görev dışı sitemap ve RRT* testleri 5 saniyede zaman
+aşımına uğradı; ikisi tek işçiyle, tam paket iki işçiyle test/süre değişmeden
+geçti. İlk tam E2E koşusunda görev dışı `ThresholdViewer` mobil kanıt olayı
+paralel yükte oluşmadı; aynı test tek işçiyle geçti ve değiştirilmeden yinelenen
+tam matris **321 geçti, 18 koşullu atlandı, 0 başarısız** sonucu verdi.
+
+Governance dosyası değişmedi. `content/sozluk.json`, RobotSpec/robot katalogları,
+`Neden`/WhyButton, CodeMirror/editör, telemetry paneli, `IkTarget.tsx` ve
+`ReachabilityMap.tsx` dosyalarına dokunulmadı.

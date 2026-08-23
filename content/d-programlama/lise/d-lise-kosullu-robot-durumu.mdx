@@ -22,6 +22,7 @@ incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
   - CodeRunner
+  - ConceptSimulationCode
 durum: yayinda
 ---
 
@@ -49,6 +50,14 @@ if mesafe < 0.25:
     print(f"Uyari: TCP tabana cok yakin (mesafe={mesafe:.2f})")
 else:
     print(f"TCP guvenli calisma bolgesinde (mesafe={mesafe:.2f})")`}
+/>
+
+<ConceptSimulationCode
+  concept="if/else, robotun ölçülen güncel durumunu bir koşulla karşılaştırır ve yalnız uygun hareket dalını çalıştırır."
+  simulation="Yukarıdaki CodeRunner, movel sonrasında gerçek TCP konumunu get_tcp ile okur; hesaplanan mesafeye göre güvenli veya uyarı dalını seçer."
+  code="Kod Akademisi'nde get_tcp ile okunan x konumuna göre dallanıp eksik hareket komutunu kendin tamamla."
+  codeHref="/kod-akademisi/orta/koda-orta-kosul-ile-dal"
+  codeLabel="Konuma göre dallan modülünü aç"
 />
 
 ## Ne oldu

@@ -164,6 +164,10 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
       "lib/sozluk.ts",
     ],
   },
+  ConceptSimulationCode: {
+    componentFile: "components/interactive/ConceptSimulationCode.tsx",
+    engineFiles: [],
+  },
   Quiz: {
     componentFile: "components/interactive/Quiz.tsx",
     engineFiles: ["components/interactive/QuizSorusu.tsx", "lib/quiz.ts"],

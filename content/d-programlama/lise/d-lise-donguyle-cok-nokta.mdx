@@ -25,6 +25,7 @@ incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
   - CodeRunner
+  - ConceptSimulationCode
 durum: yayinda
 ---
 
@@ -48,6 +49,14 @@ rota = [(1.2, 0.5), (0.3, 1.4), (-1.0, 0.8)]
 for x, y in rota:
     robot.movel(x, y, 0, speed=hiz)
     print(f"Hedefe gidildi: ({x}, {y})")`}
+/>
+
+<ConceptSimulationCode
+  concept="Bir for döngüsü, rota listesindeki her hedefi aynı hareket gövdesinden sırayla geçirir; hedef sayısı artsa da döngü kodu değişmez."
+  simulation="Yukarıdaki CodeRunner, rota noktalarını movel ile sırayla çözer ve robotun her hedefte oluşan eklem izini gösterir."
+  code="Kod Akademisi'nde aynı liste ve for yapısını eklem hedefleriyle kur; orada hareket movej ile verilir ama Python döngüsü aynıdır."
+  codeHref="/kod-akademisi/orta/koda-orta-donguyle-uc-nokta"
+  codeLabel="Döngüyle üç nokta modülünü aç"
 />
 
 ## Ne oldu

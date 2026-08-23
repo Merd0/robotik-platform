@@ -30,4 +30,5 @@ export const IZINLI_BILESEN_ADLARI = [
   "RobotSelectionTable",
   "FourLensTraceLab",
   "Terim",
+  "ConceptSimulationCode",
 ] as const;

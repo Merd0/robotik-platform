@@ -25,6 +25,7 @@ incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
   - CodeRunner
+  - ConceptSimulationCode
 durum: yayinda
 ---
 
@@ -48,6 +49,14 @@ ettirmek asıl kullanılan yöntemdir — endüstri bu komuta `movej` der (RAPID
 hedef_acilar = [75, -35]
 robot.movej(hedef_acilar)
 print("Yeni duruş:", hedef_acilar)`}
+/>
+
+<ConceptSimulationCode
+  concept="Bir hedef açı listesini isimli bir değişkende tutarsan aynı değeri hareket komutunda ve programın başka yerlerinde yeniden kullanabilirsin."
+  simulation="Yukarıdaki CodeRunner, hedef_acilar listesini gerçek movej köprüsüne verir; eklem duruşu ve TCP sonucu aynı hedefe göre değişir."
+  code="Kod Akademisi'nde aynı değişkeni düzenleyip robotun yeni eklem hedefini çalıştırarak sonucu doğrula."
+  codeHref="/kod-akademisi/temel/koda-temel-degisken-degistir"
+  codeLabel="Değeri değiştir modülünü aç"
 />
 
 ## Ne oldu
