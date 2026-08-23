@@ -92,6 +92,67 @@ robotik-platform/
 └── docs/                     bu planlama dokümanları
 ```
 
+### `lib/robotics/` geliştirici haritası ve veri akışı
+
+`lib/robotics/` bir sahne veya durum yöneticisi değil, tarayıcıda çalışan saf
+TypeScript hesaplama katmanıdır. Yeni kodu hangi dosyaya koyacağını şu ayrımla
+belirle:
+
+| Katman | Dosyalar | Sorumluluk |
+|---|---|---|
+| Matematik temeli | `transform.ts`, `kinematics.ts`, `collision.ts`, `random.ts` | Matris/vektör işlemleri, FK/IK/Jacobian, çarpışma ve deterministik rastgelelik |
+| Algoritmalar | `planners/` | Ortak `Planner` sözleşmesini kullanan A*, RRT ve RRT* |
+| Robot verisi | `robots/` | Değişmez `RobotSpec` presetleri ve id → preset kayıt defteri |
+| Deney motorları | `learningLabs.ts`, `fourLensTrace.ts`, `safety.ts`, `blockProgram.ts`, `robotCell*.ts` | UI'dan bağımsız deney durumu, hesap ve doğrulama kuralları |
+| Sınır/uyarlayıcı | `pythonBridge.ts`, `customRobot.ts` | Dış girdiyi doğrulayıp çekirdek sözleşmelere çevirme |
+| Testler | Aynı dizindeki `*.test.ts` dosyaları | Saf motoru DOM/React olmadan doğrulama |
+
+Tipik veri akışı şöyledir:
+
+```text
+MDX prop'ları + kullanıcı girdisi
+  → etkileşimli bileşenin yerel durumu
+  → getRobotById(...) + saf lib/robotics fonksiyonu
+  → sonuç (poz, iz, plan, çarpışma veya hata)
+  ├─→ React/SVG/Three.js sunumu
+  └─→ semantik Evidence olayı → kayıtlı predicate → gerekirse passed
+```
+
+Çekirdek; React state, DOM, `window`, `localStorage`, çizim veya Evidence
+kaydetmez. UI, çekirdeğe SI birimlerinde girdi verir ve sonucu gösterim
+birimine çevirir. Uzun hesap worker'a taşınsa da iş kuralının kaynak dosyası
+ve worker kaynağı `interactionHash` kapsamına alınır.
+
+### Koordinat ve birim sözleşmesi
+
+Hesaplama katmanında tek sözleşme vardır; kullanıcıya gösterilen derece/mm
+değerleri bu sözleşmenin parçası değildir:
+
+| Değer | Çekirdek birimi / düzeni |
+|---|---|
+| Konum, hedef, engel, DH `a` ve `d` | metre |
+| DH `alpha`, `theta`; döner eklem girdisi ve limiti | radyan |
+| Doğrusal eklem girdisi ve limiti | metre |
+| `maxVelocity` | döner eklemde rad/s, doğrusal eklemde m/s |
+| `Mat4` | satır öncelikli; öteleme son sütunda |
+| DH dönüşümü | klasik/standart DH: `Rz(theta) · Tz(d) · Tx(a) · Rx(alpha)` |
+| Robotik dünya | sağ elli, Z-yukarı |
+
+`forwardKinematics(robot, jointValues)` içindeki ikinci argümanın tarihsel adı
+`jointAngles` olsa da karma zincirde değer eklem türüne göre yorumlanır:
+döner eklemde radyan olarak sabit `theta` ofsetine, doğrusal eklemde metre
+olarak sabit `d` ofsetine eklenir. Derece veya milimetre kabul eden bir UI/API,
+dönüşümü **giriş sınırında bir kez** yapar; çekirdekte iki birim birlikte
+taşınmaz. `RobotMetadata.maxReachMm` üretici iddiasını gösteren metadata'dır,
+FK girdisi değildir ve metreye çevrilmeden hesaba katılmaz.
+
+Three.js Y-yukarı çalıştığı için 3B renderer, çekirdek sonucunu
+`components/scene/robotFrames.ts` içindeki dönüşümle taşır:
+`(x, y, z)_robotik → (x, z, -y)_sahne`. Bu yalnız görselleştirme sınırıdır;
+çekirdek koordinatını değiştirmez. Düzlemsel öğretim robotları robotik XY
+düzleminde (`z = 0`) çalışır. UI'da gösterilen takım yönelimi ZYX
+roll-pitch-yaw ve derecedir; kinematik hesabın girdisi değildir.
+
 ---
 
 ## Değişmez sözleşmeler
@@ -146,7 +207,7 @@ interface RobotMetadata {
 
 `lib/robotics/kinematics.ts`'te tanımlı, `lib/content.ts`'teki ders `SourceRef`inden BİLİNÇLİ olarak ayrı (bu dosya fs'e dokunan `content.ts`'i import etmez — `lib/robotics/CLAUDE.md`'nin "window/document/React'e özel import yok" mobil-port saflığı kuralı fs importunu da kapsar).
 
-**Kural: `metadata` yalnız GERÇEK, kaynak gösterilebilir bir üretici ürününe karşılık gelen bir `RobotSpec`te doldurulur.** Bu platformdaki katalog robotları (`generic-2dof`, `generic-prismatic`, `generic-6dof`) ve kullanıcı tanımlı `custom-robot` örnekleri kasıtlı olarak jeneriktir — DH parametreleri hiçbir gerçek üretici modelinin datasheet'inden gelmiyor (bkz. `lib/robotics/robots/genericSixDof.ts` başındaki not). Bu robotlara `metadata` eklemek, kinematik davranışı gerçek olmayan bir markayla özdeşleştirmek olurdu — bu yüzden Faz 6 kapsamında hiçbiri `metadata` taşımıyor; alan şu an yalnız altyapı olarak duruyor, ileride gerçek bir robotun DH'si datasheet'ten doğrulanarak eklenirse kullanılacak.
+**Kural: `metadata` yalnız GERÇEK, kaynak gösterilebilir bir üretici ürününe karşılık gelen bir `RobotSpec`te doldurulur.** `generic-2dof`, `generic-prismatic`, `generic-6dof` ve kullanıcı tanımlı `custom-robot` örnekleri kasıtlı olarak jeneriktir; DH parametreleri hiçbir gerçek üretici modelinin veri sayfasından gelmez. Bu robotlara marka/model metadata'sı eklemek yanlış özdeşleştirme olur ve yasaktır. `meca500-r4`, kamuya açık üretici dokümanındaki geometri, limit, hız ve erişim verileriyle eklenen ilk gerçek preset örneğidir; jenerik presetlerin statüsünü değiştirmez.
 
 Görsel katman (`components/interactive/RobotInfoLine.tsx`, JointSliders ve IkTarget'a bağlı) bu ayrımı kullanıcıya da taşır: `metadata` varsa gerçek marka/model + kaynak linki gösterir; yoksa robotun jenerik olduğunu açıkça söyler ve (yalnız matematiksel olarak geçerli olduğu durumda — düz, `alpha=0`, tamamen döner bir zincir) kendi DH uzunluklarından hesaplanan azami erişimi gösterir. Genel bir DH zincirinde (d ofseti veya alpha bükümü olan) bu toplam yanlış olacağı için hiç gösterilmez.
 
@@ -190,6 +251,43 @@ tork, yerçekimi, yük, ivme/jerk, denetleyici gecikmesi, bağlantı kalınlığ
 motor gövdesi, kablo kaynaklı bağlı limitler ve çevre çarpışmasını modellemez.
 Dolayısıyla öğretilen yol gerçek robot komutu olarak dışa aktarılmaz; bu sınır
 arayüzde de deneyin hemen yanında görünür.
+
+#### Yeni robot preset'i ekleme
+
+Meca500 R4 deseni sırasıyla `lib/robotics/robots/meca500R4.ts`,
+`lib/robotics/robots/index.ts` ve `lib/robotics/robots/catalog.test.ts`
+dosyalarında görülebilir.
+
+1. Önce testleri yaz: id'nin katalogdan çözülmesini, DH tablosunu, limit/hız
+   değerlerini, metadata kaynağını ve en az bir bilinen FK pozunu beklenen
+   değerlerle sabitle. Jenerik presetlerin metadata'sız kaldığı negatif testi
+   koru.
+2. Her sayısal alanı kamuya açık birincil kaynağa bağla. Üreticinin resmî
+   teknik dokümanı; başlık, yayıncı, URL, sürüm ve erişim tarihiyle
+   `metadata.source` içine yazılır. Kaynakta olmayan geometri, limit, hız,
+   erişim veya yük değeri tahmin edilmez; alan opsiyonelse boş bırakılır,
+   zorunluysa preset eklenmez.
+3. `lib/robotics/robots/<model>.ts` içinde tek bir `RobotSpec` tanımla.
+   Kaynaktaki mm ve derece değerlerini dosya sınırında metre ve radyana çevir;
+   nesnede çekirdek birimlerini sakla. Kullanılan DH çeşidini ve üretici
+   çerçevesinden standart DH'ye yapılan doğrulanabilir eşlemeyi yorumda açıkla.
+4. Gerçek ürünse `metadata.manufacturer`, `model` ve `source` alanlarını ekle.
+   `maxReachMm` gibi gösterim metadata'sını DH toplamından türetme. Öğretim
+   amaçlı jenerik bir zincirse `metadata` ekleme ve marka çağrışımlı id kullanma.
+5. Preset'i `lib/robotics/robots/index.ts` kayıt defterine ekle ve dışa aktar.
+   Ders MDX'i bu id'yi bir bileşenin `robot="..."` prop'unda kullanacaksa ayrıca
+   `lib/interactionManifest.ts` içindeki robot id → spec dosyası eşlemesine
+   ekle; yalnız katalogda bulunması bu adımı gerektirmez.
+6. Önce hedefli katalog testini, ardından tam kontrol paketini çalıştır.
+   Kaynağın gerçekten erişilebilir olduğunu ve sayısal iddiaların ilgili tablo/
+   şekille birebir uyuştuğunu ayrıca elle doğrula.
+
+Meca500 örneğinde üreticinin **MC-UM-MECA500 — Technical specifications,
+Table 7 and Figure 18** belgesi tek sayısal kaynaktır:
+<https://resources.mecademic.com/en/doc/MC-UM-MECA500/2026.B/manual/technical-specifications.html>.
+Dosya, mm → m ve derece → radyan dönüşümünü tanım sınırında yapar; katalog
+testi sıfır pozunu golden sonuç olarak, kaynak metadata'sını ve bütün eklem
+limit/hız dizilerini ayrı ayrı sabitler.
 
 ### 2. Planlayıcı arayüzü
 
@@ -287,13 +385,14 @@ gerektirmez.
 
 ### 5. Evidence v2
 
-Yerel öğrenme kaydı `robotik-platform:evidence:v2` anahtarında, dersin
-`teachingHash` sürümüyle birlikte tutulur. Öğrenci ilerlemesinin sürüm
-anahtarı bilinçli olarak `teachingHash`'tir, tüm ders artifact'ı değil:
-öğretilen metin değişirse eski kanıt geçersiz olmalı, ama bir kaynağın erişim
-tarihini güncellemek veya dersi yayına almak öğrencinin kaydını silmemeli.
-İnceleme geçerliliği ile öğrenci ilerlemesi ayrı sorulardır ve aynı anahtara
-bağlanmazlar. `read`, `predicted`, `tried`, `observed` ve
+Yerel öğrenme kaydı `robotik-platform:evidence:v2` anahtarında dersin birleşik
+`contentVersion` değeriyle tutulur. Bu değer `teachingHash`, `interactionHash`
+ve `predicateHash` köklerini birleştirir: öğretilen metin, çalışan deney veya
+başarı ölçütü değişirse eski kanıt geçersiz olur. `sourceHash` ve
+`presentationHash` bu köke girmez; bir kaynağın erişim tarihini güncellemek ya
+da dersi taslaktan yayına almak öğrencinin kaydını eskitmez. İnceleme
+geçerliliği ile öğrenci ilerlemesi ayrı sorulardır ve aynı anahtara bağlanmaz.
+`read`, `predicted`, `tried`, `observed` ve
 `assessed` kullanıcı/bileşen olaylarıdır; bunların hiçbiri doğrudan başarı
 değildir. `passed` yalnız `lib/evidence.ts` içindeki kayıtlı predicate'in aynı
 ders ve aynı artifact sürümündeki ölçülebilir olay dizisini doğrulamasıyla
@@ -330,7 +429,7 @@ bir modülde yaşıyor, tıpkı `computeLessonSubjectHashes`'in saf kalıp
 
 **Kapsam ve durum (güncellendi — bkz. docs/durum-denetim.md "Faz 2 — Kanıt
 zincirindeki eksik bağlantı"):** Sprint 2'de yalnız üç pilot laboratuvar
-kayıtlıyken, artık MDX'te izinli 19 bileşenin TAMAMI `LAB_DEPENDENCY_REGISTRY`'de
+kayıtlıyken, artık MDX'te izinli 20 bileşenin TAMAMI `LAB_DEPENDENCY_REGISTRY`'de
 tanımlı (`lib/interactionManifest.test.ts` bunu regresyona karşı doğruluyor);
 kayıtlı olmayan bir bileşen için `computeInteractionHash` hâlâ açıkça hata
 fırlatır. `computeEvidenceVersionRoot` artık canlı ders sayfasına BAĞLI:
@@ -339,6 +438,55 @@ fırlatır. `computeEvidenceVersionRoot` artık canlı ders sayfasına BAĞLI:
 `LessonEvidenceProvider`a `contentVersion={computeTeachingHash(lesson)}`
 değil, üç kökün birleşimini veriyor — bileşen/motor/predicate kodu
 değiştiğinde eski kanıt artık otomatik eskiyor.
+
+#### Yeni deney/laboratuvar ekleme
+
+`DlsTraceLab` ve `CspaceLab`, saf deney motoru + kontrollü UI + Evidence +
+bağımlılık manifesti deseninin küçük örnekleridir. Yeni bir deney şu sırayla
+eklenir:
+
+1. **Davranışı test-first tanımla.** Hesap/karar mantığını mümkünse
+   `lib/robotics/<deney>.ts` içinde saf fonksiyon olarak kur; React, DOM ve
+   depolama ekleme. Bilinen sonuç (golden), sınır ve geçersiz girdi testlerini
+   yanındaki `<deney>.test.ts` dosyasına önce yaz.
+2. **İnce UI adaptörünü ekle.** `components/interactive/<Deney>.tsx`, kullanıcı
+   girdisini çekirdek birimine çevirir, motoru çağırır ve sonucu gösterir.
+   Paylaşılabilir durum gerekiyorsa `LabChallengeUi` içindeki sürümlü
+   `useSharedLabState` / `createLabShareUrl` desenini kullan. Bileşeni
+   `components/interactive/index.ts` ve `lib/izinliBilesenler.ts` kayıtlarına
+   ekle; eşitliği `components/interactive/index.test.ts` korur.
+3. **Semantik Evidence olayı kaydet.** `useEvidenceRecorder()` ile yalnız
+   anlamlı commit/çalıştırma anında `tried`, `observed` veya `assessed` yaz.
+   Her pointer/input karesini kaydetme. `skillId`, `result`, gerekiyorsa `seed`
+   ve predicate'in bağımsız doğrulayabileceği ham metrikleri taşı; bileşen
+   hiçbir zaman `passed` yazamaz.
+4. **Predicate'i sürümle.** `lib/evidence.ts` içindeki
+   `EVIDENCE_PREDICATES` listesine ders id'si ve aynı `skillId` ile bir
+   `<anlamlı-ad>-v1` kaydı ekle. Predicate, yalnız UI'ın `result: success`
+   iddiasına güvenmemeli; doğru ders/sürümdeki birden fazla ölçülebilir olayı,
+   ham metrikleri ve gerekiyorsa assessment'ı birlikte doğrulamalıdır. Mantık
+   veya olayı üretme semantiği değişirse eski id'yi yeniden kullanma, `-v2`
+   olarak sürümle.
+5. **Çalışan kodu `interactionHash`e bağla.** `lib/interactionManifest.ts`
+   içindeki `LAB_DEPENDENCY_REGISTRY` kaydına bileşenin kendisini, davranışını
+   etkileyen bütün motor/ortak yardımcı dosyalarını ve varsa worker kaynağını
+   ekle. MDX'te literal `robot="..."` kullanılıyorsa robot id'sinin spec
+   eşlemesini de ekle. `lib/interactionManifest.test.ts`te tam beklenen
+   bağımlılık kümesini ve bilinmeyen kaydın açıkça hata verdiğini doğrula.
+6. **Derse bağla ve zinciri doğrula.** MDX bileşenini kullandığında ders
+   sayfası AST'den bileşen/robot id'lerini çıkarır;
+   `computeLessonContentVersion`, `teachingHash + interactionHash +
+   predicateHash` kökünü otomatik olarak `LessonEvidenceProvider`a verir.
+   Elle contentVersion yazma. Predicate testinde tek olayın/başarısız koşunun
+   geçmediği negatif senaryoyu ve gerekli bütün olayların geçtiği golden
+   senaryoyu yan yana tut; gerekiyorsa Playwright ile gerçek etkileşimden
+   `passed` üretildiğini sınırdan sınırına doğrula.
+
+Evidence zincirinin güvenlik sınırı şudur: bileşen yalnız gözlem/assessment
+olayı üretir; `appendEvidence`, aynı `contentVersion` olaylarını kayıtlı
+predicate'e verir; başarılı `passed` olayını yalnız bu registry üretir.
+Dolayısıyla bir deney davranışı, bağımlılığı veya başarı ölçütü değiştiğinde
+ilgili manifest/predicate sürümü de aynı değişiklikte güncellenmelidir.
 
 ### 7. Python↔robot köprüsü (Pyodide)
 
@@ -374,13 +522,38 @@ değişirse `interactionHash` de değişir, eski kanıt otomatik eskir.
 
 ## Doğrulama stratejisi
 
-TypeScript matematiği doğru mu? Üç katman:
+Değişiklik sırası **kırmızı test → en küçük uygulama → refactor → tam kapı**dır.
+Testi atlamak, `skip`lemek, anlamlı assertion'ı silmek veya toleransı yalnız
+test geçsin diye genişletmek kabul edilmez. Bir hata düzeltmesi önce hatayı
+üreten regresyon testiyle görünür hâle gelir.
 
-1. **Birim testleri** — bilinen analitik sonuçlar (2 eklemli kol elle çözülebilir).
-2. **Çapraz doğrulama** — Python/PyBullet ile aynı girdiler çalıştırılıp
-   sonuçlar JSON'a yazılır (`reference-python/generate_fixtures.py`),
-   TypeScript testleri bu fixture'lara karşı koşar. Tolerans: 1e-6.
-3. **Özellik testleri** — `FK(IK(hedef)) ≈ hedef` gibi değişmezler.
+| Test deseni | Ne zaman | Örnek |
+|---|---|---|
+| Analitik birim testi | Küçük, elle hesaplanabilir matematik | 2R kolun 0°/90° FK sonucu |
+| Golden/fixture | Sabit, bağımsız kaynaktan beklenen tam çıktı | Meca500 sıfır pozu; `reference-python/fixtures/` sonuçları |
+| Negatif/sınır testi | Yanlış başarının veya sessiz kabulün önlenmesi | Limit dışı eklem, erişilemez IK, çarpışan yol, eksik Evidence olayı |
+| Özellik/değişmez testi | Çok sayıda girdide yapısal doğruluk | `FK(IK(hedef)) ≈ hedef`, planın bütün segmentlerinin çarpışmasızlığı |
+| Entegrasyon/E2E | UI, worker, paylaşım ve Evidence kabloları | Gerçek etkileşimden sürümlü `passed` üretimi |
+
+Golden sonuç uygulamanın kendi çıktısını kopyalayarak üretilmez. Kaynağı test
+yorumunda belirtilir: analitik türetim, resmî üretici tablosu veya bağımsız
+Python oracle/fixture. Python ile aynı girdiler çalıştırılıp JSON fixture'lara
+yazılan çapraz doğrulamada (`reference-python/scripts/generate_fixtures.py`)
+mevcut sayısal tolerans `1e-6`dır; tolerans değişikliği gerekçe ve hata analizi
+olmadan yapılmaz.
+
+Her başarı testi, aynı davranışın aşırı izin verici olmadığını gösteren en az
+bir negatif karşılıkla düşünülür. Özellikle Evidence predicate testlerinde
+yalnız `result: success`, eksik olay kümesi, yanlış metrik, başarısız/timeout
+çalışma ve eski predicate id'si başarı üretmemelidir. `interactionHash`
+testleri de kayıtlı bağımlılığın hash'e girdiğini ve bilinmeyen bileşen/robotun
+sessizce atlanmak yerine hata verdiğini korur.
+
+Hedefli Vitest dosyası geliştirme döngüsünü hızlandırır; teslim kapısı değildir.
+Teslimde `docs/06-kalite-ve-topluluk.md` içindeki CI ile birebir tam komut
+listesi çalıştırılır. Playwright matematik oracle'ı olarak kullanılmaz; saf
+motor doğruluğu Vitest/fixture katmanında, tarayıcı kablosu E2E katmanında
+doğrulanır.
 
 ---
 

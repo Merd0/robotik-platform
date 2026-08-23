@@ -2110,3 +2110,38 @@ tablet WCAG testi CPU yükünde 60 saniye zaman aşımına uğradı; aynı test 
 işçiyle 17.1 saniyede geçti. Test veya süre zayıflatılmadan dört işçiyle
 yinelenen ve birleşik `main` üzerinde son kez çalıştırılan tam paket
 **306 geçti, 18 koşullu atlandı, 0 başarısız** sonucu verdi.
+
+### 2026-08-23 · Madde 66 geliştirici teknik dokümantasyonu tamamlandı
+
+Kanonik governance dosyası `docs/02-mimari.md`, mevcut kod davranışı
+değiştirilmeden geliştirici rehberiyle genişletildi. Yeni bölümler şunları
+tek yerde açıklıyor:
+
+- `lib/robotics/` katmanları ve MDX girdisinden saf motor sonucuna, sunuma ve
+  Evidence predicate'ine uzanan veri akışı;
+- sağ elli Z-yukarı robotik dünya, Three.js Y-yukarı eşlemesi, standart DH
+  sırası ve metre/radyan/derece/mm sınırları;
+- test-first yeni `RobotSpec` preset'i ekleme adımları ve kaynaklı Meca500 R4
+  örneği;
+- yeni deney/laboratuvar için saf motor, UI kayıtları, semantik Evidence
+  olayları, sürümlü predicate ve `interactionHash` bağımlılık manifesti;
+- analitik, golden/fixture, negatif, özellik ve E2E testlerinin görev ayrımı.
+
+Meca500 örneğinin sayısal kaynağı değişmedi: Mecademic'in kamuya açık
+[MC-UM-MECA500 2026.B teknik özellikler sayfası](https://resources.mecademic.com/en/doc/MC-UM-MECA500/2026.B/manual/technical-specifications.html)
+ve [2026.B.277 PDF kılavuzu](https://resources.mecademic.com/en/doc/MC-UM-MECA500/2026.B/mc-um-meca500.pdf).
+Rehber, `generic-2dof`, `generic-prismatic`, `generic-6dof` ve `custom-robot`
+tanımlarına marka/model metadata'sı eklenemeyeceğini açıkça koruyor.
+
+`content/` altındaki MDX dosyaları, `components/` UI bileşenleri ve
+`lib/robotics/` hesaplama mantığı değiştirilmedi. `docs/02-mimari.md` kanonik
+mimari/governance belgesi olduğu için değişikliği bilinçli ve bu görevin doğal
+kapsamındadır.
+
+**Doğrulama:** `npx tsc`, `npm run lint`, `npm test` (821/821), bütün içerik/
+graph/quiz/MDX/review/hassas terim kapıları, `npm run build` (328 statik
+sayfa), `check-performance-budget` ve `npm audit --audit-level=high` temiz.
+İlk 10-işçili E2E koşusunda aynı WCAG testi mobil ve tablette CPU yükü altında
+60 saniye zaman aşımına uğradı; assertion veya ihlal raporu oluşmadı. Test/süre
+değiştirilmeden dört işçiyle yinelenen tam matris **315 geçti, 18 koşullu
+atlandı, 0 başarısız** sonucu verdi.
