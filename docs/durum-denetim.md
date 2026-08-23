@@ -3832,3 +3832,85 @@ complexity-layer) insan kararına bağlı olarak açıkça bekletiliyor.** Bu lo
 için otonom olarak alınabilecek bir sonraki madde kalmadı — kalan iki açık
 madde (Faz 6, Faz 7) Mert'in tercih edeceği yaklaşımı bekliyor.
 
+---
+
+## Faz 6 (RobotSpec metadata genişletmesi) — TAMAMLANDI (2026-08-23, commit 8b7bb25)
+
+Mert 2026-08-23'te Faz 6 ve Faz 7 için doğrudan talimat verdi (yukarıdaki
+"insan kararı bekliyor" notunu çözdü) — bu yüzden `RobotSpec` sözleşmesi
+kök `CLAUDE.md`'nin 1. "dur ve sor" koşulunu tetiklemeden genişletildi;
+onay zaten bu talimatın kendisiydi.
+
+**Yapılan:** `lib/robotics/kinematics.ts`'te `RobotSpec`e opsiyonel
+`metadata?: RobotMetadata` alanı eklendi (`manufacturer`, `model`,
+`maxReachMm?`, `payloadKg?`, `imageUrl?`, `source`). `docs/02-mimari.md`
+"1.1 RobotMetadata" bölümüyle güncellendi. Yeni paylaşılan bileşen
+`components/interactive/RobotInfoLine.tsx` (saf hesap kısmı ayrı, test
+edilebilir bir dosyada: `lib/robotics/robotMetadataDisplay.ts`)
+`JointSliders` ve `IkTarget`e bağlandı — sahnenin altında tek satırlık bir
+kimlik bilgisi gösteriyor.
+
+**Bilinçli olarak UYGULANMAYAN kısım — ve neden:** talimat açıkça "YENİ
+marka/model iddiası UYDURMA, sadece projede zaten var olan kaynak
+gösterilebilir robotlar için gerçek metadata ekle" diyordu. Kod incelemesi
+şunu doğruladı: platformdaki HİÇBİR katalog `RobotSpec`i (`generic-2dof`,
+`generic-prismatic`, `generic-6dof`) gerçek bir üretici modeline
+dayanmıyor — üçünün de kaynak kodundaki yorumlar bunu zaten açıkça
+söylüyordu (bkz. `lib/robotics/robots/genericSixDof.ts` başı). Ayrı bir
+`lib/robotSelection.ts` + `RobotSelectionTable` laboratuvarı gerçek,
+kaynaklı robotlar (ABB IRB 1100, UR10e, ABB GoFa, Epson GX4/GX8, MiR250,
+Kivnon K05) taşıyor ama bunlar **kinematik `RobotSpec` değil** — ayrı bir
+"hangi robotu seçmeliyim" karşılaştırma aracı, DH parametresi yok. Yani
+`metadata` alanını doldurabileceğim GERÇEK bir kaynaklı `RobotSpec` hiç
+yoktu. Bunu doldurmak için ya (a) uydurma marka/DH iddiası yazmam ya da (b)
+gerçek bir ürünün (ör. Meca500) datasheet'ini bulup DH parametrelerini
+doğrulanmış şekilde yeniden üretmem gerekirdi — ikincisi talimatın
+"sadece metadata katmanı ekle, mevcut 3 robotu bozma" kapsamının dışında,
+kendi başına ayrı bir faz olurdu. Bu yüzden `metadata` şu an üç katalog
+robotunda da boş — RobotInfoLine bunu "jenerik, belirli bir üretici
+modeline karşılık gelmez" diye açıkça söylüyor, ve SADECE matematiksel
+olarak geçerli olduğu durumda (düz/`alpha=0`/tamamen döner zincir —
+`generic-2dof`'ta geçerli, `generic-6dof`/`generic-prismatic`'te DEĞİL)
+kendi DH uzunluklarından hesaplanan azami erişimi gösteriyor. Yanlış bir
+sum-of-a sayısı `generic-6dof` gibi düz olmayan bir zincirde göstermek de
+aynı "uydurma sayı" hatası olurdu — bu yüzden guard'lı.
+
+**Doğrulama:** Çalışma dizininde bu faza hiç ait olmayan, önceden var olan
+büyük bir commit'lenmemiş iş bulundu — `feat/python-code-editor` dalı,
+CodeMirror tabanlı yeni bir Python editörü (sözdizimi vurgusu, otomatik
+tamamlama, hata satırı vurgusu) üzerinde çalışıyordu; `components/interactive/
+CodeRunner.tsx`, `KodAkademisiCodeLab.tsx`, `package.json` (yeni
+`@codemirror/*` bağımlılıkları) değişmiş, `PythonCodeEditor.tsx`/
+`LazyPythonCodeEditor.tsx`/`lib/pythonCodeEditor.ts` henüz `git add`
+edilmemişti. Bu iş docs/03 veya bu dosyada kayıtlı değildi — muhtemelen
+başka bir oturumun (interaktif terminal?) yarım bıraktığı iş. **Hiçbir
+şeye dokunulmadı, silinmedi, tamamlanmaya çalışılmadı** — kontrol paketi
+(tsc/lint/testler/build/e2e) bu yüzden ÖNCE tüm dizinle (Python editörü
+WIP'i dahil, 10 e2e testi WIP'in kendi eksikliği yüzünden bekleniyor
+şekilde kırmızıydı — otomatik tamamlama/hata satırı vurgusu henüz
+çalışmıyor), SONRA `git stash push --keep-index --include-untracked` ile
+yalnız Faz 6'nın izole edilmiş hâline karşı tekrar koşuldu (tsc/lint/800
+unit/check-content/validate-content-graph/check-quiz-dagilimi/
+check-mdx-guvenlik/check-review-debt/check-review-integrity/
+check-sensitive-terms/build/check-performance-budget/npm audit/e2e
+**282/282, sıfır hata** — CodeRunner'daki 10 başarısızlık gerçekten o WIP'e
+aitmiş, doğrulandı). Commit, `lib/interactionManifest.ts` ve
+`e2e/platform.spec.ts` gibi Python-editör WIP'iyle aynı dosyada iç içe
+geçmiş üç dosya için `git apply --cached` ile elle hazırlanmış yamalarla
+YALNIZ Faz 6'ya ait satırlar seçilerek yapıldı (`git add <dosya>` bütün
+dosyayı evet/hayır olarak stage ederdi, WIP'i de commit'e sürüklerdi).
+Commit `feat/python-code-editor` dalına atıldı (o dal zaten checkout'taydı,
+WIP'e dokunmamak için dal DEĞİŞTİRİLMEDİ), sonra `main` `git branch -f`
+ile hiç checkout yapılmadan aynı commit'e ilerletildi. `feat/python-code-editor`
+dalındaki commit'lenmemiş Python editörü işi hâlâ tam olarak bulunduğu
+gibi duruyor — kim sürdürüyorsa `git checkout feat/python-code-editor`
+sonrası kaldığı yerden devam edebilir.
+
+**docs/02-mimari.md değişti (governance dosyası) — bilinçli otomatik
+commit kararı:** Mert'in bu oturumdaki talimatı "docs/02'deki sözleşmeyi
+genişlet" diye AÇIKÇA bu değişikliği istiyordu; `docs/09-ai-muhendisligi.md`
+§7'deki "governance dosyası değişince dur ve sor" kuralı bir agent'ın
+KENDİ KARARIYla kural değiştirmesini önlemek için var — burada karar zaten
+Mert'e aitti, tekrar sormak alışkanlık hâline gelmiş gereksiz bir duraklama
+olurdu (kök `CLAUDE.md`: "soru sormak istisna olmalı, alışkanlık değil").
+
