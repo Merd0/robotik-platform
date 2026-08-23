@@ -19,6 +19,7 @@ import {
   useSharedLabState,
 } from "@/components/interactive/LabChallengeUi";
 import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
+import { ComplexityModeProvider, useComplexityMode } from "@/components/ui/ComplexityModeProvider";
 
 interface JacobianVizProps {
   robot: string;
@@ -29,9 +30,22 @@ const toDegrees = (radians: number) => (radians * 180) / Math.PI;
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 const round = (value: number) => Math.round(value * 1000) / 1000;
 
+/**
+ * Faz 7 (2026-08-23): `ComplexityModeProvider` burada da YEREL monteli,
+ * IkTarget'takiyle aynı gerekçeyle (bkz. docs/durum-denetim.md "Faz 7").
+ */
+export function JacobianViz(props: JacobianVizProps) {
+  return (
+    <ComplexityModeProvider>
+      <JacobianVizInner {...props} />
+    </ComplexityModeProvider>
+  );
+}
+
 /** Ders içine gömülen etkileşimli sahne: Jacobian sütunlarını ve manipülabilite elipsini görselleştirir. */
-export function JacobianViz({ robot: robotId, pilot }: JacobianVizProps) {
+function JacobianVizInner({ robot: robotId, pilot }: JacobianVizProps) {
   const record = useEvidenceRecorder();
+  const { mode, setMode } = useComplexityMode();
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
   const jointColors = [palette.jointPrimary, palette.jointSecondary] as const;
@@ -136,9 +150,28 @@ export function JacobianViz({ robot: robotId, pilot }: JacobianVizProps) {
         </p>
       )}
 
+      <div className="flex items-center justify-end gap-1 text-xs" role="group" aria-label="Gösterim modu">
+        {(["learn", "engineering"] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={mode === option}
+            onClick={() => setMode(option)}
+            className={`min-h-11 rounded-md border px-3 font-semibold ${
+              mode === option
+                ? "border-universite-ink bg-universite-ink text-universite-surface"
+                : "border-universite-ink/20 text-universite-ink/70"
+            }`}
+          >
+            {option === "learn" ? "Öğren" : "Mühendislik"}
+          </button>
+        ))}
+      </div>
+
       <NasilHesaplandi
         ozet="Çizgiler ve elips, eklem hızlarından uç hıza nasıl gidildiğini gösteriyor."
         className="border-universite-ink/10 bg-universite-bg text-universite-ink"
+        varsayilanAcik={mode === "engineering"}
       >
         <p>
           Renkli çizgiler: her eklemin birim hızının uç noktada ürettiği hız yönü (Jacobian
@@ -150,6 +183,15 @@ export function JacobianViz({ robot: robotId, pilot }: JacobianVizProps) {
           <code>manipulabilityOf</code> fonksiyonunun ürettiği sayı, yukarıdaki &ldquo;Manipülabilite&rdquo;
           satırında gösterilen değerin ta kendisi.
         </p>
+        {mode === "engineering" && (
+          <p className="mt-2 font-mono text-xs" data-testid="engineering-detail">
+            {columns.map((column, index) => (
+              <span key={index} className="block">
+                J col{index + 1} (Eklem {index + 1}): x={round(column.x)} · y={round(column.y)} · z={round(column.z)}
+              </span>
+            ))}
+          </p>
+        )}
       </NasilHesaplandi>
 
       <ExperimentShareButton

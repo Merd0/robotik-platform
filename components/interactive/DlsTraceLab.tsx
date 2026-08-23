@@ -10,6 +10,7 @@ import {
 import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
 import { forwardKinematics, inverseKinematicsNumerical, type NumericalIkResult } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
+import { ComplexityModeProvider, useComplexityMode } from "@/components/ui/ComplexityModeProvider";
 
 const robot = getRobotById("generic-2dof");
 const round = (value: number, digits = 4) => Number.isFinite(value) ? value.toFixed(digits) : "—";
@@ -26,9 +27,22 @@ function solve(target: { x: number; y: number }, damping: number): NumericalIkRe
   });
 }
 
-/** Exposes every numerical IK iteration instead of hiding an analytical result behind animation. */
+/**
+ * Faz 7 (2026-08-23): `ComplexityModeProvider` burada da YEREL monteli,
+ * IkTarget'takiyle aynı gerekçeyle (bkz. docs/durum-denetim.md "Faz 7").
+ */
 export function DlsTraceLab() {
+  return (
+    <ComplexityModeProvider>
+      <DlsTraceLabInner />
+    </ComplexityModeProvider>
+  );
+}
+
+/** Exposes every numerical IK iteration instead of hiding an analytical result behind animation. */
+function DlsTraceLabInner() {
   const record = useEvidenceRecorder();
+  const { mode, setMode } = useComplexityMode();
   const [target, setTarget] = useState({ x: 1.15, y: 0.65 });
   const [damping, setDamping] = useState(0.08);
   const [result, setResult] = useState<NumericalIkResult | null>(null);
@@ -127,9 +141,28 @@ export function DlsTraceLab() {
         </div>
       </div>}
 
+      <div className="mt-4 flex items-center justify-end gap-1 text-xs" role="group" aria-label="Gösterim modu">
+        {(["learn", "engineering"] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={mode === option}
+            onClick={() => setMode(option)}
+            className={`min-h-11 rounded-md border px-3 font-semibold ${
+              mode === option
+                ? "border-universite-ink bg-universite-ink text-universite-surface"
+                : "border-universite-ink/20 text-universite-ink/70"
+            }`}
+          >
+            {option === "learn" ? "Öğren" : "Mühendislik"}
+          </button>
+        ))}
+      </div>
+
       <NasilHesaplandi
         ozet="Her adımda hata, Jacobian'ın sönümlü tersinden gelen bir düzeltmeyle küçültülüyor."
-        className="mt-4 border-universite-ink/10 bg-universite-bg text-universite-ink"
+        className="mt-2 border-universite-ink/10 bg-universite-bg text-universite-ink"
+        varsayilanAcik={mode === "engineering"}
       >
         <p className="font-mono text-xs">Δθ = Jᵀ (J Jᵀ + λ²I)⁻¹ · hata</p>
         <p className="mt-2">
@@ -142,6 +175,17 @@ export function DlsTraceLab() {
           değiştirerek gözlemleyebilirsin. Kaynak kodu: <code>lib/robotics/kinematics.ts</code>{" "}
           içindeki <code>inverseKinematicsNumerical</code>.
         </p>
+        {mode === "engineering" && iteration && (
+          <p className="mt-2 font-mono text-xs" data-testid="engineering-detail">
+            {(() => {
+              const previous = result?.trace[step - 1]?.angles;
+              if (!previous) return "Δθ: ilk adım, önceki eklem açısı yok.";
+              return iteration.angles
+                .map((angle, index) => `Δθ${index + 1}=${round(toDegrees(angle - previous[index]), 3)}°`)
+                .join(" · ");
+            })()}
+          </p>
+        )}
       </NasilHesaplandi>
 
       <ExperimentShareButton

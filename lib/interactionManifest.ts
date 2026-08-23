@@ -106,7 +106,12 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
   },
   JacobianViz: {
     componentFile: "components/interactive/JacobianViz.tsx",
-    engineFiles: ["components/interactive/NasilHesaplandi.tsx", "lib/robotics/kinematics.ts"],
+    engineFiles: [
+      "components/interactive/NasilHesaplandi.tsx",
+      "components/ui/ComplexityModeProvider.tsx",
+      "lib/robotics/kinematics.ts",
+      "lib/complexityMode.ts",
+    ],
   },
   ScanPath: {
     componentFile: "components/interactive/ScanPath.tsx",
@@ -126,7 +131,12 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
   },
   DlsTraceLab: {
     componentFile: "components/interactive/DlsTraceLab.tsx",
-    engineFiles: ["components/interactive/NasilHesaplandi.tsx", "lib/robotics/kinematics.ts"],
+    engineFiles: [
+      "components/interactive/NasilHesaplandi.tsx",
+      "components/ui/ComplexityModeProvider.tsx",
+      "lib/robotics/kinematics.ts",
+      "lib/complexityMode.ts",
+    ],
   },
   CspaceLab: {
     componentFile: "components/interactive/CspaceLab.tsx",

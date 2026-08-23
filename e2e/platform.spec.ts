@@ -1262,6 +1262,49 @@ test("NasilHesaplandi paneli DLS formülünü gösterir, mevcut iterasyon izini 
   await expect(panel.getByText("Δθ = J", { exact: false })).toBeVisible();
 });
 
+test("Öğren/Mühendislik modu (Faz 7 yayılma — JacobianViz): sahne lazy-load eşiği bozulmadan panel otomatik açılır, Jacobian sütunları gösterilir", async ({ page }) => {
+  await page.goto("/ders/b-universite-tekillik");
+
+  // Kullanıcının açıkça istediği doğrulama: toggle'ın konumu bu sahnenin
+  // KENDİ lazy-load eşiğini bozmuyor mu (IkTarget'ta bulunan regresyonla
+  // aynı sınıf — her sahne kendi kutu boyutuna göre ayrı davranabilir).
+  const scene = page.locator("[data-scene-active]").first();
+  await scene.scrollIntoViewIfNeeded();
+  await expect(scene).toHaveAttribute("data-scene-active", "true");
+
+  const panel = page.locator("details").filter({ hasText: "Nasıl hesaplandı?" });
+  await expect(panel.getByText("manipülabilite = √det", { exact: false })).toBeHidden();
+  await expect(page.getByTestId("engineering-detail")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Mühendislik" }).click();
+  await expect(panel.getByText("manipülabilite = √det", { exact: false })).toBeVisible();
+  await expect(page.getByTestId("engineering-detail")).toContainText("J col1");
+  await expect(page.getByTestId("engineering-detail")).toContainText("J col2");
+});
+
+test("Öğren/Mühendislik modu (Faz 7 yayılma — DlsTraceLab): panel otomatik açılır, Δθ satırı gerçek iterasyon farkını gösterir (sahne yok, lazy-load riski yok)", async ({ page }) => {
+  await page.goto("/ders/b-universite-ters-kinematik");
+  // Bu sahnede hiç `SahneAlani`/3D yok (elle SVG) — bu test bunu doğrulayıp
+  // kayıt altına alıyor: lazy-load regresyonu sınıfı burada uygulanamaz.
+  await expect(page.locator("[data-scene-active]")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "80 adıma kadar çöz" }).click();
+  await expect(page.getByText(/^Adım \d+$/)).toBeVisible();
+
+  const panel = page.locator("details").filter({ hasText: "Nasıl hesaplandı?" });
+  await expect(panel.getByText("Δθ = J", { exact: false })).toBeHidden();
+  await expect(page.getByTestId("engineering-detail")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Mühendislik" }).click();
+  await expect(panel.getByText("Δθ = J", { exact: false })).toBeVisible();
+  // Adım 0'dayken önceki adım yok — dürüst "ilk adım" mesajı, uydurma sıfır değil.
+  await expect(page.getByTestId("engineering-detail")).toContainText("ilk adım");
+
+  const stepSlider = page.getByRole("slider", { name: /İz adımı/ });
+  await stepSlider.fill("5");
+  await expect(page.getByTestId("engineering-detail")).toContainText("Δθ1=");
+});
+
 test("ScanPath iki tamamlanmış yoğunluğu kanıtlar ve state'i paylaşır", async ({ page }) => {
   await page.goto("/ders/f-universite-tarama-yolu-uretimi");
   const rows = page.getByRole("slider");
