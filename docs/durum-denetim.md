@@ -3914,3 +3914,137 @@ KENDİ KARARIYla kural değiştirmesini önlemek için var — burada karar zate
 Mert'e aitti, tekrar sormak alışkanlık hâline gelmiş gereksiz bir duraklama
 olurdu (kök `CLAUDE.md`: "soru sormak istisna olmalı, alışkanlık değil").
 
+---
+
+## Faz 7 (Öğren/Mühendislik modu — complexity layer) — DİKEY DİLİM TAMAMLANDI, YAYILMA İÇİN ONAY BEKLİYOR (2026-08-23, commit ac2c60e)
+
+Mert'in talimatı iki adımlıydı: önce kod yazmadan mimari öneri, sonra TEK
+bir laboratuvarda dikey dilim, sonra dur ve onay bekle. Aşağıdaki mimari
+öneri bu sırayla uygulandı; commit `ac2c60e` yalnız IkTarget'ı kapsıyor.
+
+### Mimari öneri
+
+**1. Ortogonal eksen mi, seviye ekseninin eklentisi mi?** Ortogonal —
+seviye (ortaokul/lise/üniversite) ile AYNI boyut değil, ÇAPRAZ bir boyut.
+Gerekçe: seviye, dersin TABAN metnini ve çerçevelemesini belirler (docs/05
+"seviyeye göre doz" — kanca dili, oyunlaştırma yoğunluğu, görsel ton).
+Öğren/Mühendislik ise aynı taban metnin üstüne binen, İSTEĞE BAĞLI teknik
+derinlik panellerinin varsayılan açık/kapalı durumunu belirler. Bir
+üniversite öğrencisi ilk karşılaştığında Öğren modunda kalabilir (panel
+kapalı, tıklarsa açar); bir lise öğrencisi meraklanıp Mühendislik moduna
+geçip aynı formülü baştan görebilir. İkisi karışmaz çünkü FARKLI sorulara
+cevap verir: "bu ders bana nasıl anlatılıyor" (seviye) vs "teknik detay
+panelleri varsayılan açık mı" (mod).
+
+**2. Docs/05'teki "seviyeye göre doz" ile nasıl bir arada durur?** Çakışmaz,
+TAMAMLAR. docs/05'in tablosu zaten "alttaki etkileşim motoru aynı, üstündeki
+çerçeveleme ve dil seviyeyle ciddileşir" diyor — complexity-mode bu
+çerçevelemenin bir katmanı daha: aynı motor (`inverseKinematicsAnalytical2Dof`
+vb.), üç farklı sunum ekseni (seviye × mod). Faz 2-5'te kurulan
+`NasilHesaplandi`/`Neden` (progressive-disclosure, varsayılan kapalı, tıkla-aç)
+zaten complexity-mode fikrinin YEREL/bileşen-başına versiyonu — bu Faz 7,
+docs/16 madde 10'un istediği GLOBAL/kalıcı halini ekliyor: kullanıcı bir kez
+seçer, platform boyunca (en azından mod'u okuyan bileşenlerde) hatırlanır.
+
+**3. Varsayılan ne olmalı?** "learn" (Öğren). Gerekçe: mevcut davranışın
+BİREBİR aynısı (tüm Neden/NasilHesaplandi panelleri zaten varsayılan kapalı)
+— yeni kullanıcı hiçbir regresyon görmez, docs/00 "önce oyna sonra oku"
+felsefesiyle örtüşür. Mühendislik modu bilinçli bir opt-in.
+
+**4. Kaç bileşen dokunmadan bırakılır / global state'i okuması gerekir?**
+Kritik mimari bulgu: `InlineNot.tsx` zaten `Neden`, `NasilHesaplandi` VE
+`TerimInline`nin PAYLAŞTIĞI tek açılıp-kapanma bileşeni (Faz 2-4'te kurulan
+birincil). Bu, "20 bileşenin çoğu global state'i okumalı" korkusunu
+büyük ölçüde ortadan kaldırıyor: mod'u `InlineNot`a tek bir opsiyonel
+`baslangicAcik` prop'uyla akıtmak yeterli — `Neden`/`NasilHesaplandi` bu
+prop'u kendi çağıranından (ör. IkTarget) alıp iletir, `InlineNot`ın kendisi
+DEĞİŞMEZ (zaten değişti — bkz. aşağıda). Yani global rollout, teoride
+tahmin edilenin aksine, "20 bileşeni tek tek değiştir" değil, "birkaç
+LABORATUVAR bileşenini (IkTarget, JacobianViz, DlsTraceLab, CspaceLab —
+Neden/NasilHesaplandi kullananlar) `useComplexityMode()` okuyacak ve
+`varsayilanAcik` prop'unu geçecek şekilde güncelle" ölçeğinde bir iş.
+`TerimInline` (sözlük terimi) bilinçli olarak KAPSAM DIŞI — "bu robot neden
+böyle davranıyor" ile "bu terim ne demek" farklı sorular, ikincisi
+Mühendislik modunda otomatik açılırsa gürültü olur.
+
+**5. Hesapsız (localStorage) nasıl kalıcı olacak?** `lib/complexityMode.ts`
+(`ThemeProvider`/`lib/theme.ts` ile BİREBİR aynı desen — zaten kanıtlanmış,
+kod incelemesiyle doğrulanmış bir örüntü): `robotik-platform:complexity-mode`
+anahtarında `"learn" | "engineering"`, `resolveComplexityMode` bilinmeyen/
+boş değeri sessizce "learn"e düşürür (uydurma değer state'e sızmaz).
+
+### Dikey dilim — ne yapıldı
+
+`components/ui/ComplexityModeProvider.tsx` (Context + `useComplexityMode()`,
+`ThemeProvider`nin birebir aynı iskeleti) IkTarget'ın KENDİ İÇİNDE, YEREL
+monteli — global onay beklediği için kök `layout.tsx`'e TAŞINMADI, bilinçli
+kapsam sınırı. `InlineNot`a `baslangicAcik` (varsayılan `false`, geriye
+dönük uyumlu — 18 diğer kullanım etkilenmez) ve mod değiştiğinde zaten
+monteli bir paneli senkronlayan bir `useEffect` eklendi; `Neden`
+`varsayilanAcik` prop'unu buna iletir. IkTarget'a "Öğren · Mühendislik"
+segmented toggle eklendi (Neden panelinin hemen üstünde — konum bilinçli,
+aşağıda "bulunan hata" bölümüne bkz.). Mühendislik modunda Neden paneli
+otomatik açılır VE yeni, gerçek bir sayı ekler: `lib/robotics/kinematics.ts`
+içine `analyticalTwoDofDebug` (a1, a2, r², cos θ2) eklendi —
+`inverseKinematicsAnalytical2Dof` artık kendi içinde BUNU çağırıyor (aynı
+formül iki yerde ayrı yazılmadı, DRY + tek kaynaktan doğrulanabilirlik).
+Sayısal (DLS) çözücü yolunda ek satır çözücü/iterasyon/residual'ı daha
+yüksek hassasiyetle gösteriyor (yeni hesap değil, zaten var olan alanların
+daha ayrıntılı biçimi).
+
+Ekran görüntüleri (Öğren: panel kapalı; Mühendislik: panel açık + `cos θ2 = ...`
+satırı) konuşmada Mert'e gönderildi.
+
+### Bulunan ve düzeltilen gerçek regresyon
+
+İlk taslakta toggle IkTarget'ın EN ÜSTÜNE (sahneden önce) kondu. Bu, sahnenin
+`SahneAlani`daki `IntersectionObserver`-tabanlı tembel bağlanma eşiğini
+(`rootMargin: "300px"`) sayfa yüksekliğini artırarak bozdu — sahne artık
+ilk yüklemede "yaklaşan" sayılmıyordu, hiç bağlanmıyordu (`data-scene-active`
+DOM'a hiç girmiyordu). Playwright'ın `scrollIntoViewIfNeeded()`'ı var
+olmayan bir elemente kaydıramadığı için "R3F canvas görünmezken durur ve
+cihaz DPR bütçesini kullanır" testi 4/4 tekrarda tutarlı biçimde 30 saniye
+zaman aşımına uğradı — flake değil, gerçek bir davranış regresyonuydu
+(kod incelemesiyle kök nedeni doğrulandı, sonra tekrarlı koşuyla
+kanıtlandı). Düzeltme: toggle sahnenin ALTINA, doğrudan etkilediği Neden
+panelinin hemen üstüne taşındı — bu hem regresyonu giderdi hem de
+konumu semantik olarak daha doğru hale getirdi (toggle artık ne
+kontrol ettiğine bitişik).
+
+### Doğrulama ve teslim disiplini
+
+Çalışma dizininde Faz 6'da bulunan `feat/python-code-editor` WIP'i hâlâ
+duruyordu (bkz. yukarıdaki Faz 6 girişi) — aynı izolasyon disiplini
+(`git stash push --keep-index --include-untracked`, izole ağaçta TAM kontrol
+paketi, `git apply --cached`/blob-crafting ile yalnız Faz 7'ye ait satırların
+seçilmesi) tekrarlandı. Bu kez bir öğrenme oldu: izolasyon sırasında (stash
+açıkken) R3F hatasını düzeltmek için IkTarget.tsx'i TEKRAR düzenlemek,
+`git stash pop`'ın 3 dosyada (IkTarget.tsx, e2e/platform.spec.ts,
+interactionManifest.*) otomatik birleştirme yapmasına ve IkTarget.tsx'te
+toggle'ı YİNELEMİŞ (hem eski konumunda hem yeni konumunda, iki kez) olarak
+bırakmasına yol açtı — fark edildi, elle temizlendi, `tsc` ile doğrulandı.
+Ders: izole edilmiş bir ağaçta (stash açıkken) dosya düzenlemekten kaçın;
+düzenle → izole et → doğrula → commit et → geri yükle sırasını boz, yoksa
+stash'in 3-way merge'i beklenmedik şekilde birleştirebilir.
+
+Tam kontrol paketi izole ağaçta temiz: `tsc`, `lint`, 805 unit,
+`check-content`, `validate-content-graph`, `check-quiz-dagilimi`,
+`check-mdx-guvenlik`, `check-review-debt`/`check-review-integrity`,
+`check-sensitive-terms`, `build`, `check-performance-budget` (3D'siz ders
+gzip bütçesi 265→266 KiB, küçük pay — aynı docs/05 ödünleşim deseni),
+`npm audit` (0 zafiyet), e2e (281-282/282 — 4 zaman aşımı hatası tek tek
+tekrar koşulduğunda hepsi geçti; WCAG 60s taraması ve Pyodide soğuk-yükleme
+testleri tam paralel yükte docs/durum-denetim.md'de zaten kayıtlı bilinen
+flake sınıfı, bu fazdan bağımsız). `main` `git branch -f` ile (yine
+checkout yapılmadan) commit `ac2c60e`'ye ilerletildi;
+`feat/python-code-editor` dalındaki Python editörü WIP'i dokunulmadan
+duruyor.
+
+**Karar: bu dilim diğer laboratuvarlara (JacobianViz, DlsTraceLab, CspaceLab)
+veya köke (global toggle, `layout.tsx`) YAYILMADI — Mert'in talimatı gereği
+burada duruluyor.** Onay gelirse sıradaki adım: `ComplexityModeProvider`'ı
+kök `layout.tsx`'e taşımak (muhtemelen `ThemeProvider`la yan yana, site
+başlığında bir toggle), sonra yukarıdaki madde 4'teki üç ek laboratuvara
+`varsayilanAcik` prop'unu bağlamak — `InlineNot`ın kendisi zaten hazır,
+değişmesi gerekmiyor.
+
