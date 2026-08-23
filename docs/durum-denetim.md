@@ -4435,3 +4435,97 @@ hazır duruma gelmedi (WSL2 desteksizliği nedeniyle); halen arka planda
 takılı kalmış olabilir, isteğe bağlı olarak kapatılabilir — bu makinede
 Linux container tabanlı doğrulama için güvenilir bir yol değil.
 
+---
+
+## docs/16 önerilen 5 madde — sıralı uygulama (2026-08-23)
+
+Mert onayladı: docs/16-urun-denetimi.md "E. Güncel durum" bölümündeki
+önerilen 5 maddeyi (38, 20, 33, 9, 26) sırayla, her biri kendi tam kontrol
+paketiyle `main`e alarak uygula.
+
+### Paralel oturum keşfi — çalışma disiplini değişti
+
+Bu göreve başlarken `C:\Users\hp\Desktop\robotik-platform` (ana worktree)
+başka bir oturum tarafından aktif kullanılıyordu — dal `docs/technical-
+documentation`e, sonra `feat/reachability-workspace`e, göreve devam ederken
+de `feat/concept-simulation-code`e değişti; her seferinde büyük, ilgisiz
+stage edilmiş değişiklikler (docs/02-mimari.md genişlemesi, `lib/robotics/
+reachability.ts`) bulundu. Hiçbirine dokunulmadı. Bunun yerine TÜM bu
+göreve `C:\Users\hp\Desktop\robotik-platform-python-editor` (önceden Faz
+A/B/CI-fix'te kullanılan sabit worktree) üzerinde, `main`den açılan yeni bir
+`feat/urun-denetimi-top5` dalında çalışıldı — paylaşılan worktree'ye hiç
+girilmedi. e2e için de paylaşılan varsayılan port (3102/3103) yerine, her
+koşudan önce `netstat` ile boş olduğu doğrulanan tek kullanımlık portlar
+(`PLAYWRIGHT_PORT=...`) kullanıldı — bkz. aşağıdaki Madde 38 girişindeki
+port-çakışması kök nedeni.
+
+### Madde 38 (inline glossary yayılımı) — TAMAMLANDI (commit 6cdcdfc)
+
+`Terim`/`TerimInline` mekanizması (Faz 3) yalnız 2 pilot yerleşimde (TCP,
+tekillik) kullanılıyordu. 15 yeni terim yerleşimi eklendi (14 ders dosyası),
+her biri terimin KENDİ ev dersinden BAŞKA bir derste, ileri/geri referans
+olarak (Faz 3 pilot deseniyle aynı ilke) — bkz. commit mesajı için tam
+terim/dosya listesi. Faz 3'ün "TCP/IP ile robotik TCP'si karışıklığı"
+uyarısına benzer çapraz-anlam riski taşıyan hiçbir terim seçilmedi.
+
+**Bulunan ve düzeltilen iki gerçek altyapı sorunu (madde 38'in kendisiyle
+ilgisiz, ama gelecekte tekrar karşılaşılabilir):**
+
+1. **`.next` önbellek bayatlığı.** İlk `npm run build`dan sonra bazı
+   sayfalarda `<Terim>` JSX olarak değil DÜZ METİN olarak render ediliyordu
+   — kaynak dosya doğruydu, `check-mdx-guvenlik`/`check-content` temizdi,
+   ama gerçek HTML çıktısı yanlıştı. Kök neden izole bir `compileMDX`
+   scriptiyle (next-mdx-remote/rsc, aynı config) doğrulandı: İZOLE ortamda
+   AYNI kaynak metni doğru render ediyordu — yani derleyicinin kendisi
+   sorunlu değildi. `.next`i silip temiz build alınca sorun kayboldu. Ders:
+   "içerik doğru ama render yanlış" belirtisinde önce `.next` temizliği
+   denenmeli, kod/içeriğe şüpheyle bakılmadan önce.
+2. **Port çakışması — YANLIŞ sunucuya karşı test.** Playwright'ın
+   `reuseExistingServer: true` ayarı (yerelde varsayılan), port 3103'te
+   ZATEN dinleyen bir süreci sorgusuzca yeniden kullanıyor. O port ana
+   worktree'nin kendi `next start` sürecine aitti (paralel oturumun kendi
+   işi) — benim playwright koşularım YANLIŞLIKLA o sunucuya karşı
+   çalışıyordu, "el-göz kalibrasyonu"ndan "IkTarget"a kadar TAMAMEN
+   ilgisiz onlarca test aynı anda kırmızı çıktı. `netstat` ile port
+   boşluğu doğrulanıp izole bir port (3197→3211→3223→3231) kullanılınca
+   sorun anında kayboldu. Ders: paylaşılan bir makinede varsayılan
+   Playwright portuna GÜVENME — her koşudan önce boşluğunu doğrula.
+
+**Ayrı bir kirlenme ve düzeltmesi:** Bu iki sorunu araştırırken alınan bir
+"temiz" e2e yaması (`git diff --cached` ile ana worktree'den çekilmiş),
+AYNI ANDA o dosyada paralel oturumun stage ettiği ilgisiz bir "IkTarget
+çalışma uzayı / reachability" testini de yakalamıştı — `wc -l` ile
+"73 satır, makul" diye kabul edilmiş ama İÇERİĞİ satır satır okunmamıştı.
+Tam e2e koşusunda `getByTestId("reachability-map")` bulunamadı hatası bunu
+ortaya çıkardı (bu özellik o an `main`de yoktu — paralel oturumun
+tamamlanmamış işiydi). Düzeltme: `git checkout -- e2e/platform.spec.ts`
+ile dosya HEAD'e sıfırlandı, yalnız Madde 38'e ait 23 satır elle yeniden
+eklendi. Ders: başka bir süreçle AYNI dosyayı paylaşan bir ortamda alınan
+herhangi bir patch/diff, satır sayısı makul görünse bile İÇERİK olarak
+doğrulanmalı — yama kaynağı (`git diff --cached`) o an dosyada başka
+kimin ne stage ettiğinden habersizdi.
+
+**İkinci bir operasyonel bulgu — arka plan görevleri tur sınırında
+öldürülüyor.** Tam e2e koşusu `run_in_background: true` ile iki kez
+başlatıldı, ikisi de dış bir `killed` sinyaliyle yarıda kesildi (kalan
+tüm testler "0ms" ile başarısız — gerçek bir test hatası değil, sürecin
+zorla sonlandırıldığının imzası). Kök neden: bu görev için hâlâ etkin olan
+5 dakikalık `/loop` cron'u, arka plandaki e2e süreci bitmeden yeni bir tur
+tetikliyor ve tur sınırında önceki arka plan süreçleri öldürülüyor gibi
+görünüyor. Düzeltme: cron işi silindi (`CronDelete`), yalnız `ScheduleWakeup`
+dinamik bekleme bırakıldı; e2e koşusu ARKA PLANA ALINMADAN, doğrudan (senkron,
+`timeout` parametresiyle) çalıştırıldı — tur bitene kadar süreç canlı kaldığı
+için üçüncü deneme 318/318 temiz geçti. Ders: uzun (>5dk) bir işlemi hem
+arka plana alıp hem de sabit-aralıklı bir cron'la aynı anda beklemek riskli;
+ya cron'u kapat ya işlemi ön planda (tek turda) çalıştır.
+
+Tam kontrol paketi (izole worktree + izole port): `tsc`, `lint`, 821 unit,
+`check-content`, `validate-content-graph`, `check-quiz-dagilimi`,
+`check-mdx-guvenlik`, `check-sensitive-terms`, `build` (temiz `.next`),
+`check-performance-budget`, `npm audit` (0 zafiyet), e2e **318/318** (3
+viewport, 18 koşullu atlama, sıfır hata). `main` `git branch -f` ile
+(hiçbir worktree o an main'i tutmadığı için sorunsuz) commit `6cdcdfc`'e
+ilerletildi.
+
+**Sırada — Madde 20 (Meca500'ü bir derste/bileşende göster).**
+
