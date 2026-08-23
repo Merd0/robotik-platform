@@ -4363,3 +4363,75 @@ ilerledi. `main` push edilmedi.
 
 FAZ A ve FAZ B ikisi de tamamlandı ve `main`e alındı.
 
+---
+
+## Acil — 3 ardışık CI kırmızısı: tek kök neden, tüm "farklı" işlerden bağımsız (2026-08-23, commit 56c0222)
+
+Mert'in bulgusu: `main`e giden son üç push (`b741ac2`, `a76b4fa`, `4832c0e` —
+sırasıyla Python kod editörü, Faz 7 global toggle + paralel worktree
+birleştirmesi, Meca500 kataloğu) GitHub Actions'ta art arda kırmızı çıktı;
+hepsi "yerelde temiz" raporuyla merge edilmişti.
+
+**1. Üç run'ın logları:** `gh run view` ile incelendi — üçü de TAM OLARAK
+aynı adımda (`Üç viewport erişilebilirlik ve kullanıcı akışı`, yani
+`npm run test:e2e`), TAM OLARAK aynı testte (`e2e/platform.spec.ts:410
+"Python editörü robot API çağrılarını klavyeyle tamamlar"`) ve TAM OLARAK
+aynı hatayla (`editör içeriği "robot.mov"da donuyor, tamamlanma hiç
+uygulanmıyor`) patlıyordu — viewport ve retry farketmeksizin.
+
+**2. Sınıflandırma:** Bu docs/09 §7'nin "yerel kontrol listesi CI'dan geride"
+sınıfı DEĞİL (adım/liste birebir aynı, 9 Ağustos'takinden farklı olarak) —
+üç "paralel iş"ten (RobotSpec/Meca500, complexity mode yayılımı + telemetry,
+Python kod editörü) HİÇBİRİNİN kendi regresyonu da değil. Tek kaynak: Python
+kod editörü testinin İÇ MANTIĞI, editör `main`e ilk girdiği commit'ten
+(`b741ac2`) itibaren HER push'ta patlıyordu — sadece kimse fark etmemişti
+(her seferinde başka bir şey "suçlanıp" not edilmiş, testin kendisi hiç
+incelenmemişti).
+
+**3. Kök neden (kaynak koddan doğrulandı):** `@codemirror/autocomplete`nin
+`acceptCompletion` komutu (Enter'a `Prec.highest` ile bağlı,
+`node_modules/@codemirror/autocomplete/dist/index.js:1096`) tamamlama paneli
+AÇILDIKTAN SONRAKİ `interactionDelay` (varsayılan 75ms) içinde kasıtlı olarak
+hiçbir şey yapmıyor — yanlışlıkla "fat-finger" kabul etmeyi önleyen,
+kütüphanenin KENDİ koruması. Bu zaman damgası panel ilk açıldığında bir kez
+set ediliyor, `ArrowDown` gibi seçim değişiklikleriyle SIFIRLANMIYOR (aynı
+dosya, satır 872). Test, tooltip'in görünür olduğunu doğruladıktan HEMEN
+SONRA `ArrowDown`+`Enter` basıyordu — araya hiçbir bekleme koymadan. Yerel
+makinede tooltip görünürlüğü + iki `toContainText` + `ArrowDown`'a kadar
+geçen gerçek IPC/assertion gecikmesi tesadüfen 75ms'yi aşıyordu (testi
+"tesadüfen" geçiriyordu); CI'nin farklı zamanlama profilinde bu süre 75ms'nin
+altında kalabiliyordu.
+
+**4. Reprodüksiyon:** Docker Desktop bu makinede çalışmıyor (`wsl --status`
+"WSL2 mevcut makine yapılandırmanızla desteklenmiyor" diyor) — gerçek
+Ubuntu/Linux container'ı kullanılamadı. Hata bir JS-motoru zamanlama yarışı
+olduğu için (işletim sistemine özgü bir kod yolu değil), aynı yarışı YEREL
+Windows makinesinde tetiklemek eşdeğer kanıt sağladı: testin geçici bir
+kopyasında iki `toContainText` bekleme adımı kaldırılıp `ArrowDown`+`Enter`
+hiçbir ara bekleme olmadan çalıştırıldığında, YEREL makinede de **8/8
+çalıştırmada** aynı `"robot.mov"` hatası tekrarlandı. Aynı kopyaya
+`interactionDelay`'i (75ms) hesaba katan 150ms'lik açık bir bekleme eklenince
+**8/8 çalıştırmada** tamamlama başarıyla uygulandı — tekrarlanabilir ölçüm,
+tahmin değil.
+
+**5. Düzeltme:** Testin kendisine (`e2e/platform.spec.ts`), tooltip içeriği
+doğrulandıktan sonra `ArrowDown`'dan önce, `interactionDelay`'i açıkça hesaba
+katan 150ms'lik bir bekleme eklendi — nedenini kaynak referansıyla açıklayan
+bir yorumla. Ürün kodu DEĞİŞMEDİ: kütüphanenin kasıtlı korumasını kaldırmak
+(`interactionDelay: 0`) gerçek kullanıcılar için yanlışlıkla kabul riskini
+geri getirirdi — bu bir test-zamanlama düzeltmesiydi, ürün davranışı
+düzeltmesi değil. Test zayıflatılmadı/atlanmadı; assertion aynen kaldı.
+
+**6. Teslim ve kanıt:** Yerelde tam kontrol paketi + tekrarlı doğrulama
+sonrası `main`e commit `56c0222` ile alındı ve **push edildi**
+(`origin/main`, Mert'in bu görev için açık talimatıyla — önceki fazlardaki
+"merge et, push etme" varsayılanının istisnası). Yeni CI run'ı izlendi ve
+GERÇEKTEN yeşile döndüğü doğrulandı:
+https://github.com/Merd0/robotik-platform/actions/runs/32639418747
+(`test` job'ı, tüm adımlar ✓, e2e "315 passed (7.3m), 18 skipped").
+
+**Yan not:** Docker Desktop bu görev sırasında başlatıldı ama motor asla
+hazır duruma gelmedi (WSL2 desteksizliği nedeniyle); halen arka planda
+takılı kalmış olabilir, isteğe bağlı olarak kapatılabilir — bu makinede
+Linux container tabanlı doğrulama için güvenilir bir yol değil.
+
