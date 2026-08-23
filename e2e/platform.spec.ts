@@ -241,6 +241,29 @@ test("inline sözlük: ders içinde terime tıklayınca tanım context içinde a
   await expect(not).toBeHidden();
 });
 
+test("inline sözlük yayılımı (Madde 38): ortaokul, lise ve üniversite derslerindeki yeni terimler açılıyor", async ({ page }) => {
+  // Ortaokul — kalın metin içine gömülü terim, çok satırlı markdown kaynağı.
+  await page.goto("/ders/h-ortaokul-temel-guvenlik-kurallari");
+  const acilDurdurma = page.getByRole("button", { name: "acil durdurma", exact: true });
+  await expect(acilDurdurma).toBeVisible();
+  await acilDurdurma.click();
+  await expect(page.getByRole("note")).toContainText("emergency stop");
+
+  // Lise — `children` `ad`den farklı (çekimli hali gösteriliyor: "dış parametrelerle").
+  await page.goto("/ders/f-lise-piksel-milimetre");
+  const disParametreler = page.getByRole("button", { name: "dış parametrelerle", exact: true });
+  await expect(disParametreler).toBeVisible();
+  await disParametreler.click();
+  await expect(page.getByRole("note")).toContainText("extrinsic parameters");
+
+  // Üniversite — blockquote (uyarı kutusu) içine gömülü terim.
+  await page.goto("/ders/h-lise-acil-durdurma-ve-guvenli-bolge");
+  const riskDegerlendirmesi = page.getByRole("button", { name: "risk değerlendirmesi", exact: true });
+  await expect(riskDegerlendirmesi).toBeVisible();
+  await riskDegerlendirmesi.click();
+  await expect(page.getByRole("note")).toContainText("risk assessment");
+});
+
 test("sözlük ↔ ders çift yönlü bağlantı: karıştırılan terim ve derse geri bağlantı çalışır", async ({ page }) => {
   // Sözlük → sözlük: "sıkça karıştırılır" notu gerçek bir çift yönlü bağa açılır.
   await page.goto("/sozluk/ters-kinematik");
