@@ -66,3 +66,16 @@ export function referencedLazyChunks(outDir: string, initialAssets: readonly str
   }
   return [...references].sort();
 }
+
+export function partitionAssetsBySourceMarker(
+  assets: readonly string[],
+  readSource: (asset: string) => string,
+  marker: string,
+): { matching: string[]; other: string[] } {
+  const matching: string[] = [];
+  const other: string[] = [];
+  for (const asset of assets) {
+    (readSource(asset).includes(marker) ? matching : other).push(asset);
+  }
+  return { matching, other };
+}

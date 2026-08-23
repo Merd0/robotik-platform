@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { compressedSize, extractInitialLocalAssets, sumTransferSizes } from "./performanceBudget";
+import {
+  compressedSize,
+  extractInitialLocalAssets,
+  partitionAssetsBySourceMarker,
+  sumTransferSizes,
+} from "./performanceBudget";
 
 describe("performans bütçesi ölçümü", () => {
   it("yalnız yerel başlangıç script ve stylesheet varlıklarını tekilleştirir", () => {
@@ -19,5 +24,23 @@ describe("performans bütçesi ölçümü", () => {
     });
     expect(first.gzip).toBeLessThan(first.raw);
     expect(first.brotli).toBeLessThan(first.raw);
+  });
+
+  it("yalnız gerçekten ilgili lazy parçayı kaynak işaretine göre ayırır", () => {
+    const sources = new Map([
+      ["/_next/scene.js", "WebGLRenderer"],
+      ["/_next/editor.js", "cm-python-errorLine"],
+      ["/_next/shared.js", "ortak"],
+    ]);
+    expect(
+      partitionAssetsBySourceMarker(
+        [...sources.keys()],
+        (asset) => sources.get(asset) ?? "",
+        "cm-python-errorLine",
+      ),
+    ).toEqual({
+      matching: ["/_next/editor.js"],
+      other: ["/_next/scene.js", "/_next/shared.js"],
+    });
   });
 });

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { ExperimentShareButton } from "@/components/interactive/LabChallengeUi";
+import { LazyPythonCodeEditor } from "@/components/interactive/LazyPythonCodeEditor";
 import { codeRunnerStatusText, roundPose, useCodeRunnerEngine } from "@/components/interactive/useCodeRunnerEngine";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/Tabs";
@@ -110,6 +111,7 @@ export function KodAkademisiCodeLab({
 
   const codeVisibility = activeTab === "kod" ? "block" : "hidden";
   const resultVisibility = activeTab === "sonuc" ? "block" : "hidden";
+  const editorLabelId = `${editorId}-label`;
 
   return (
     <div className="flex flex-col gap-4">
@@ -132,16 +134,16 @@ export function KodAkademisiCodeLab({
       <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-4">
         <TabPanel id="kod" idPrefix="koda-mobile" ariaLabel="Kod editörü" className={`${codeVisibility} lg:block`}>
           <div className="flex flex-col gap-3 rounded-xl border border-site-border bg-site-surface p-4">
-            <label htmlFor={editorId} className="text-sm font-medium text-site-ink">
+            <span id={editorLabelId} className="text-sm font-medium text-site-ink">
               Python kodu
-            </label>
-            <textarea
+            </span>
+            <LazyPythonCodeEditor
               id={editorId}
               value={code}
-              onChange={(event) => setCode(event.target.value)}
-              spellCheck={false}
-              rows={10}
-              className="w-full rounded-lg border border-site-border bg-site-bg p-3 font-mono text-sm text-site-ink"
+              onChange={setCode}
+              error={error}
+              labelledBy={editorLabelId}
+              tone="site"
             />
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" onClick={handleRun} disabled={running} className="h-11 rounded-md bg-site-strong px-4 text-site-on-strong disabled:opacity-50">

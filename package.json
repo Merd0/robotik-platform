@@ -33,6 +33,13 @@
     "generate-fixtures": "python reference-python/scripts/generate_fixtures.py"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "6.20.3",
+    "@codemirror/commands": "6.11.0",
+    "@codemirror/lang-python": "6.2.1",
+    "@codemirror/language": "6.12.3",
+    "@codemirror/state": "6.7.1",
+    "@codemirror/view": "6.43.9",
+    "@lezer/highlight": "1.2.3",
     "@react-three/drei": "10.7.7",
     "@react-three/fiber": "9.7.0",
     "gray-matter": "4.0.3",

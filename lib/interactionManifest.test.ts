@@ -121,10 +121,28 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
   it("CodeRunner motor, Pyodide worker ve çalışma limitlerini interactionHash'e bağlar", () => {
     expect(LAB_DEPENDENCY_REGISTRY.CodeRunner).toMatchObject({
       componentFile: "components/interactive/CodeRunner.tsx",
-      engineFiles: expect.arrayContaining(["lib/codeLab.ts", "lib/robotics/kinematics.ts"]),
+      engineFiles: expect.arrayContaining([
+        "components/interactive/PythonCodeEditor.tsx",
+        "lib/codeLab.ts",
+        "lib/pythonCodeEditor.ts",
+        "lib/robotics/kinematics.ts",
+      ]),
       workerFiles: ["lib/workers/pyodideWorker.ts", "lib/workers/executionLimits.ts"],
     });
     expect(() => computeInteractionHash(["CodeRunner"], ["generic-2dof"])).not.toThrow();
+  });
+
+  it("Kod Akademisi aynı Python editörü ve çalışma motorunu interactionHash'e bağlar", () => {
+    expect(LAB_DEPENDENCY_REGISTRY.KodAkademisiCodeLab).toMatchObject({
+      componentFile: "components/kod-akademisi/KodAkademisiCodeLab.tsx",
+      engineFiles: expect.arrayContaining([
+        "components/interactive/PythonCodeEditor.tsx",
+        "components/interactive/useCodeRunnerEngine.ts",
+        "lib/pythonCodeEditor.ts",
+      ]),
+      workerFiles: ["lib/workers/pyodideWorker.ts", "lib/workers/executionLimits.ts"],
+    });
+    expect(() => computeInteractionHash(["KodAkademisiCodeLab"], ["generic-2dof"])).not.toThrow();
   });
 
   it("SignalTimeline bileşeni ile el sıkışma motorunu interactionHash'e bağlar", () => {

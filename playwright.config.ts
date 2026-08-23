@@ -1,17 +1,23 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const port = Number(process.env.PLAYWRIGHT_PORT ?? "3102");
+if (!Number.isSafeInteger(port) || port < 1024 || port > 65_535) {
+  throw new Error("PLAYWRIGHT_PORT 1024-65535 aralığında bir tam sayı olmalı.");
+}
+const baseURL = `http://127.0.0.1:${port}`;
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: {
-    baseURL: "http://127.0.0.1:3102",
+    baseURL,
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "node scripts/serve-static.mjs --port 3102 --root out",
-    url: "http://127.0.0.1:3102",
+    command: `node scripts/serve-static.mjs --port ${port} --root out`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
   },
   projects: [

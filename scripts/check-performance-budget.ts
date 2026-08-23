@@ -26,6 +26,7 @@ import path from "node:path";
 import {
   extractInitialLocalAssets,
   measureFiles,
+  partitionAssetsBySourceMarker,
   referencedLazyChunks,
   sumTransferSizes,
   type TransferSize,
@@ -121,9 +122,21 @@ for (const surface of surfaces) {
   const initialAssets = extractInitialLocalAssets(html);
   const initialScripts = measureFiles(outDir, initialAssets.filter((asset) => asset.endsWith(".js")));
   const initial = measureFiles(outDir, [surface.html, ...initialAssets]);
-  const sceneAssets = surface.deferred === "none" ? [] : referencedLazyChunks(outDir, initialAssets);
+  const lazyAssets = surface.deferred === "none" ? [] : referencedLazyChunks(outDir, initialAssets);
+  // `[slug]` route'u bütün etkileşimli bileşenleri aynı modül grafiğinde
+  // tuttuğu için, CodeMirror lazy parçasının adı 3D dersin başlangıç
+  // chunk'ında da REFERANS olarak geçiyor. Tarayıcı ağ ölçümü bu parçanın
+  // CodeRunner olmayan 3D derste istenmediğini doğruluyor; yalnız CodeRunner
+  // render edilince yükleniyor. 3D yüzeyine gerçekte indirilmeyen editörü
+  // eklemek yerine parçayı sabit kaynak işaretiyle ayrı sınıflandırıyoruz.
+  const { matching: editorAssets, other: nonEditorAssets } = partitionAssetsBySourceMarker(
+    lazyAssets,
+    (asset) => fs.readFileSync(path.join(outDir, asset.replace(/^\//, "")), "utf8"),
+    "cm-python-errorLine",
+  );
+  const sceneAssets = surface.deferred === "none" ? [] : nonEditorAssets;
   const deferredAssets = surface.deferred === "code-runner"
-    ? [...sceneAssets, ...pythonRuntimeAssets]
+    ? [...sceneAssets, ...editorAssets, ...pythonRuntimeAssets]
     : sceneAssets;
   const deferred = measureFiles(outDir, deferredAssets);
   const total = add(initial, deferred);

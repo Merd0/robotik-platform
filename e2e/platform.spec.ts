@@ -1,5 +1,9 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
+
+async function codeEditorText(editor: Locator): Promise<string> {
+  return editor.evaluate((element) => (element as HTMLElement).innerText.replace(/\r\n?/g, "\n"));
+}
 
 const publishedSixAxisLessons = [
   "/ders/a-lise-koordinat-sistemleri",
@@ -387,7 +391,49 @@ test("CodeRunner state'i doğrulanmış paylaşım bağlantısıyla geri yüklen
   expect(href).not.toBeNull();
 
   await page.goto(href!);
-  await expect(page.getByLabel("Python kodu")).toHaveValue(sharedCode);
+  expect(await codeEditorText(page.getByLabel("Python kodu"))).toBe(sharedCode);
+});
+
+test("CodeRunner ve Kod Akademisi Python vurgulu, satır numaralı kod editörünü paylaşır", async ({ page }) => {
+  for (const route of [
+    "/ders/d-lise-python-komut-dizisi",
+    "/kod-akademisi/temel/koda-temel-degisken-degistir",
+  ]) {
+    await page.goto(route);
+    const editor = page.getByRole("textbox", { name: "Python kodu" });
+    await expect(editor).toHaveAttribute("contenteditable", "true");
+    await expect(page.locator(".cm-lineNumbers .cm-gutterElement").filter({ hasText: "1" }).first()).toBeVisible();
+    expect(await page.locator(".cm-content .cm-line span").count()).toBeGreaterThan(0);
+  }
+});
+
+test("Python editörü robot API çağrılarını klavyeyle tamamlar", async ({ page }) => {
+  await page.goto("/ders/d-lise-python-komut-dizisi");
+  const editor = page.getByRole("textbox", { name: "Python kodu" });
+  await editor.click();
+  await page.keyboard.press("Control+a");
+  await page.keyboard.type("robot.mov");
+  const completions = page.locator(".cm-tooltip-autocomplete");
+  await expect(completions).toBeVisible();
+  await expect(completions).toContainText("movej");
+  await expect(completions).toContainText("movel");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(editor).toContainText(/robot\.move[lj]\(/);
+});
+
+test("Python yazım hatasının kullanıcı kodundaki satırı editörde vurgulanır", async ({ page }) => {
+  await page.goto("/kod-akademisi/temel/koda-temel-parametre-gonder");
+  const editor = page.getByRole("textbox", { name: "Python kodu" });
+  await editor.fill("robot.movej([45, -30])\nprint(");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText(/SyntaxError/)).toBeVisible({ timeout: 30_000 });
+
+  const kodSekmesi = page.getByRole("tab", { name: "Kod" });
+  if (await kodSekmesi.isVisible()) await kodSekmesi.click();
+  const errorLine = page.locator('.cm-python-errorLine[data-error-line="2"]');
+  await expect(errorLine).toBeVisible();
+  await expect(errorLine).toContainText("print(");
 });
 
 test("movej geçerli bir açı listesiyle robotu hareket ettirir ve predicate'i kanıtlar", async ({ page }) => {
@@ -597,7 +643,7 @@ test("Kod Akademisi: gerçek Python yazım hatası (NameError) da ham traceback 
 test("Kod Akademisi: Açıkla-sonra-uygula modülü boş editörle açılır, sıfırdan yazılan kod predicate'i geçirir", async ({ page }) => {
   await page.goto("/kod-akademisi/temel/koda-temel-acikla-sonra-uygula");
   await expect(page.getByRole("heading", { name: "Açıkla, sonra uygula" })).toBeVisible();
-  await expect(page.getByLabel("Python kodu")).toHaveValue(/^# Buraya kendi kodunu yaz\.?\s*$/);
+  expect(await codeEditorText(page.getByLabel("Python kodu"))).toMatch(/^# Buraya kendi kodunu yaz\.?\s*$/);
 
   // Boş editörle çalıştırma: otomatik test istiyor ama robot hiç hareket
   // etmedi, predicate geçmemeli.
@@ -732,7 +778,7 @@ test("Kod Akademisi: Konuma göre dallan modülü pass ile geçmez, if dalı tam
 test("Kod Akademisi: Döngü ve liste birlikte modülü boş editörle açılır, sıfırdan yazılan dört noktalık rota predicate'i geçirir", async ({ page }) => {
   await page.goto("/kod-akademisi/orta/koda-orta-donguyle-liste-birlikte");
   await expect(page.getByRole("heading", { name: "Döngü ve liste birlikte" })).toBeVisible();
-  await expect(page.getByLabel("Python kodu")).toHaveValue(/^# Buraya kendi kodunu yaz\.?\s*$/);
+  expect(await codeEditorText(page.getByLabel("Python kodu"))).toMatch(/^# Buraya kendi kodunu yaz\.?\s*$/);
 
   await page.getByRole("button", { name: "Çalıştır" }).click();
   await expect(page.getByText("Tekrar dene", { exact: true })).toBeVisible({ timeout: 30_000 });
@@ -832,7 +878,7 @@ test("Kod Akademisi: Fonksiyon ve döngüyü birleştir modülü boş gövdeyle 
 test("Kod Akademisi: Güvenli bölge kontrolü modülü boş editörle açılır, sıfırdan yazılan fonksiyon predicate'i geçirir", async ({ page }) => {
   await page.goto("/kod-akademisi/ileri/koda-ileri-kosullu-fonksiyon");
   await expect(page.getByRole("heading", { name: "Güvenli bölge kontrolü" })).toBeVisible();
-  await expect(page.getByLabel("Python kodu")).toHaveValue(/^# Buraya kendi kodunu yaz\.?\s*$/);
+  expect(await codeEditorText(page.getByLabel("Python kodu"))).toMatch(/^# Buraya kendi kodunu yaz\.?\s*$/);
 
   await page.getByRole("button", { name: "Çalıştır" }).click();
   await expect(page.getByText("Tekrar dene", { exact: true })).toBeVisible({ timeout: 30_000 });
@@ -884,7 +930,7 @@ test("Kod Akademisi: İleri hata avcılığı modülü parametre yerine dış de
 test("Kod Akademisi: Üç noktayı sırayla ziyaret et (Usta) modülü boş editörle açılır, sıfırdan yazılan kod üç adımlık izle predicate'i geçirir", async ({ page }) => {
   await page.goto("/kod-akademisi/usta/koda-usta-uc-nokta-sirayla");
   await expect(page.getByRole("heading", { name: "Üç noktayı sırayla ziyaret et" })).toBeVisible();
-  await expect(page.getByLabel("Python kodu")).toHaveValue(/^# Buraya kendi kodunu yaz\.?\s*$/);
+  expect(await codeEditorText(page.getByLabel("Python kodu"))).toMatch(/^# Buraya kendi kodunu yaz\.?\s*$/);
 
   await page.getByRole("button", { name: "Çalıştır" }).click();
   await expect(page.getByText("Tekrar dene", { exact: true })).toBeVisible({ timeout: 30_000 });
@@ -918,7 +964,7 @@ test("Kod Akademisi: Üç noktayı sırayla ziyaret et (Usta) modülü boş edit
 test("Kod Akademisi: Güvenli adayları süz (Usta) modülü boş editörle açılır, yalnız güvenli adaylara uğrayan kod predicate'i geçirir", async ({ page }) => {
   await page.goto("/kod-akademisi/usta/koda-usta-kosullu-hareket");
   await expect(page.getByRole("heading", { name: "Güvenli adayları süz" })).toBeVisible();
-  await expect(page.getByLabel("Python kodu")).toHaveValue(/^# Buraya kendi kodunu yaz\.?\s*$/);
+  expect(await codeEditorText(page.getByLabel("Python kodu"))).toMatch(/^# Buraya kendi kodunu yaz\.?\s*$/);
 
   await page.getByRole("button", { name: "Çalıştır" }).click();
   await expect(page.getByText("Tekrar dene", { exact: true })).toBeVisible({ timeout: 30_000 });
@@ -1529,7 +1575,7 @@ test("TransformOrderLab iki gerçek sonucu kanıtlar ve state'i paylaşır", asy
   await expect(page.getByText("orijin (1.000, 0.000) m · seçtiğin sıra", { exact: false }).first()).toBeVisible();
 
   const editor = page.getByLabel("Python kodu");
-  const correctedCode = (await editor.inputValue()).replace("compose = matmul(T, R)", "compose = matmul(R, T)");
+  const correctedCode = (await codeEditorText(editor)).replace("compose = matmul(T, R)", "compose = matmul(R, T)");
   await editor.fill(correctedCode);
   await page.getByRole("button", { name: "Çalıştır" }).click();
   await expect(page.getByText("Otomatik test geçti.", { exact: false })).toBeVisible({ timeout: 30_000 });

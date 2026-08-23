@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import { ExperimentShareButton } from "@/components/interactive/LabChallengeUi";
+import { LazyPythonCodeEditor } from "@/components/interactive/LazyPythonCodeEditor";
 import { codeRunnerStatusText, roundPose, useCodeRunnerEngine } from "@/components/interactive/useCodeRunnerEngine";
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/Tabs";
 
@@ -140,6 +141,7 @@ export function CodeRunner({
 
   const codeVisibility = activeTab === "kod" ? "block" : "hidden";
   const resultVisibility = activeTab === "sonuc" ? "block" : "hidden";
+  const editorLabelId = `${editorId}-label`;
 
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
@@ -164,16 +166,16 @@ export function CodeRunner({
       <div className="xl:grid xl:grid-cols-2 xl:items-start xl:gap-4">
         <TabPanel id="kod" idPrefix={TAB_ID_PREFIX} ariaLabel="Kod editörü" className={`${codeVisibility} xl:block`}>
           <div className="flex flex-col gap-3">
-            <label htmlFor={editorId} className={`text-sm font-medium ${t.ink}`}>
+            <span id={editorLabelId} className={`text-sm font-medium ${t.ink}`}>
               Python kodu
-            </label>
-            <textarea
+            </span>
+            <LazyPythonCodeEditor
               id={editorId}
               value={code}
-              onChange={(event) => setCode(event.target.value)}
-              spellCheck={false}
-              rows={10}
-              className={`w-full rounded-lg border ${t.outline} ${t.bg} p-3 font-mono text-sm ${t.ink}`}
+              onChange={setCode}
+              error={error}
+              labelledBy={editorLabelId}
+              tone={theme}
             />
 
             <div className="flex flex-wrap items-center gap-2">

@@ -85,8 +85,11 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
     // paylaşılıyor) — davranışı belirleyen kod, sadece lib/robotics/**
     // değil.
     engineFiles: [
+      "components/interactive/LazyPythonCodeEditor.tsx",
+      "components/interactive/PythonCodeEditor.tsx",
       "components/interactive/useCodeRunnerEngine.ts",
       "lib/codeLab.ts",
+      "lib/pythonCodeEditor.ts",
       "lib/robotics/kinematics.ts",
       "lib/robotics/pythonBridge.ts",
     ],
@@ -173,8 +176,11 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
   KodAkademisiCodeLab: {
     componentFile: "components/kod-akademisi/KodAkademisiCodeLab.tsx",
     engineFiles: [
+      "components/interactive/LazyPythonCodeEditor.tsx",
+      "components/interactive/PythonCodeEditor.tsx",
       "components/interactive/useCodeRunnerEngine.ts",
       "lib/codeLab.ts",
+      "lib/pythonCodeEditor.ts",
       "lib/robotics/kinematics.ts",
       "lib/robotics/pythonBridge.ts",
     ],
