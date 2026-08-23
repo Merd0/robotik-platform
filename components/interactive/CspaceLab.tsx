@@ -10,6 +10,8 @@ import {
 import { configurationCollides, type CircleObstacle } from "@/lib/robotics/learningLabs";
 import { forwardKinematics } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
+import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
+import { useComplexityMode, useDeclareComplexityModeSupport } from "@/components/ui/ComplexityModeProvider";
 
 const robot = getRobotById("generic-2dof");
 const obstacle: CircleObstacle = { x: 0.72, y: 0.28, radius: 0.24 };
@@ -28,6 +30,8 @@ const CELLS = Array.from({ length: 24 * 24 }, (_, index) => {
 /** Couples a real planar arm collision to its point in theta1/theta2 space. */
 export function CspaceLab() {
   const record = useEvidenceRecorder();
+  const { mode } = useComplexityMode();
+  useDeclareComplexityModeSupport();
   const [q1, setQ1] = useState(0);
   const [q2, setQ2] = useState(0);
   const [observed, setObserved] = useState({ safe: false, collision: false });
@@ -105,6 +109,24 @@ export function CspaceLab() {
         <p className={`text-sm font-semibold ${collides ? "text-red-700 dark:text-red-300" : "text-success-ink"}`} role="status">{collides ? "Çarpışma: bu nokta C-space'te yasak." : "Serbest: bu nokta geçerli bir konfigürasyon."}</p>
       </div>
       <p className="mt-2 text-xs text-universite-ink/65">Gözlem görevi: bir serbest ve bir çarpışan konfigürasyon kaydet. Serbest {observed.safe ? "✓" : "○"} · Çarpışan {observed.collision ? "✓" : "○"}</p>
+
+      <NasilHesaplandi
+        ozet="Sağdaki nokta doğrudan (θ1, θ2)'den geliyor; soldaki kol, aynı açıların forwardKinematics'ten hesaplanan eklem konumlarıdır."
+        className="mt-3 border-universite-ink/10 bg-universite-bg text-universite-ink"
+        varsayilanAcik={mode === "engineering"}
+      >
+        <p>
+          İki görünüm aynı durumun iki farklı izdüşümü: iş uzayındaki kol tamamen <code>forwardKinematics</code>{" "}
+          çıktısıyla çizilir, C-space&apos;teki nokta ise sadece açı çiftinin kendisidir.
+        </p>
+        {mode === "engineering" && (
+          <p className="mt-2 font-mono text-xs" data-testid="engineering-detail">
+            q=({radians(q1).toFixed(3)}, {radians(q2).toFixed(3)}) rad ·{" "}
+            {positions.map((point, index) => `eklem${index}=(${point.x.toFixed(3)}, ${point.y.toFixed(3)})`).join(" · ")}
+          </p>
+        )}
+      </NasilHesaplandi>
+
       <ExperimentShareButton
         seviye="universite"
         createShareUrl={() => createLabShareUrl({

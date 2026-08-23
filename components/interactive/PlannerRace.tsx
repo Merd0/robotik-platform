@@ -18,6 +18,8 @@ import { runPlannerInWorker } from "@/lib/workers/runPlannerWorker";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SCENE_PALETTES } from "@/lib/theme";
+import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
+import { useComplexityMode, useDeclareComplexityModeSupport } from "@/components/ui/ComplexityModeProvider";
 
 interface PlannerRaceProps {
   /** Yarışa girecek algoritmalar; tek algoritma verilirse "yarış" değil tek sahne olur. */
@@ -70,6 +72,17 @@ const THEME = {
   },
 } as const;
 
+/**
+ * `theme` diğer ikisinde (ortaokul/lise) sayfa boyunca sabit bir prop — hook
+ * kurallarını (koşulsuz çağrı) ihlal etmeden yalnız üniversite temasında
+ * desteği kaydettirmek için bu, ayrı, koşullu monte edilen bir bileşene
+ * taşındı (bkz. docs/durum-denetim.md "Faz 7 yayılma — PlannerRace").
+ */
+function PlannerRaceComplexitySupport() {
+  useDeclareComplexityModeSupport();
+  return null;
+}
+
 const DEFAULT_OBSTACLE_RADIUS = 0.18;
 const round = (value: number) => Math.round(value * 1000) / 1000;
 const CHALLENGE_SEED = 240807;
@@ -100,6 +113,7 @@ export function PlannerRace({
   pilot,
 }: PlannerRaceProps) {
   const record = useEvidenceRecorder();
+  const { mode } = useComplexityMode();
   const { theme: colorMode } = useTheme();
   const palette = SCENE_PALETTES[colorMode];
   const algorithmColors: Record<PlannerId, string> = {
@@ -238,6 +252,7 @@ export function PlannerRace({
 
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
+      {theme === "universite" && <PlannerRaceComplexitySupport />}
       {challengeAvailable && (
         <ChallengeHeader
           seviye="universite"
@@ -386,6 +401,41 @@ export function PlannerRace({
           </table>
         </div>
       )}
+
+      {theme === "universite" && (
+        <NasilHesaplandi
+          ozet="Tablodaki yol uzunluğu, ham (x, y) nokta dizisinin toplam mesafesidir — dizinin kendisi burada."
+          className={`border ${t.outline} ${t.bg} ${t.ink}`}
+          varsayilanAcik={mode === "engineering"}
+        >
+          <p>
+            Her algoritmanın döndürdüğü <code>PlanResult.path</code>, ardışık (x, y) noktalarından
+            oluşur; yukarıdaki tablonun &ldquo;Yol uzunluğu&rdquo; sütunu bu dizideki ardışık
+            noktalar arası mesafelerin toplamıdır (<code>pathLength</code>, <code>lib/robotics/planners</code>).
+          </p>
+          {mode === "engineering" && (
+            <div className="mt-2 flex flex-col gap-2" data-testid="engineering-detail">
+              {algorithms.filter((id) => results[id]?.success).length === 0 && (
+                <p className="font-mono text-xs">Henüz başarılı bir yol yok — önce yarıştır.</p>
+              )}
+              {algorithms.filter((id) => results[id]?.success).map((id) => {
+                const path = results[id]!.path;
+                return (
+                  <div key={id}>
+                    <p className="font-mono text-xs font-semibold">
+                      {ALGORITHM_LABELS[id]} · {path.length} nokta
+                    </p>
+                    <p className={`mt-1 max-h-24 overflow-y-auto rounded border ${t.outline} p-2 font-mono text-[11px] leading-relaxed`}>
+                      {path.map((p) => `(${round(p.x)}, ${round(p.y)})`).join(" → ")}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </NasilHesaplandi>
+      )}
+
       {Object.keys(errors).length > 0 && (
         <div role="alert" className="rounded-md border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-700 dark:text-red-300">
           {algorithms.filter((id) => errors[id]).map((id) => (

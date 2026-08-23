@@ -101,7 +101,14 @@ const surfaces: SurfaceConfig[] = [
   // sayfa notu yukarıda). Bu sayfada zaten ekstra bilgi amaçlı ölçülen
   // (bütçeye girmeyen) "3D'siz ders" başlangıç JS'i dışındaki TOPLAM gzip
   // 266.0→266.4 KiB'e çıktı — 267 KiB'e çekildi, küçük pay.
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 267 * KIB, brotli: 250 * KIB } },
+  //
+  // 2026-08-23 (Faz A — Öğren/Mühendislik yayılması): PlannerRace/
+  // SafetyZone/CspaceLab'a `NasilHesaplandi` + complexity-mode hook'ları
+  // eklendi (üçü de paylaşılan `mdxComponents` haritası üzerinden bu
+  // sayfanın da içinde bulunduğu ortak route chunk'ına giriyor, docs/05
+  // "3D'siz ders yüzeyi tüm etkileşimli bileşenleri taşıyor" ödünleşimiyle
+  // aynı sınıf). Gzip 266.4→267.9 KiB'e çıktı — 268 KiB'e çekildi, küçük pay.
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 268 * KIB, brotli: 250 * KIB } },
   { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 480 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];

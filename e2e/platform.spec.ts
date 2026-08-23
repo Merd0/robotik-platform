@@ -1351,6 +1351,70 @@ test("Öğren/Mühendislik modu (Faz 7 global toggle — DlsTraceLab): panel oto
   await expect(page.getByTestId("engineering-detail")).toContainText("Δθ1=");
 });
 
+test("Öğren/Mühendislik modu (Faz A yayılma — PlannerRace): sahne lazy-load bozulmadan panel açılır, ham path koordinatları gösterilir, ortaokul/lise sayfalarında toggle yok", async ({ page }) => {
+  await page.goto("/ders/c-universite-algoritma-karsilastirma-deneyi");
+
+  // Bu derste sahneden önce bir ön koşul kontrolü, tahmin bloğu ve meydan
+  // okuma başlığı var — mobil viewport'ta bunların toplam yüksekliği
+  // sahneyi 300px'lik yükleme eşiğinin dışında bırakabiliyor. `SahneAlani`
+  // sarmalayıcısı (`.aspect-square`) `data-scene-active` henüz DOM'a
+  // girmeden önce de var; önce ONA kaydırmak tembel yüklemeyi tetikler
+  // (aksi halde `[data-scene-active]` locator'ı hiç var olmayan bir
+  // elemente kaydırmayı bekleyip zaman aşımına uğrar — JacobianViz'in
+  // desktop'ta hiç karşılaşmadığı, sayfaya özgü bir eşik farkı).
+  await page.locator(".aspect-square.overflow-hidden").first().scrollIntoViewIfNeeded();
+  const scene = page.locator("[data-scene-active]").first();
+  await scene.scrollIntoViewIfNeeded();
+  await expect(scene).toHaveAttribute("data-scene-active", "true");
+
+  const panel = page.locator("details").filter({ hasText: "Nasıl hesaplandı?" });
+  await expect(panel.getByText("ardışık (x, y) noktalarından", { exact: false })).toBeHidden();
+  await expect(page.getByTestId("engineering-detail")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Yarıştır" }).click();
+  await expect(page.getByRole("table")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Yarıştır" })).toBeEnabled({ timeout: 10_000 });
+
+  await page.getByRole("button", { name: "Mühendislik moduna geç" }).click();
+  await expect(panel.getByText("ardışık (x, y) noktalarından", { exact: false })).toBeVisible();
+  await expect(page.getByTestId("engineering-detail")).toContainText("A* · ");
+  await expect(page.getByTestId("engineering-detail")).toContainText("nokta");
+  await expect(page.getByTestId("engineering-detail")).toContainText("(");
+
+  // Ortaokul/lise temasındaki PlannerRace/SafetyZone sayfalarında toggle hiç görünmemeli —
+  // desteği yalnız üniversite temasında kaydeden koşullu montaj doğru çalışıyor mu.
+  await page.goto("/ders/c-ortaokul-labirentte-yol-bulma");
+  await expect(page.getByRole("button", { name: /moduna geç$/ })).toHaveCount(0);
+  await page.goto("/ders/h-lise-acil-durdurma-ve-guvenli-bolge");
+  await expect(page.getByRole("button", { name: /moduna geç$/ })).toHaveCount(0);
+});
+
+test("Öğren/Mühendislik modu (Faz A yayılma — SafetyZone): yalnız 'hesap' derinliğinde desteklenir, komple duruş mesafesi ilk kez metin olarak görünür", async ({ page }) => {
+  await page.goto("/ders/h-universite-guvenli-durus-hiz-ve-mesafe");
+
+  const panel = page.locator("details").filter({ hasText: "Nasıl hesaplandı?" });
+  await expect(panel.getByText("gerekli ayrım = insanın aldığı yol", { exact: false })).toBeHidden();
+  await expect(page.getByTestId("engineering-detail")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Mühendislik moduna geç" }).click();
+  await expect(panel.getByText("gerekli ayrım = insanın aldığı yol", { exact: false })).toBeVisible();
+  await expect(page.getByTestId("engineering-detail")).toContainText("Robot komple duruşta (0 mm/s) gerekli mesafe:");
+});
+
+test("Öğren/Mühendislik modu (Faz A yayılma — CspaceLab): panel otomatik açılır, forwardKinematics'in eklem konumları radyan cinsinden gösterilir", async ({ page }) => {
+  await page.goto("/ders/c-universite-c-space");
+  await expect(page.locator("[data-scene-active]")).toHaveCount(0);
+
+  const panel = page.locator("details").filter({ hasText: "Nasıl hesaplandı?" });
+  await expect(panel.getByText("İki görünüm aynı durumun", { exact: false })).toBeHidden();
+  await expect(page.getByTestId("engineering-detail")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Mühendislik moduna geç" }).click();
+  await expect(panel.getByText("İki görünüm aynı durumun", { exact: false })).toBeVisible();
+  await expect(page.getByTestId("engineering-detail")).toContainText("rad");
+  await expect(page.getByTestId("engineering-detail")).toContainText("eklem0=");
+});
+
 test("ScanPath iki tamamlanmış yoğunluğu kanıtlar ve state'i paylaşır", async ({ page }) => {
   await page.goto("/ders/f-universite-tarama-yolu-uretimi");
   const rows = page.getByRole("slider");

@@ -8,6 +8,8 @@ import {
   ExperimentShareButton,
   useSharedLabState,
 } from "@/components/interactive/LabChallengeUi";
+import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
+import { useComplexityMode, useDeclareComplexityModeSupport } from "@/components/ui/ComplexityModeProvider";
 
 interface SafetyZoneProps {
   /**
@@ -87,6 +89,17 @@ const DEFAULTS = {
 const round = (value: number) => Math.round(value);
 
 /**
+ * `mode` prop (bölge/mesafe/hesap) her sayfada sabit — hook kurallarını
+ * ihlal etmeden desteği yalnız "hesap" (üniversite) derinliğinde kaydetmek
+ * için ayrı, koşullu monte edilen bir bileşen (PlannerRace'teki desenle
+ * aynı, bkz. docs/durum-denetim.md "Faz 7 yayılma — SafetyZone").
+ */
+function SafetyZoneComplexitySupport() {
+  useDeclareComplexityModeSupport();
+  return null;
+}
+
+/**
  * Ders içine gömülen etkileşimli sahne: bir robot ile bir insan arasındaki
  * ayrım mesafesi daraldıkça robotun önce yavaşlaması, sonra durması.
  *
@@ -102,6 +115,7 @@ export function SafetyZone({
 }: SafetyZoneProps) {
   const t = THEME[theme];
   const record = useEvidenceRecorder();
+  const { mode: complexityMode } = useComplexityMode();
   const [distance, setDistance] = useState(2500);
   const [robotSpeed, setRobotSpeed] = useState(initialSpeed);
   const [brakingTime, setBrakingTime] = useState(DEFAULTS.brakingTime);
@@ -171,6 +185,7 @@ export function SafetyZone({
 
   return (
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
+      {mode === "hesap" && <SafetyZoneComplexitySupport />}
       {/* Sahne: sol uçta robot, kaydırıcıyla konumlanan insan, aradaki bölgeler */}
       <div className={`relative h-28 overflow-hidden rounded-lg ${t.bg}`} aria-hidden="true">
         <div
@@ -275,6 +290,26 @@ export function SafetyZone({
             </>
           )}
         </dl>
+      )}
+
+      {mode === "hesap" && (
+        <NasilHesaplandi
+          ozet="Gerekli mesafe, iki tarafın durma süresi boyunca aldığı yol ile belirsizlik payının toplamıdır."
+          className={`border ${t.outline} ${t.bg} ${t.ink}`}
+          varsayilanAcik={complexityMode === "engineering"}
+        >
+          <p className="font-mono text-xs">gerekli ayrım = insanın aldığı yol + robotun aldığı yol + belirsizlik payı</p>
+          <p className="mt-2">
+            <code>lib/robotics/safety.ts</code> içindeki <code>requiredSeparation</code> bu üç
+            bileşeni topluyor; yukarıdaki tablo bunları zaten satır satır gösteriyor.
+          </p>
+          {complexityMode === "engineering" && (
+            <p className="mt-2 font-mono text-xs" data-testid="engineering-detail">
+              Robot komple duruşta (0 mm/s) gerekli mesafe: {round(stoppedSeparation)} mm — sahnedeki
+              kırmızı bandın genişliği doğrudan bu sayıdan geliyor.
+            </p>
+          )}
+        </NasilHesaplandi>
       )}
 
       <div className="flex items-center gap-3">
