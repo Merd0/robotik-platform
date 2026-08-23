@@ -107,8 +107,10 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
       engineFiles: [
         "components/interactive/Neden.tsx",
         "components/interactive/InlineNot.tsx",
+        "components/interactive/RobotInfoLine.tsx",
         "lib/robotics/ikSolver.ts",
         "lib/robotics/kinematics.ts",
+        "lib/robotics/robotMetadataDisplay.ts",
       ],
     });
     expect(() => computeInteractionHash(["IkTarget"], ["generic-2dof"])).not.toThrow();

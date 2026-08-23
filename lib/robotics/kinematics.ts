@@ -9,11 +9,55 @@ export interface JointSpec {
   maxVelocity: number;
 }
 
+export type RobotMetadataSourceKind = "official-doc" | "software-doc" | "book" | "paper" | "standard" | "dataset" | "other";
+
+/**
+ * `lib/content.ts`teki ders `SourceRef`iyle aynı alan adlarını taşır ama
+ * kasıtlı olarak burada AYRI tanımlı — bu dosya fs'e dokunan content.ts'i
+ * import etmez (bkz. lib/robotics/CLAUDE.md: "asla window/document/React'e
+ * özel import girmez", mobil port saflığı).
+ */
+export interface RobotMetadataSource {
+  kind: RobotMetadataSourceKind;
+  title: string;
+  publisher?: string;
+  url?: string;
+  version?: string;
+  accessedAt?: string;
+}
+
+/**
+ * Yalnız GERÇEK, kaynak gösterilebilir bir üretici ürününe karşılık gelen
+ * robotlarda doldurulur (bkz. docs/02-mimari.md "1. Robot tanımı"). Bu
+ * platformdaki jenerik katalog robotları (generic-2dof, generic-prismatic,
+ * generic-6dof) ve kullanıcı tanımlı `custom-robot` örnekleri bu alanı asla
+ * taşımaz — DH parametreleri gerçek bir üretici modeline dayanmıyor,
+ * metadata eklemek yanlış özdeşleştirme (uydurma marka iddiası) olurdu.
+ */
+export interface RobotMetadata {
+  manufacturer: string;
+  model: string;
+  /** Üreticinin veri sayfasında yayınladığı azami erişim (mm). Robotun kendi
+   * DH toplamından türetilmiş bir tahmin DEĞİL — kaynaktaki sayı. */
+  maxReachMm?: number;
+  /** Üreticinin veri sayfasında yayınladığı azami payload (kg). Bu platform
+   * yük/dinamik modellemez (bkz. "kinematik dijital prova" sınırı) — alan
+   * yalnız bilgi amaçlı gösterilir, hesaplamaya girmez. */
+  payloadKg?: number;
+  /** Ürünün gerçek görseline/üretici sayfasına referans; dosya bu repoya
+   * gömülmez (harici CDN yasağı, bkz. docs/08) — yalnız üreticinin kendi
+   * sayfasına bağlantı. */
+  imageUrl?: string;
+  source: RobotMetadataSource;
+}
+
 export interface RobotSpec {
   id: string;
   displayName: string;
   joints: JointSpec[];
   meshUrl?: string;
+  /** bkz. RobotMetadata dokümantasyonu — opsiyonel, geriye dönük uyumlu. */
+  metadata?: RobotMetadata;
 }
 
 export interface ForwardKinematicsResult {

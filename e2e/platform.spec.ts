@@ -1396,6 +1396,27 @@ test("IkTarget eklem açılarını gösterir, \"Neden?\" gerçek sayılarla dolu
   await expect(not).toContainText("inverseKinematicsAnalytical2Dof");
 });
 
+test("robot kimlik satırı jenerik robotlar için marka uydurmaz, geçerli olduğunda hesaplanan erişimi gösterir (Faz 6)", async ({ page }) => {
+  await page.goto("/ders/b-ortaokul-eklemleri-oynat");
+  const jointSlidersInfo = page.locator("[data-joint-sliders]").getByTestId("robot-info-line");
+  await expect(jointSlidersInfo).toHaveAttribute("data-robot-metadata", "generic");
+  await expect(jointSlidersInfo).toContainText("jenerik örnek kol, belirli bir üretici modeline karşılık gelmez");
+  // generic-2dof: a1=1.0 + a2=0.8, düz (alpha=0) tamamen döner zincir → geçerli hesap.
+  await expect(jointSlidersInfo).toContainText("Hesaplanan azami erişim: 1.80 m");
+
+  await page.goto("/ders/a-lise-tcp-kavrami");
+  const sixDofInfo = page.locator("[data-joint-sliders]").getByTestId("robot-info-line");
+  await expect(sixDofInfo).toHaveAttribute("data-robot-metadata", "generic");
+  // generic-6dof düz bir zincir değil (alpha≠0 kollar var) — yanlış bir sayı
+  // göstermek yerine hesaplanan erişim hiç yazılmaz.
+  await expect(sixDofInfo).not.toContainText("Hesaplanan azami erişim");
+
+  await page.goto("/ders/b-ortaokul-erisemedigi-noktalar");
+  const ikInfo = page.getByTestId("robot-info-line");
+  await expect(ikInfo).toContainText("jenerik örnek kol");
+  await expect(ikInfo).toContainText("Hesaplanan azami erişim: 1.80 m");
+});
+
 test("dirsek değiştirme deneyi iki gerçek çözülebilir duruşla geçilebilir (Sprint 2 doğruluk düzeltmesi)", async ({ page }) => {
   await page.goto("/ders/b-ortaokul-birden-fazla-yol");
   const toggle = page.getByRole("button", { name: /^Dirsek:/ });

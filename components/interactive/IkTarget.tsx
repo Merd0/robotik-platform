@@ -20,6 +20,7 @@ import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider"
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SCENE_PALETTES } from "@/lib/theme";
 import { Neden } from "@/components/interactive/Neden";
+import { RobotInfoLine } from "@/components/interactive/RobotInfoLine";
 
 interface IkTargetProps {
   robot: string;
@@ -184,6 +185,7 @@ export function IkTarget({ robot: robotId, solver = "auto", pilot }: IkTargetPro
           )}
         </RobotArm>
       </SahneAlani>
+      <RobotInfoLine robot={robot} className="text-lise-ink/70" />
 
       {/*
         Hedefi sürüklemek dokunmatik/fare için doğal ama klavyeyle imkânsız.

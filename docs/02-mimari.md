@@ -116,10 +116,39 @@ interface RobotSpec {
   displayName: string;
   joints: JointSpec[];
   meshUrl?: string;           // yoksa basit geometriyle çizilir
+  metadata?: RobotMetadata;   // bkz. aşağıda — opsiyonel, geriye dönük uyumlu
 }
 ```
 
 Robot tanımları veri, kod değil. Yeni robot eklemek dosya eklemektir.
+
+### 1.1 `RobotMetadata` — gerçek ürün kimliği (Faz 6, 2026-08-23)
+
+```ts
+interface RobotMetadataSource {
+  kind: "official-doc" | "software-doc" | "book" | "paper" | "standard" | "dataset" | "other";
+  title: string;
+  publisher?: string;
+  url?: string;
+  version?: string;
+  accessedAt?: string;
+}
+
+interface RobotMetadata {
+  manufacturer: string;
+  model: string;
+  maxReachMm?: number;   // üreticinin veri sayfasındaki sayı, DH toplamından türetilmiş TAHMİN değil
+  payloadKg?: number;    // yalnız bilgi amaçlı — platform yük/dinamik modellemez
+  imageUrl?: string;     // üreticinin kendi sayfasına bağlantı, dosya bu repoya gömülmez
+  source: RobotMetadataSource;
+}
+```
+
+`lib/robotics/kinematics.ts`'te tanımlı, `lib/content.ts`'teki ders `SourceRef`inden BİLİNÇLİ olarak ayrı (bu dosya fs'e dokunan `content.ts`'i import etmez — `lib/robotics/CLAUDE.md`'nin "window/document/React'e özel import yok" mobil-port saflığı kuralı fs importunu da kapsar).
+
+**Kural: `metadata` yalnız GERÇEK, kaynak gösterilebilir bir üretici ürününe karşılık gelen bir `RobotSpec`te doldurulur.** Bu platformdaki katalog robotları (`generic-2dof`, `generic-prismatic`, `generic-6dof`) ve kullanıcı tanımlı `custom-robot` örnekleri kasıtlı olarak jeneriktir — DH parametreleri hiçbir gerçek üretici modelinin datasheet'inden gelmiyor (bkz. `lib/robotics/robots/genericSixDof.ts` başındaki not). Bu robotlara `metadata` eklemek, kinematik davranışı gerçek olmayan bir markayla özdeşleştirmek olurdu — bu yüzden Faz 6 kapsamında hiçbiri `metadata` taşımıyor; alan şu an yalnız altyapı olarak duruyor, ileride gerçek bir robotun DH'si datasheet'ten doğrulanarak eklenirse kullanılacak.
+
+Görsel katman (`components/interactive/RobotInfoLine.tsx`, JointSliders ve IkTarget'a bağlı) bu ayrımı kullanıcıya da taşır: `metadata` varsa gerçek marka/model + kaynak linki gösterir; yoksa robotun jenerik olduğunu açıkça söyler ve (yalnız matematiksel olarak geçerli olduğu durumda — düz, `alpha=0`, tamamen döner bir zincir) kendi DH uzunluklarından hesaplanan azami erişimi gösterir. Genel bir DH zincirinde (d ofseti veya alpha bükümü olan) bu toplam yanlış olacağı için hiç gösterilmez.
 
 `RobotSpec` yalnız depodaki sabit katalog robotlarıyla sınırlı değildir.
 `/oyun-alani`, kullanıcı girdisini önce saf `lib/robotics/customRobot.ts`

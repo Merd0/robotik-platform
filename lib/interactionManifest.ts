@@ -45,7 +45,11 @@ export interface LabDependencyManifest {
 export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
   JointSliders: {
     componentFile: "components/interactive/JointSliders.tsx",
-    engineFiles: ["lib/robotics/kinematics.ts"],
+    engineFiles: [
+      "lib/robotics/kinematics.ts",
+      "components/interactive/RobotInfoLine.tsx",
+      "lib/robotics/robotMetadataDisplay.ts",
+    ],
   },
   PlannerRace: {
     componentFile: "components/interactive/PlannerRace.tsx",
@@ -66,8 +70,10 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
     engineFiles: [
       "components/interactive/Neden.tsx",
       "components/interactive/InlineNot.tsx",
+      "components/interactive/RobotInfoLine.tsx",
       "lib/robotics/ikSolver.ts",
       "lib/robotics/kinematics.ts",
+      "lib/robotics/robotMetadataDisplay.ts",
     ],
   },
   CodeRunner: {

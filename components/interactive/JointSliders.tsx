@@ -13,6 +13,7 @@ import { forwardKinematics } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import { toolOrientationOf } from "@/components/scene/robotFrames";
+import { RobotInfoLine } from "@/components/interactive/RobotInfoLine";
 
 interface JointSlidersProps {
   robot: string;
@@ -154,6 +155,7 @@ export function JointSliders({ robot: robotId, pilot }: JointSlidersProps) {
               )}
             </RobotArm>
           </SahneAlani>
+          <RobotInfoLine robot={robot} className="mt-2 text-ortaokul-ink/70" />
           {isSixAxis && (
             <div className="mt-2 space-y-1 text-xs leading-relaxed text-ortaokul-ink/70">
               <p>Çerçeveler: X kırmızı · Y yeşil · Z mavi · soluk taban · parlak alet</p>
