@@ -296,6 +296,58 @@ test("bilinmeyen ders adresi güvenli 404 sınırında karşılanır", async ({ 
   await expect(page.getByRole("link", { name: "Yayınlı derslerde ara" })).toBeVisible();
 });
 
+test("komut paleti (Ctrl+K): açılır, tuş tuzağını korur, sonuca gider (Faz 8)", async ({ page }) => {
+  // Sayfa geçişini (Enter → gerçek navigasyon) BİLEREK en sona bırakıyoruz:
+  // navigasyon sonrası paleti hemen tekrar açmak, ağır paralel CI yükünde
+  // hydration/olay dinleyicisi yeniden bağlanma zamanlamasına karşı yarış
+  // koşuluna giriyordu (aynı sayfada kalındığı sürece bu risk yok).
+  await page.goto("/");
+  const araLink = page.getByRole("link", { name: /^Ara/ });
+  const dialog = page.getByRole("dialog", { name: "Hızlı ders arama" });
+
+  // Aç, hiçbir şey yazmadan Escape'le kapat — odak paleti açan bağlantıya dönmeli.
+  await araLink.focus();
+  await page.keyboard.press("Control+k");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("searchbox")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(araLink).toBeFocused();
+
+  // Tekrar aç ve ara. "tekillik" gövde metninde birden fazla derste geçtiği
+  // için (yalnız başlık eşleşmesi ilk sırada garanti — bkz. lib/arama.ts
+  // BASLIK_PUANI), gerçek SON sonuca ulaşmak için sonuç sayısı kadar
+  // ArrowDown gerekir.
+  await page.keyboard.press("Control+k");
+  await expect(dialog).toBeVisible();
+  await page.keyboard.type("tekillik");
+  const sonuc = dialog.getByRole("link", { name: /Tekillik — nedir, neden tehlikelidir/ });
+  await expect(sonuc).toBeVisible();
+  const tumSonuclar = dialog.locator("ul a");
+  const sonucSayisi = await tumSonuclar.count();
+  for (let i = 0; i < sonucSayisi; i++) await page.keyboard.press("ArrowDown");
+  await expect(tumSonuclar.last()).toBeFocused();
+
+  // Tab-döngüsü: son odaklanabilir elemandan Tab'la overlay'in ARKASINDAKİ
+  // sayfa içeriğine değil, girişe geri dönmeli (aria-modal="true" vaadi).
+  await page.keyboard.press("Tab");
+  await expect(dialog.getByRole("searchbox")).toBeFocused();
+
+  // Dışına tıklamak da kapatmalı.
+  await page.mouse.click(5, 5);
+  await expect(dialog).toBeHidden();
+
+  // Son olarak: aç, ilk sonuca in, Enter ile git.
+  await page.keyboard.press("Control+k");
+  await page.keyboard.type("tekillik");
+  await expect(sonuc).toBeVisible();
+  await page.keyboard.press("ArrowDown");
+  await expect(sonuc).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/ders\/b-universite-tekillik$/);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Tekillik");
+});
+
 test("kavram kontrolü tek başına değil, kayıtlı deney predicate'iyle kanıt üretir", async ({ page }) => {
   await page.goto("/ders/c-universite-algoritma-karsilastirma-deneyi");
   await page.getByRole("button", { name: "Başarı oranını gerekçe gösterip A*" }).click();

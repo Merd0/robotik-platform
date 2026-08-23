@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { CommandPalette } from "@/components/ui/CommandPalette";
 import { SiteFooter } from "@/components/ui/SiteFooter";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
@@ -41,6 +42,7 @@ export default function RootLayout({
           <SiteHeader />
           {children}
           <SiteFooter />
+          <CommandPalette />
         </ThemeProvider>
       </body>
     </html>

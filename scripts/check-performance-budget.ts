@@ -44,7 +44,16 @@ interface SurfaceConfig {
 }
 
 const surfaces: SurfaceConfig[] = [
-  { name: "Ana sayfa", html: "index.html", deferred: "none", initialScriptGzip: 200 * KIB, budget: { gzip: 220 * KIB, brotli: 200 * KIB } },
+  // 2026-08-22: docs/16 öncelik #8 (madde 39) için eklenen CommandPalette
+  // (Ctrl+K arama) kök layout'ta HER sayfada yüklü — ağır kısmı (arama
+  // motoru, sonuç listesi) next/dynamic({ ssr: false }) ile ayrı bir
+  // parçaya alındı (bkz. components/ui/CommandPalette.tsx,
+  // components/scene/LazyScene.tsx ile aynı desen), ama küçük kabuk
+  // (klavye kısayolu dinleyicisi + dynamic() import sarmalayıcısının
+  // kendisi) bile ana sayfanın zaten tam dolu (199.8→199.9 KiB) bütçesini
+  // ~1.2 KiB aşırdı. Bütçe bunu yansıtacak şekilde 202 KiB'e çekildi —
+  // ana sayfa hâlâ platformun en sıkı bütçeli sayfası, pay minimal.
+  { name: "Ana sayfa", html: "index.html", deferred: "none", initialScriptGzip: 200 * KIB, budget: { gzip: 220 * KIB, brotli: 202 * KIB } },
   // 255/240 KiB (2026-08-01 kalibrasyonu) 2026-08-15'te 257.0/239.4 KiB'e
   // taştı — kök neden araştırıldı: components/interactive/index.ts, TÜM 19
   // etkileşimli bileşeni statik import ediyor ve next-mdx-remote/rsc'nin

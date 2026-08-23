@@ -18,7 +18,10 @@ export function SiteHeader() {
           <span className="hidden sm:inline">Robotik Laboratuvarı</span>
         </Link>
         <nav aria-label="Ana menü" className="flex items-center gap-1 text-sm">
-          <Link href="/ara" className="inline-flex min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft">Ara</Link>
+          <Link href="/ara" className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-site-muted hover:bg-site-soft">
+            Ara
+            <kbd aria-hidden="true" className="hidden rounded border border-site-border px-1 py-0.5 font-mono text-[10px] text-site-muted sm:inline">Ctrl+K</kbd>
+          </Link>
           {OVERFLOW_NAV_LINKS.map((link) => (
             <Link
               key={link.href}
