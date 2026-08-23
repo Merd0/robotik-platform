@@ -2246,7 +2246,7 @@ yükteki Vitest koşusunda görev dışı sitemap ve RRT* testleri 5 saniyede za
 aşımına uğradı; ikisi tek işçiyle, tam paket iki işçiyle test/süre değişmeden
 geçti. İlk tam E2E koşusunda görev dışı `ThresholdViewer` mobil kanıt olayı
 paralel yükte oluşmadı; aynı test tek işçiyle geçti ve değiştirilmeden yinelenen
-tam matris **321 geçti, 18 koşullu atlandı, 0 başarısız** sonucu verdi.
+tam birleşik matris **324 geçti, 18 koşullu atlandı, 0 başarısız** sonucu verdi.
 
 Governance dosyası değişmedi. `content/sozluk.json`, RobotSpec/robot katalogları,
 `Neden`/WhyButton, CodeMirror/editör, telemetry paneli, `IkTarget.tsx` ve
