@@ -1996,3 +1996,82 @@ bu oturumda daha önce iki kez tespit edilmiş, ortama özgü CPU
 Ekran görüntüsüyle kanıtlandı: `robot.movej([])` artık yalnız "Bu robot
 2 eklemli olduğu için movej() 2 eklem açısı bekliyor.\n\nÖrnek:\n
 robot.movej([0, 0])" gösteriyor, hiçbir dahili çerçeve yok.
+
+---
+
+# Codex çalışma durumu — Python kod editörü
+
+Tarih: 2026-08-23
+
+Dal: `feat/python-code-editor-clean`
+
+Güncel `main` tabanı: `353a171`
+
+## Önce / sonra
+
+`CodeRunner` ve `KodAkademisiCodeLab` düz `<textarea>` yerine modüler
+CodeMirror 6 tabanlı ortak bir Python editörü kullanıyor. Motor, worker ve
+Evidence akışı değiştirilmedi. Masaüstü split/sticky, mobil sekmeli yerleşim
+ile mevcut klavye erişimi korundu.
+
+**Önce — düz textarea:** Python kodu tek renkli; satır numarası, token
+vurgulaması ve tamamlama yüzeyi yok.
+
+![Kod editörü önce — düz textarea](./assets/code-editor/code-editor-before.png)
+
+**Sonra — Python vurgulaması ve satır numaraları:** yorum, API çağrısı,
+sayı ve string token'ları ayrışıyor; sol gutter 1–4 satırlarını gösteriyor.
+
+![Kod editörü sonra — Python vurgulaması ve satır numaraları](./assets/code-editor/code-editor-after.png)
+
+**Gerçek Pyodide hatası — satır 2:** kullanıcı kodu
+`robot.movej([45, -30])\nprint(` olarak çalıştırıldı. Pyodide çıktısındaki
+`File "<robotik-lab>", line 2` bilgisi editördeki ikinci satırla eşleştirildi;
+aynı satır kırmızı zemin ve sol kenar işaretiyle vurgulandı.
+
+![Kod editörü — Pyodide hata satırı vurgulaması](./assets/code-editor/code-editor-error-line.png)
+
+Görseller 1440×1000 viewportta gerçek Chromium ile alındı. Önce görünümü
+`353a171` detached worktree'sinde, sonra ve hata görünümü özellik dalında
+`npm run dev` ile çalışan gerçek Next.js uygulamasından üretildi.
+
+## Uygulama
+
+- `PythonCodeEditor` çıplak, tree-shake edilebilir CodeMirror 6 modüllerini
+  kullanıyor; React wrapper veya Monaco eklenmedi.
+- Python parser tabanlı sözdizimi vurgulaması, satır numarası gutter'ı,
+  parantez eşleme/kapatma, undo ve erişilebilir autocomplete etkin.
+- `robot.movej`, `robot.movel`, `robot.get_tcp`, `robot.get_joints`,
+  `robot.forward_kinematics`, `robot.inverse_kinematics`, `robot.eklem_ac` ve
+  `robot.hedefe_git` için temel tamamlama önerileri var.
+- Yalnız `<robotik-lab>, line N` biçimindeki kullanıcı kodu satırı işaretleniyor;
+  Pyodide/Python iç çerçevelerindeki satır sayıları editöre yansıtılmıyor.
+- Editör istemci tarafında dinamik yükleniyor. Üretim parçası 411.868 bayt
+  ham, 135.937 bayt (132,8 KiB) gzip ve 125.260 bayt (122,3 KiB) Brotli.
+  Tarayıcı ağ ölçümü editör parçasının 3B ders yüzeyinde istenmediğini,
+  yalnız CodeRunner/Kod Akademisi açıldığında yüklendiğini doğruladı.
+- Tab tuşuna editör-içi girinti ataması yapılmadı; odak editörden kaçabiliyor.
+  CodeMirror kaydırma alanı klavyeyle erişilebilir ve odak yazma yüzeyine
+  aktarılıyor. Gutter ve yorum renkleri WCAG AA kontrastını geçiyor.
+
+## Test-first ve son doğrulama
+
+- Saf tamamlama/hata satırı yardımcılarının testi uygulamadan önce kırmızı
+  çalıştırıldı; performans parçası sınıflandırması için de önce başarısız
+  regresyon testi eklendi.
+- `npx tsc --noEmit`, `npm run lint`, `git diff --check`: geçti.
+- `npm test`: 61 dosya, 811/811 test geçti.
+- `check-content`, `validate-content-graph`, `check-quiz-dagilimi`,
+  `check-mdx-guvenlik`, `check-review-debt`, `check-review-integrity` ve
+  `check-sensitive-terms`: geçti.
+- `npm run build`: geçti; 328 statik sayfa üretildi.
+- `npm run check-performance-budget`: geçti. CodeRunner toplamı 6899,7 KiB
+  gzip / 6331,9 KiB Brotli; bütçeler 7168 / 6400 KiB.
+- `npm audit --audit-level=high`: 0 açık.
+- Tam Playwright matrisi: 300 geçti, 18 viewport/koşul özel test atlandı,
+  başarısız test yok. CodeRunner ve Kod Akademisi editörleri, otomatik
+  tamamlama, Pyodide hata satırı, mobil sekmeler, masaüstü split/sticky ve
+  kritik/ciddi axe ihlali bulunmaması 390/768/1440 viewportlarında doğrulandı.
+
+`content/` MDX, RobotSpec/model, sözlük, SiteHeader/command palette,
+`JointSliders.tsx` ve `IkTarget.tsx` değiştirilmedi.
