@@ -39,6 +39,10 @@ export const RobotArm = dynamic(() => import("./scenes").then((modul) => modul.R
   loading: SahneIskeleti,
 });
 
+export const ReachabilityMap = dynamic(() => import("../interactive/ReachabilityMap"), {
+  ssr: false,
+});
+
 export const PlanningGrid = dynamic(() => import("./scenes").then((modul) => modul.PlanningGrid), {
   ssr: false,
   loading: SahneIskeleti,

@@ -107,10 +107,13 @@ describe("computeInteractionHash — bileşen + motor + robot spec + worker imza
       engineFiles: [
         "components/interactive/Neden.tsx",
         "components/interactive/InlineNot.tsx",
+        "components/interactive/ReachabilityMap.tsx",
         "components/interactive/RobotInfoLine.tsx",
+        "components/scene/LazyScene.tsx",
         "components/ui/ComplexityModeProvider.tsx",
         "lib/robotics/ikSolver.ts",
         "lib/robotics/kinematics.ts",
+        "lib/robotics/reachability.ts",
         "lib/robotics/robotMetadataDisplay.ts",
         "lib/complexityMode.ts",
       ],

@@ -2145,3 +2145,54 @@ sayfa), `check-performance-budget` ve `npm audit --audit-level=high` temiz.
 60 saniye zaman aşımına uğradı; assertion veya ihlal raporu oluşmadı. Test/süre
 değiştirilmeden dört işçiyle yinelenen tam matris **315 geçti, 18 koşullu
 atlandı, 0 başarısız** sonucu verdi.
+
+### 2026-08-23 · Madde 21 çalışma uzayı / reachability görselleştirmesi
+
+Reachability katmanı `IkTarget` laboratuvarına eklendi. Bu laboratuvar seçildi;
+çünkü sekiz mevcut derste hedef noktayı zaten fare/dokunma ve erişilebilir X/Y
+kaydırıcılarıyla yönetiyor, aynı hedef için gerçek analitik 2R IK çözümünü
+üretiyor ve dirsek dalını seçebiliyor. Ayrı bir laboratuvar aynı hedef/IK
+durumunu gereksiz yere çoğaltacaktı.
+
+Yeni çalışma uzayı haritası her örnek noktasını dört gerçek hesap durumundan
+biriyle gösteriyor: `reachable`, `near-limit`, `unreachable` ve
+`singularity-risk`. Sınıflandırma `lib/robotics/reachability.ts` içinde saf
+olarak yapılıyor:
+
+- erişim, mevcut analitik 2R IK ile çözülüyor;
+- mekanik sınır ve son %10'luk limit payı doğrudan `RobotSpec.limits`ten
+  hesaplanıyor;
+- tekillik riski mevcut `computeJacobian` manipülabilitesi ve
+  `SINGULARITY_THRESHOLD` ile belirleniyor;
+- geometrik erişim dışında J2 kosinüs koşulu, limit ihlalinde gereken açı ile
+  gerçek eklem aralığı kullanıcıya somut Türkçe gerekçe olarak gösteriliyor.
+
+Harita renk yanında nokta/çizgi/çapraz desen ve açık metin etiketleri taşıyor;
+hedef hareket ettikçe durum metni güncelleniyor. Yalnız varsayımları doğrulanan
+klasik iki döner eklemli düzlemsel zincirlerde açılıyor; prizmatik veya 3B bir
+robot yaklaşık bir disk gibi gösterilmiyor. 441 hesap hücresi dört birleşik
+SVG path'ine sıkıştırıldı ve harita mevcut `LazyScene` sınırından ayrı client
+parçası olarak yükleniyor. `interactionHash`, yeni görsel ve saf motor dosyasını
+kapsayacak şekilde güncellendi.
+
+**Test-first kayıt:** Saf sınıflandırıcı testi önce `reachability.ts` yokken
+kırmızı çalıştı. Golden/negatif testler; erişilebilir çözümü, mekanik sınırın
+son %10'unu, gerçek Jacobian tekilliğini, J2 için gerçek açı bulunamamasını,
+belirli eklem limiti ihlalini ve desteklenmeyen prizmatik zinciri kapsıyor.
+Mevcut `reference-python/fixtures/generic-2dof-fk.json` hedef/açı/
+manipülabilite oracle'ı da çapraz doğrulandı. Bağımlılık manifesti testi de
+önce yeni dosyalar kayıtsızken kırmızı, registry güncellenince yeşil çalıştı.
+Yeni Playwright testi dört harita sınıfını ve reachable → near-limit →
+singularity-risk → unreachable geçişini 390/768/1440 viewportlarında doğruluyor.
+
+**Doğrulama:** `npx tsc`, `npm run lint`, `npm test` (828/828), bütün içerik/
+graph/quiz/MDX/review/hassas terim kapıları, `npm run build` (328 statik
+sayfa), `check-performance-budget` ve `npm audit --audit-level=high` temiz.
+Performans bütçesi yükseltilmedi: 3D'siz ders 268,0 KiB gzip / 249,8 KiB
+Brotli; 3D ders 522,1 / 477,9 KiB. İlk dört-işçili tam E2E koşusunda görev
+dışı ScanPath animasyonu CPU yükünde 5 saniyeyi aştı; aynı test tek işçiyle
+geçti. Test/süre değiştirilmeden iki işçiyle yinelenen tam matris **318 geçti,
+18 koşullu atlandı, 0 başarısız** sonucu verdi.
+
+Governance dosyası değişmedi. `content/sozluk.json`, robot katalog/presetleri,
+`Neden`/WhyButton, CodeMirror/editör ve telemetry panel dosyalarına dokunulmadı.

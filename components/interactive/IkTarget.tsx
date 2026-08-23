@@ -9,7 +9,7 @@ import {
   ExperimentShareButton,
   useSharedLabState,
 } from "@/components/interactive/LabChallengeUi";
-import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
+import { ReachabilityMap, RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import {
   analyticalTwoDofDebug,
   forwardKinematics,
@@ -190,6 +190,7 @@ export function IkTarget({ robot: robotId, solver = "auto", pilot }: IkTargetPro
         </RobotArm>
       </SahneAlani>
       <RobotInfoLine robot={robot} className="text-lise-ink/70" />
+      <ReachabilityMap robot={robot} target={target} elbow={elbow} />
 
       {/*
         Hedefi sürüklemek dokunmatik/fare için doğal ama klavyeyle imkânsız.
@@ -222,11 +223,7 @@ export function IkTarget({ robot: robotId, solver = "auto", pilot }: IkTargetPro
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-        <span role="status">
-          {reachable
-            ? `Hedef: (${round(target.x)}, ${round(target.y)})`
-            : "Bu noktaya ulaşılamıyor — hedef, erişim alanının dışında"}
-        </span>
+        <span>Hedef: ({round(target.x)}, {round(target.y)})</span>
         <div className="flex gap-2">
           {resolvedSolver === "analytical" && robot.joints.length === 2 && (
             <button
