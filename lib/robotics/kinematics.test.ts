@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import {
+  analyticalTwoDofDebug,
   computeJacobian,
   forwardKinematics,
   inverseKinematicsAnalytical2Dof,
@@ -124,6 +125,30 @@ describe("inverseKinematicsAnalytical2Dof", () => {
   it("erişim alanı dışındaki hedef için null döner", () => {
     const angles = inverseKinematicsAnalytical2Dof(genericTwoDofRobot, { x: 10, y: 10 }, "up");
     expect(angles).toBeNull();
+  });
+});
+
+describe("analyticalTwoDofDebug", () => {
+  it("inverseKinematicsAnalytical2Dof'un kullandığı aynı ara değerleri döner (erişilebilir hedef)", () => {
+    const target = { x: 1.2, y: 0.6 };
+    const debug = analyticalTwoDofDebug(genericTwoDofRobot, target);
+    expect(debug.a1).toBeCloseTo(1.0, 6);
+    expect(debug.a2).toBeCloseTo(0.8, 6);
+    expect(debug.r2).toBeCloseTo(1.2 * 1.2 + 0.6 * 0.6, 6);
+    expect(debug.reachable).toBe(true);
+    expect(debug.cosTheta2).toBeGreaterThanOrEqual(-1);
+    expect(debug.cosTheta2).toBeLessThanOrEqual(1);
+  });
+
+  it("erişim dışı bir hedefte reachable false ve cosTheta2 [-1, 1] dışında", () => {
+    const debug = analyticalTwoDofDebug(genericTwoDofRobot, { x: 10, y: 10 });
+    expect(debug.reachable).toBe(false);
+    expect(debug.cosTheta2).toBeGreaterThan(1);
+  });
+
+  it("2 eklemden farklı bir robotta fırlatır", () => {
+    const sixDofStub = { ...genericTwoDofRobot, joints: [...genericTwoDofRobot.joints, genericTwoDofRobot.joints[0]] };
+    expect(() => analyticalTwoDofDebug(sixDofStub, { x: 1, y: 1 })).toThrow();
   });
 });
 

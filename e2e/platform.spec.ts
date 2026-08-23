@@ -1417,6 +1417,27 @@ test("robot kimlik satırı jenerik robotlar için marka uydurmaz, geçerli oldu
   await expect(ikInfo).toContainText("Hesaplanan azami erişim: 1.80 m");
 });
 
+test("Öğren/Mühendislik modu (Faz 7 dikey dilim): Mühendislik Neden panelini otomatik açar, ek teknik satır gösterir ve kalıcıdır", async ({ page }) => {
+  await page.goto("/ders/b-ortaokul-erisemedigi-noktalar");
+
+  const ogrenButton = page.getByRole("button", { name: "Öğren" });
+  const muhendislikButton = page.getByRole("button", { name: "Mühendislik" });
+  await expect(ogrenButton).toHaveAttribute("aria-pressed", "true");
+
+  const not = page.getByRole("note");
+  await expect(not).toBeHidden();
+  await expect(page.getByTestId("engineering-detail")).toHaveCount(0);
+
+  await muhendislikButton.click();
+  await expect(muhendislikButton).toHaveAttribute("aria-pressed", "true");
+  await expect(not).toBeVisible();
+  await expect(page.getByTestId("engineering-detail")).toContainText("cos θ2 =");
+
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Mühendislik" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("note")).toBeVisible();
+});
+
 test("dirsek değiştirme deneyi iki gerçek çözülebilir duruşla geçilebilir (Sprint 2 doğruluk düzeltmesi)", async ({ page }) => {
   await page.goto("/ders/b-ortaokul-birden-fazla-yol");
   const toggle = page.getByRole("button", { name: /^Dirsek:/ });

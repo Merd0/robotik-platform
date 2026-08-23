@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 
 interface InlineNotProps {
   /** Buton olarak render edilen, her zaman görünen tetikleyici (terim metni, "Neden?" vb.). */
@@ -9,6 +9,12 @@ interface InlineNotProps {
   children: ReactNode;
   /** Buton için ek sınıf (görsel farklılaştırma — ör. Terim vs Neden). */
   tetikleyiciClassName?: string;
+  /**
+   * Panel varsayılan açık mı başlasın (varsayılan false — mevcut davranış).
+   * Faz 7 dikey dilimi: Mühendislik modunda Neden panelleri tıklamaya
+   * gerek kalmadan açık gelsin diye eklendi (bkz. IkTarget.tsx).
+   */
+  baslangicAcik?: boolean;
 }
 
 /**
@@ -21,9 +27,19 @@ interface InlineNotProps {
  * metin eklemek — açıldığında çevredeki metin normal şekilde bir alt
  * satıra kayar, hiçbir konumlandırma mantığı gerekmez.
  */
-export function InlineNot({ tetikleyici, children, tetikleyiciClassName = "" }: InlineNotProps) {
-  const [acik, setAcik] = useState(false);
+export function InlineNot({ tetikleyici, children, tetikleyiciClassName = "", baslangicAcik = false }: InlineNotProps) {
+  const [acik, setAcik] = useState(baslangicAcik);
   const notId = useId();
+
+  // baslangicAcik yalnız ilk render'da useState'in başlangıç değeri olarak
+  // okunur — mod değişince (ör. Öğren → Mühendislik) panel zaten monteliyse
+  // bu olmadan tepki vermezdi.
+  useEffect(() => {
+    function syncFromMode() {
+      setAcik(baslangicAcik);
+    }
+    syncFromMode();
+  }, [baslangicAcik]);
 
   return (
     <span className="whitespace-normal">

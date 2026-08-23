@@ -83,7 +83,12 @@ const surfaces: SurfaceConfig[] = [
   // bir regresyonu (ör. yanlışlıkla eklenen ağır bir kütüphane) yakalayacak
   // kadar sıkı ama faz-faz küçük eklemelerde kırılmayacak kadar gevşek bir
   // eşik tutmak.
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 265 * KIB, brotli: 250 * KIB } },
+  //
+  // 2026-08-23: Faz 7 dikey dilimi (Öğren/Mühendislik modu — bkz. docs/
+  // durum-denetim.md) `ComplexityModeProvider`/`InlineNot`in `baslangicAcik`
+  // genişlemesini ekledi, gzip 265.0→265.3 KiB'e çıktı (brotli hâlâ 250'nin
+  // altında, 247.4). Aynı gerekçeyle gzip 266 KiB'e çekildi — küçük pay.
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 266 * KIB, brotli: 250 * KIB } },
   { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 480 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];

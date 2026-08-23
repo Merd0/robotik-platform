@@ -110,6 +110,32 @@ function withinLimits(robot: RobotSpec, angles: number[]): boolean {
 
 export type Elbow = "up" | "down";
 
+export interface AnalyticalTwoDofDebug {
+  a1: number;
+  a2: number;
+  /** Hedefin taban merkezine uzaklığının karesi: x² + y². */
+  r2: number;
+  /** Kosinüs teoreminden: (r² − a1² − a2²) / (2·a1·a2). [-1, 1] dışındaysa hedef erişim dışıdır. */
+  cosTheta2: number;
+  reachable: boolean;
+}
+
+/**
+ * `inverseKinematicsAnalytical2Dof`in kullandığı ara değerleri (a1, a2, r²,
+ * cos θ2) dışarı açar — Mühendislik modunun (Faz 7) gösterdiği sayılar bu
+ * fonksiyonun İÇİNDE ikinci kez elle yazılmaz, tek kaynaktan gelir.
+ */
+export function analyticalTwoDofDebug(robot: RobotSpec, target: { x: number; y: number }): AnalyticalTwoDofDebug {
+  if (robot.joints.length !== 2) {
+    throw new Error("Analitik 2-DOF debug bilgisi sadece iki eklemli düzlemsel kollar için tanımlı.");
+  }
+  const a1 = robot.joints[0].dhParams.a;
+  const a2 = robot.joints[1].dhParams.a;
+  const r2 = target.x * target.x + target.y * target.y;
+  const cosTheta2 = (r2 - a1 * a1 - a2 * a2) / (2 * a1 * a2);
+  return { a1, a2, r2, cosTheta2, reachable: cosTheta2 >= -1 && cosTheta2 <= 1 };
+}
+
 /**
  * İki eklemli düzlemsel kol için kapalı form (analitik) ters kinematik.
  * Kosinüs teoremiyle theta2, sonra theta1 çözülür — iki çözüm ("dirsek
@@ -121,16 +147,8 @@ export function inverseKinematicsAnalytical2Dof(
   target: { x: number; y: number },
   elbow: Elbow = "up",
 ): number[] | null {
-  if (robot.joints.length !== 2) {
-    throw new Error("Analitik 2-DOF ters kinematik sadece iki eklemli düzlemsel kollar için tanımlı.");
-  }
-
-  const a1 = robot.joints[0].dhParams.a;
-  const a2 = robot.joints[1].dhParams.a;
-  const r2 = target.x * target.x + target.y * target.y;
-  const cosTheta2 = (r2 - a1 * a1 - a2 * a2) / (2 * a1 * a2);
-
-  if (cosTheta2 < -1 || cosTheta2 > 1) return null;
+  const { a1, a2, cosTheta2, reachable } = analyticalTwoDofDebug(robot, target);
+  if (!reachable) return null;
 
   const sinTheta2Magnitude = Math.sqrt(1 - cosTheta2 * cosTheta2);
   const theta2 =

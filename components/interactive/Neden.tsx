@@ -8,6 +8,8 @@ interface NedenProps {
   children: ReactNode;
   /** Ekran okuyucu ve odak sırası için bağlama özgü etiket (ör. "Joint 2 açısının nedeni"). */
   etiket?: string;
+  /** bkz. InlineNot `baslangicAcik` — Faz 7 Mühendislik modu için. */
+  varsayilanAcik?: boolean;
 }
 
 /**
@@ -24,9 +26,9 @@ interface NedenProps {
  * matematiği tekrar üretmez, çağıranın (ör. IkTarget) zaten sahip olduğu
  * gerçek çözüm değerlerini yeniden anlatır.
  */
-export function Neden({ children, etiket = "Neden?" }: NedenProps) {
+export function Neden({ children, etiket = "Neden?", varsayilanAcik = false }: NedenProps) {
   return (
-    <InlineNot tetikleyici={etiket} tetikleyiciClassName="text-xs font-semibold not-italic">
+    <InlineNot tetikleyici={etiket} tetikleyiciClassName="text-xs font-semibold not-italic" baslangicAcik={varsayilanAcik}>
       {children}
     </InlineNot>
   );

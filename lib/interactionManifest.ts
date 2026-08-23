@@ -71,9 +71,11 @@ export const LAB_DEPENDENCY_REGISTRY: Record<string, LabDependencyManifest> = {
       "components/interactive/Neden.tsx",
       "components/interactive/InlineNot.tsx",
       "components/interactive/RobotInfoLine.tsx",
+      "components/ui/ComplexityModeProvider.tsx",
       "lib/robotics/ikSolver.ts",
       "lib/robotics/kinematics.ts",
       "lib/robotics/robotMetadataDisplay.ts",
+      "lib/complexityMode.ts",
     ],
   },
   CodeRunner: {

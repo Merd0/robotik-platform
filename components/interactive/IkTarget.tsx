@@ -11,6 +11,7 @@ import {
 } from "@/components/interactive/LabChallengeUi";
 import { RobotArm, SahneAlani } from "@/components/scene/LazyScene";
 import {
+  analyticalTwoDofDebug,
   forwardKinematics,
   type Elbow,
 } from "@/lib/robotics/kinematics";
@@ -21,6 +22,7 @@ import { useTheme } from "@/components/ui/ThemeProvider";
 import { SCENE_PALETTES } from "@/lib/theme";
 import { Neden } from "@/components/interactive/Neden";
 import { RobotInfoLine } from "@/components/interactive/RobotInfoLine";
+import { ComplexityModeProvider, useComplexityMode } from "@/components/ui/ComplexityModeProvider";
 
 interface IkTargetProps {
   robot: string;
@@ -31,11 +33,26 @@ interface IkTargetProps {
 const round = (value: number) => Math.round(value * 1000) / 1000;
 const toDegrees = (value: number) => round((value * 180) / Math.PI);
 
+/**
+ * Faz 7 dikey dilim (2026-08-23, bkz. docs/durum-denetim.md "Faz 7"):
+ * `ComplexityModeProvider` burada YEREL monteli — global rollout onayı
+ * bekliyor (bkz. proposal). Provider dışa taşınmadan `useComplexityMode`
+ * IkTarget dışından çağrılamaz; bu bilinçli bir kapsam sınırı.
+ */
+export function IkTarget(props: IkTargetProps) {
+  return (
+    <ComplexityModeProvider>
+      <IkTargetInner {...props} />
+    </ComplexityModeProvider>
+  );
+}
+
 /** Ders içine gömülen etkileşimli sahne: hedefi sürükle, robot ters kinematikle uzansın. */
-export function IkTarget({ robot: robotId, solver = "auto", pilot }: IkTargetProps) {
+function IkTargetInner({ robot: robotId, solver = "auto", pilot }: IkTargetProps) {
   const record = useEvidenceRecorder();
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
+  const { mode, setMode } = useComplexityMode();
   const robot = useMemo(() => getRobotById(robotId), [robotId]);
   const maxReach = useMemo(
     () => robot.joints.reduce((sum, joint) => sum + joint.dhParams.a, 0),
@@ -247,9 +264,27 @@ export function IkTarget({ robot: robotId, solver = "auto", pilot }: IkTargetPro
       </p>
 
       {reachable && (
-        <p className="text-xs text-lise-ink/70">
-          Eklem açıları: {angles.map((angle, index) => `θ${index + 1}=${toDegrees(angle)}°`).join(" · ")}{" "}
-          <Neden etiket="Neden bu açılar?">
+        <>
+          <div className="flex items-center justify-end gap-1 text-xs" role="group" aria-label="Gösterim modu">
+            {(["learn", "engineering"] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={mode === option}
+                onClick={() => setMode(option)}
+                className={`min-h-11 rounded-md border px-3 font-semibold ${
+                  mode === option
+                    ? "border-lise-ink bg-lise-ink text-lise-surface"
+                    : "border-lise-ink/20 text-lise-ink/70"
+                }`}
+              >
+                {option === "learn" ? "Öğren" : "Mühendislik"}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-lise-ink/70">
+            Eklem açıları: {angles.map((angle, index) => `θ${index + 1}=${toDegrees(angle)}°`).join(" · ")}{" "}
+            <Neden etiket="Neden bu açılar?" varsayilanAcik={mode === "engineering"}>
             {solution.solver === "analytical" && robot.joints.length === 2 ? (
               <>
                 Bu robotta iki bağlantı var: a1 = {round(robot.joints[0].dhParams.a)} m, a2 ={" "}
@@ -260,16 +295,31 @@ export function IkTarget({ robot: robotId, solver = "auto", pilot }: IkTargetPro
                 değerden geometriyle çıktı. Kaynak kodu:{" "}
                 <code>lib/robotics/kinematics.ts</code> içindeki{" "}
                 <code>inverseKinematicsAnalytical2Dof</code>.
+                {mode === "engineering" && (
+                  <>
+                    {" "}
+                    <span className="block font-mono" data-testid="engineering-detail">
+                      cos θ2 = (r² − a1² − a2²) / (2·a1·a2) = {round(analyticalTwoDofDebug(robot, target).cosTheta2)}
+                    </span>
+                  </>
+                )}
               </>
             ) : (
               <>
                 Bu robotta kapalı-form (analitik) formül yok; sayısal çözücü {solution.iterations} iterasyonda
                 hedefe {Number.isFinite(solution.residual) ? round(solution.residual) : "—"} m hatayla
                 yakınsadı.
+                {mode === "engineering" && (
+                  <span className="block font-mono" data-testid="engineering-detail">
+                    çözücü: {solution.solver} · iterasyon: {solution.iterations} · artık (residual):{" "}
+                    {Number.isFinite(solution.residual) ? solution.residual.toExponential(3) : "—"} m
+                  </span>
+                )}
               </>
             )}
           </Neden>
-        </p>
+          </p>
+        </>
       )}
 
       {challengeActive && !challengeComplete && (
