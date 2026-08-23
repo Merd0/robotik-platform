@@ -1,8 +1,17 @@
-# Ürün denetimi (2026-08-22)
+# Ürün denetimi (2026-08-22, 2026-08-23'te güncellendi)
 
 Bu doküman, Mert'in 68 maddelik "projeyi uçtan uca ele al" talebinin
 kod tabanına karşı satır satır denetimidir. **Hiçbir uygulama yapılmadı** —
 bu sadece analiz. `PROMPT-urun-denetimi.md`'deki talimata göre yazıldı.
+
+**2026-08-23 güncellemesi:** Aşağıdaki A/B/C/D bölümleri 2026-08-22'deki
+ORİJİNAL denetimin değişmemiş kaydıdır — tarihsel referans için olduğu gibi
+bırakıldı. **Güncel durum için dosyanın SONUNDAKİ "E. Güncel durum" bölümüne
+bakın** — 8 fazlık ilk uygulama turu (iskelet çeşitliliği, hesaplama paneli,
+glossary, "Neden?" bileşeni, telemetry, RobotSpec metadata, command palette,
+complexity mode) ve sonraki turun (Meca500 gerçek veri, complexity mode
+yayılımı, zaman grafikleri) hangi maddeleri gerçekten kapattığını, hangilerinin
+hâlâ kısmen/hiç ele alınmadığını tazeden bir denetimdir.
 
 **Kapsam dışı (talimatla):** Madde 14, 15, 16 — kullanıcı hesabı, login,
 "My Lab" kişisel workspace. Mert'in kararı: hesapsız ilke kalıcı
@@ -299,3 +308,140 @@ desenleri genişleten işler; sonra yeni desen gerektirenler.
 çekirdek sözleşmeleri (`RobotSpec`/`PlanResult`/`Planner`) değiştirmiyor —
 kök `CLAUDE.md`'deki "dur ve sor" eşiğinin altında kalıyorlar. Uygulama
 fazına geçilirse her biri ayrı, küçük bir dal olarak ele alınabilir.
+
+---
+
+# E. Güncel durum (2026-08-23 taraması)
+
+Yukarıdaki A/B/C/D bölümleri 2026-08-22'nin dondurulmuş kaydı. Bu bölüm,
+o tarihten bu yana yapılan iki turu (`docs/durum-denetim.md`'deki "Faz 1-8"
+ve "Faz A/B" girişleri, satır satır okunarak) her maddeye karşı yeniden
+denetliyor. Metodoloji: her Faz'ın durum-denetim.md kaydı okundu (ne
+yapıldı, ne BİLİNÇLİ OLARAK yapılmadı, hangi kapsam daraltıldı), sonra
+kod tabanında `grep`/dosya sayımıyla iddialar doğrulandı (ör. glossary'nin
+kaç derste kullanıldığı, complexity-mode desteğinin kaç bileşende olduğu
+tek tek sayıldı, varsayılmadı).
+
+## Yapılan iki tur — hangi madde hangi Faz'da ele alındı
+
+| Faz | Ne yapıldı | docs/16 maddesi |
+|---|---|---|
+| Faz 1 (2026-08-22) | Ders sayfası şablon çeşitliliği — yalnız 10/94 derste (`sablon: gorev`/`karsilastirma`) | 7 |
+| Faz 2 (2026-08-22) | Ortak "Nasıl hesaplandı?" paneli — yalnız DlsTraceLab+JacobianViz | 3, 4 |
+| Faz 3 (2026-08-22) | Inline glossary bileşeni — yalnız 2/94 derste pilot | 38 |
+| Faz 4 (2026-08-22) | "Neden?" bileşeni — yalnız IkTarget | 33 |
+| Faz 5 (2026-08-22) | Zaman grafiği — yalnız oyun-alanı, yalnız eklem açısı | 26, 27 |
+| Faz 6 (2026-08-23) | RobotSpec `metadata` alanı eklendi — **3 katalog robotunda da boş bırakıldı** (hiçbiri gerçek marka değil) | 20 |
+| Faz 7 (2026-08-23) | Öğren/Mühendislik modu — dikey dilim → JacobianViz/DlsTraceLab'a yayıldı → kök `layout.tsx`de global toggle | 5, 10 |
+| Faz 8 (2026-08-23) | Command palette (Ctrl+K) | 39 |
+| *(Codex, 2026-08-23)* | Kaynaklı Meca500 R4 preseti (`meca500-r4`) katalog kaydına eklendi — **hiçbir derste/bileşende render edilmiyor** | 20 |
+| Faz A (2026-08-23, bu oturum) | Complexity mode → PlannerRace/SafetyZone/CspaceLab'a yayıldı (toplam 6 bileşen) | 5, 10 |
+| Faz B (2026-08-23, bu oturum) | Zaman grafiği → robot hücresi Yol provası'na (eklem açısı + hız + TCP konumu) | 26, 27 |
+
+**Önemli düzeltme — docs/16'nın kendisi bir maddeyi eksik değerlendirmiş:**
+Madde 25 ("MoveJ/MoveL — joint interpolation vs cartesian linear
+karşılaştırması yok" diyordu) yanlıştı: `/laboratuvar/robot-hucresi`nin
+"Yol provası" sekmesi bu karşılaştırmayı **2026-08-12'den beri** (docs/16
+yazılmadan 10 gün önce) yapıyordu — `RobotCellMotionWorkbench.tsx`,
+`MotionResultCard`, gerçek IK/çarpışma kontrollü iki ayrı yol. Denetim bunu
+gözden kaçırmış (muhtemelen "Hat B içeriği" aramış, standalone `/laboratuvar`
+sayfasına bakmamış). Bugün (Faz B) bu karta zaman grafiği de eklenince madde
+tamamen kapandı.
+
+## Tam tablo — her B+C maddesi tek tek
+
+| # | Madde (kısa) | 2026-08-22 durumu | 2026-08-23 durumu | Kanıt |
+|---|---|---|---|---|
+| 3 | "Neden oldu" katmanı | Kısmen (ad-hoc) | **TAMAMLANDI** | `NasilHesaplandi.tsx` 6 bileşende: IkTarget, JacobianViz, DlsTraceLab, PlannerRace, SafetyZone, CspaceLab |
+| 4 | Progressive disclosure | Yok | **TAMAMLANDI** | Aynı `NasilHesaplandi` — Madde 3 ile aynı kök, Faz 2'de netleşti |
+| 5 | Fidelity (3 etiketli seviye) | Kısmen | **Kısmen — değişmedi** | Learn/Engineering 2 durumlu toggle var ama Mert'in istediği Conceptual/Kinematic/Advanced 3-etiketli sistem literal olarak yok |
+| 6 | Lab derinliği tutarlı şablon | Kısmen | **Kısmen — güçlendi** | 6 lab artık aynı `NasilHesaplandi`/`Neden` desenini paylaşıyor ama Amaç→Sistem→Playground→Observe→Inspect→Explain→Challenge tam iskeleti hiçbir yerde yok |
+| 7 | Ders sayfası iskelet çeşitliliği | Yok (gerçek boşluk) | **Kısmen — 10/94 ders** | `sablon: gorev` (7), `sablon: karsilastirma` (3); D (16 ders) ve E (11 ders) grupları BİLİNÇLİ OLARAK yapılmadı (D zaten farklı, E yeni içerik ister); ayrıca `docs/02-mimari.md`'nin `presentationHash` alan listesine `sablon` hâlâ eklenmedi (bekleyen governance borcu) |
+| 8 | Kod editörü (syntax/autocomplete) | Kısmen (düz `<textarea>`) | **Kısmen — çoğu kapandı** | `PythonCodeEditor.tsx` (CodeMirror): syntax highlight ✓, satır numarası ✓, robot API autocomplete ✓, hata satırı vurgusu ✓ (bonus). Kalan: hover/dokümantasyon tooltip yok, format/otomatik biçimlendirme yok |
+| 9 | Kod→robot dönüşüm izi (satır vurgusu) | Kısmen | **Kısmen — değişmedi** | `jointTrace`/`traceIndex` slider'ı var ama editördeki `errorLineField` yalnız HATA satırını vurguluyor; başarılı çalıştırmada geçerli/yürütülen satırı `traceIndex`'e senkron vuran bir vurgu yok |
+| 10 | Learn/Engineering mode | Kısmen (yok, kavramsal) | **TAMAMLANDI** | Global toggle (`SiteHeader`), `ComplexityModeProvider` kök `layout.tsx`de, 6 bileşen destekliyor, `storage` olayıyla sekmeler arası senkron |
+| 11 | Onboarding akışı (adım göstergeli) | Kısmen | **Kısmen — değişmedi** | `CURATED_START_ROUTES` hâlâ sessiz, "1/5" gibi açık adım göstergesi yok |
+| 20 | RobotSpec metadata (marka) | Kısmen (alan yok) | **Kısmen — veri var, gösterilmiyor** | `metadata?: RobotMetadata` alanı + `RobotInfoLine.tsx` var; `meca500-r4` kaynaklı gerçek preset katalogda kayıtlı AMA hiçbir derste/bileşende `robot="meca500-r4"` kullanılmıyor — sourced veri üretildi, kullanıcıya hiç görünmüyor |
+| 21 | Workspace/reachability görselleştirme | Kısmen (yalnız metin) | **HİÇ ELE ALINMADI** | Değişmedi — reachable/near-limit/singularity-risk bölge boyaması yok |
+| 25 | Path Planning Lab (MoveJ/MoveL) | Kısmen (docs/16'nın kendi hatası — bkz. yukarıdaki düzeltme) | **TAMAMLANDI** | RobotCellStudio Yol provası (2026-08-12'den beri) + Faz B'nin zaman grafikleri (bugün) |
+| 26 | Telemetry paneli (birleşik) | Yok | **Kısmen — parçalar iyileşti, birleşik panel yok** | TCP satırı (oyun-alanı) + joint/velocity/TCP zaman grafikleri (Faz B) var ama TEK, adlandırılmış, açılıp-kapanabilen "telemetry panel" hâlâ yok — her biri kendi bileşeninde dağınık |
+| 27 | Zaman grafikleri | Yok | **TAMAMLANDI** | Oyun-alanı (eklem açısı) + robot hücresi (eklem açısı+hız+TCP konumu, Faz B). DlsTraceLab/PlannerRace bilinçli dışarıda — gerçek zaman verisi yok, Madde 52 dürüstlük ilkesi |
+| 28 | Robot state machine | Kısmen | **HİÇ ELE ALINMADI** | Değişmedi — paylaşılan `IDLE/PLANNING/MOVING/...` state machine yok |
+| 30 | "What if" çerçeveli deney | Kısmen | **HİÇ ELE ALINMADI** | Değişmedi |
+| 33 | "Neden?" butonu | Kısmen (dağınık metin) | **Kısmen — mekanizma kanıtlı, kapsam dar** | `Neden.tsx`/`InlineNot.tsx` çalışıyor ama yalnız IkTarget'ta (8 ders) kullanılıyor; JacobianViz/DlsTraceLab/PlannerRace/SafetyZone/CspaceLab'a eklenen şey `NasilHesaplandi` (durağan), `Neden` (duruma bağlı) değil |
+| 35 | Concept→Sim→Code (3 etiketli) | Kısmen | **HİÇ ELE ALINMADI** | `sablon` işi anlatı SIRASINI değiştiriyor, 3 ayrı etiketli bölüm oluşturmuyor — farklı eksen |
+| 38 | Inline glossary | Yok | **Kısmen — mekanizma kanıtlı, kapsam çok dar** | `Terim`/`TerimInline.tsx` çalışıyor, test edilmiş, ama yalnız 2/94 derste (`a-lise-calisma-uzayi`, `b-universite-jacobian`) kullanılıyor |
+| 39 | Command palette | Yok | **TAMAMLANDI** | Ctrl+K, `CommandPalette.tsx`, global |
+| 41 | Knowledge graph (görsel) | Kısmen (yalnız veri) | **HİÇ ELE ALINMADI** | `onkosul` graph verisi hâlâ yalnız CI doğrulaması için, kullanıcıya görsel graph yok |
+| 48/49 | Design system/micro-interactions | Kısmen | **Kısmen — ufak tutarlılık kazancı** | `RobotInfoLine` + complexity-mode toggle deseni tekrar kullanılabilir hale geldi ama sistematik "hata olan joint'i vurgula" gibi bir kalıp hâlâ doğrulanmadı |
+| 55 | Debug mode (gizlenebilir) | Kısmen | **Kısmen — değişmedi** | Paneller HERKESE varsayılan kapalı ama her zaman görünür/tıklanabilir; "normal kullanıcı hiç görmesin" ayrımı yok |
+| 63 | Bilgi mimarisi/navigasyon | Kısmen | **Kısmen — değişmedi** | Gerçek kullanıcı testi hâlâ yapılmadı |
+| 64 | Empty state'ler | Kısmen | **Kısmen — değişmedi** | `StatePage.tsx` içeriği hâlâ tek tek doğrulanmadı |
+
+## Özet tablo
+
+**TAMAMLANDI (6):** Madde 3, 4, 10, 25, 27, 39.
+
+**HÂLÂ KISMEN VAR (13):** Madde 5, 6, 7, 8, 9, 11, 20, 26, 33, 38, 48/49,
+55, 63, 64.
+
+**HİÇ ELE ALINMADI (5):** Madde 21, 28, 30, 35, 41.
+
+(Madde 1-2, 12-19, 22-24, 29, 31-32, 34, 36-37, 40, 42-47, 50-54, 56-62,
+65-67 zaten "ZATEN VAR" kategorisindeydi ve hiçbir Faz bunları bozmadı —
+değişmedi, yeniden doğrulanmadı çünkü doğrulanacak yeni bir şey yok.)
+
+## Önerilen sıradaki 5 — etki/risk sıralı
+
+Aşağıdakiler KISMEN VAR + HİÇ ELE ALINMADI havuzundan, en düşük risk/en
+yüksek etki mantığıyla seçildi. Ortak tema: **hepsi zaten inşa edilmiş,
+test edilmiş bir mekanizmanın KAPSAMINI genişletiyor** — yeni mimari karar
+gerektiren hiçbiri yok, hepsi "yayılım" işi.
+
+1. **Madde 38 — Glossary'yi 2 dersten daha fazlasına yay.** En düşük risk:
+   `Terim`/`TerimInline` zaten çalışıyor, test edilmiş, MDX allowlist'te.
+   İş yalnız hangi terimlerin hangi derslerde ilk geçtiğini bulup
+   `<Terim ad="...">` eklemek — içerik-yazım işi, kod değişikliği yok.
+   Düşük risk, orta-yüksek etki (okunabilirlik, madde 38'in orijinal amacı
+   "kullanıcı ayrı sayfaya gitmek zorunda kalmasın").
+
+2. **Madde 20 — Meca500'ü gerçekten bir yerde göster.** Veri zaten
+   kaynaklı ve test edilmiş (`meca500-r4`), ama hiçbir kullanıcı bunu
+   göremiyor. En doğal yer: `d-universite-mecademic-python.mdx` dersine
+   `<JointSliders robot="meca500-r4">` veya `<RobotInfoLine>` eklemek, ya
+   da `/oyun-alani`/`RobotSelectionTable`a bir seçenek olarak katmak.
+   Düşük risk (RobotSpec zaten var ve test edilmiş, yalnız içerik/bileşen
+   bağlama işi), yüksek "kapanış" değeri — çok oturumluk bir kaynak
+   araştırmasının meyvesi şu an kimseye görünmüyor.
+
+3. **Madde 33 — "Neden?" bileşenini IkTarget dışına yay.** Desen kanıtlı
+   ve test edilmiş; JacobianViz'in manipülabilite değeri, DlsTraceLab'ın
+   güncel λ'sı, PlannerRace'in seçilen algoritma gerekçesi gibi DURUMA BAĞLI
+   değerlere `Neden` eklenebilir (bunlar zaten `NasilHesaplandi` — durağan
+   — taşıyor, `Neden` — duruma bağlı — ayrı ve tamamlayıcı). Düşük risk,
+   orta etki.
+
+4. **Madde 9 — Editördeki satır vurgusunu `jointTrace` adımına senkronla.**
+   `PythonCodeEditor.tsx`'teki `errorLineField`/`setErrorLine` altyapısı
+   ŞU AN yalnız hata satırı için var ama aynı mekanizma "şu an yürütülen
+   satır" için de kullanılabilir — CodeRunner'ın zaten var olan
+   `traceIndex` state'i editöre bir efekt olarak bağlanabilir. Düşük-orta
+   risk (iki bileşen arası yeni bir bağlantı gerektirir), yüksek etki —
+   platformun kendi iddiasının ("kodun robota dönüşümünü göster") tam
+   karşılığı.
+
+5. **Madde 26 — Dağınık telemetriyi tek, adlandırılmış bir panelde
+   topla.** Faz B zaman grafikleri + oyun-alanının TCP satırı zaten VAR
+   ama her biri kendi bileşeninde ayrı duruyor. Tek bir `TelemetryPanel`
+   deseni (açılıp kapanabilen, docs/16 madde 26'nın istediği TCP/orientation/
+   joint/velocity/frame/trajectory-progress alanlarını tek yerde toplayan)
+   bu parçaları yeniden kullanabilir. Orta risk (tasarım kararı gerektirir
+   — hangi lab'larda görünecek, hangi alanlar zorunlu), orta-yüksek etki.
+
+**Kasıtlı olarak DIŞARIDA bırakılanlar** (düşük öncelik, yüksek
+efor/mimari risk): Madde 7'nin D/E grupları (D zaten bilinçli "kesif"
+kaldı, E yeni içerik ister — küçük bir "sonraki adım" değil, ayrı bir
+içerik projesi), Madde 21 (workspace görselleştirme — yeni bir görsel
+katman), Madde 41 (bilgi grafiği — yeni bir sayfa/görselleştirme), Madde
+5'in literal 3-etiketli fidelity sistemi (mevcut 2-durumlu toggle'ın
+üstüne yeniden etiketleme riski, muhtemelen gerekmiyor).
