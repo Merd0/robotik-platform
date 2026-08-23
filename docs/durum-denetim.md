@@ -4186,3 +4186,89 @@ eski/artık gereksiz Python editörü WIP taslağı da dokunulmadan bırakıldı
 — bu worktree artık `main`in gerisinde ama hiçbir şey bozulmadı, hâlâ
 kendi haliyle duruyor.
 
+---
+
+## Faz A — Öğren/Mühendislik modu PlannerRace/SafetyZone/CspaceLab'a yayıldı (2026-08-23, commit 134dda8)
+
+Mert'in talimatı: global toggle'ı (Faz 7) `PlannerRace`, `CspaceLab`,
+`SafetyZone` ve "varsa görselleştirmesi zengin diğerleri"ne yay. Bu iş
+`C:\Users\hp\Desktop\robotik-platform` worktree'sinde (aynı dal,
+`feat/python-code-editor`) yapıldı — Codex paralelde
+`lib/robotics/robots/*.ts` (robot kataloğu) üzerinde çalıştığı için o
+dosyalara hiç dokunulmadı.
+
+**Kapsam kararı — iki bileşen bilinçli olarak dışarıda bırakıldı:**
+`FourLensTraceLab` ve `TransformOrderLab` incelendi ama eklenmedi. İkisi
+de kendi her-zaman-açık panelleriyle (kod adımları/4×4 matris `<details>`)
+zaten tüm hesaplı veriyi gösteriyor — Mühendislik modunun ekleyebileceği
+gerçekten "gizli" bir sayı kalmamış. Buraya bir panel eklemek uydurma
+detay üretmek olurdu (docs/09 §"uydurma detay ekleme" kuralını ihlal
+ederdi); Faz 7 rollout'taki CspaceLab/kapsam-dışı gerekçesiyle aynı sınıf.
+
+**Uygulanan üç laboratuvar:**
+
+- **PlannerRace** — `theme` prop'u (ortaokul/lise/universite) sayfa
+  boyunca sabit olduğu için hook kurallarını (koşulsuz çağrı) ihlal
+  etmeden desteği yalnız `theme === "universite"`de kaydetmek gerekiyordu.
+  Çözüm: `useDeclareComplexityModeSupport()`'u çağıran, `null` dönen ayrı
+  bir alt bileşen (`PlannerRaceComplexitySupport`), yalnız üniversite
+  temasında monte ediliyor — hook her zaman kendi bileşeninin tepesinde
+  koşulsuz çağrılıyor, montaj kararı koşullu. Aynı desen `SafetyZone`da
+  (`mode === "hesap"`) tekrarlandı. Mühendislik modunda her başarılı
+  algoritmanın ham `(x, y)` path dizisi ve nokta sayısı gösteriliyor —
+  `PlanResult.path` zaten hesaplıydı, tablo yalnız toplam uzunluğunu
+  (`pathLength`) gösteriyordu.
+- **SafetyZone** — yalnız `mode === "hesap"`ta (üniversite derinliği)
+  destek. Mühendislik modunda `stoppedSeparation` (robotun komple
+  duruştaki gerekli mesafesi — sahnedeki kırmızı bandın genişliğini
+  belirleyen ama daha önce hiç metin olarak yazılmayan sayı) ilk kez
+  görünür oluyor. `mode` prop adıyla çakışmaması için `useComplexityMode()`
+  sonucu `complexityMode` olarak yeniden adlandırıldı.
+- **CspaceLab** — her zaman üniversite seviyesi tek bir ders (`c-universite-c-space`)
+  olduğu için koşulsuz destek (IkTarget/JacobianViz/DlsTraceLab'la aynı
+  desen). Mühendislik modunda `forwardKinematics`in ürettiği eklem
+  konumları (x, y) ve radyan cinsinden (θ1, θ2) gösteriliyor — ikisi de
+  zaten hesaplı, önceden yalnız SVG çiziminde kullanılıyordu.
+
+**Mobil'e özgü bulunan bir eşik farkı (kod regresyonu değil):**
+`c-universite-algoritma-karsilastirma-deneyi` dersinde sahneden önce bir
+ön koşul kontrolü, bir tahmin bloğu ve bir meydan okuma başlığı var; bu
+toplam yükseklik 390×844 mobil viewport'ta `SahneAlani`nın 300px'lik
+yükleme eşiğinin (`rootMargin`) dışında kalabiliyor. İlk yazılan e2e testi
+doğrudan `[data-scene-active]` locator'ına `scrollIntoViewIfNeeded()`
+çağırdı ve mobilde tıkanıp zaman aşımına uğradı — element DOM'a hiç
+girmemişti (tavan-taban problemi: kaydırmak için elementin var olması,
+elementin var olması için kaydırmak/eşiğe girmek gerekiyor). Kök neden
+ölçülerek doğrulandı (ayrı bir ad-hoc Playwright betiğiyle: `SahneAlani`
+sarmalayıcısının `.aspect-square.overflow-hidden` sınıfı her zaman DOM'da,
+skeleton durumunda bile — önce ONA kaydırmak yükleme gözlemcisini
+tetikliyor). Düzeltme yalnız TESTTE: önce sarmalayıcıya, sonra gerçek
+sahne elementine kaydırma. `PlannerRace`/`SahneAlani` kod tarafında hiçbir
+değişiklik gerekmedi — bu, JacobianViz/IkTarget'ın Faz 7'de karşılaştığı
+gerçek layout regresyonundan (toggle sahnenin üstüne konması) FARKLI bir
+sınıf: burada sorun test stratejisindeydi, üründe değil.
+
+**Doğrulama ve teslim:** Bu fazda `main` çalışma ortasında öndeki
+worktree'nin (bkz. yukarıdaki "paralel worktree" girişi) yaptığı merge'le
+öne geçti; kendi dalım (`feat/python-code-editor`) da aynı sırada 4832c0e'ye
+ilerlemiş bulundu (paylaşılan `.git`, ayrı worktree'ler). Faz A değişikliği
+bu güncel taban üzerine TEMİZ uygulandı (doğrulandı: `git diff main` yalnız
+Faz A'nın 179 eklenen satırını gösteriyordu, hiçbir main içeriği kayıp
+değildi). Tam kontrol paketi bu taban üzerinde çalıştırıldı: `tsc`, `lint`,
+815 unit (62 dosya), `check-content`, `validate-content-graph`,
+`check-quiz-dagilimi`, `check-mdx-guvenlik`, `check-review-debt`/
+`check-review-integrity`, `check-sensitive-terms`, `build`,
+`check-performance-budget` (3D'siz ders gzip 267→268 KiB, küçük pay —
+paylaşılan `mdxComponents` route chunk'ı büyüdüğü için, docs/05'teki
+bilinen ödünleşimle aynı sınıf), `npm audit` (0 zafiyet), e2e **315/315**
+(3 viewport, hiç flake yok). `git branch -f main` bu kez de reddedildi
+(worktree kilidi, aynı sınıf) — çözüm yine `git -C
+robotik-platform-python-editor merge --no-edit feat/python-code-editor`
+(fast-forward, çakışmasız). `main` push edilmedi. Kendi worktree'imdeki
+artık gereksiz (main'e polished haliyle zaten girmiş) Python editörü
+WIP'inin stash kaydı düşürüldü (`git stash drop`) — saklamanın hiçbir
+faydası kalmamıştı, üstü main'de zaten daha eksiksiz haliyle duruyordu.
+
+**Sıradaki:** Faz B (telemetry/zaman grafikleri) — bu fazın onayına bağlı,
+ayrı bir görev olarak başlıyor.
+
