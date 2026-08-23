@@ -2,11 +2,13 @@ import type { RobotSpec } from "../kinematics";
 import { genericTwoDofRobot } from "./genericTwoDof";
 import { genericPrismaticRobot } from "./genericPrismatic";
 import { genericSixDofRobot } from "./genericSixDof";
+import { meca500R4Robot } from "./meca500R4";
 
 const REGISTRY: Record<string, RobotSpec> = {
   [genericTwoDofRobot.id]: genericTwoDofRobot,
   [genericPrismaticRobot.id]: genericPrismaticRobot,
   [genericSixDofRobot.id]: genericSixDofRobot,
+  [meca500R4Robot.id]: meca500R4Robot,
 };
 
 export function getRobotById(id: string): RobotSpec {
@@ -15,4 +17,4 @@ export function getRobotById(id: string): RobotSpec {
   return robot;
 }
 
-export { genericTwoDofRobot, genericPrismaticRobot, genericSixDofRobot };
+export { genericTwoDofRobot, genericPrismaticRobot, genericSixDofRobot, meca500R4Robot };

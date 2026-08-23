@@ -2075,3 +2075,37 @@ Görseller 1440×1000 viewportta gerçek Chromium ile alındı. Önce görünüm
 
 `content/` MDX, RobotSpec/model, sözlük, SiteHeader/command palette,
 `JointSliders.tsx` ve `IkTarget.tsx` değiştirilmedi.
+
+### 2026-08-23 · Robot kataloğuna kaynaklı Meca500 R4 preseti eklendi
+
+Mevcut `generic-2dof` ve `generic-6dof` tanımları değiştirilmedi ve gerçek bir
+üretici modeliyle eşleştirilmedi. Yanlarına `meca500-r4` kimlikli, metadata'sı
+"Mecademic / Meca500 R4" olan ayrı bir gerçek ürün preseti eklendi. Katalog
+testi jeneriklerin `metadata` taşımamaya devam ettiğini negatif assertion ile
+koruyor.
+
+**Sayısal kaynak:** Mecademic'in kamuya açık
+[MC-UM-MECA500 2026.B teknik özellikler sayfası](https://resources.mecademic.com/en/doc/MC-UM-MECA500/2026.B/manual/technical-specifications.html)
+ve aynı dokümanın
+[2026.B.277 PDF sürümü](https://resources.mecademic.com/en/doc/MC-UM-MECA500/2026.B/mc-um-meca500.pdf).
+Tablo 7'deki altı eklem aralığı, R4 azami eklem hızları, 330 mm flanş erişimi
+ve 0.5 kg nominal payload doğrudan alındı. Şekil 18'deki 135/135/38/120/70 mm
+bağlantı/ofset ölçüleri ve üreticinin gösterdiği sıfır konumu, motorun standart
+DH sırasına çevrildi; metre/radyan birim dönüşümü dışında kaynaksız sayı
+eklenmedi. Ortaya çıkan sıfır-eklem FK sonucu `(0.190, 0, 0.308) m`, aynı
+Şekil 18 geometrisinden gelen bağımsız regresyon assertion'ıyla korunuyor.
+
+**Test-first kayıt:** `catalog.test.ts` önce yeni export/registry kaydı yokken
+3 testle kırmızı çalıştırıldı; preset ve katalog kaydı eklendikten sonra 4/4
+yeşile döndü. Testler metadata/kaynak sürümünü, standart DH tablosunu, sıfır
+konum FK'sını, eklem limitlerini ve R4 azami hızlarını sabitliyor.
+
+**Doğrulama:** `npx tsc --noEmit`, `npm run lint`, `npm test` (809/809),
+`check-content`, `validate-content-graph`, `check-quiz-dagilimi`,
+`check-mdx-guvenlik`, `check-review-integrity`, `check-sensitive-terms`,
+`npm run build` (328 statik sayfa), `check-performance-budget` ve
+`npm audit --audit-level=high` temiz. Hassas terim desenleri yeni preset
+dosyasına ayrıca doğrudan uygulandı; bulgu yok. İlk 10-işçili e2e koşusunda
+tablet WCAG testi CPU yükünde 60 saniye zaman aşımına uğradı; aynı test tek
+işçiyle 17.1 saniyede geçti. Test veya süre zayıflatılmadan dört işçiyle
+yinelenen tam paket **297 geçti, 18 koşullu atlandı, 0 başarısız** sonucu verdi.
