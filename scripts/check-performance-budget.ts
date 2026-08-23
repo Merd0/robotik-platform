@@ -54,7 +54,13 @@ const surfaces: SurfaceConfig[] = [
   // kendisi) bile ana sayfanın zaten tam dolu (199.8→199.9 KiB) bütçesini
   // ~1.2 KiB aşırdı. Bütçe bunu yansıtacak şekilde 202 KiB'e çekildi —
   // ana sayfa hâlâ platformun en sıkı bütçeli sayfası, pay minimal.
-  { name: "Ana sayfa", html: "index.html", deferred: "none", initialScriptGzip: 200 * KIB, budget: { gzip: 220 * KIB, brotli: 202 * KIB } },
+  //
+  // 2026-08-23: Faz 7 (Öğren/Mühendislik modu) global oldu —
+  // `ComplexityModeProvider`/`ComplexityModeToggle` artık kök `layout.tsx`da
+  // HER sayfada yüklü (SiteHeader'daki toggle "supported" sayfalarda görünür
+  // olmalı, bu yüzden context her yerde mevcut olmak zorunda). brotli
+  // 202.0→202.4 KiB'e çıktı — küçük pay, 203 KiB'e çekildi.
+  { name: "Ana sayfa", html: "index.html", deferred: "none", initialScriptGzip: 200 * KIB, budget: { gzip: 220 * KIB, brotli: 203 * KIB } },
   // 255/240 KiB (2026-08-01 kalibrasyonu) 2026-08-15'te 257.0/239.4 KiB'e
   // taştı — kök neden araştırıldı: components/interactive/index.ts, TÜM 19
   // etkileşimli bileşeni statik import ediyor ve next-mdx-remote/rsc'nin
@@ -89,7 +95,13 @@ const surfaces: SurfaceConfig[] = [
   // durum-denetim.md) `ComplexityModeProvider`/`InlineNot`in `baslangicAcik`
   // genişlemesini ekledi, gzip 265.0→265.3 KiB'e çıktı (brotli hâlâ 250'nin
   // altında, 247.4). Aynı gerekçeyle gzip 266 KiB'e çekildi — küçük pay.
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 266 * KIB, brotli: 250 * KIB } },
+  //
+  // 2026-08-23 (devam): Faz 7 global oldu — `ComplexityModeProvider`/
+  // `ComplexityModeToggle` kök `layout.tsx`da HER sayfada yüklü (bkz. Ana
+  // sayfa notu yukarıda). Bu sayfada zaten ekstra bilgi amaçlı ölçülen
+  // (bütçeye girmeyen) "3D'siz ders" başlangıç JS'i dışındaki TOPLAM gzip
+  // 266.0→266.4 KiB'e çıktı — 267 KiB'e çekildi, küçük pay.
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 267 * KIB, brotli: 250 * KIB } },
   { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 480 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];

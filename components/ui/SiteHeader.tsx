@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ComplexityModeToggle } from "./ComplexityModeToggle";
 import { MobileNavMenu } from "./MobileNavMenu";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -33,6 +34,7 @@ export function SiteHeader() {
           ))}
           <Link href="/oyun-alani" className="inline-flex min-h-11 items-center rounded-lg bg-site-soft px-3 font-semibold text-site-ink hover:bg-site-border">Oyun alanı</Link>
           <MobileNavMenu links={OVERFLOW_NAV_LINKS} />
+          <ComplexityModeToggle />
           <ThemeToggle />
         </nav>
       </div>

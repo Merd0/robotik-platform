@@ -19,7 +19,7 @@ import {
   useSharedLabState,
 } from "@/components/interactive/LabChallengeUi";
 import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
-import { ComplexityModeProvider, useComplexityMode } from "@/components/ui/ComplexityModeProvider";
+import { useComplexityMode, useDeclareComplexityModeSupport } from "@/components/ui/ComplexityModeProvider";
 
 interface JacobianVizProps {
   robot: string;
@@ -30,22 +30,11 @@ const toDegrees = (radians: number) => (radians * 180) / Math.PI;
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
 const round = (value: number) => Math.round(value * 1000) / 1000;
 
-/**
- * Faz 7 (2026-08-23): `ComplexityModeProvider` burada da YEREL monteli,
- * IkTarget'takiyle aynı gerekçeyle (bkz. docs/durum-denetim.md "Faz 7").
- */
-export function JacobianViz(props: JacobianVizProps) {
-  return (
-    <ComplexityModeProvider>
-      <JacobianVizInner {...props} />
-    </ComplexityModeProvider>
-  );
-}
-
 /** Ders içine gömülen etkileşimli sahne: Jacobian sütunlarını ve manipülabilite elipsini görselleştirir. */
-function JacobianVizInner({ robot: robotId, pilot }: JacobianVizProps) {
+export function JacobianViz({ robot: robotId, pilot }: JacobianVizProps) {
   const record = useEvidenceRecorder();
-  const { mode, setMode } = useComplexityMode();
+  const { mode } = useComplexityMode();
+  useDeclareComplexityModeSupport();
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
   const jointColors = [palette.jointPrimary, palette.jointSecondary] as const;
@@ -149,24 +138,6 @@ function JacobianVizInner({ robot: robotId, pilot }: JacobianVizProps) {
           bazı yönlerde hızlanamaz — Jacobian bu yönde tersinemez hale gelir.
         </p>
       )}
-
-      <div className="flex items-center justify-end gap-1 text-xs" role="group" aria-label="Gösterim modu">
-        {(["learn", "engineering"] as const).map((option) => (
-          <button
-            key={option}
-            type="button"
-            aria-pressed={mode === option}
-            onClick={() => setMode(option)}
-            className={`min-h-11 rounded-md border px-3 font-semibold ${
-              mode === option
-                ? "border-universite-ink bg-universite-ink text-universite-surface"
-                : "border-universite-ink/20 text-universite-ink/70"
-            }`}
-          >
-            {option === "learn" ? "Öğren" : "Mühendislik"}
-          </button>
-        ))}
-      </div>
 
       <NasilHesaplandi
         ozet="Çizgiler ve elips, eklem hızlarından uç hıza nasıl gidildiğini gösteriyor."
