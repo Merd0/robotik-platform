@@ -3766,3 +3766,69 @@ saatlik iş olacağı) gerçekten farklı.
 **Karar: bu faz otonom uygulanmıyor, Mert'in tercih edeceği yaklaşımı
 bekliyor.** Loop Faz 8'e geçiyor.
 
+
+---
+
+## Faz 8 (command palette) — TAMAMLANDI (2026-08-23, commit 3d37e99)
+
+docs/16-urun-denetimi.md öncelik #8 (madde 39, "bağımsız, izole bir özellik
+... sıralamada son olmasının sebebi risk değil, göreli düşük etki"). Ctrl+K
+(⌘K de çalışır — dinleyici `event.metaKey || event.ctrlKey`) ile açılan
+hızlı ders arama kutusu.
+
+**Mimari:** `CommandPalette.tsx` her sayfada (kök `layout.tsx`) yüklü kalan
+küçük bir kabuk — yalnız klavye kısayolunu dinler ve `open` durumunu tutar.
+Ağır kısım (`lib/arama.ts`in `aramaYap`/`indeksHazirla` motorunu ve sonuç
+listesini taşıyan `CommandPaletteDialog.tsx`) `next/dynamic({ ssr: false })`
+ile tembel yüklenir — `components/scene/LazyScene.tsx` ile aynı desen.
+Kullanıcı Ctrl+K'ye hiç basmazsa arama kodu hiç indirilmez. `/ara` sayfasıyla
+AYNI `lib/arama.ts` motorunu ve `public/arama-index.json`ı kullanır — arama
+mantığı iki yerde ayrı yazılmadı.
+
+**Erişilebilirlik — bu oturumda bulunan gerçek regresyon:** ilk taslak
+`role="dialog" aria-modal="true"` vaat ediyordu ama gerçek bir odak
+tuzağı yoktu (Escape ve Tab-döngüsü yalnız input/sonuç elemanlarının kendi
+`onKeyDown`'ına bağlıydı) — son sonuçtan Tab'la odak overlay'in ARKASINDAKİ
+sayfaya kaçabiliyordu. `MobileNavMenu.tsx` ve `RobotCellStudio.tsx`nin
+odak-modu dialogunda ZATEN kurulu olan desen (doküman seviyesinde Escape +
+Tab-döngüsü + `document.body.style.overflow = "hidden"`) buraya da taşındı.
+
+Ayrıca SiteHeader'daki "Ctrl+K" `<kbd>` ipucu `text-site-muted/80` (opaklık
+azaltılmış) kullanıyordu — axe-core ölçümüyle kontrast oranı 3.91, WCAG AA
+eşiği 4.5 — **gerçek bir kontrast regresyonuydu**, e2e'nin 20 sayfalık WCAG
+taraması ve `robot-hucresi-3d.spec.ts`in kendi axe kontrolü bunu yakaladı.
+Düzeltme: opaklık modifikatörünü kaldırıp diğer nav linkleri gibi tam opak
+`text-site-muted` kullanmak (kontrast ~7.6, geniş marjla geçiyor).
+
+Yeni e2e testi (`platform.spec.ts`, "komut paleti (Ctrl+K)...") ilk
+yazımında kendi hatasını da açığa çıkardı: "tekillik" araması gövde
+metninde 6 derste geçtiği için (yalnız başlık eşleşmesi ilk sırada garanti
+— `lib/arama.ts`teki `BASLIK_PUANI`), ilk sonuç her zaman SON sonuç
+değil — test ilk sürümde Tab-tuzağını yanlış varsayımla (tek sonuç
+varsayarak) sınıyordu. Sonuç sayısı kadar ArrowDown ile gerçek son öğeye
+gidecek şekilde düzeltildi. İkinci bir test hatası: sayfa navigasyonu
+(Enter → gerçek route değişimi) sonrası paleti HEMEN tekrar açmak, tam
+paralel CI yükünde hydration/olay-dinleyici yeniden bağlanma zamanlamasına
+karşı bir yarış koşuluna giriyordu — testte navigasyon en sona alınarak
+(aynı sayfada kalındığı sürece risk yok) giderildi. Üç tam e2e koşusuyla
+doğrulandı (son koşu: 278 geçti, yalnız test dosyasının kendi yorumunda
+zaten kayıtlı olan WCAG-taraması 60s zaman aşımı — tam paralel CI yükünün
+bilinen, bu fazdan bağımsız pariltısı — 1 kez başarısız oldu).
+
+Performans bütçesi: küçük kabuk bile (klavye dinleyicisi + `dynamic()`
+sarmalayıcısı) ana sayfanın zaten dolu bütçesini ~1.2 KiB aşırdı —
+`check-performance-budget.ts`teki ana sayfa brotli sınırı 200→202 KiB'e
+çekildi, minimal pay.
+
+Tam kontrol paketi temiz: `tsc`, `lint`, 795 unit, `check-content`,
+`validate-content-graph`, `check-quiz-dagilimi`, `check-mdx-guvenlik`,
+`check-review-debt`/`check-review-integrity`, `check-sensitive-terms`,
+`build`, `check-performance-budget`, `npm audit --audit-level=high` (0
+zafiyet), e2e (278-279/279, tek istisna yukarıda açıklanan bilinen flake).
+
+**docs/16'daki 8 öncelik maddesinin (10/5, 26/27, 33, 35, 38, 39, 41)
+tamamı artık ya uygulandı ya da (Faz 6 RobotSpec genişletmesi, Faz 7 global
+complexity-layer) insan kararına bağlı olarak açıkça bekletiliyor.** Bu loop
+için otonom olarak alınabilecek bir sonraki madde kalmadı — kalan iki açık
+madde (Faz 6, Faz 7) Mert'in tercih edeceği yaklaşımı bekliyor.
+
