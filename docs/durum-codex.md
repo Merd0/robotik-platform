@@ -2100,7 +2100,7 @@ eklenmedi. Ortaya çıkan sıfır-eklem FK sonucu `(0.190, 0, 0.308) m`, aynı
 yeşile döndü. Testler metadata/kaynak sürümünü, standart DH tablosunu, sıfır
 konum FK'sını, eklem limitlerini ve R4 azami hızlarını sabitliyor.
 
-**Doğrulama:** `npx tsc --noEmit`, `npm run lint`, `npm test` (809/809),
+**Doğrulama:** `npx tsc --noEmit`, `npm run lint`, `npm test` (815/815),
 `check-content`, `validate-content-graph`, `check-quiz-dagilimi`,
 `check-mdx-guvenlik`, `check-review-integrity`, `check-sensitive-terms`,
 `npm run build` (328 statik sayfa), `check-performance-budget` ve
@@ -2108,4 +2108,5 @@ konum FK'sını, eklem limitlerini ve R4 azami hızlarını sabitliyor.
 dosyasına ayrıca doğrudan uygulandı; bulgu yok. İlk 10-işçili e2e koşusunda
 tablet WCAG testi CPU yükünde 60 saniye zaman aşımına uğradı; aynı test tek
 işçiyle 17.1 saniyede geçti. Test veya süre zayıflatılmadan dört işçiyle
-yinelenen tam paket **297 geçti, 18 koşullu atlandı, 0 başarısız** sonucu verdi.
+yinelenen ve birleşik `main` üzerinde son kez çalıştırılan tam paket
+**306 geçti, 18 koşullu atlandı, 0 başarısız** sonucu verdi.
