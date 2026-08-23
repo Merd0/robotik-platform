@@ -4048,3 +4048,71 @@ başlığında bir toggle), sonra yukarıdaki madde 4'teki üç ek laboratuvara
 `varsayilanAcik` prop'unu bağlamak — `InlineNot`ın kendisi zaten hazır,
 değişmesi gerekmiyor.
 
+---
+
+## Faz 7 yayılma — JacobianViz + DlsTraceLab (2026-08-23, commit 15fefbf)
+
+Mert onay verdi, EK bir koşulla: "her sahnenin kendi lazy-load eşiği farklı
+davranabilir, her birinde ayrı ayrı doğrula." Bu talebe göre çalışıldı.
+
+**Düzeltme — önceki proposal'daki bir hata:** yukarıdaki madde 4 "IkTarget,
+JacobianViz, DlsTraceLab, CspaceLab — Neden/NasilHesaplandi kullananlar"
+diyordu. Kod incelemesi bunun YANLIŞ olduğunu gösterdi: `CspaceLab.tsx`
+hiçbir `Neden`/`NasilHesaplandi` paneli KULLANMIYOR (grep ile doğrulandı).
+Bu yüzden CspaceLab **bilinçli olarak kapsam dışı bırakıldı** — mod yalnız
+VAR OLAN panellerin varsayılan açık/kapalı durumunu değiştirir; CspaceLab'a
+sıfırdan bir panel eklemek bu fazın kapsamının (mevcut progressive-
+disclosure'ı global hale getirmek) ötesine geçip yeni içerik uydurmak
+olurdu.
+
+**Uygulanan:** `NasilHesaplandi.tsx`ye `varsayilanAcik` prop'u eklendi —
+`InlineNot`taki React state yerine native `<details open>` özniteliği
+kullanıyor; mod değişince paneli senkronlamak için `key={String(varsayilanAcik)}`
+ile öğe yeniden monte ediliyor (aynı sonuç, farklı mekanizma — native
+element React state'i yok). `JacobianViz` ve `DlsTraceLab`, IkTarget'la
+birebir aynı desende (yerel `ComplexityModeProvider`, toggle NasilHesaplandi
+panelinin hemen üstünde — sahnenin ALTINDA, IkTarget'ın regresyon dersi
+uygulanarak) güncellendi. Mühendislik modunda ikisi de gerçek, önceden
+zaten hesaplanmış ama gösterilmeyen sayılar ekliyor: JacobianViz Jacobian
+sütun vektörlerinin (x, y, z) ham değerlerini, DlsTraceLab iki ardışık
+iterasyon arasındaki gerçek Δθ farkını (trace'teki `angles` dizisinden
+türetilmiş, uydurma değil).
+
+**Kullanıcının istediği doğrulama — sonuç:** JacobianViz gerçekten bir 3D
+sahne kullanıyor (`SahneAlani`/`JacobianScene`) — bu yüzden IkTarget'takiyle
+AYNI SINIF regresyon riski taşıyordu. Yeni bir e2e testi özellikle bunu
+kontrol ediyor: `data-scene-active` doğrudan `"true"`ya dönüyor mu (toggle
+sahnenin altında olduğu için bu sefer BOZULMADI, ama test bunu varsaymak
+yerine ÖLÇÜYOR). DlsTraceLab ve CspaceLab'ın ikisi de `SahneAlani` KULLANMIYOR
+(elle SVG çiziyorlar, docs/durum-denetim.md Faz 5 notundaki presedanla aynı)
+— yani bu regresyon sınıfı yapısal olarak bu ikisinde oluşamaz; DlsTraceLab'ın
+yeni e2e testi bunu da `[data-scene-active]` sayısının sıfır olduğunu
+doğrulayarak kayıt altına alıyor.
+
+**Ayrıca bulunan (kod değil, ölçüm hatası):** Bu fazın ilk build/perf-bütçe
+koşusunda "3D ders" sayfasının etkileşim boyutu 249→382 KiB gzip gibi
+görünüp bütçeyi büyük farkla aştı. Kök neden kod DEĞİLDİ: çalışma dizininde
+hâlâ duran `feat/python-code-editor` WIP'inin (bkz. Faz 6 girişi)
+`package.json`a eklediği `@codemirror/*` bağımlılıkları, izolasyon
+yapılmadan alınan build'e karışmıştı. `git stash push --keep-index
+--include-untracked` ile yeniden izole edilip ölçülünce sayı gerçek
+değerine (249.3 KiB, öncekiyle aynı) döndü — gerçek bir regresyon değildi.
+Ders: bu fazda kurulan izolasyon disiplini yalnız COMMIT için değil, HER
+ölçüm/build/test koşusu için de zorunlu; aksi halde WIP'in etkisini kendi
+değişikliğinin etkisi sanabilirsin.
+
+Tam kontrol paketi izole ağaçta temiz: `tsc`, `lint`, 805 unit (60 dosya),
+içerik/review kontrolleri, `build`, `check-performance-budget` (gerçek
+değerlerle, WIP karışmadan), `npm audit` (0 zafiyet), e2e 288/291 ilk
+koşuda — kalan 3 hata (`movej...`, 2× WCAG 60s taraması) `--workers=1` ile
+tek tek tekrar koşulduğunda hepsi geçti; aynı, önceden kayıtlı flake sınıfı
+(tam paralel yükte kaynak çekişmesi), bu fazdan bağımsız. `main` yine `git
+branch -f` ile (checkout yapılmadan) commit `15fefbf`'e ilerletildi.
+
+**Kalan kapsam (henüz yapılmadı, ayrı bir onay gerektirir):**
+`ComplexityModeProvider`'ı kök `layout.tsx`'e taşıyıp site başlığında
+global bir toggle haline getirmek. Şu an her laboratuvar kendi yerel
+provider'ını taşıyor — localStorage paylaşıldığı için ayarlar sayfalar
+arası kalıcı, ama aynı sayfada aynı anda birden fazla laboratuvar açıksa
+(nadir) her biri kendi mount'unda okur, canlı çapraz senkron yok.
+
