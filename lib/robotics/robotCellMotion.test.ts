@@ -4,6 +4,7 @@ import { ROBOT_CELL_WORKPIECE } from "./robotCellProgram";
 import {
   ROBOT_CELL_OBSTACLES,
   detectRobotCellCollisions,
+  jointVelocityProfile,
   planRobotCellMoveJ,
   planRobotCellMoveL,
   sampleRobotCellMotion,
@@ -116,5 +117,76 @@ describe("3B robot hücresi hareket provası", () => {
     const unreachable = planRobotCellMoveL(genericSixDofRobot, HOME, { x: 4, y: 0, z: 4 }, [], { sampleCount: 12 });
     expect(unreachable.status).toBe("ik-failure");
     expect(unreachable.firstIssue).toEqual(expect.objectContaining({ reason: "ik-failure" }));
+  });
+
+  describe("zaman içindeki telemetri (Faz B — joint angle/velocity/TCP grafikleri)", () => {
+    it("örnek zamanları sıfırdan başlar, tahmini süreyle biter ve MoveJ için eşit aralıklıdır", () => {
+      const plan = planRobotCellMoveJ(genericSixDofRobot, HOME, BIN_APPROACH, [], { sampleCount: 10 });
+
+      expect(plan.sampleTimesSeconds).toHaveLength(plan.samples.length);
+      expect(plan.sampleTimesSeconds[0]).toBe(0);
+      expect(plan.sampleTimesSeconds.at(-1)).toBeCloseTo(plan.estimatedDurationSeconds, 10);
+
+      // MoveJ eklem uzayında doğrusal enterpolasyon yaptığı için (bkz.
+      // planRobotCellMoveJ), her segmentteki en büyük eklem adımı sabittir —
+      // dolayısıyla segment süresi de sabit olmalı.
+      const deltas = plan.sampleTimesSeconds.slice(1).map((t, index) => t - plan.sampleTimesSeconds[index]);
+      deltas.forEach((delta) => expect(delta).toBeCloseTo(deltas[0], 10));
+    });
+
+    it("MoveJ süresi, en büyük eklem değişiminin maxVelocity*speedScale sınırından türetilir", () => {
+      const speedScale = 0.35;
+      const plan = planRobotCellMoveJ(genericSixDofRobot, HOME, BIN_APPROACH, [], { sampleCount: 20, speedScale });
+      const governingDelta = Math.max(...HOME.map((angle, index) => Math.abs(BIN_APPROACH[index] - angle)));
+      // genericSixDofRobot'un tüm eklemleri aynı maxVelocity'yi (π rad/s) paylaşıyor.
+      const expectedDuration = governingDelta / (Math.PI * speedScale);
+
+      expect(plan.estimatedDurationSeconds).toBeCloseTo(expectedDuration, 6);
+    });
+
+    it("jointVelocityProfile ardışık örnek çiftleri arasında, gerçek zaman farkından türetilmiş hız üretir", () => {
+      const speedScale = 0.35;
+      const plan = planRobotCellMoveJ(genericSixDofRobot, HOME, BIN_APPROACH, [], { sampleCount: 20, speedScale });
+      const profile = jointVelocityProfile(plan);
+
+      expect(profile).toHaveLength(plan.samples.length - 1);
+      // Governing eklemin limiti π rad/s * speedScale'i (derece/s'ye çevrilmiş)
+      // hiçbir segmentte aşmamalı — bu, motor teorik hız sınırının bir
+      // sonucu, uydurma bir sınır değil.
+      const limitDegPerSecond = (Math.PI * speedScale * 180) / Math.PI;
+      const maxObserved = Math.max(...profile.flatMap((sample) => sample.degPerSecond.map(Math.abs)));
+      expect(maxObserved).toBeLessThanOrEqual(limitDegPerSecond + 1e-6);
+
+      // Eşit zaman adımlı doğrusal enterpolasyonda her segmentin hızı aynı olmalı.
+      const firstSegment = profile[0].degPerSecond;
+      profile.forEach((sample) => {
+        sample.degPerSecond.forEach((value, jointIndex) => {
+          expect(value).toBeCloseTo(firstSegment[jointIndex], 4);
+        });
+      });
+    });
+
+    it("jointVelocityProfile zaman noktalarını ardışık örneklerin tam orta noktasına yerleştirir", () => {
+      const plan = planRobotCellMoveJ(genericSixDofRobot, HOME, BIN_APPROACH, [], { sampleCount: 6 });
+      const profile = jointVelocityProfile(plan);
+
+      profile.forEach((sample, index) => {
+        const expectedMidpoint = (plan.sampleTimesSeconds[index] + plan.sampleTimesSeconds[index + 1]) / 2;
+        expect(sample.tSeconds).toBeCloseTo(expectedMidpoint, 10);
+      });
+    });
+
+    it("erken kesilen (IK hatası) bir planda hız profili örnek sayısıyla tutarlı kalır, bölme hatası fırlatmaz", () => {
+      const plan = planRobotCellMoveL(genericSixDofRobot, HOME, { x: 4, y: 0, z: 4 }, [], { sampleCount: 12 });
+      expect(plan.status).toBe("ik-failure");
+      expect(() => jointVelocityProfile(plan)).not.toThrow();
+      expect(jointVelocityProfile(plan)).toHaveLength(Math.max(0, plan.samples.length - 1));
+    });
+
+    it("tek örnekli bir planda boş hız profili döner", () => {
+      const solitary = planRobotCellMoveL(genericSixDofRobot, HOME, { x: 40, y: 0, z: 40 }, [], { sampleCount: 12 });
+      expect(solitary.samples).toHaveLength(1);
+      expect(jointVelocityProfile(solitary)).toEqual([]);
+    });
   });
 });

@@ -44,6 +44,16 @@ export interface RobotCellMotionPlan {
   jointTravelRadians: number;
   estimatedDurationSeconds: number;
   maxCartesianDeviation: number;
+  /**
+   * `samples` ile birebir aynı uzunlukta, kümülatif zaman (saniye), `[0]`
+   * her zaman 0. `progress * estimatedDurationSeconds` YAKLAŞIK olurdu —
+   * MoveL'de eşit `progress` adımları eşit süreye karşılık gelmez (IK'nın
+   * ürettiği eklem adımları eğrisel yol boyunca değişken), bu yüzden her
+   * segmentin süresi `cumulativeMotionTimesSeconds` ile ayrı hesaplanır.
+   * Telemetri grafikleri (Faz B, bkz. components/lab/RobotCellMotionCharts.tsx)
+   * zaman eksenini bundan türetir.
+   */
+  sampleTimesSeconds: number[];
 }
 
 export interface RobotCellMotionOptions {
@@ -159,15 +169,24 @@ function sampleCountFor(start: readonly number[], end: readonly number[], reques
   return Math.max(24, Math.ceil(largestDelta / (2 * Math.PI / 180)));
 }
 
-function durationFromJointLimits(robot: RobotSpec, samples: readonly RobotCellMotionSample[], speedScale: number): number {
-  if (samples.length < 2) return 0;
-  return samples.slice(1).reduce((duration, sample, sampleIndex) => {
-    const previous = samples[sampleIndex];
+/**
+ * Her örneğe kadar geçen kümülatif süre (saniye), `[0] = 0`. Segment süresi,
+ * o segmentteki en yavaş (governing) eklemin `maxVelocity * speedScale`
+ * sınırından belirlenir — tek kaynak, hem toplam süre (`estimatedDurationSeconds`)
+ * hem de zaman grafiklerinin (Faz B) x ekseni buradan türetilir.
+ */
+function cumulativeMotionTimesSeconds(robot: RobotSpec, samples: readonly RobotCellMotionSample[], speedScale: number): number[] {
+  if (samples.length === 0) return [];
+  const times = [0];
+  for (let index = 1; index < samples.length; index += 1) {
+    const previous = samples[index - 1];
+    const sample = samples[index];
     const segmentDuration = Math.max(...sample.jointAngles.map(
       (angle, jointIndex) => Math.abs(angle - previous.jointAngles[jointIndex]) / (robot.joints[jointIndex].maxVelocity * speedScale),
     ));
-    return duration + segmentDuration;
-  }, 0);
+    times.push(times[index - 1] + segmentDuration);
+  }
+  return times;
 }
 
 function issueFromSample(sample: RobotCellMotionSample, sampleIndex: number): RobotCellMotionIssue | undefined {
@@ -192,6 +211,7 @@ function finalizePlan(
   speedScale: number,
 ): RobotCellMotionPlan {
   const tcpPath = samples.map((sample) => sample.tcp);
+  const sampleTimesSeconds = cumulativeMotionTimesSeconds(robot, samples, speedScale);
   return {
     kind,
     status: firstIssue?.reason ?? "safe",
@@ -200,8 +220,9 @@ function finalizePlan(
     firstIssue,
     tcpDistanceMetres: pathDistance(tcpPath),
     jointTravelRadians: jointTravel(samples),
-    estimatedDurationSeconds: durationFromJointLimits(robot, samples, speedScale),
+    estimatedDurationSeconds: sampleTimesSeconds.at(-1) ?? 0,
     maxCartesianDeviation,
+    sampleTimesSeconds,
   };
 }
 
@@ -296,4 +317,37 @@ export function sampleRobotCellMotion(plan: RobotCellMotionPlan, progress: numbe
     tcp: interpolatePoint(lower.tcp, upper.tcp, localProgress),
     collisions: localProgress < 0.5 ? lower.collisions : upper.collisions,
   };
+}
+
+const RAD_TO_DEG = 180 / Math.PI;
+
+export interface RobotCellVelocitySample {
+  /** Aralığın orta noktası (saniye) — bir sınır örneğine değil, çift arasına ait. */
+  tSeconds: number;
+  /** Derece/saniye, eklem sırasıyla. */
+  degPerSecond: number[];
+}
+
+/**
+ * Ardışık örnek çiftleri arasındaki gerçek eklem hızı (derece/saniye),
+ * `plan.sampleTimesSeconds`teki GERÇEK zaman farkından türetilir (yaklaşık
+ * `progress` aralığından değil). Yeni bir hesap değil — zaten hesaplanan
+ * `jointAngles` ve `sampleTimesSeconds`in sonlu farkı (bkz. docs/durum-
+ * denetim.md Faz B, DlsTraceLab'daki Δθ desenindeki aynı dürüstlük ilkesi:
+ * "gerçekte hesaplamadığımızı hesaplıyormuş gibi göstermeyelim").
+ *
+ * Her örneğe değil, ARALIĞA bir hız atar (`tSeconds` iki örneğin ortası) —
+ * uç örneklere uydurma bir "anlık hız" yüklemekten kaçınmak için.
+ */
+export function jointVelocityProfile(plan: RobotCellMotionPlan): RobotCellVelocitySample[] {
+  const { samples, sampleTimesSeconds } = plan;
+  if (samples.length < 2) return [];
+  return samples.slice(1).map((sample, index) => {
+    const previous = samples[index];
+    const dt = sampleTimesSeconds[index + 1] - sampleTimesSeconds[index];
+    const degPerSecond = sample.jointAngles.map((angle, jointIndex) =>
+      dt > 0 ? ((angle - previous.jointAngles[jointIndex]) * RAD_TO_DEG) / dt : 0,
+    );
+    return { tSeconds: (sampleTimesSeconds[index] + sampleTimesSeconds[index + 1]) / 2, degPerSecond };
+  });
 }

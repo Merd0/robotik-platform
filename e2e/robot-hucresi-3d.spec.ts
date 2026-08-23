@@ -49,6 +49,20 @@ test("MoveJ ve MoveL yollarını karşılaştırır, çarpışan provayı açık
   await expect(motion.getByTestId("movel-result")).toContainText("Fikstür");
   await expect(motion.getByRole("button", { name: "Çarpışmaya kadar göster" })).toBeEnabled();
 
+  // Faz B — zaman grafikleri: varsayılan kapalı, açılınca gerçek hesaplı
+  // eklem açısı/hız/TCP konumu grafikleri görünür olmalı (dekoratif değil).
+  const moveJChartsToggle = motion.getByTestId("movej-result").locator("summary");
+  await expect(motion.getByTestId("movej-result").getByRole("img", { name: /eklem açısı zaman grafiği/ })).toBeHidden();
+  await moveJChartsToggle.click();
+  const angleChart = motion.getByTestId("movej-result").getByRole("img", { name: /eklem açısı zaman grafiği/ });
+  const velocityChart = motion.getByTestId("movej-result").getByRole("img", { name: /eklem hızı zaman grafiği/ });
+  const tcpChart = motion.getByTestId("movej-result").getByRole("img", { name: /TCP konumu zaman grafiği/ });
+  await expect(angleChart).toBeVisible();
+  await expect(velocityChart).toBeVisible();
+  await expect(tcpChart).toBeVisible();
+  // MoveL kartının kendi bağımsız (kapalı) paneli var — MoveJ'yi açmak onu etkilemez.
+  await expect(motion.getByTestId("movel-result").getByRole("img", { name: /eklem açısı zaman grafiği/ })).toBeHidden();
+
   const play = focusView.getByRole("button", { name: "Çarpışmaya kadar oynat" });
   await play.scrollIntoViewIfNeeded();
   await expect(focusView.getByTestId("robot-cell-stage")).toBeInViewport();

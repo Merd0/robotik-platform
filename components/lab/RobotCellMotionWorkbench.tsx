@@ -1,6 +1,7 @@
 "use client";
 
 import type { RobotCellMotionKind, RobotCellMotionPlan } from "@/lib/robotics/robotCellMotion";
+import { RobotCellMotionCharts } from "@/components/lab/RobotCellMotionCharts";
 
 const RAD_TO_DEG = 180 / Math.PI;
 
@@ -42,6 +43,7 @@ function MotionResultCard({ label, plan }: { label: "MoveJ" | "MoveL"; plan: Rob
         <div><dt>Eklem yolu</dt><dd className="mt-1 font-mono font-semibold text-site-ink">{(plan.jointTravelRadians * RAD_TO_DEG).toFixed(0)}°</dd></div>
         <div><dt>Teorik en az</dt><dd className="mt-1 font-mono font-semibold text-site-ink">{plan.estimatedDurationSeconds.toFixed(2)} s</dd></div>
       </dl>
+      <RobotCellMotionCharts plan={plan} label={label} />
     </div>
   );
 }
