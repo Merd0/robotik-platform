@@ -4622,5 +4622,73 @@ Tam kontrol paketi (izole worktree): `tsc`, `lint`, 834 unit
 değil), `npm audit` (0 zafiyet), e2e **324/324** (18 koşullu atlama, sıfır
 hata, 5.8 dakika — Madde 33'ün 3 yeni assertion bloğu dahil).
 
-**Sırada — Madde 9 (editör satır vurgusunu jointTrace adımına senkronla).**
+### Madde 9 (editör satır vurgusunu jointTrace adımına senkronla) — TAMAMLANDI
+
+`jointTrace`'in kendisi (`robot.movej`/`movel`/`eklem_ac`/`hedefe_git` her
+çağrıda eklem açılarının anlık durumunu kaydeder) hiçbir zaman HANGİ Python
+satırının o adımı ürettiğini bilmiyordu — "Çalışma izi" kaydırıcısını
+sürükleyip 3. adıma geçtiğinde, editörde o adımı üreten satırı bulmak
+kullanıcıya kalıyordu. Var olan hata-satırı altyapısı (`errorLineField`/
+`setErrorLine`, CodeMirror `Decoration.line`) desen olarak genişletildi,
+kendisi DEĞİŞTİRİLMEDİ:
+
+- **`lib/workers/pyodideWorker.ts`** — Python tarafındaki `_Robot`
+  sarmalayıcı metotları artık `_sys._getframe(1).f_lineno` (çağıranın,
+  yani kullanıcı kodunun o anki satırı) ile aynı JS callback'e ek bir
+  `lineno` argümanı geçiyor. Worker içinde TEK bir
+  `BoundedTraceCollector<{angles, line}>` kullanılıyor (iki ayrı koleksiyon
+  DEĞİL) — böylece kesme/kota davranışı (`MAX_JOINT_TRACE`) otomatik olarak
+  senkron kalıyor, iki koleksiyonun ayrı ayrı kesilip birbirinden
+  kayması riski yapısal olarak yok. Sonuç payload'ı hâlâ eskisi gibi
+  `jointTrace: number[][]` döndürüyor (var olan tüketiciler — `lib/codeLab.ts`,
+  Evidence metrikleri, `RobotArm` animasyonu — DOKUNULMADI) ve YANINA yeni,
+  paralel bir `jointTraceLines: (number | null)[]` alanı eklendi.
+- **`lib/pythonCodeEditor.ts`** — yeni saf `activeTraceLine(error,
+  jointTraceLines, traceIndex)` fonksiyonu: hata varken bastırır (hata
+  satırı zaten kırmızıyla ayrı gösteriliyor, iki farklı vurgu üst üste kafa
+  karıştırır), aksi halde o adımın satırını döndürür. `findPythonErrorLine`
+  ile aynı dosyada, aynı test dosyasında (`lib/pythonCodeEditor.test.ts`) —
+  vitest'in `include: ["lib/**/*.test.ts"]` taraması yalnız `lib/` altını
+  görüyor, bu yüzden saf mantık `components/` yerine bilinçli olarak buraya
+  kondu (ilk yazımda `components/interactive/` altına yazılan test dosyası
+  "No test files found" ile sessizce atlandığı görüldü, taşınarak düzeltildi).
+- **`PythonCodeEditor.tsx`** — `errorLineField`'ın state-effect deseni
+  `createLineHighlightField(setLine, className, dataAttribute)` olarak
+  ortak bir fabrikaya çıkarıldı (iki gerçek kullanım noktası — hata ve iz
+  adımı — aynı state-machine mantığını birebir istiyordu). Yeni
+  `traceLineField`/`traceLine` prop'u, hatadan ayrı bir CSS sınıfıyla
+  (`cm-python-traceLine`, vurgu rengi kırmızı değil — site vurgu tonu)
+  işaretleniyor. `CodeRunner.tsx` VE `KodAkademisiCodeLab.tsx` (ikisi de
+  aynı `useCodeRunnerEngine`'i paylaşıyor) yeni `currentTraceLine`'ı aynı
+  şekilde editöre geçiriyor.
+
+Test-first: `lib/pythonCodeEditor.test.ts`'e `activeTraceLine` için 4 yeni
+senaryo (adım→satır, hata bastırması, boş/null iz, aralık dışı indeks)
+eklendi; `e2e/platform.spec.ts`'e gerçek Pyodide çalıştırmasıyla iz
+kaydırıcısını iki adım arasında gezdirip editördeki `.cm-python-traceLine`
+vurgusunun DOĞRU satıra taşındığını (ve önceki adımın vurgusunun
+kaybolduğunu) kanıtlayan bir uçtan uca test eklendi.
+
+**Bulunan bir operasyonel ayrıntı — Playwright statik `out/`'u servis ediyor,
+dev sunucusu değil.** Yeni e2e testi ilk denemede `.cm-python-traceLine`
+bulunamadı hatasıyla kırmızı çıktı — worker/editör kodu doğruydu ama
+`playwright.config.ts`'in `webServer`'ı `scripts/serve-static.mjs` ile
+önceden derlenmiş `out/` klasörünü servis ediyor (`predev`/`prebuild`
+esbuild adımı dahil); ben yalnız kaynağı değiştirmiştim, `npm run build`
+çalıştırmamıştım. Temiz `.next` + `npm run build` sonrası test ilk
+denemede geçti. Ders: bu projede e2e her zaman TAZE bir `npm run build`
+gerektirir, kaynak değişikliği tek başına yetmez (Madde 38'in `.next`
+önbellek bulgusuyla aynı aile, farklı katman).
+
+Tam kontrol paketi (izole worktree): `tsc`, `lint`, 838 unit (+4, `--no-file-
+parallelism`), `check-content`, `validate-content-graph`, `check-quiz-dagilimi`,
+`check-mdx-guvenlik`, `check-review-debt`, `check-review-integrity`,
+`check-sensitive-terms`, `build` (temiz `.next`), `check-performance-budget`
+(3D'siz ders 269.4/268.0 KiB gzip — Madde 33'ten sonraki 268.8 KiB baseline'a
+göre +0.6 KiB marjinal, `git stash` ile ayrıca doğrulandı; aynı önceden var
+olan/kabul edilmiş ödünleşim, yeni bir regresyon sınıfı değil), `npm audit`
+(0 zafiyet), e2e **327/327** (18 koşullu atlama, sıfır hata, 4.3 dakika —
+Madde 9'un yeni testi dahil, 3 viewport'ta ayrıca tek tek doğrulandı).
+
+**Sırada — Madde 26 (dağınık telemetriyi tek adlandırılmış panelde topla).**
 
