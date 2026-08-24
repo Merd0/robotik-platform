@@ -5610,3 +5610,42 @@ senaryoları) ayrıca izole çalıştırıldı, hepsi geçti.
 
 **FAZ 3 tamamlandı.** Sıradaki: FAZ 4 (debug modu + boş durum mesajları,
 docs/16 Madde 55/64).
+
+## FAZ 4 — Debug modu + boş durum mesajları (docs/16 Madde 55/64, 2026-08-25)
+
+**Madde 55 — debug modu.** Önce mevcut altyapı araştırıldı: siteWide bir
+"Öğren/Mühendislik modu" (`ComplexityModeProvider`) zaten var ve IkTarget,
+PlannerRace, JacobianViz gibi labların çoğu zaten teknik derinliği bu
+moda göre gizliyor/açıyor (`mode === "engineering"`). Madde 55'in asıl
+şikayeti DAHA DAR: `DlsTraceLab` bu deseni izlemiyordu ama bu, o dersin
+KENDİ pedagojik içeriğini (iterasyon/hata tablosu) gizlemekle çözülecek
+bir şey değil — o tablo dersin ta kendisi. Gerçek boşluk farklı bir eksen:
+solver'ın kendi iç YAPILANDIRMASI (başlangıç tahmini, azami iterasyon,
+tolerans, adım sınırı) hiçbir yerde görünmüyordu.
+
+`components/ui/DebugPanel.tsx` — native `<details>` tabanlı (JS state
+gerektirmez, klavye/ekran okuyucu ücretsiz gelir), varsayılan KAPALI, salt
+sunum bileşeni. İki gerçek entegrasyon:
+- **DlsTraceLab**: `SOLVER_CONFIG` sabitine çıkarılan (`initialGuess`,
+  `maxIterations`, `tolerance`, `maxStep`) — önceden `solve()` fonksiyonu
+  içine gömülü, hiçbir yerde gösterilmeyen gerçek parametreler.
+- **CodeRunner**: `lib/workers/executionLimits.ts`teki gerçek sabitler
+  (`MAX_CODE_RUNTIME_MS`, `MAX_OUTPUT_BYTES`, `MAX_OUTPUT_EMISSIONS`,
+  `MAX_JOINT_TRACE`) — önceden yalnız bir durumda (yükleniyor mesajında)
+  kısmen bahsediliyordu, artık tek yerde toplu.
+
+**Madde 64 — boş durumlar.** `components/ui/StatePage.tsx` (loading/error/
+404) ve `RobotCellTeachingWorkbench`in "Henüz komut yok" + örnek iş yükleme
+butonu, `/kanit-okuyucu`nun dosya-öncesi açıklaması gibi çoğu boş durum
+zaten yönlendiriciydi. Gerçek boşluk `AramaKutusu`da bulundu: sıfır sonuçta
+yalnız "0 ders bulundu." yazıyordu — bir çıkmaz. Artık daha kısa terim
+önerisi + sözlük linki + ana sayfa linki gösteriyor.
+
+**Kontrol paketi:** tsc, lint, 951 vitest, check-content, `npm audit`,
+build, performans bütçesi (gerçek +0.5 KiB gzip/br ölçümüyle güncellendi
+ve temiz) — hepsi temiz. Dokunulan bileşenleri kapsayan 8 hedefli e2e testi
+(DlsTraceLab, CodeRunner/Kod Akademisi düzen testleri) izole çalıştırıldı,
+hepsi geçti.
+
+**FAZ 4 tamamlandı.** Sıradaki: FAZ 5 (4 farklılaştırıcı özellik: Robot
+Röportajı, Zaman Kapsülü, Sınır Testi, Kırık Kod Laboratuvarı).
