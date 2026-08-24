@@ -62,6 +62,19 @@ export default async function KodAkademisiAsamaPage({ params }: AsamaPageProps) 
           </ol>
         )}
 
+        {asama === "temel" && (
+          <Link
+            href="/kod-akademisi/gecis-parametre-transferi"
+            className="mt-6 flex min-h-11 items-center justify-between gap-4 rounded-xl border-2 border-site-border bg-site-surface p-4 hover:bg-site-soft"
+          >
+            <span>
+              <span className="font-mono text-xs text-site-accent-text">Temel → Orta geçiş kapısı</span>
+              <span className="mt-1 block font-heading text-lg font-semibold text-site-ink">Aynı komutu farklı hedefe genelle</span>
+            </span>
+            <span aria-hidden="true">→</span>
+          </Link>
+        )}
+
         {asama === "ileri" && (
           <Link
             href="/kod-akademisi/gecis-kapisi"

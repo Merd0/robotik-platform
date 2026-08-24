@@ -47,6 +47,18 @@ export default function KodAkademisiPage() {
         </div>
 
         <Link
+          href="/kod-akademisi/gecis-parametre-transferi"
+          className="mt-4 flex min-h-11 flex-col gap-2 rounded-2xl border-2 border-site-border bg-site-surface p-5 hover:bg-site-soft"
+        >
+          <span className="text-xs font-semibold uppercase tracking-[.14em] text-site-accent-text">Temel → Orta geçiş kapısı</span>
+          <span className="font-heading text-2xl font-semibold text-site-ink">Aynı komutu farklı hedefe genelle</span>
+          <span className="text-sm text-site-muted">
+            Parametreleri kullanmayan bir fonksiyonu düzelt, sonra görmediğin bir hedefe de
+            genellediğini kanıtla.
+          </span>
+        </Link>
+
+        <Link
           href="/kod-akademisi/gecis-kapisi"
           className="mt-4 flex min-h-11 flex-col gap-2 rounded-2xl border-2 border-site-border bg-site-surface p-5 hover:bg-site-soft"
         >

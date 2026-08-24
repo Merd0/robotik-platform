@@ -2146,6 +2146,34 @@ test("Kod Akademisi kapanış: eksik doğrulama (Milestone 2 atlanmış) çözü
   await expect(page.getByTestId("esnek-hucre-milestone-5")).toContainText("○");
 });
 
+test("Kod Akademisi geçiş kapısı (Parametre transferi): parametreleri kullanmayan başlangıç kodu görüneni geçer ama gizli transferde başarısız olur", async ({ page }) => {
+  await page.goto("/kod-akademisi/gecis-parametre-transferi");
+  await expect(page.getByRole("heading", { name: "Aynı komutu farklı hedefe genelle" })).toBeVisible();
+
+  // Başlangıç kodu sabit sayı kullanır (90, -60) — bu tam olarak görünür senaryonun hedefi,
+  // o yüzden görüneni "yanlışlıkla" geçer ama parametreleri gerçekten kullanmadığı gizli
+  // senaryoda (30, -75) ortaya çıkar.
+  await page.getByRole("button", { name: "Çalıştır", exact: true }).click();
+  await expect(page.getByTestId("koda-parametre-sonuc-gorunur")).toContainText("✓", { timeout: 60_000 });
+  await expect(page.getByTestId("koda-parametre-sonuc-gizli-transfer")).toContainText("○");
+});
+
+test("Kod Akademisi geçiş kapısı (Parametre transferi): parametreleri gerçekten kullanan düzeltme her iki senaryoyu da geçer", async ({ page }) => {
+  await page.goto("/kod-akademisi/gecis-parametre-transferi");
+
+  const dogruKod = ["def git(j1, j2):", "    robot.movej([j1, j2])", "", "git(HEDEF_J1, HEDEF_J2)"].join("\n");
+  await page.getByLabel("Python kodu").fill(dogruKod);
+  await page.waitForTimeout(150);
+  await page.getByRole("button", { name: "Çalıştır", exact: true }).click();
+  await expect(page.getByTestId("koda-parametre-sonuc-gorunur")).toContainText("✓", { timeout: 60_000 });
+  await expect(page.getByTestId("koda-parametre-sonuc-gizli-transfer")).toContainText("✓");
+
+  const kanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(kanit.some((e: { stage?: string; verification?: string; predicateId?: string }) =>
+    e.stage === "passed" && e.verification === "registry-predicate" && e.predicateId === "koda-parametre-transfer-v1",
+  )).toBe(true);
+});
+
 test("Kod Akademisi geçiş kapısı (Satırdan poza): düzeltilmemiş bug her iki senaryoda da başarısız", async ({ page }) => {
   await page.goto("/kod-akademisi/gecis-kapisi");
   await expect(page.getByRole("heading", { name: "Satırdan poza: izle, tahmin et, düzelt" })).toBeVisible();

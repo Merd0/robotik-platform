@@ -1588,3 +1588,22 @@ describe("koda-frame-chain-v1: golden + negatif predicate testleri", () => {
     expect(predicate.evaluate([run({ gorunur: true, gizliTransfer: true }, "retry")]).passed).toBe(false);
   });
 });
+
+describe("koda-parametre-transfer-v1: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "koda-parametre-transfer-v1")!;
+  const run = (metrics: Record<string, number | string | boolean>, result: EvidenceEvent["result"] = "success") =>
+    event("assessed", result, { lessonId: "koda-gecis-parametre-transferi", skillId: "koda-parametre-transfer", metrics });
+
+  it("predicate doğru lessonId/skillId'ye kayıtlı", () => {
+    expect(predicate.lessonId).toBe("koda-gecis-parametre-transferi");
+    expect(predicate.skillId).toBe("koda-parametre-transfer");
+  });
+
+  it("golden: hem görünür hem gizli senaryo geçen koşu geçer", () => {
+    expect(predicate.evaluate([run({ gorunur: true, gizliTransfer: true })]).passed).toBe(true);
+  });
+
+  it("negatif: yalnız görünür senaryo geçip gizli geçmezse başarısız", () => {
+    expect(predicate.evaluate([run({ gorunur: true, gizliTransfer: false })]).passed).toBe(false);
+  });
+});
