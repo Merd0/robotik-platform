@@ -19,6 +19,7 @@ import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider"
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { SCENE_PALETTES } from "@/lib/theme";
 import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
+import { Neden } from "@/components/interactive/Neden";
 import { useComplexityMode, useDeclareComplexityModeSupport } from "@/components/ui/ComplexityModeProvider";
 
 interface PlannerRaceProps {
@@ -37,6 +38,13 @@ const ALGORITHM_LABELS: Record<PlannerId, string> = {
   astar: "A*",
   rrt: "RRT",
   rrt_star: "RRT*",
+};
+
+/** Madde 33 — "Neden bu farklar?": her algoritmanın bilinen arama stratejisi, sonucu situasyonel açıklamak için. */
+const ALGORITHM_REASON: Record<PlannerId, string> = {
+  astar: "A* grid'i sistematik tarar — en kısa yolu garanti eder ama düğüm sayısı engel yoğunluğuyla hızla artar.",
+  rrt: "RRT rastgele örnekleme yapar — genelde hızlı ama yol garanti en kısa değildir, zikzaklı olabilir.",
+  rrt_star: "RRT*, RRT gibi rastgele örnekler ama sürekli iyileştirir (rewiring) — RRT'den yavaştır ama yol optimale daha yakındır.",
 };
 
 const THEME = {
@@ -401,6 +409,26 @@ export function PlannerRace({
           </table>
         </div>
       )}
+
+      {theme === "universite" && (() => {
+        const successful = algorithms
+          .map((id) => ({ id, result: results[id] }))
+          .filter((entry): entry is { id: PlannerId; result: PlanResult } => Boolean(entry.result?.success));
+        if (successful.length < 2) return null;
+        const fastest = [...successful].sort((a, b) => a.result.elapsedMs - b.result.elapsedMs)[0];
+        const fewestNodes = [...successful].sort((a, b) => a.result.nodesExpanded - b.result.nodesExpanded)[0];
+        const shortest = [...successful].sort((a, b) => pathLength(a.result.path) - pathLength(b.result.path))[0];
+        return (
+          <p className={`text-sm ${t.ink}`}>
+            <Neden etiket="Neden bu farklar?" varsayilanAcik={mode === "engineering"}>
+              Bu koşuda {ALGORITHM_LABELS[fastest.id]} en hızlısıydı ({round(fastest.result.elapsedMs)} ms),{" "}
+              {ALGORITHM_LABELS[fewestNodes.id]} en az düğüm genişletti ({fewestNodes.result.nodesExpanded}),{" "}
+              {ALGORITHM_LABELS[shortest.id]} en kısa yolu buldu ({round(pathLength(shortest.result.path))} m).{" "}
+              {ALGORITHM_REASON[fastest.id]}
+            </Neden>
+          </p>
+        );
+      })()}
 
       {theme === "universite" && (
         <NasilHesaplandi

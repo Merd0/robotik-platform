@@ -385,6 +385,14 @@ test("kavram kontrolü tek başına değil, kayıtlı deney predicate'iyle kanı
   await page.getByRole("button", { name: "Yarıştır" }).click();
   await expect(page.getByRole("table")).toBeVisible();
   await expect(page.getByRole("button", { name: "Yarıştır" })).toBeEnabled({ timeout: 10_000 });
+
+  // Madde 33: "Neden?" — üç algoritmanın bu koşudaki gerçek fark nedeninin situasyonel açıklaması.
+  await page.getByRole("button", { name: "Neden bu farklar?" }).click();
+  const plannerNedenNot = page.getByRole("note").filter({ hasText: "en hızlısıydı" });
+  await expect(plannerNedenNot).toContainText("en hızlısıydı");
+  await expect(plannerNedenNot).toContainText("en az düğüm genişletti");
+  await expect(plannerNedenNot).toContainText("en kısa yolu buldu");
+
   evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
   expect(evidence.some((event: { stage?: string; verification?: string; predicateId?: string }) =>
     event.stage === "passed" &&
@@ -1304,6 +1312,15 @@ test("JacobianViz gerçek tekillik commit'iyle kanıtlanır ve state'i paylaşı
   await sliders.nth(1).fill("0");
   await sliders.nth(1).evaluate((element) => element.dispatchEvent(new PointerEvent("pointerup", { bubbles: true })));
   await expect(page.getByText("Tekillik:", { exact: false })).toBeVisible();
+
+  // Madde 33: "Neden?" — manipülabilite değerinin situasyonel açıklaması.
+  const nedenButton = page.getByRole("button", { name: "Neden bu değer?" });
+  await nedenButton.click();
+  const nedenNot = page.getByRole("note").filter({ hasText: "col1 = (" });
+  await expect(nedenNot).toContainText("col1 = (");
+  await expect(nedenNot).toContainText("col2 = (");
+  await expect(nedenNot).toContainText("neredeyse aynı/ters doğrultuda");
+
   await page.getByRole("button", { name: /O yönde hız üretilemeyebilir/ }).click();
 
   const evidence = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
@@ -1741,6 +1758,12 @@ test("DlsTraceLab aynı hedefte iki bandı kanıtlar ve iz state'ini paylaşır"
   await expect(damping).toHaveValue("0.08");
   await solve.click();
   await expect(page.getByText(/Yakınsadı · \d+ iterasyon/)).toBeVisible();
+
+  // Madde 33: "Neden?" — bu λ'nın bu sonucu neden ürettiğinin situasyonel açıklaması.
+  await page.getByRole("button", { name: "Neden bu sonuç?" }).click();
+  const dlsNedenNot = page.getByRole("note").filter({ hasText: "λ = 0.080" });
+  await expect(dlsNedenNot).toContainText("Büyük λ düzeltmeyi küçültür");
+
   await damping.fill("0.02");
   await solve.click();
   await expect(page.getByText(/Yakınsadı · \d+ iterasyon/)).toBeVisible();

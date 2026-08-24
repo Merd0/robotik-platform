@@ -19,6 +19,7 @@ import {
   useSharedLabState,
 } from "@/components/interactive/LabChallengeUi";
 import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
+import { Neden } from "@/components/interactive/Neden";
 import { useComplexityMode, useDeclareComplexityModeSupport } from "@/components/ui/ComplexityModeProvider";
 
 interface JacobianVizProps {
@@ -122,7 +123,18 @@ export function JacobianViz({ robot: robotId, pilot }: JacobianVizProps) {
       </div>
 
       <div className="flex items-center justify-between text-sm">
-        <span role="status">Manipülabilite: {manipulability.toExponential(3)}</span>
+        <span role="status">
+          Manipülabilite: {manipulability.toExponential(3)}{" "}
+          <Neden etiket="Neden bu değer?" varsayilanAcik={mode === "engineering"}>
+            Manipülabilite, Jacobian sütunlarının ne kadar BAĞIMSIZ yön gösterdiğine bağlı — şu an
+            col1 = ({round(columns[0].x)}, {round(columns[0].y)}), col2 = ({round(columns[1].x)}, {round(columns[1].y)}).{" "}
+            {singular ? (
+              <>Bu ikisi neredeyse aynı/ters doğrultuda — elips bir çizgiye yaklaştığı için manipülabilite eşiğin altına düştü.</>
+            ) : (
+              <>Aralarındaki açı paralellikten yeterince uzak olduğu için elips hâlâ gerçek bir alan kaplıyor.</>
+            )}
+          </Neden>
+        </span>
         <button
           type="button"
           onClick={handleReset}

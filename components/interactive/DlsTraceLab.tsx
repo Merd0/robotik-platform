@@ -8,6 +8,7 @@ import {
   useSharedLabState,
 } from "@/components/interactive/LabChallengeUi";
 import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
+import { Neden } from "@/components/interactive/Neden";
 import { forwardKinematics, inverseKinematicsNumerical, type NumericalIkResult } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
 import { useComplexityMode, useDeclareComplexityModeSupport } from "@/components/ui/ComplexityModeProvider";
@@ -110,7 +111,27 @@ export function DlsTraceLab() {
             <input type="range" min="0.005" max="0.2" step="0.005" value={damping} onChange={(event) => { setDamping(Number(event.target.value)); setResult(null); }} className="block h-11 w-full accent-universite-accent" />
           </label>
           <button type="button" onClick={run} className="min-h-11 rounded-xl bg-universite-ink px-4 font-semibold text-universite-surface">80 adıma kadar çöz</button>
-          <p className="rounded-xl border border-universite-ink/10 bg-universite-bg p-3 text-sm" role="status">{!result ? "Henüz çalıştırılmadı." : result.converged ? `Yakınsadı · ${result.iterations} iterasyon · son hata ${round(result.finalError)} m` : `Yakınsamadı · son hata ${round(result.finalError)} m`}</p>
+          <p className="rounded-xl border border-universite-ink/10 bg-universite-bg p-3 text-sm" role="status">
+            {!result
+              ? "Henüz çalıştırılmadı."
+              : result.converged
+                ? `Yakınsadı · ${result.iterations} iterasyon · son hata ${round(result.finalError)} m`
+                : `Yakınsamadı · son hata ${round(result.finalError)} m`}
+            {result && (
+              <>
+                {" "}
+                <Neden etiket="Neden bu sonuç?" varsayilanAcik={mode === "engineering"}>
+                  λ = {damping.toFixed(3)} ile başladı; hata {round(result.trace[0]?.errorNorm ?? result.finalError)} m&apos;den{" "}
+                  {result.iterations} adımda {round(result.finalError)} m&apos;ye {result.converged ? "düştü" : "indi ama hedefin altına inemedi"}.{" "}
+                  {damping <= 0.02
+                    ? "Küçük λ ham düzeltmeyi büyütür — hızlı ama daha yalpalayan bir yakınsama."
+                    : damping >= 0.08
+                      ? "Büyük λ düzeltmeyi küçültür — yavaş ama düzgün bir yakınsama."
+                      : "Orta bir λ, hız ile kararlılık arasında bir denge kurdu."}
+                </Neden>
+              </>
+            )}
+          </p>
         </div>
       </div>
 
