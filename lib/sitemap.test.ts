@@ -21,6 +21,7 @@ describe("sitemap", () => {
     expect(paths).toContain("/laboratuvar/dil-karsilastirici");
     expect(paths).toContain("/laboratuvar/ters-problem");
     expect(paths).toContain("/laboratuvar/dijital-ikiz-kaymasi");
+    expect(paths).toContain("/laboratuvar/hata-muzesi");
   });
 
   it("taslak önizlemesi açıkken bile yalnızca yayındaki dersleri listeler", () => {

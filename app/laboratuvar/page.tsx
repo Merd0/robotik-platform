@@ -42,6 +42,13 @@ const LABS = [
     description: "İkiz tahmini ile sentetik fiziksel ölçüm arasındaki kalıcı farkı bul, yeniden kalibre et ve ayrı pozlarda doğrula.",
     detail: "TCP artığı · kalıcılık · bağımsız doğrulama",
   },
+  {
+    href: "/laboratuvar/hata-muzesi",
+    eyebrow: "Küratörlü karşı örnekler",
+    title: "Hata Müzesi",
+    description: "Üç golden trace’i önce cazip bir yanlış yorumla, sonra onu gerçekten çürüten ölçümle yeniden oku.",
+    detail: "Yanlış zihinsel model · karşı kanıt · güvenli sıra",
+  },
 ] as const;
 
 export default function LabsPage() {
