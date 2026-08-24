@@ -21,6 +21,13 @@ const LABS = [
     description: "Gizli bir encoder, iletişim veya aktüatör arızasını sınırlı telemetriyle teşhis et.",
     detail: "Deterministik trace · güvenli ilk eylem",
   },
+  {
+    href: "/laboratuvar/dil-karsilastirici",
+    eyebrow: "Vendor Rosetta",
+    title: "Dil Karşılaştırıcı",
+    description: "Aynı hareket niyetinin ABB RAPID ve Mecademic komutlarında nerede ayrıştığını karşılaştır.",
+    detail: "MoveIntent · 5 ölçütlü semantik iz",
+  },
 ] as const;
 
 export default function LabsPage() {
@@ -33,7 +40,7 @@ export default function LabsPage() {
           <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight text-site-ink sm:text-6xl">Robotik kararlarını çalışan deneylerde sınayabilirsin.</h1>
           <p className="mt-4 text-lg leading-8 text-site-muted">Her laboratuvar tarayıcıda ve hesapsız çalışır. Sayılar ile grafikler simülasyonun gerçek hesaplarından gelir; gerçek robota komut gönderilmez.</p>
         </header>
-        <section className="mt-10 grid gap-5 md:grid-cols-2" aria-label="Yayındaki laboratuvarlar">
+        <section className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3" aria-label="Yayındaki laboratuvarlar">
           {LABS.map((lab) => (
             <Link key={lab.href} href={lab.href} className="group flex min-h-72 flex-col rounded-3xl border border-site-border bg-site-surface p-6 transition-colors hover:border-site-accent">
               <p className="font-mono text-xs font-bold uppercase tracking-[.14em] text-site-accent-text">{lab.eyebrow}</p>

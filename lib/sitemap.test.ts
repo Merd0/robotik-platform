@@ -18,6 +18,7 @@ describe("sitemap", () => {
     expect(paths).toContain("/oyun-alani");
     expect(paths).toContain("/laboratuvar");
     expect(paths).toContain("/laboratuvar/ariza-klinigi");
+    expect(paths).toContain("/laboratuvar/dil-karsilastirici");
   });
 
   it("taslak önizlemesi açıkken bile yalnızca yayındaki dersleri listeler", () => {
