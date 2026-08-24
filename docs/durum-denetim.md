@@ -5565,3 +5565,48 @@ izole koşuda geçti, gerçek bir regresyon değil.
 
 **FAZ 2 tamamlandı.** Sıradaki: FAZ 3 ("What if" deneyleri, docs/16
 Madde 30).
+
+## FAZ 3 — "What if" önerileri (docs/16 Madde 30, 2026-08-25)
+
+Madde 30'un tespiti: parametre değiştirmek (link uzunluğu, engel boyutu,
+hedef konumu) zaten mümkün ve sonuç canlı gözlemleniyor — ama sistem
+kullanıcıya SPESİFİK bir soru sormuyor, "ya şunu denesem" fikrini
+kullanıcı kendisi üretmek zorunda.
+
+**Yaklaşım.** `components/ui/WhatIfSuggestion.tsx` — çerçeveleyen bir soru
+metni + "Dene" butonu taşıyan salt sunum bileşeni. Hesap yapmıyor; çağıran
+laboratuvar kendi var olan state setter'ını `onApply`e veriyor. Üç
+laboratuvara gerçek, o labın kendi motoruyla çalışan öneri eklendi:
+
+- **IkTarget** (`components/interactive/IkTarget.tsx`): "Hedefi robotun
+  azami erişiminin biraz dışına taşısan robot yine ulaşabilir mi?" →
+  var olan `commitTarget({x: maxReach*1.15, y:0}, elbow)` çağrısı; sonucu
+  zaten var olan `ReachabilityMap` gösteriyor. Keşif görevi aktifken
+  (`challengeActive`) gizleniyor — cevabı önceden vermemek için.
+- **PlannerRace** (`components/interactive/PlannerRace.tsx`): "Bir engelin
+  boyutunu iki katına çıkarsan planlayıcılar hâlâ yol bulur mu?" → yeni
+  `handleGrowLargestObstacle()`, var olan `setObstacles` state'ini
+  büyütüyor; kullanıcı var olan "Çalıştır" butonuyla gerçek sonucu görüyor.
+  Meydan okuma modunda gizli (sabit 3-engel senaryosunu bozmamak için).
+- **`/oyun-alani`** (`components/playground/CustomRobotPlayground.tsx`):
+  "İlk bağlantıyı %20 uzatsan robotun toplam erişimi ne kadar büyür?" →
+  yeni `handleExtendFirstLinkAndApply()`. `applyDesign()` artık opsiyonel
+  bir `overrideDefinition` parametresi kabul ediyor — `setDraft(...)` +
+  hemen ardından `applyDesign()` çağrısı React state batching nedeniyle
+  ESKİ `draft`ı okurdu; override parametresi bu sınıf hatayı yapısal olarak
+  önlüyor. Gerçek `createCustomRobotSpec` doğrulamasından geçiyor, "erişim"
+  okuması (satır ~1002) anında güncelleniyor.
+
+**Performans bütçesi düzeltmesi:** `git stash -u` ile doğrulandı — "3D
+ders" (IkTarget kullanıyor) 524.9/480.6→525.5/481.0 KiB (gzip zaten
+yeterliydi, brotli ham baytta 481'i az aştı) — brotli 481→482 KiB'e
+çekildi.
+
+**Kontrol paketi:** tsc, lint, 951 vitest, check-content, build, performans
+bütçesi (düzeltmeyle temiz), `npm audit` (0 zafiyet) temiz. Dokunulan üç
+laboratuvarı kapsayan 13 hedefli e2e testi (`oyun-alani.spec.ts`,
+`reachability.spec.ts`, `platform.spec.ts`'teki IkTarget/PlannerRace
+senaryoları) ayrıca izole çalıştırıldı, hepsi geçti.
+
+**FAZ 3 tamamlandı.** Sıradaki: FAZ 4 (debug modu + boş durum mesajları,
+docs/16 Madde 55/64).
