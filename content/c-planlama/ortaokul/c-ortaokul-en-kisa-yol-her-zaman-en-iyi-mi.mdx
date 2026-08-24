@@ -30,16 +30,22 @@ gidiyor. İkisi de eve varıyor — ama farklı bir bedel ödeyerek.
 
 ## Ne oldu
 
-Sahnede iki farklı yöntem aynı anda çalıştı. Turkuaz çizgi (A*) genelde
-daha kısa ve daha düzgün bir yol bulur ama her kareyi tek tek kontrol
-ettiği için daha çok iş yapar. Turuncu çizgi (RRT) rastgele noktalar
-deneyerek daha hızlı bir sonuca ulaşabilir, ama yolu daha dolambaçlı
-olabilir.
+Sahnede aynı başlangıç, hedef ve engeller için iki planlayıcı çalıştı. A*,
+haritayı karelerden oluşan bir arama alanı olarak kullanır ve hedefe umut veren
+kareleri maliyetlerine göre inceler. RRT ise boş alanda rastgele noktalar seçip
+başlangıçtan büyüyen bir ağaç kurar. İkisi aynı soruna farklı biçimde bakar.
 
-Sonuç tablosundaki "süre" ve "yol uzunluğu" sütunlarına bak: biri kısa
-sürede uzun bir yol, diğeri (biraz daha uzun sürede) daha kısa bir yol
-bulmuş olabilir. Hangisinin "kazandığını" söylemek göründüğü kadar basit
-değil.
+Sonuç tablosundaki "süre", bilgisayarın yolu bulmak için harcadığı zamandır.
+"Yol uzunluğu" ise robotun bulunan çizgiyi izlerken kat edeceği mesafedir.
+Kısa hesaplama süresi ile kısa robot yolu aynı ölçü değildir: planlayıcı hızlı
+cevap verip dolambaçlı bir yol bulabilir veya daha uzun düşünüp daha kısa bir
+yol çıkarabilir.
+
+RRT rastgele örnek kullandığı için aynı sahnede her koşu aynı sonucu vermek
+zorunda değildir. Bu nedenle tek yarıştan "RRT her zaman hızlıdır" ya da "A*
+her zaman daha iyidir" sonucu çıkaramazsın. Kazananı seçmeden önce görevde
+hangi bedelin önemli olduğunu söylemen ve özellikle rastgele yöntemi birkaç
+kez gözlemen gerekir.
 
 ## Gerçek dünyada
 

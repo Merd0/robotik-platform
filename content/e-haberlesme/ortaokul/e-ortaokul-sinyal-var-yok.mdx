@@ -34,10 +34,21 @@ olarak AÇIK/KAPALI yapabiliyorsun. "Oynat"a basınca okuma başı ikisini
 de aynı anda tarıyor — bir adımda A açıkken B kapalı olabilir, başka
 bir adımda ikisi de açık olabilir.
 
-Bir sinyal tek başına sadece "var" (AÇIK) ya da "yok" (KAPALI) söyler.
-Ama iki sinyali yan yana koyunca bir DÜZEN ortaya çıkar: hangisi önce
-açılıyor, hangisi ne zaman kapanıyor. Fabrikalardaki makineler
-birbirine tam olarak bunu okutur — kelime değil, bu düzeni.
+Bir sinyalin iki durumu vardır. İki bağımsız sinyali birlikte okuyunca dört
+farklı durum görebilirsin: ikisi de kapalı, yalnız A açık, yalnız B açık veya
+ikisi de açık. Bu dört durumdan hangisinin doğru olduğu, makinelerin o anda ne
+yapması gerektiğine bağlıdır.
+
+Zaman ekseni bu durumların sırasını gösterir. A önce açılıp B sonra açılıyorsa
+bu, B'nin A'ya cevap verdiği bir düzen olabilir. İkisi aynı anda açık kalıyorsa
+başka bir aşamayı gösterebilir. Tek bir kareye bakmak yalnız o anı söyler;
+soldan sağa bütün şeridi okumak ise olayların hangi sırayla gerçekleştiğini
+söyler.
+
+Bu nedenle haberleşme yalnız "sinyal var mı?" sorusu değildir. Hangi hattın
+açıldığı, diğer hattın o sırada ne durumda olduğu ve durumun ne kadar sürdüğü
+birlikte anlam taşır. Sonraki el sıkışma dersinde bu zaman düzenine açık bir
+istek-onay kuralı vereceksin.
 
 ## Gerçek dünyada
 

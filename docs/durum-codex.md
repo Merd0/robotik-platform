@@ -2251,3 +2251,145 @@ tam birleşik matris **324 geçti, 18 koşullu atlandı, 0 başarısız** sonucu
 Governance dosyası değişmedi. `content/sozluk.json`, RobotSpec/robot katalogları,
 `Neden`/WhyButton, CodeMirror/editör, telemetry paneli, `IkTarget.tsx` ve
 `ReachabilityMap.tsx` dosyalarına dokunulmadı.
+
+### 2026-08-24 · Açıklama derinliği turu ve Kod Akademisi üçüncü tur önerisi
+
+#### Faz 1 — 94 dersin açıklama taraması
+
+`content/**/*.mdx` içindeki 94 `## Ne oldu` bölümü birlikte tarandı. Kelime
+sayısı yalnız ön eleme olarak kullanıldı; son seçimde terimin açık tanımı,
+deneyde gözlenen şey ile kavram arasındaki bağ ve kavramın değiştirdiği
+mühendislik kararı arandı. En zayıf bulunan 14 açıklama şunlardı:
+
+- `a-ortaokul-eksen-ne-demek`;
+- `b-ortaokul-eklemleri-oynat`, `b-ortaokul-birden-fazla-yol`,
+  `b-ortaokul-erisemedigi-noktalar` ve `b-lise-aci-birimleri`;
+- `c-ortaokul-labirentte-yol-bulma`,
+  `c-ortaokul-en-kisa-yol-her-zaman-en-iyi-mi` ve
+  `c-universite-algoritma-karsilastirma-deneyi`;
+- `e-ortaokul-makineler-nasil-konusur`, `e-ortaokul-sinyal-var-yok`,
+  `e-lise-el-sikisma` ve `e-lise-zamanlama-neden-onemli`;
+- `g-ortaokul-simulasyon-nedir` ve `g-lise-deneme-yanilma-maliyeti`.
+
+Derinleştirme yalnız gövde açıklamalarına uygulandı. Frontmatter, kaynak listesi,
+etkileşim çağrıları, quiz/görevler ve bileşenler değiştirilmedi. Her bölüm artık
+üç soruyu yanıtlıyor: terim nedir, sahnede hangi ilişki gözlendi ve bu ayrım
+hangi kararı değiştirir? İki yanıltıcı kısa yol da kaldırıldı: A* bütün kareleri
+zorunlu olarak tek tek tarıyormuş gibi anlatılmıyor; iki bağlantılı kolun iç
+erişim boşluğu da "eklemler birbirinin içine giremez" gerekçesine bağlanmıyor.
+
+#### Faz 2 — öneri; uygulanmadı, onay bekliyor
+
+Bu bölüm, onaylanırsa `docs/15-kod-akademisi.md`ye eklenecek üçüncü derinlik
+turu taslağıdır. Bu turda `docs/15` veya Kod Akademisi kodu değiştirilmedi.
+
+##### Teşhis: dört aşama var, dört ayrı güçlük sınıfı henüz yok
+
+| Geçiş | Bugünkü gerçek fark | Hüküm |
+|---|---|---|
+| Temel → Orta | Değer değiştirmeden döngü/koşul/liste boşluğu doldurmaya geçiliyor. | Hissedilir, fakat görev hâlâ tek dosya, tek robot ve çoğunlukla tek son duruş. |
+| Orta → İleri | `def` ve birkaç kavram birleşiyor; iskelet küçülüyor. | Sözdizimi sıçraması var, problem boyutu ve durum yönetimi sıçramıyor. |
+| İleri → Usta | Editör boşalıyor ve çözüm baştan yazılıyor. | Yardım azalıyor; buna karşın görevler yine üç nokta, bir koşul veya verilen hatayı düzeltme ölçeğinde. Güçlük tasarımdan çok hatırlamadan geliyor. |
+| Usta → kapanış | Bugün yok. | En büyük açık: çok aşamalı gereksinim, test, arıza, yeniden düzenleme ve teslim kanıtı aynı işte birleşmiyor. |
+
+Sonuç: 17 modül başlangıç için geniş, fakat derinlik çoğunlukla editörde ne kadar
+kod verildiğiyle artıyor. Gerçek ilerleme hissi için her aşamada dört eksen
+birlikte büyümeli: çözüm kapsamı, tutulacak durum, bilinmeyen senaryo sayısı ve
+öğrencinin karar özerkliği. Her aşama sonuna, ezberlenen örneğin sayılarını
+değiştiren değil bağlamı değiştiren kör bir transfer görevi konmalı.
+
+##### Usta ötesi kapanış projesi: Esnek Hücreyi Devreye Al
+
+Kapanış, beşinci bir küçük ders aşaması değil; Usta sonrasında açılan tek büyük
+bir mühendislik projesi olmalı. Öğrenci, giriş sensöründen gelen farklı iş
+emirlerini alıp parçayı uygun istasyona taşıyan, hatayı güvenli duruma çeken ve
+çalışmasını testlerle kanıtlayan bir Python hücre yöneticisi geliştirir. Yüzey
+gerçek robot kontrolü değil, sürümlü ve açıkça etiketli bir semantik simülasyon
+olur.
+
+Proje altı teslim taşından oluşur; her taş aynı dosyayı büyütür:
+
+1. **Şartnameyi yürütülebilir sözleşmeye çevir:** Hazır/başla/tamamlandı/hata
+   durumlarını ve geçersiz geçişleri kabul testleri olarak yaz.
+2. **İş emrini doğrula:** Hedef listesi, parça türü ve sınırları doğrula;
+   geçersiz girdiyi robot hareketinden önce reddet.
+3. **Durum makinesini kur:** `idle`, `ready`, `running`, `fault` geçişlerini
+   olaylara bağla; eski bir onayı yeni iş emri sanma.
+4. **Hareket politikasını uygula:** Fonksiyon, liste, döngü ve koşulları tek
+   programda birleştir; ara duruşların sırası davranışsal olarak ölçülsün.
+5. **Arıza enjekte et ve toparla:** Ulaşılamayan hedef, gelmeyen onay ve yarıda
+   kesilen iş için güvenli son durum ile açıklanabilir hata üret.
+6. **Teslim et:** Kodu davranışı bozmadan yeniden düzenle; görünür ve gizli
+   senaryoları çalıştır; şartname, test raporu, çalışma izi ve kısa mühendislik
+   karar notunu tek yerel proje kaydı olarak çıkar.
+
+Değerlendirme kaynak kodu metnine bakmaz. Birden fazla doğru çözümü kabul eden
+predicate'ler; durum geçiş sırası, yasak durumda hareket edilmemesi, doğru iş
+sırası, arıza sonrası güvenli durum ve yeni seed'e transferi ölçer. Öğrencinin
+tek iyi koşusu yetmez: en az üç görünür ve iki gizli deterministik senaryo
+geçmelidir. İpucu sistemi dosyayı çözümle doldurmaz; hangi sözleşmenin veya
+olayın henüz karşılanmadığını gösterir.
+
+##### Var olan dokuz deseni tekrarlamayan yeni modül biçimleri
+
+1. **Şartnameden teste stüdyosu.** Öğrenci çözüm kodundan önce kabul testini ve
+   değişmez kuralı kurar; sonra kodunu kendi yazdığı sözleşmeye karşı geliştirir.
+   Bu, `Yaz` değildir: başarı ölçütünü hazır almak yerine ölçütü oluşturmak
+   öğrenme işinin parçasıdır.
+2. **Karşı örnek üret.** Çalışıyor görünen bir programa hata aramak yerine,
+   öğrenciden onu bozan en küçük geçerli girdiyi üretmesi istenir. Ardından kodu
+   hem eski hem yeni girdide geçecek şekilde sertleştirir. Bu, hazır bozuk kod
+   veren Hata avcılığından farklıdır.
+3. **Davranışı koruyarak yeniden düzenle.** Çalışan fakat tekrarlı bir programı
+   fonksiyonlara ayırır; golden çalışma izi ve bütün predicate'ler değişmeden
+   kalmalıdır. Bu, aday çözüm seçilen Kod incelemesinden farklıdır: öğrenci kodu
+   değiştirir ve eşdeğerliği kanıtlar.
+4. **Olay-durum orkestrasyonu.** Önce bir durum geçiş haritası kurulur, sonra
+   her olaya Python işleyicisi yazılır. Değerlendirme yalnız son poza değil,
+   geçersiz geçişlerin reddine ve olay sırasına bakar. Bu, kod gösterilmeden log
+   yorumlanan Teşhis modundan farklı bir üretim görevidir.
+
+İlk dikey dilim için yeni biçimlerin tamamını açmak yerine Şartnameden teste +
+Davranışı koruyarak yeniden düzenle seçilmeli; diğer ikisi capstone'un arıza ve
+durum makinesi taşlarında kullanılmalı.
+
+##### `docs/guncel-fikirler.md` §13 kararları
+
+§13'teki altı laboratuvar doğrudan Kod Akademisi modülü yapılmamalı; ilgili hat
+derslerine bağlı olma ayrımı korunmalı. Bununla birlikte şu parçalar artık
+devreye alınmaya değer:
+
+- **Lab 2 — Python: tahmin et, izle, düzelt:** Hemen değerli. Hat D'ye bağlı
+  kopyasını taşımak yerine satır-pozu-iz eşlemesi, İleri → Usta geçişinde kör
+  transferli bir çalışma izi modülüne genellenmeli.
+- **Lab 4 — NumPy ile çerçeve zinciri:** Capstone öncesi zorunlu çekirdek değil,
+  Usta sonrası uzmanlık stüdyosu olarak değerli. Şekil/dtype, identity,
+  round-trip ve çarpım sırası testleri Şartnameden teste biçimi için güçlü bir
+  örnek verir.
+- **Lab 1 — iki durumda çalışan blok program:** Python-only sınırı nedeniyle
+  Blockly modülü olarak taşınmamalı. İki sensör durumu ve iki seed ile aynı
+  programı doğrulama ölçütü Orta aşama sonu transfer kapısına alınmalı.
+- **Lab 3 — ROS 2 desen seçici:** Gerçek topic/service/action semantik harness'i
+  ve sürümlü distro kaynağı olmadan ertelenmeli; Python temellerinin ilerleme
+  hattını erken bir alan uzmanlığıyla bölmemeli.
+- **Lab 5 — DLS IK ve Lab 6 — planlayıcı doğrulama:** Sayısal solver,
+  çarpışma oracle'ı ve failure fixture'ları hazır olduğunda Usta sonrası uzmanlık
+  projeleri olabilir. Capstone'un genel Python yeterliğini bu iki ileri robotik
+  önkoşula bağlamak doğru olmaz.
+
+Şimdi alınması gereken ortak §13 deseni şudur: tahmin et, gerçek izi çalıştır,
+bir failure'ı düzelt, çoklu senaryoda davranışsal doğrula ve yeni bir girdiye
+transfer et. Alınmaması gereken şey, altı hat laboratuvarını 17 modülün sonuna
+ekleyip modül sayısını derinlik sanmaktır.
+
+##### Uygulama sırası ve onay kapısı
+
+Onay gelirse önce yalnız capstone veri sözleşmesi, durum geçişleri, görünür/gizli
+senaryo fixture'ları ve predicate'ler test-first tasarlanmalı. Sonra tek bir
+masaüstü/mobil dikey dilim; ardından altı teslim taşı açılmalı. Yeni backend,
+hesap, rekabet, AI yardım veya gerçek robot kontrolü eklenmemeli. Mevcut
+Pyodide/worker, yerel ilerleme ve davranışsal değerlendirme sınırları korunmalı.
+
+Bu plan uygulanmadı. Mert'in açık onayı olmadan `docs/15`, Kod Akademisi
+kataloğu, route'ları, bileşenleri, worker veya evidence sözleşmeleri
+değiştirilmeyecek.

@@ -33,9 +33,20 @@ sinyalin AÇIK mı KAPALI mı olacağını sen belirliyorsun. "Oynat"a
 basınca bir okuma başı soldan sağa ilerliyor ve her adımda sinyale
 bakıyor.
 
-Bu sinyal telefon mesajı gibi kelimeler taşımaz. İki hâli vardır: AÇIK
-ve KAPALI. Bir ışık düğmesi kadar sade. Sayılar ve daha uzun komutlar da
-sonunda bu iki hâlin zaman içindeki düzenlerinden kurulur.
+Bu bir **dijital sinyal**: her okuma anında iki durumdan yalnızca birindedir,
+AÇIK ya da KAPALI. Kutucuğun soldan sağa nerede değiştiği de en az durumu
+kadar önemlidir. AÇIK'a geçiş "tepsi geldi", KAPALI'ya dönüş "tepsi geçti"
+anlamına gelebilir.
+
+Sinyalin kendisi bu Türkçe cümleleri taşımaz. Anlamı, iki makinenin önceden
+üzerinde anlaştığı kurala göre kontrolör verir. Aynı AÇIK durumu başka bir
+hatta "kapı kapalı" veya "işlem bitti" diye yorumlanabilir. Makinelerin
+konuşması, yalnız elektriksel durumu görmek değil; o durumun ne anlama
+geldiğini ve ne zaman okunacağını iki tarafta da aynı tanımlamaktır.
+
+Daha uzun bilgiler de birden çok ikili durumun belirli sırada okunmasıyla
+kurulabilir. Temel yapı yine değişmez: alıcı, doğru hattın doğru andaki AÇIK
+veya KAPALI durumunu okur.
 
 ## Gerçek dünyada
 

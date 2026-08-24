@@ -36,18 +36,27 @@ teslim yoktur. İki sinyal doğru sırada buluşmalı.
 
 ## Ne oldu
 
-Bu, el sıkışma (handshake) mantığının iskeleti. Dolum robotu ile kapaklama
-PLC'si birbirinin sinyaline bakarak ilerliyor:
+**El sıkışma (handshake)**, iki bağımsız cihazın bir işlemin hangi aşamada
+olduğu konusunda anlaşmasını sağlayan istek-onay düzenidir. Dolum robotu ile
+kapaklama PLC'si aynı programı çalıştırmaz; birbirlerinin sinyalini okuyarak
+ilerler:
 
 1. Robot işini bitirir, "Tepsi hazır" sinyalini açar.
 2. PLC bu sinyali görür, kendi işini yapar (ör. parçayı alır) ve "Aldım"
    sinyalini açar.
-3. Robot "Aldım"ı görünce "Hazırım"ı kapatır, bir sonraki işe geçer.
+3. Robot "Aldım"ı görünce "Tepsi hazır" sinyalini kapatır.
+4. PLC isteğin kapandığını görünce "Aldım"ı kapatır; iki taraf da bir sonraki
+   teslim için başlangıç durumuna döner.
 
-Kritik nokta sıradır: "Aldım" sinyali ancak "Tepsi hazır" görüldükten
-sonra anlamlıdır. Sıra tersine dönerse — PLC, "Hazırım" hiç açılmamışken
-"Aldım" derse — bu sinyal boş bir onaydan ibaret kalır, çünkü ortada henüz
-alınacak bir şey yoktur.
+Kritik nokta yalnız iki sinyalin bir an açık olması değil, bu dört geçişin
+sırasıdır. "Aldım" ancak "Tepsi hazır" görüldükten sonra anlamlıdır. Onay
+baştan açık kalırsa robot eski onayı yeni teslimin cevabı sanabilir. İstek ve
+onay yeniden kapanmazsa da bir teslimin nerede bittiği, sonrakinin nerede
+başladığı ayırt edilemez.
+
+El sıkışma bu yüzden hız eşitleme yöntemi değildir. Hızları farklı iki cihazın,
+önceki aşama doğrulanmadan sonraki aşamaya geçmesini engelleyen bir sıra
+sözleşmesidir. Bir taraf gecikse bile diğer taraf doğru sinyali bekler.
 
 ## Gerçek dünyada
 

@@ -28,12 +28,20 @@ Ne oluyor?
 
 ## Ne oldu
 
-Nokta kırmızıya döndüğünde kol oraya ulaşamıyor demektir. Kolun iki parçası
-var ve ikisi birlikte açılsa bile belirli bir uzunluğu geçemezler — tıpkı
-senin kolun gibi, ne kadar gerinsen de bir sınırı var.
+Robot ucunun ulaşabildiği bütün noktalar birlikte robotun **çalışma uzayını
+(workspace)** oluşturur. Hedef kırmızıya döndüğünde ters kinematik o hedef için
+geçerli bir eklem duruşu bulamamıştır; daha hızlı hesaplamak ya da daha güçlü
+motor kullanmak kolu uzatmaz.
 
-Kırmızı noktayı kola çok yaklaştırmayı da dene. Bazen çok yakın noktalara da
-uzanamaz, çünkü eklemler birbirinin içine giremez.
+Dış sınırı görmek kolaydır. İki kol parçasını aynı yöne doğrulttuğunda erişim,
+parçaların toplam uzunluğuyla sınırlanır. Hedef bu sınırın dışındaysa hiçbir
+eklem açısı ucu oraya taşıyamaz.
+
+İçeride de boşluk oluşabilir. İki parçanın uzunlukları farklıysa kolu geriye
+katladığında uzun parça, kısa parçanın yetişemediği bir mesafe bırakır. Bu yüzden
+tabana çok yakın bazı hedefler de kırmızı olabilir. Çalışma uzayı yalnız "ne
+kadar uzağa gider?" sorusunun cevabı değildir; kolun uzanabildiği ve
+uzanamadığı bölgelerin tamamını gösteren bir haritadır.
 
 ## Gerçek dünyada
 

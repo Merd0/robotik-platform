@@ -38,10 +38,22 @@ kurman kolay — "PLC: Başla"yı erken bir adımda aç, "Robot: Hazırım"ı hi
 açma ya da çok geç aç. Sonuç: PLC, robotun aslında hazır olmadığı bir anda
 ona "başla" komutu vermiş olur.
 
-Bu, yarış durumu (race condition) olarak adlandırılan bir hatanın basit
-bir örneği: sistemin doğru çalışması, sinyallerin doğru SIRADA gelmesine
-bağlıdır; sıradan bir gecikme veya erken tetikleme, beklenmedik bir
-davranışa yol açabilir.
+Protokolün değişmez kuralı şudur: "Başla" ancak "Hazırım" görüldükten sonra
+geçerli olabilir. Zaman çizelgesinde bu kuralı tek bakışta sınayabilirsin.
+"Başla" karesine geldiğinde "Hazırım" hâlâ kapalıysa iki kontrolör aynı işlem
+aşamasında değildir.
+
+Sonucun iki işlemin göreli zamanına bağlı olmasına **yarış durumu (race
+condition)** denir. Robot biraz erken hazır olduğunda akış çalışıp biraz geç
+hazır olduğunda bozuluyorsa, program doğru bir sıra kurmamış; yalnız belirli bir
+zamanlamaya denk gelmiştir. Bu tür hata her koşuda görünmeyebilir. Gecikme
+değiştiğinde ortaya çıkması da onu zor yakalanır yapar.
+
+Çözüm "sinyalleri daha hızlı gönder" değildir. Alıcı, gerekli önceki durumu
+görmeden sonraki adıma geçmemelidir. Beklenen sinyal hiç gelmezse de sonsuza
+kadar sessizce beklemek yerine tanımlı bir hata veya zaman aşımı yoluna ihtiyaç
+vardır. Böylece doğru davranış, iki cihazın tesadüfen aynı hızda çalışmasına
+bağlı kalmaz.
 
 ## Gerçek dünyada
 

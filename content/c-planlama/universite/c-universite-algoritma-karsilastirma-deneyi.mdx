@@ -41,11 +41,24 @@ istiyorsun.
 
 ## Ne oldu
 
-Bu sahne bir anlatım görseli değil, deney düzeneği. Üç algoritma da
-`lib/robotics/planners/` içindeki gerçek koddan çalışıyor, Web Worker'da,
-tarayıcını kilitlemeden. `Planner.plan(start, goal, isFree)` sözleşmesi
-(bkz. docs/02-mimari.md) sayesinde üçü de birbirinin yerine geçebilir —
-sahne hangi algoritmanın çalıştığını bilmek zorunda değil.
+Bu sahne bir anlatım görseli değil, karşılaştırmalı bir deney düzeneği.
+Değiştirdiğin engel yerleşimi deneyin girdisi; başarı durumu, hesaplama
+süresi ve yol uzunluğu ise gözlediğin çıktılardır. Bir algoritmayı yalnız
+"yol buldu" diye değerlendirmek bu üç çıktıyı tek sonuca indirger. Oysa
+göreve göre kısa yol, hızlı cevap veya tekrarlı koşularda güvenilir başarı
+farklı ağırlık taşıyabilir.
+
+Üç algoritma da `lib/robotics/planners/` içindeki gerçek koddan Web Worker'da
+çalışıyor. Ortak `Planner.plan(start, goal, isFree)` sözleşmesi (bkz.
+docs/02-mimari.md), aynı başlangıç-hedef-engel problemini farklı
+planlayıcılara vermeni sağlıyor. Böylece karşılaştırmada problem sabit kalıyor;
+değişen şey çözüm yöntemi oluyor.
+
+A* bir ızgara üzerinde maliyetli arama yapar. RRT ve RRT* ise uzayı örnekleyerek
+ağaç büyütür; rastgele örnekler yüzünden aynı sahnede farklı yollar ve süreler
+üretebilir. Bu nedenle tek koşu bir sonuç değil, yalnızca bir ölçümdür. Savunulur
+bir seçim için aynı senaryoyu tekrarlayıp başarı oranını, süre dağılımını ve yol
+kalitesini birlikte okuman gerekir.
 
 ## Gerçek dünyada
 
