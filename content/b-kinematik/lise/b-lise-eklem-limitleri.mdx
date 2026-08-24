@@ -16,6 +16,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -23,6 +24,14 @@ durum: yayinda
 
 Kaydırıcıyı sonuna kadar götürmeyi dene — bir noktada durur, öteye
 gitmez. Bu bir yazılım hatası değil, gerçek robotların da aynı sınırı var.
+
+<PredictionPrompt
+  skillId="eklem-limitleri"
+  prompt="Kolun ulaşabileceği en uzak nokta yalnızca link uzunluklarının toplamına mı bağlıdır?"
+  options={["Evet, sadece toplam uzunluğa bağlıdır", "Hayır, eklem limitleri de erişimi kısıtlayabilir"]}
+  correct={1}
+  explanation="Erişim alanı sadece uzunluğa değil, eklem limitlerine de bağlıdır — matematiksel olarak ulaşılabilir bir nokta, limit dışı bir açı gerektiriyorsa hâlâ erişilemez."
+/>
 
 <JointSliders robot="generic-2dof" />
 

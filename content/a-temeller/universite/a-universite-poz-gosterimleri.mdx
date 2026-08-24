@@ -17,6 +17,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -26,6 +27,14 @@ Bir uçak simülatöründe pilotun burnu tam yukarıyı gösterdiği anda,
 joystick'in sağa-sola hareketi aniden yukarı-aşağı harekete
 dönüşüverir. Pilotlar buna "gimbal kilidi" der — Euler açılarının
 kaçamadığı tek zayıf nokta tam burasıdır.
+
+<PredictionPrompt
+  skillId="pozisyon-gosterimi"
+  prompt="Önce Z ekseni etrafında 90° döndürüp sonra X ekseni etrafında 90° döndürmek, önce X sonra Z döndürmekle AYNI sonucu verir mi?"
+  options={["Evet, sıra önemli değil", "Hayır, sıra sonucu değiştirir"]}
+  correct={1}
+  explanation="Dönme matrislerinin çarpımı (multiply) değişmeli değildir; sıra farklı sonuç üretir — Euler açılarının 'hangi sırada' sorusuna bu kadar duyarlı olmasının kökeni budur."
+/>
 
 <JointSliders robot="generic-6dof" />
 

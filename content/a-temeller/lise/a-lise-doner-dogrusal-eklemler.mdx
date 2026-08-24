@@ -16,6 +16,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -24,6 +25,14 @@ durum: yayinda
 Bir kapı menteşesi ile bir çekmece, ikisi de "bir eksende" hareket eder
 — ama biri döner, diğeri kayar. Robot eklemleri de tam olarak bu iki
 aileden birine girer.
+
+<PredictionPrompt
+  skillId="eklem-turleri"
+  prompt="Doğrusal (prismatic) bir eklemin kaydırıcısı hangi birimi gösterir?"
+  options={["Derece", "Metre"]}
+  correct={1}
+  explanation="Doğrusal eklem açı değil, düz bir hat boyunca uzunluk değiştirir; doğal birimi metredir."
+/>
 
 <JointSliders robot="generic-prismatic" />
 

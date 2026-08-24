@@ -19,6 +19,7 @@ incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -30,6 +31,14 @@ tanımının `.urdf` uzantılı tek bir XML dosyasında durduğunu görürsün.
 tablosundaki `a`, `α`, `d`, `θ` dörtlüsü burada hiç yok; onun yerine
 `origin` (konum-yönelim) ve `axis` (eksen) etiketleri var. Aynı robotu
 tarif eden iki bambaşka dil.
+
+<PredictionPrompt
+  skillId="urdf-modelleme"
+  prompt="Aşağıdaki generic-6dof kolunun DH tanımındaki birinci eklemin α=π/2 değeri, bir URDF dosyasında hangi etikette karşılığını bulur?"
+  options={['<joint><origin rpy="1.5708 0 0"> gibi bir satırda', "<link><collision> içindeki geometri tanımında"]}
+  correct={0}
+  explanation="Her joint'in origin elemanı, ebeveyn çerçeveden bu ekleme sabit bir dönüşümü (xyz + roll-pitch-yaw) taşır; DH'deki α açısı buraya rpy bileşeni olarak yazılır."
+/>
 
 <JointSliders robot="generic-6dof" />
 

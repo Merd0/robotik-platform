@@ -17,6 +17,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -25,6 +26,14 @@ durum: yayinda
 Bir kaptan gemiye "sağa dön" dediğinde, gemi kaptanın soluna değil,
 geminin PRUVASININ sağına döner. Robota konum söylerken de tam bu
 tuzak var — "ileri", kimin bakış açısına göre söylendiğine bağlı.
+
+<PredictionPrompt
+  skillId="koordinat-cerceveleri"
+  prompt="Aşağıdaki kolda yalnızca SON eklemi oynatırsan, robotun TABAN çerçevesi yer değiştirir mi?"
+  options={["Evet, taban da kayar", "Hayır, taban sabit kalır"]}
+  correct={1}
+  explanation="Taban çerçevesi robotun ilk eklemine bağlıdır; zincirin sonundaki bir eklemi oynatmak tabanı etkilemez."
+/>
 
 <JointSliders robot="generic-6dof" />
 
@@ -57,10 +66,10 @@ yorumlandığını açıkça belirtir.
 
 ## Dene
 
-Önce tahmin et: yalnızca son eklemi oynatırsan taban çerçevesi yer
-değiştirir mi? Sonra sahnede dene. Uca en yakın eklemin konumu hareket
-ederken taban çerçevesine en yakın ilk eklemin kendi konumu sabit kalır.
-İkisi aynı robota bağlı; fark, hangi parçayı referans aldığındır.
+Yukarıdaki sahnede son eklemi tekrar oynat: uca en yakın eklemin konumu
+hareket ederken taban çerçevesine en yakın ilk eklemin kendi konumu
+sabit kalır. İkisi aynı robota bağlı; fark, hangi parçayı referans
+aldığındır.
 
 <Quiz
   sorular={[

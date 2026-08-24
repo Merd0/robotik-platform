@@ -1285,6 +1285,28 @@ test("SignalTimeline state'i paylaşılır ve doğru el sıkışma sırası kan�
   await expect(page.getByRole("button", { name: /Kapaklama PLC: Aldım — adım 4: AÇIK/ })).toHaveAttribute("aria-pressed", "true");
 });
 
+test("SignalTimeline oynatma bitince gecikmeyi sayısal ve metinsel gösterir", async ({ page }) => {
+  await page.goto("/ders/e-lise-el-sikisma");
+  await page.getByRole("button", { name: /Dolum robotu: Tepsi hazır — adım 2:/ }).click();
+  await page.getByRole("button", { name: /Kapaklama PLC: Aldım — adım 4:/ }).click();
+  await page.getByRole("button", { name: "Oynat" }).click();
+
+  await expect(page.getByRole("status").filter({ hasText: "Sıra doğru" })).toHaveText(
+    '"Dolum robotu: Tepsi hazır" önce geldi (2. adım), "Kapaklama PLC: Aldım" 2 adım (1000 ms) sonra geldi. Sıra doğru.',
+    { timeout: 8000 },
+  );
+
+  await page.getByRole("button", { name: "Sıfırla" }).click();
+  await page.getByRole("button", { name: /Kapaklama PLC: Aldım — adım 1:/ }).click();
+  await page.getByRole("button", { name: /Dolum robotu: Tepsi hazır — adım 3:/ }).click();
+  await page.getByRole("button", { name: "Oynat" }).click();
+
+  await expect(page.getByRole("status").filter({ hasText: "Sıra ters" })).toHaveText(
+    '"Kapaklama PLC: Aldım" önce geldi (1. adım), "Dolum robotu: Tepsi hazır" 2 adım (1000 ms) sonra geldi. Sıra ters — önce "Dolum robotu: Tepsi hazır" açılmalıydı.',
+    { timeout: 8000 },
+  );
+});
+
 test("SafetyZone iki sınır ölçümünü kanıtlar ve state'i paylaşır", async ({ page }) => {
   await page.goto("/ders/h-universite-guvenli-durus-hiz-ve-mesafe");
   const sliders = page.getByRole("slider");

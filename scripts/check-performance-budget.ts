@@ -108,7 +108,16 @@ const surfaces: SurfaceConfig[] = [
   // sayfanın da içinde bulunduğu ortak route chunk'ına giriyor, docs/05
   // "3D'siz ders yüzeyi tüm etkileşimli bileşenleri taşıyor" ödünleşimiyle
   // aynı sınıf). Gzip 266.4→267.9 KiB'e çıktı — 268 KiB'e çekildi, küçük pay.
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 268 * KIB, brotli: 250 * KIB } },
+  //
+  // 2026-08-24 (FAZ 1 — SignalTimeline gecikme görünürlüğü): `lib/
+  // signalTimeline.ts`'e eklenen `describeSignalGap` (aynı paylaşılan route
+  // chunk'ına giren `SignalTimeline` bileşeninin motor dosyası, yukarıdaki
+  // notlarla aynı kök neden sınıfı) gzip'i 267.9→270.2 KiB'e çıkardı — 271
+  // KiB'e çekildi, küçük pay. Bu ders (`a-ortaokul-robot-nedir`) ayrıca aynı
+  // fazda `PredictionPrompt` kullanmaya başladı ama bu bileşen zaten başka
+  // derslerde kullanıldığı için paylaşılan chunk'a önceden dahildi — ek
+  // maliyet yok.
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 271 * KIB, brotli: 252 * KIB } },
   { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 480 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];

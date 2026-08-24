@@ -17,6 +17,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -27,6 +28,14 @@ gördün. Bu formül işe yarıyor çünkü kol düzlemsel ve basit. Altı eklem
 üç boyutlu bir endüstriyel kolda aynı şeyi elle türetmek pratik değil.
 Denavit-Hartenberg (DH) gösterimi, herhangi bir açık kinematik zincir için
 bu türetmeyi sistematik hale getirir.
+
+<PredictionPrompt
+  skillId="dh-genel-cozum"
+  prompt="Aşağıdaki generic-2dof robotunda α=0 olması, ardışık eklem eksenlerinin birbirine göre nasıl durduğu anlamına gelir?"
+  options={["Dik (birbirine 90°)", "Paralel (0°) — düzlemsel bir kol"]}
+  correct={1}
+  explanation="α, ardışık eklem eksenleri arasındaki açıdır. α=0 tüm eksenlerin paralel olduğu, yani kolun tek bir düzlemde hareket ettiği anlamına gelir."
+/>
 
 <JointSliders robot="generic-2dof" />
 

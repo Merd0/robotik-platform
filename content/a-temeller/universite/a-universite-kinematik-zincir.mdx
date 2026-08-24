@@ -16,6 +16,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -25,6 +26,14 @@ durum: yayinda
 listesindeki SIRAYLA gezip her birinin dönüşümünü bir öncekine ekliyor
 (`accumulated = multiply(accumulated, step)`). Bu tek satırlık döngü,
 aslında "kinematik zincir" dediğimiz kavramın ta kendisi.
+
+<PredictionPrompt
+  skillId="kinematik-zincir"
+  prompt="Aşağıdaki açık zincirde üçüncü eklemi oynatırsan, zincirdeki İKİNCİ eklemden ÖNCEKİ linklerin konumu değişir mi?"
+  options={["Evet, tüm zincir etkilenir", "Hayır, yalnızca üçüncü eklemden SONRAKİ linkler değişir"]}
+  correct={1}
+  explanation="Açık zincirde her link yalnızca kendisinden SONRAKİ linkleri taşır; bir eklemi oynatmak ondan önceki linklerin konumunu değiştirmez."
+/>
 
 <JointSliders robot="generic-6dof" />
 

@@ -16,6 +16,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -24,6 +25,14 @@ durum: yayinda
 Bir çamaşır makinesine "robot" deme — haklı bir itirazla karşılaşırsın.
 İçinde motor var, program var, karmaşık bir döngü izliyor; yine de
 robot sayılmıyor. Bu ders sana nedenini gösterecek.
+
+<PredictionPrompt
+  skillId="robot-makine-farki"
+  prompt="Bir çamaşır makinesinin de motoru ve karmaşık bir yıkama programı var. Bu, onu robot yapmaya yeter mi?"
+  options={["Evet, program olması yeterli", "Hayır, çok eksenli programlanabilir hareket de gerekir"]}
+  correct={1}
+  explanation="Programlanabilirlik tek başına yetmez; robot sayılmak için birden fazla eksende YENİDEN programlanabilir hareket de gerekir."
+/>
 
 <JointSliders robot="generic-2dof" />
 

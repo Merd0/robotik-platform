@@ -16,6 +16,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -26,12 +27,22 @@ olarak kullanıldığını sanır. Aslında olan şey biraz daha ilginç:
 `Math.cos`, `Math.sin` gibi fonksiyonlar dereceyi hiç tanımaz, sadece
 radyan bekler.
 
+<PredictionPrompt
+  skillId="aci-birimi-donusumu"
+  prompt="Kaydırıcıyı 90°'ye getirdiğinde, bu sayı Math.cos/Math.sin'e verilmeden önce ne olur?"
+  options={["Hiçbir şey, 90 sayısı doğrudan kullanılır", "90, önce radyana çevrilir, hesap radyanla yapılır"]}
+  correct={1}
+  explanation="Trigonometri fonksiyonları radyan bekler; arayüz derece gösterse bile perde arkasında açı radyana çevrilir."
+/>
+
 <JointSliders robot="generic-2dof" />
 
 ## Ne oldu
 
-Radyan, bir çemberin yarıçapı kadar uzunluktaki yayın gördüğü açıdır. Tam
-tur (360°) = 2π radyan olduğundan dönüşüm şöyle:
+**Radyan**, yay uzunluğunun çember yarıçapına oranıyla tanımlanan açı
+birimidir. Yay uzunluğu yarıçapa eşitse açı 1 radyandır. Tam çemberin çevresi
+yarıçapın `2π` katı olduğu için tam tur `2π` radyan, yarım tur `π` radyandır.
+Derece ile aynı açıyı farklı bir ölçekle yazar:
 
 ```
 radyan = derece × (π / 180)
@@ -42,6 +53,12 @@ Yukarıdaki sahnede sen kaydırıcıyı derece cinsinden oynatıyorsun, ama
 perde arkasında her açı radyana çevrilip `cos`/`sin` fonksiyonlarına öyle
 veriliyor. Sayı sana derece görünüyor, hesap radyanla yapılıyor — ikisi
 aynı açının iki farklı yazımı.
+
+Birim etiketi sayıdan ayrı düşünülemez. `90` değerini dönüşüm yapmadan radyan
+bekleyen bir fonksiyona verirsen program bunu 90 derece diye tahmin etmez; 90
+radyan kabul eder ve bambaşka bir yön hesaplar. Bu nedenle kullanıcı arayüzü
+ile matematik kodu arasındaki sınırda dönüşüm açık olmalıdır. İçeride tek bir
+birim kullanmak, aynı açının iki farklı sayı gibi karışmasını önler.
 
 ## Gerçek dünyada
 

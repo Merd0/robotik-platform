@@ -16,6 +16,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -25,6 +26,14 @@ Bir depo robotunun kolu yok, bir fabrika robotunun tekerleği yok —
 ikisi de "robot" diye adlandırılıyor ama birbirlerine hiç
 benzemiyorlar. Robotlar tek bir kalıba uymaz, birkaç farklı ailede
 toplanır.
+
+<PredictionPrompt
+  skillId="robot-turleri"
+  prompt="Aşağıdaki kolun tabanına tekerlek eklesek, kol artık 'kol tipi' robot olmaktan çıkar mı?"
+  options={["Evet, artık sadece mobil robot sayılır", "Hayır, hem kol hem mobil robot olur — ikisi bir arada"]}
+  correct={1}
+  explanation="Robot türleri birbirini dışlamaz; tekerlekli bir taban üzerine oturtulmuş kol, aynı anda hem kol tipi hem mobildir."
+/>
 
 <JointSliders robot="generic-2dof" />
 
@@ -53,10 +62,11 @@ içindeki mekanizma kartezyendir. Aynı fabrikada üç tür de bir arada
 
 ## Dene
 
-Yukarıdaki kolu tekrar oynat ve şunu düşün: bu kol bir tekerlek
-takılsaydı ne olurdu? Hâlâ "kol tipi" mi sayılırdı, yoksa hem kol hem
-mobil robot mu olurdu (ipucu: bazı gerçek robotlar tam olarak böyle —
-tekerlekli bir taban üzerine oturtulmuş bir kol).
+Tahminini az önce doğruladın: bir tür diğerini dışlamıyor. Şimdi kendi
+başına bir örnek bul — çevrende (evde, okulda, bir videoda) gördüğün
+bir makinenin hangi iki türün özelliğini birlikte taşıyabileceğini
+düşün (ipucu: bir asansör kabini hem raylarda kayar hem kapıyı açıp
+kapatır — bu iki hareket aynı türden mi, farklı mı?).
 
 ## Sonraki
 

@@ -16,6 +16,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -24,6 +25,14 @@ durum: yayinda
 Elindeki bir kalemi havada tut. Onu istediğin HER konuma, HER açıyla
 yönlendirebilir misin? Bunun için kaç sayıyı bağımsız olarak
 değiştirmen gerektiğini hiç saymadın belki — cevap tam olarak 6.
+
+<PredictionPrompt
+  skillId="degrees-of-freedom"
+  prompt="Bir cismi 3B uzayda HER konuma ve HER açıyla yönlendirmek için 5 eklem yeterli midir?"
+  options={["Evet, 5 eklem yeterlidir", "Hayır, en az 6 bağımsız eklem gerekir"]}
+  correct={1}
+  explanation="3B'de tam konum (3) + tam yönelim (3) kontrolü için en az 6 bağımsız eklem gerekir; 5 veya daha az eklem bazı konum-açı kombinasyonlarına asla ulaşamaz."
+/>
 
 <JointSliders robot="generic-6dof" />
 

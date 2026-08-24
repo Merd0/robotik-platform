@@ -4771,3 +4771,168 @@ tek tek doğrulandı, 49/49).
 sonuncusu (Madde 38 → 20 → 33 → 9 → 26). Beşi de test-first, tam kontrol
 paketiyle `main`'e merge edildi.**
 
+---
+
+## FAZ 1 — İnteraktif çeşitlilik envanteri + uygulama (2026-08-24, devam ediyor)
+
+Mert'in isteği: 94 ana dersin hangi laboratuvar bileşenini kullandığını ve
+etkileşim TÜRÜNÜ çıkar, en çok tekrar eden desene sahip hat/seviyeden
+başlayarak zaten var olan desenleri (PredictionPrompt, TransferChallenge,
+Kod Akademisi'nin hata avcılığı/teşhis modu/kod incelemesi/kişisel
+optimizasyon/tahmin-önce/karşılaştırma) uygun ana derslere uygula — yeni
+motor icat etme.
+
+### Envanter yöntemi
+
+Elle 94 dosya okumak yerine `lib/interactionManifest.ts`'teki
+`extractUsedComponents` (AST tabanlı, `etkilesimli` frontmatter'ına değil
+gerçek MDX kullanımına bakan fonksiyon — zaten var, Sprint 2'de yazılmıştı)
+geçici bir script'le (`scripts/tmp-inventory.ts`, iş bitince silindi) her
+dersin frontmatter'ı (`hat`/`seviye`/`durum`) ile birleştirilip çalıştırıldı.
+
+### Bileşen kullanım sayısı (94 ders)
+
+| Bileşen | Ders sayısı | Not |
+|---|---|---|
+| Quiz | 84 | Standart "Dene" bölümü, ayrı bir etkileşim türü sayılmaz |
+| **JointSliders** | **17** | **Tekrar eden asıl desen — bkz. aşağı** |
+| Terim | 16 | Sözlük tooltip'i, etkileşim değil |
+| CodeRunner | 14 | Hat D — uygun (konu zaten kod yazma) |
+| PlannerRace | 12 | Hat C — uygun (konu zaten algoritma yarışı) |
+| IkTarget | 8 | Hedef sürükleme |
+| TransferChallenge | 8 | Görev bazlı, zaten "desen genişletme" örneği |
+| SignalTimeline | 8 | Hat E/F — bkz. aşağıdaki düzeltme |
+| PredictionPrompt | 5 | Tahmin-önce deseni, zaten var ama sınırlı yayılım |
+| PixelToWorld | 5 | Hat F — uygun |
+| SafetyZone | 5 | Hat H — uygun |
+| ConceptSimulationCode | 4 | Hat D lise |
+| JacobianViz, ScanPath | 3 | |
+| BlockEditor, ThresholdViewer | 2 | |
+| TransformOrderLab, RobotSelectionTable, FourLensTraceLab, DlsTraceLab, CspaceLab | 1 | Hat A/B/C üniversite — zaten özgün, tekil laboratuvar |
+
+### Asıl bulgu: "çıplak JointSliders" — 16 ders, aynı etkileşim tekrarı
+
+`JointSliders` kullanan 17 dersten **16'sı** hiçbir tamamlayıcı desen
+(PredictionPrompt, TransferChallenge, IkTarget vb.) taşımadan yalnız
+"kaydırıcı çek, açı değişsin (+opsiyonel Quiz)" ile bitiyor — üç seviyede de
+birebir aynı etkileşim mekaniği, farklı sadece metin. Tek istisna
+(iyi örnek, referans alındı): `b-ortaokul-eklemleri-oynat` zaten
+`[JointSliders, PredictionPrompt, TransferChallenge]` kullanıyor.
+
+**Hat/seviye dağılımı (öncelik sırası — en çok tekrar eden en üstte):**
+
+| Hat | Çıplak JointSliders ders sayısı | Hat A'nın toplam ders sayısına oranı |
+|---|---|---|
+| **A — Temeller** | **11 / 14 (%79)** | ortaokul 4/4, lise 4/5, üniversite 3/5 |
+| B — Kinematik | 3 (aci-birimleri, eklem-limitleri, dh-ileri-kinematik lise/üni) | 14 dersten 3 |
+| G — Simülasyon | 2 (ortaokul-simulasyon-nedir, universite-urdf-modelleme) | 8 dersten 2 |
+
+Hat A açık ara en yüksek yoğunluk — bu yüzden uygulama sırası Hat A →
+Hat B → Hat G.
+
+**Hat A'nın çıplak listesi (11 ders):**
+`a-ortaokul-eksen-ne-demek`, `a-ortaokul-robot-ile-makine-farki`,
+`a-ortaokul-robot-nedir`, `a-ortaokul-robot-turleri`,
+`a-lise-doner-dogrusal-eklemler`, `a-lise-koordinat-sistemleri`,
+`a-lise-serbestlik-derecesi`, `a-lise-tcp-kavrami`,
+`a-universite-dh-parametreleri`, `a-universite-kinematik-zincir`,
+`a-universite-poz-gosterimleri`.
+(`a-lise-calisma-uzayi` IkTarget kullanıyor, `a-universite-homojen-donusum`
+CodeRunner+TransformOrderLab, `a-universite-robot-mimarileri`
+RobotSelectionTable — bu üçü zaten farklılaştığı için listede değil.)
+
+### SignalTimeline gecikme görünürlüğü — TAMAMLANDI
+
+Mert'in somut bulgusu doğrulandı: `pilot="handshake-order"` (yalnız
+`e-lise-el-sikisma` dersinde) "Oynat"a basınca `useEvidenceRecorder` ile
+sonuç sessizce kaydediliyordu ama kullanıcıya HİÇBİR görünür geri bildirim
+yoktu — docs/05'teki "Görünürlük ve yönelim ilkesi" ihlali (eylem var,
+sonuç görünmüyor).
+
+Düzeltme, var olan saf `analyzeHandshake` fonksiyonuna DOKUNMADAN (predicate
+zaten buna bağlı, mantığını değiştirmek `-v2` sürümleme gerektirirdi) yanına
+yeni bir saf fonksiyon eklendi:
+
+- `lib/signalTimeline.ts` — `describeSignalGap(analysis, [ad1, ad2], stepMs,
+  requireOrder)`: hangi sinyalin kaç adım/kaç ms önce geldiğini Türkçe
+  metne çevirir; `requireOrder` yalnız pilotlu derste "Sıra doğru"/"Sıra
+  ters" yargısı ekliyor, pilotsuz kullanımda yargı YOK (yalnız gecikme
+  bilgisi — çünkü genel `SignalTimeline` kullanımının çoğunda "doğru sıra"
+  diye bir kavram yok, sadece iki sinyal var).
+- `components/interactive/SignalTimeline.tsx` — `signals.length === 2`
+  olduğunda oynatma bitince (`playhead` sıfırlanınca) hesaplanan analiz
+  `role="status" aria-live="polite"` bir kutuda gösteriliyor. Tek satırlı
+  veya 3+ satırlı kullanımlarda (ör. `e-ortaokul-makineler-nasil-konusur`)
+  bu kutu hiç render edilmiyor — "iki sinyal arasındaki gecikme" kavramı
+  yalnız iki satır olduğunda anlamlı.
+- Test-first: `lib/signalTimeline.test.ts`'e 6 yeni senaryo (doğru sıra,
+  ters sıra, `requireOrder=false` yargısız mod, aynı adım/fark yok, bir
+  sinyal hiç açılmadı, ikisi de açılmadı). `e2e/platform.spec.ts`'e yeni
+  test: `e-lise-el-sikisma` üzerinde hem doğru hem ters sırayı kurup görünen
+  metnin TAM içeriğini (sayı + isim + "Sıra doğru"/"Sıra ters" dahil)
+  doğruluyor — 3 viewport'ta 6/6 geçti.
+- `LAB_DEPENDENCY_REGISTRY`'de `SignalTimeline` zaten `lib/signalTimeline.ts`'i
+  `engineFiles` olarak taşıyordu (Sprint 2'den) — manifest değişikliği
+  gerekmedi, ama dosya içeriği değiştiği için 8 dersin `interactionHash`'i
+  otomatik güncellendi (beklenen, zararsız: eski Evidence kaydı varsa
+  bu derslerde eskiyecek, davranış gerçekten değiştiği için doğru sonuç).
+
+### Hat A + B + G — PredictionPrompt yayılımı (16 ders) — TAMAMLANDI
+
+`b-ortaokul-eklemleri-oynat`'ın zaten kanıtladığı desen (JointSliders'tan
+önce `PredictionPrompt`) 16 "çıplak" derse yayıldı — **yeni bileşen
+YOK**, var olan `PredictionPrompt`'un (zaten `LAB_DEPENDENCY_REGISTRY`'de
+kayıtlı, motor dosyası olmayan, salt `useEvidenceRecorder` ile "predicted"
+olayı yazan) tekrar kullanımı:
+
+| Hat/seviye | Ders | skillId |
+|---|---|---|
+| A/ortaokul | robot-nedir | `robot-tanimi` |
+| A/ortaokul | eksen-ne-demek | `eksen-kavrami` |
+| A/ortaokul | robot-turleri | `robot-turleri` |
+| A/ortaokul | robot-ile-makine-farki | `robot-makine-farki` |
+| A/lise | serbestlik-derecesi | `degrees-of-freedom` |
+| A/lise | koordinat-sistemleri | `koordinat-cerceveleri` |
+| A/lise | doner-dogrusal-eklemler | `eklem-turleri` |
+| A/lise | tcp-kavrami | `tcp-kavrami` |
+| A/üniversite | dh-parametreleri | `dh-parametreleri` |
+| A/üniversite | kinematik-zincir | `kinematik-zincir` |
+| A/üniversite | poz-gosterimleri | `pozisyon-gosterimi` |
+| B/lise | aci-birimleri | `aci-birimi-donusumu` |
+| B/lise | eklem-limitleri | `eklem-limitleri` |
+| B/üniversite | dh-ileri-kinematik | `dh-genel-cozum` |
+| G/ortaokul | simulasyon-nedir | `simulasyon-kavrami` |
+| G/üniversite | urdf-modelleme | `urdf-modelleme` |
+
+Her prompt, o dersin metninde ZATEN var olan ama pasif kalan bir tahmin
+anını (ör. `a-lise-koordinat-sistemleri`'nin "Önce tahmin et: ..." cümlesi,
+`a-lise-serbestlik-derecesi`'nin "her ekleme dokunmadan önce tahmin et"
+cümlesi) gerçek, kaydı tutulan bir etkileşime çevirdi — metin
+UYDURULMADI, dersin kendi "Ne oldu"/"Dene" açıklamasından türetildi. İki
+yerde (`a-lise-koordinat-sistemleri`, `a-ortaokul-robot-turleri`) aynı
+soruyu prosede TEKRAR sormayı önlemek için "Dene" bölümü, artık
+widget'ta cevaplanmış soruyu tekrarlamayacak şekilde küçük düzenlemeden
+geçti.
+
+`TransferChallenge` bilinçli olarak bu 16 derse EKLENMEDİ: gerçek bir
+davranışsal predicate (b-ortaokul-eklemleri-oynat'taki gibi `hasObservedJoints`
++ `hasVerifiedTransferChallenge` birleşimi) gerektirir ve Hat A'nın ortaokul
+dersleri (robot nedir, eksen, tür, fark) hedefe-ulaş türünde görevler değil,
+karşılaştırmalı/kavramsal dersler — TransferChallenge'ın "Ulaş" çerçevesi
+buraya zorlama olurdu. `PredictionPrompt` (formative, predicate gerektirmez)
+bu 16 ders için doğru ölçekti.
+
+Doğrulama: `check-content` (94/94 temiz), `tsc`, `lint`, `npm test`
+(844/844, +10 signalTimeline), `validate-content-graph`, `check-quiz-dagilimi`,
+`check-mdx-guvenlik`, `check-review-debt`/`check-review-integrity` (bilgi,
+kırmadı), `check-sensitive-terms`, `build` (94 ders temiz), `npm audit`
+(0 zafiyet) — hepsi temiz.
+
+**Bilinen, kabul edilmiş performans etkisi:** `describeSignalGap`
+(SignalTimeline motoru) paylaşılan `/ders/[slug]` route chunk'ına girdiği
+için (docs/05'teki önceden belgelenmiş "3D'siz ders tüm bileşenleri taşıyor"
+ödünleşimiyle aynı sınıf) "3D'siz ders" bütçesi 267.9→270.2 KiB gzip'e çıktı;
+`scripts/check-performance-budget.ts`'teki yerleşik pattern izlenerek bütçe
+271/252 KiB'e (dated yorumla) çekildi. `PredictionPrompt`'un kendisi zaten
+başka derslerde bulunduğu için ek maliyet getirmedi.
+

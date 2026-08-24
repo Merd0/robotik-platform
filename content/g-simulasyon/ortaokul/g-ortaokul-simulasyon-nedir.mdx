@@ -16,6 +16,7 @@ incelendi_tarafindan: ""
 incelendi_tarih: ""
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -25,18 +26,33 @@ Paketleme hücresine döner eklemli, ileri geri kayan bir itici ekledin.
 İlk programın kasayı yanlış yöne sürebilir. Gerçek düzeneği riske atmadan
 önce hareketi ekranda bozup yeniden kurabilirsin.
 
+<PredictionPrompt
+  skillId="simulasyon-kavrami"
+  prompt="Aşağıdaki modeli kasıtlı olarak kötü bir duruşa sokarsan (döner eklemi ters çevir, doğrusal eklemi sonuna götür), gerçek bir motor ısınır veya bir parça yıpranır mı?"
+  options={["Evet, simülasyon gerçek etkiler üretir", "Hayır, ekrandaki model gerçek robotu etkilemez"]}
+  correct={1}
+  explanation="Simülasyon gerçek robotun bir kopyasıdır; ekranda gördüğün kol gerçekten dönmüyor, ısınmıyor, yıpranmıyor — denemenin bedeli yoktur."
+/>
+
 <JointSliders robot="generic-prismatic" />
 
 ## Ne oldu
 
-Az önce oynattığın döner ve doğrusal eklemli düzenek gerçek değil.
-Ekrandaki her şey bir simülasyon: bir robot davranışını taklit eden,
-metalden ve motordan yapılmamış bir model.
+Az önce oynattığın düzenek gerçek robot değil, onun seçilmiş özelliklerini
+temsil eden bir **simülasyon**. Buradaki model döner ve doğrusal eklemlerin
+nasıl hareket ettiğini biliyor. Gerçek bir motorun ısınması, parçaların
+esnemesi veya çevredeki her nesne ise bu basit modelde yok.
 
-Doğrusal eklemi sonuna kadar sürdün, döner eklemi ters yöne çevirdin.
-Ekranı sıfırlamak bir düğme sürdü. Fiziksel parça kırılmadı; üretim de
-durmadı. Simülasyon, hatayı güvenli ve tekrarlanabilir bir deneye
-çevirir.
+Modelin yararı, aynı soruyu kontrollü biçimde tekrar sorabilmendir. Doğrusal
+eklemi sonuna kadar sürüp döner eklemi ters yöne çevirdin; sonra tek düğmeyle
+aynı başlangıç durumuna döndün. Gerçek parça yıpranmadı, üretim durmadı ve iki
+deneme arasındaki farkı sen belirledin.
+
+Bu yüzden simülasyon, hatayı güvenli ve tekrarlanabilir bir deneye çevirir.
+Ama ekranda çalışan bir hareket, gerçek robotta otomatik olarak güvenli veya
+doğru sayılmaz. Sonucun gücü, modelin gerçeğin hangi özelliklerini içerdiğine
+bağlıdır. Simülasyon önce neyi sınayacağını öğretir; gerçek sistem doğrulamasının
+yerini tutmaz.
 
 ## Gerçek dünyada
 

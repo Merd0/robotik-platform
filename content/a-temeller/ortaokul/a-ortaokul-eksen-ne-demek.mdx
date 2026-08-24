@@ -16,6 +16,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -25,18 +26,32 @@ Kaydırıcılardan sadece birini oynat, diğerine dokunma. Kolun ucu yine de
 hareket ediyor — ama sadece BİR eklemin çizebileceği bir yay boyunca.
 İşte "eksen" tam olarak bu: bağımsız olarak oynatabildiğin her yön.
 
+<PredictionPrompt
+  skillId="eksen-kavrami"
+  prompt="Yalnızca eksen 1'i oynatıp eksen 2'ye hiç dokunmazsan, kolun ucu ne çizer?"
+  options={["Düz bir çizgi", "Bir yay (eğri) parçası"]}
+  correct={1}
+  explanation="Eksen 1 dönel bir eksen olduğu için uç, o eksenin dönme merkezi etrafında bir yay çizer."
+/>
+
 <JointSliders robot="generic-2dof" />
 
 ## Ne oldu
 
 Bu koldaki her kaydırıcı bir eksene karşılık geliyor. İlk kaydırıcı
-"eksen 1"i, ikincisi "eksen 2"yi oynatıyor. İkisi birbirinden
-BAĞIMSIZ — birini oynatmak diğerini değiştirmiyor. Bir robotun "eksen
-sayısı", onun kaç bağımsız kaydırıcıya (yani bağımsız hareket yönüne)
-sahip olduğunu söyler.
+"eksen 1"i, ikincisi "eksen 2"yi oynatıyor. Bir **eksen**, kontrol
+edebildiğin bağımsız bir hareket değişkenidir. Yani birinci kaydırıcıyı
+oynatmak için ikinci kaydırıcının değerini değiştirmek zorunda değilsin.
 
-Bu kol 2 eksenli. Fabrikalarda gördüğün büyük robot kolları genelde 6
-eksenlidir — bu platformda ileride 6 eksenli bir kolu da deneyeceksin.
+"Bağımsız" sözü, hareketlerin birbirini hiç etkilemediği anlamına gelmez.
+Eksen 1'i döndürdüğünde eksen 2'nin açısı aynı kalır; fakat ikinci eklem ve
+robotun ucu birinci parçayla birlikte taşınır. Komutlar bağımsızdır, kolun
+uzaydaki parçaları birbirine bağlıdır.
+
+Bu kol 2 eksenli çünkü ayrı ayrı ayarlayabildiğin iki eklem değeri var. Eksen
+sayısı, robotun hareketini tarif etmek için kaç ayrı değere ihtiyaç duyduğunu
+söyler. Daha çok eksen daha çok hareket seçeneği verir; ama her eksen için bir
+değer seçmek ve bu değerlerin birlikte oluşturduğu duruşu kontrol etmek gerekir.
 
 ## Gerçek dünyada
 

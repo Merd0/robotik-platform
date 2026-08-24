@@ -16,6 +16,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -25,6 +26,14 @@ Yukarıdaki kolun ucundaki eklem (turkuaz nokta), robotun "eli" gibi
 düşünülebilir. Ama gerçek bir robota bir kaynak elektrotu, bir vakumlu
 tutucu ya da 40 santim uzunluğunda bir sprey tabancası taksan, işi
 YAPAN nokta artık o eklemin kendisi değildir.
+
+<PredictionPrompt
+  skillId="tcp-kavrami"
+  prompt="Kolun ucuna 30 cm uzunluğunda düz bir alet taksak — eklem açıları hiç değişmese bile TCP'nin konumu değişir mi?"
+  options={["Hayır, TCP hep son eklemle aynı yerde kalır", "Evet, TCP son eklemden 30 cm ötede yeni bir noktaya kayar"]}
+  correct={1}
+  explanation="TCP aletin ucudur; alet eklendiğinde TCP, eklem açıları aynı kalsa bile son eklemden öteye taşınır."
+/>
 
 <JointSliders robot="generic-6dof" />
 

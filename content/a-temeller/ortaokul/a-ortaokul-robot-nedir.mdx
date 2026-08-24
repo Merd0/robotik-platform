@@ -15,6 +15,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - JointSliders
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -23,6 +24,14 @@ durum: yayinda
 Bir sera arabası fide sıraları arasında ilerliyor; önüne kasa çıkınca
 durup başka koridora yöneliyor. Yanındaki konveyör ise düğmeye basıldığı
 sürece aynı bandı döndürüyor. İkisi de motorlu. Peki hangisi robot?
+
+<PredictionPrompt
+  skillId="robot-tanimi"
+  prompt="Aşağıdaki kolun kaydırıcılarını bırakıp beklersen, kol kendi başına yeni bir hedef seçip oraya hareket eder mi?"
+  options={["Evet, kendi kararını verir", "Hayır, sadece verdiğin komutu uygular"]}
+  correct={1}
+  explanation="Robot burada özerk bir karar vermiyor; yalnızca sen kaydırıcıyla komut verdiğin sürece hareket ediyor."
+/>
 
 <JointSliders robot="generic-2dof" />
 

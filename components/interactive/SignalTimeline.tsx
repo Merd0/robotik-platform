@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
-import { analyzeHandshake } from "@/lib/signalTimeline";
+import { analyzeHandshake, describeSignalGap, type HandshakeAnalysis } from "@/lib/signalTimeline";
 import {
   createLabShareUrl,
   ExperimentShareButton,
@@ -70,6 +70,7 @@ export function SignalTimeline({ signals, steps = 8, theme = "ortaokul", pilot }
   const record = useEvidenceRecorder();
   const [pattern, setPattern] = useState<boolean[][]>(() => signals.map(() => new Array(steps).fill(false)));
   const [playhead, setPlayhead] = useState<number | null>(null);
+  const [gapAnalysis, setGapAnalysis] = useState<HandshakeAnalysis | null>(null);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useSharedLabState("signal-timeline", (shared) => {
@@ -98,8 +99,9 @@ export function SignalTimeline({ signals, steps = 8, theme = "ortaokul", pilot }
 
   function handlePlay() {
     stopPlayback();
-    if (pilot === "handshake-order") {
-      const analysis = analyzeHandshake(pattern);
+    setGapAnalysis(null);
+    const analysis = signals.length === 2 ? analyzeHandshake(pattern) : null;
+    if (pilot === "handshake-order" && analysis) {
       record({
         skillId: "handshake-order",
         stage: "assessed",
@@ -116,7 +118,10 @@ export function SignalTimeline({ signals, steps = 8, theme = "ortaokul", pilot }
       const timeoutId = setTimeout(() => {
         setPlayhead(i);
         if (i === steps - 1) {
-          const finalTimeout = setTimeout(() => setPlayhead(null), STEP_MS);
+          const finalTimeout = setTimeout(() => {
+            setPlayhead(null);
+            setGapAnalysis(analysis);
+          }, STEP_MS);
           timeoutsRef.current.push(finalTimeout);
         }
       }, i * STEP_MS);
@@ -126,6 +131,7 @@ export function SignalTimeline({ signals, steps = 8, theme = "ortaokul", pilot }
 
   function handleReset() {
     stopPlayback();
+    setGapAnalysis(null);
     setPattern(signals.map(() => new Array(steps).fill(false)));
   }
 
@@ -176,6 +182,21 @@ export function SignalTimeline({ signals, steps = 8, theme = "ortaokul", pilot }
           Sıfırla
         </button>
       </div>
+
+      {gapAnalysis && signals.length === 2 && (
+        <p
+          role="status"
+          aria-live="polite"
+          className={`rounded-md border ${t.outline} ${t.bg} p-3 text-sm ${t.ink}`}
+        >
+          {describeSignalGap(
+            gapAnalysis,
+            [signals[0], signals[1]],
+            STEP_MS,
+            pilot === "handshake-order",
+          )}
+        </p>
+      )}
 
       <ExperimentShareButton
         seviye={theme}
