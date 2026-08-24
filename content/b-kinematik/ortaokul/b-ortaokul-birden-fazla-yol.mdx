@@ -40,21 +40,14 @@ noktaya iki farklı şekilde de uzanabilir.
 
 ## Ne oldu
 
-Yeşil noktayı sürüklediğinde robota eklem açılarını değil, ucun varacağı yeri
-verdin. Hedef yerden gerekli eklem açılarını bulma işine **ters kinematik
-(inverse kinematics)** denir. Yani soru "bu açılar ucu nereye götürür?" değil,
-"ucu buraya getirmek için hangi açılar gerekir?" oldu.
+Yeşil hedefi verdiğinde robotun gerekli eklem açılarını bulmasına **ters
+kinematik (inverse kinematics)** denir: giriş hedef, çıkış açılardır.
 
-Bu sorunun her zaman tek cevabı yoktur. "Dirsek" düğmesine bastığında yeşil
-hedef ve robotun ucu aynı yerde kaldı; omuz ile dirsek açıları değişti. Bir
-çözümde dirsek hedefin bir tarafına, diğerinde öbür tarafına kıvrıldı. İki açı
-çifti de aynı uç konumunu verdi.
-
-Bu fark yalnız görünüş değildir. Uç aynı yerde dursa bile kol parçalarının
-kapladığı alan değişir. Bir duruş rafa yaklaşırken diğeri raftan uzak kalabilir;
-birinin eklem açıları sınıra yaklaşırken diğerinin daha fazla hareket payı
-olabilir. Bu yüzden ters kinematik "bir cevap bulma" kadar, uygun cevaplar
-arasından seçim yapma işidir.
+Bu sorunun tek cevabı olmayabilir. "Dirsek" düğmesi hedefi ve robot ucunu sabit
+tutup omuz-dirsek açılarını değiştirdi. İki açı çifti aynı uç konumunu verdi,
+fakat kol parçaları farklı alanları kapladı. Bu önemlidir: bir duruş rafa veya
+eklem sınırına yaklaşırken diğeri daha fazla boşluk bırakabilir. Robot yalnız
+bir çözüm bulmamalı, göreve uygun çözümü seçmelidir.
 
 ## Gerçek dünyada
 

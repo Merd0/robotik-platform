@@ -1183,6 +1183,46 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
       return { passed: basarili.length > 0, metrics: { basariliKosuSayisi: basarili.length } };
     },
   },
+  {
+    // "Çerçeve zincirini birleştir" — Usta sonrası uzmanlık stüdyosu
+    // (docs/guncel-fikirler.md §13 Lab 4, bkz. lib/kodaFrameChain.ts).
+    // koda-gecis-satirdan-poza-v1 ile AYNI şekil: görünür + gizli senaryo
+    // ikisi de aynı koşuda geçmeli.
+    id: "koda-frame-chain-v1",
+    lessonId: "koda-uzmanlik-cerceve-zinciri",
+    skillId: "koda-frame-chain",
+    evaluate: (events) => {
+      const basarili = events.filter(
+        (event) =>
+          event.skillId === "koda-frame-chain" &&
+          event.stage === "assessed" &&
+          event.result === "success" &&
+          event.metrics?.gorunur === true &&
+          event.metrics?.gizliTransfer === true,
+      );
+      return { passed: basarili.length > 0, metrics: { basariliKosuSayisi: basarili.length } };
+    },
+  },
+  {
+    // "Aynı komutu farklı hedefe genelle" — Temel → Orta geçiş kapısı
+    // (docs/durum-codex.md "Teşhis" tablosu: her aşama sonuna kör transfer
+    // görevi konmalı; bkz. lib/kodaParametreTransfer.ts). Diğer transfer
+    // kapılarıyla AYNI şekil: görünür + gizli senaryo ikisi de geçmeli.
+    id: "koda-parametre-transfer-v1",
+    lessonId: "koda-gecis-parametre-transferi",
+    skillId: "koda-parametre-transfer",
+    evaluate: (events) => {
+      const basarili = events.filter(
+        (event) =>
+          event.skillId === "koda-parametre-transfer" &&
+          event.stage === "assessed" &&
+          event.result === "success" &&
+          event.metrics?.gorunur === true &&
+          event.metrics?.gizliTransfer === true,
+      );
+      return { passed: basarili.length > 0, metrics: { basariliKosuSayisi: basarili.length } };
+    },
+  },
 ] as const;
 
 const listeners = new Set<() => void>();

@@ -29,24 +29,15 @@ birbirine bağlamalı.
 
 ## Ne oldu
 
-Yeşil nokta başlangıç, kırmızı nokta teslim masası. Eklediğin koyu
-bloklar raf ve sandalye gibi davranıyor. Çizgi, aracın engellere değmeden
-izleyebileceği rota.
+Planlayıcı alanı karelere böler. Boş kare "burada durabilirim", yanındaki boş
+kare "buraya geçebilirim" demektir; engelli kareler bu karar haritasından
+çıkarılır.
 
-Bu çizgi tek bir sıçrama değil, yan yana gelen küçük kararların sırasıdır.
-Planlayıcı alanı karelere böler. Her boş kare "burada durabilirim", komşu bir
-boş kare de "buraya geçebilirim" anlamına gelir. Koyu bloğa denk gelen kareler
-bu karar haritasından çıkarılır.
-
-A* (okunuşu "A yıldız"), başlangıç karesinden aramaya başlar. Bir yandan o ana
-kadar kaç adım attığını, bir yandan hedefe yaklaşık ne kadar kaldığını izler.
-Umut veren boş kareleri genişleterek hedefe bağlı bir zincir bulur. Ekrandaki
-rota, işte bu kare zincirinin çizgiye çevrilmiş hâlidir.
-
-Geçidi tamamen kapattığında zincir kurulamaz. "Yol bulunamadı" sonucu bir
-çökme değil, planlamanın önemli bir cevabıdır: mevcut haritada başlangıç ile
-hedef birbirine bağlı değildir. Robotun bunu hareket etmeden önce öğrenmesi,
-duvarın önünde kalmasından daha değerlidir.
+A* ("A yıldız") başlangıçtan ararken hem atılan adımların maliyetini hem hedefe
+kalan yaklaşık uzaklığı izler. Ekrandaki rota, birbirine bağladığı boş karelerin
+sırasıdır. Geçidi kapatırsan bu zincir kurulamaz. "Yol bulunamadı" bir çökme
+değil, başlangıç ile hedefin mevcut haritada bağlı olmadığını hareketten önce
+bildiren geçerli bir planlama sonucudur.
 
 ## Gerçek dünyada
 

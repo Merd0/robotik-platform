@@ -32,28 +32,14 @@ kaç milisaniye kaydığı.
 
 ## Ne oldu
 
-Önceki derste gördüğün el sıkışmayı burada tersinden dene: PLC, robotun
-"Hazırım" sinyalini beklemeden "Başla" derse ne olur? Zaman ekseninde bunu
-kurman kolay — "PLC: Başla"yı erken bir adımda aç, "Robot: Hazırım"ı hiç
-açma ya da çok geç aç. Sonuç: PLC, robotun aslında hazır olmadığı bir anda
-ona "başla" komutu vermiş olur.
-
-Protokolün değişmez kuralı şudur: "Başla" ancak "Hazırım" görüldükten sonra
-geçerli olabilir. Zaman çizelgesinde bu kuralı tek bakışta sınayabilirsin.
-"Başla" karesine geldiğinde "Hazırım" hâlâ kapalıysa iki kontrolör aynı işlem
-aşamasında değildir.
+Kural şudur: "Başla" ancak "Hazırım" görüldükten sonra geçerlidir. Başla
+anında Hazırım kapalıysa iki kontrolör aynı işlem aşamasında değildir.
 
 Sonucun iki işlemin göreli zamanına bağlı olmasına **yarış durumu (race
-condition)** denir. Robot biraz erken hazır olduğunda akış çalışıp biraz geç
-hazır olduğunda bozuluyorsa, program doğru bir sıra kurmamış; yalnız belirli bir
-zamanlamaya denk gelmiştir. Bu tür hata her koşuda görünmeyebilir. Gecikme
-değiştiğinde ortaya çıkması da onu zor yakalanır yapar.
-
-Çözüm "sinyalleri daha hızlı gönder" değildir. Alıcı, gerekli önceki durumu
-görmeden sonraki adıma geçmemelidir. Beklenen sinyal hiç gelmezse de sonsuza
-kadar sessizce beklemek yerine tanımlı bir hata veya zaman aşımı yoluna ihtiyaç
-vardır. Böylece doğru davranış, iki cihazın tesadüfen aynı hızda çalışmasına
-bağlı kalmaz.
+condition)** denir. Robot erken hazır olduğunda çalışan, gecikince bozulan akış
+doğru sıra kurmamış; uygun zamanlamaya rastlamıştır. Çözüm sinyali hızlandırmak
+değildir. Alıcı önceki durumu doğrulamadan ilerlememeli; sinyal hiç gelmezse de
+tanımlı hata veya zaman aşımı yolu kullanmalıdır.
 
 ## Gerçek dünyada
 

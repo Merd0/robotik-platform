@@ -5331,3 +5331,108 @@ görevin dışındaki dosyalarla ilgili), 18 koşullu atlama.** Yeni eklenen
 başarısızlık izole tekrar çalıştırıldı — **üçü de geçti**, aynı kök neden
 (paralel worker yükü) doğrulandı.
 
+---
+
+## Kod Akademisi — Usta sonrası uzmanlık stüdyosu: "Çerçeve zincirini birleştir" (2026-08-24)
+
+`docs/guncel-fikirler.md` §13 Lab 4'ün `docs/durum-codex.md`'de onaylanan
+hâli: capstone öncesi zorunlu çekirdek değil, Usta sonrası opsiyonel bir
+uzmanlık stüdyosu, "Şartnameden teste" biçiminde.
+
+### Bilinçli sapma: NumPy YOK
+
+`scripts/copy-pyodide-assets.mjs` NumPy'ı kasıtlı olarak kopyalamıyor
+(harici CDN'den çekilmesi gerekirdi — docs/08 "harici CDN yasak"; bir
+bilimsel paketi yerel barındırmak ayrı, büyük bir tedarik zinciri kararı
+olurdu). Aynı pedagojik hedef (kimlik, birleştirme sırası, değişmezlik-
+olmama) SAF PYTHON 4×4 liste-matrisleriyle karşılandı — `mat_carp`/
+`nokta_donustur`/`rotz`/`translation` öğrenciye VERİLİR, bug bunların
+İÇİNDE değil BİRLEŞTİRME SIRASINDA (`rotz·translation` yerine
+`translation·rotz` olmalı). Golden değerler `lib/robotics/transform.ts`'in
+zaten test edilmiş `multiply`/`rotationZ`/`translation`/`transformPoint`
+fonksiyonlarından (bağımsız oracle) türetildi.
+
+Aynı kör-transfer deseni (görünür + gizli senaryo, sabit sayı yazan
+çözümün gizli senaryoda başarısız olması) `lib/kodaTransferGate.ts` ile
+birebir aynı — üçüncü örnek gelirse ortak bir "Kod Akademisi çoklu-senaryo"
+soyutlaması düşünülebilir, şimdi erken olurdu.
+
+`/kod-akademisi/uzmanlik-cerceve-zinciri` — yine standart katalogun
+DIŞINDA statik route. `/kod-akademisi` anasayfasına ve `/kod-akademisi/usta`
+sayfasının sonuna bağlantı eklendi.
+
+### Doğrulama
+
+`lib/kodaFrameChain.test.ts` (13 test — oracle'a karşı golden doğrulama,
+preamble, stdout ayrıştırma, 2 golden + 3 negatif değerlendirme dahil kör
+transfer koruması). `lib/evidence.ts`'e `koda-frame-chain-v1` predicate'i
+(3 test). 2 e2e senaryosu GERÇEK Pyodide ile izole geçti. Tam paket: tsc,
+lint, `npm test` (915/915), içerik/graph/mdx/sensitive-terms, build,
+performans bütçesi (270.5/252.2, bütçe içinde), `npm audit` (0 zafiyet) —
+hepsi temiz.
+
+**Kod Akademisi büyütme planı (docs/durum-codex.md) artık tamamlandı:**
+kapanış projesi (6 teslim taşı), İleri→Usta geçiş kapısı, Usta sonrası
+uzmanlık stüdyosu. Kalan: zorluk sıçramasının aşamalar arası güçlendirilmesi
+(ayrı görev, "Teşhis" tablosu).
+
+
+---
+
+## Kod Akademisi — Temel→Orta geçiş kapısı: "Aynı komutu farklı hedefe genelle" (2026-08-24)
+
+Zorluk sıçramasını güçlendirme görevinin (docs/durum-codex.md "Teşhis" tablosu)
+son eksik halkası: İleri→Usta ve capstone öncesinde iki kör-transfer kapısı
+vardı, ama Temel→Orta arasında hiç yoktu — öğrenci ilk kez "parametre"
+kavramıyla burada, sabit sayı yazmanın neden yetmediğini görerek tanışmalı.
+
+`lib/kodaParametreTransfer.ts` — en basit kör-transfer: `git(j1, j2)`
+fonksiyonu parametreleri hiç kullanmıyor, içinde sabit `robot.movej([90,
+-60])` yazılı. İki senaryo: görünür (90°, -60° — başlangıç kodundaki sabit
+sayılarla AYNI, bilinçli tercih) ve gizli (30°, -75° — tamamen farklı).
+Bu yüzden diğer iki geçitten farklı olarak **düzeltilmemiş başlangıç kodu
+görüneni geçer ama gizlide başarısız olur** — "kulağa doğru geliyor, çünkü
+görünen testi geçti" tuzağının en saf hâli. `evaluateKodaParametreSenaryo`
+`jointTrace`'in son girdisini derece cinsinden ±1° toleransla karşılaştırır.
+
+Diğer iki geçitle aynı iskelet: `useKodaParametreLab` hook + `KodaParametreLab`
+bileşeni + `computeKodaParametreContentVersion` + `koda-parametre-transfer-v1`
+predicate'i (lessonId `koda-gecis-parametre-transferi`). `/kod-akademisi/
+gecis-parametre-transferi` yine katalog dışı statik route; `/kod-akademisi`
+anasayfasına ve `/kod-akademisi/temel` sayfasının sonuna bağlantı eklendi.
+
+**Artık üç aşama geçişinin hepsinde de aynı ilke çalışıyor:** Temel→Orta
+(parametre), İleri→Usta (satırdan poza), Usta-sonrası (çerçeve zinciri) —
+hepsi görünür+gizli senaryo, sabit sayı yazan çözümün gizlide yakalanması.
+Kod Akademisi büyütme planı (docs/durum-codex.md) bu görevle birlikte
+TAMAMEN tamamlandı.
+
+### Doğrulama
+
+`lib/kodaParametreTransfer.test.ts` (8 test). `lib/evidence.ts`'e
+`koda-parametre-transfer-v1` predicate'i (golden + negatif). 2 e2e senaryosu
+(başlangıç kodu görüneni geçer/gizlide kalır; düzeltme ikisini de geçer +
+predicate `passed` kanıtı) GERÇEK Pyodide ile hem izole hem tam pakette
+yeşil. Tam kontrol paketi: `tsc`, `lint`, `npm test` (926/926),
+`check-content`/`validate-content-graph`/`check-quiz-dagilimi`/
+`check-review-debt`/`check-review-integrity` (94/94, hepsi temiz),
+`check-mdx-guvenlik`, `check-sensitive-terms`, `build` (yeni route doğru
+üretildi), `check-performance-budget` (270.5/252.2 — bütçe içinde, değişiklik
+gerekmedi), `npm audit` (0 zafiyet) — hepsi temiz.
+
+Tam Playwright suite'i: **361 geçti, 2 timeout'la başarısız** (mobile-390'da
+oyun-alanı, tablet-768'de WCAG — ikisi de bu görevin dışında, bilinen paralel
+worker yükü deseni). İkisi de izole tekrar çalıştırıldığında geçti. Yeni 2
+e2e senaryosu tam koşuda da yeşildi.
+
+### Origin senkronizasyonu
+
+`origin/main`'de paralel çalışan Codex oturumunun `df3268d` commit'i vardı
+(14 dersin teorik açıklamasını derinleştirme — FAZ 1'in kapsamına giren bir
+iş). Dosya çakışması yoktu (yalnız `content/**/*.mdx`), merge temiz oldu.
+FAZ 1'e başlarken bu 14 ders zaten derinleştirilmiş sayılacak, tekrar
+işlenmeyecek.
+
+**Görev #14 (zorluk sıçraması güçlendirme) tamamlandı.** Sıradaki: kullanıcının
+verdiği yeni 7 fazlı büyük görevin FAZ 1'i — kalan ~80 dersin teori derinliği
+geçişi.

@@ -39,26 +39,19 @@ radyan bekler.
 
 ## Ne oldu
 
-**Radyan**, yay uzunluğunun çember yarıçapına oranıyla tanımlanan açı
-birimidir. Yay uzunluğu yarıçapa eşitse açı 1 radyandır. Tam çemberin çevresi
-yarıçapın `2π` katı olduğu için tam tur `2π` radyan, yarım tur `π` radyandır.
-Derece ile aynı açıyı farklı bir ölçekle yazar:
+**Radyan**, yay uzunluğunun çember yarıçapına oranıdır. Yay yarıçapa eşitse
+açı 1 radyandır. Çevre yarıçapın `2π` katı olduğundan tam tur `2π` radyandır:
 
 ```
 radyan = derece × (π / 180)
 derece = radyan × (180 / π)
 ```
 
-Yukarıdaki sahnede sen kaydırıcıyı derece cinsinden oynatıyorsun, ama
-perde arkasında her açı radyana çevrilip `cos`/`sin` fonksiyonlarına öyle
-veriliyor. Sayı sana derece görünüyor, hesap radyanla yapılıyor — ikisi
-aynı açının iki farklı yazımı.
-
-Birim etiketi sayıdan ayrı düşünülemez. `90` değerini dönüşüm yapmadan radyan
-bekleyen bir fonksiyona verirsen program bunu 90 derece diye tahmin etmez; 90
-radyan kabul eder ve bambaşka bir yön hesaplar. Bu nedenle kullanıcı arayüzü
-ile matematik kodu arasındaki sınırda dönüşüm açık olmalıdır. İçeride tek bir
-birim kullanmak, aynı açının iki farklı sayı gibi karışmasını önler.
+Kaydırıcı derece gösterir; `cos`/`sin` hesabından önce değer radyana çevrilir.
+Çünkü `90` sayısını radyan bekleyen fonksiyona verirsen program 90 dereceyi
+tahmin etmez, 90 radyan kullanır. Arayüz-matematik sınırında açık dönüşüm ve
+hesap içinde tek birim kullanmak, aynı açının iki farklı sayı gibi karışmasını
+önler.
 
 ## Gerçek dünyada
 
