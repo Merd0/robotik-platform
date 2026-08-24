@@ -2578,3 +2578,47 @@ ait izlenmeyen `lib/robotics/robotState.ts` ile testi sahiplenilmedi; Evidence, 
 Akademisi, ders içeriği ve robot-state sözleşmeleri değiştirilmedi. Ana dal kirli
 olduğu için otomatik merge yapılmadı; beş farklılaştırıcının doğrulanmış commit
 zinciri bağımsız dalda korunuyor.
+
+## 2026-08-24 — Faz 6: Robotics Knowledge Graph
+
+`/bilgi-haritasi` altında platformun mevcut bilgi yapısını keşfedilebilir kılan
+erişilebilir ve etkileşimli bir harita eklendi. Sayılar sabit pazarlama metni değil,
+yayın kataloglarından build sırasında hesaplanıyor: 94 ders, 72 sözlük terimi,
+ders frontmatter'ında kullanılan 19 etkileşim/lab bileşeni ve 21 yayınlı Kod
+Akademisi modülü olmak üzere 206 düğüm; bunlar arasında 360 gerçek ilişki var.
+Varsayılan TCP düğümü, onu kullanan dört dersi doğrudan; bu derslerin bağlı
+etkileşimlerini ve komşu içeriklerini iki adımda gösteriyor.
+
+Yeni bir bilgi modeli icat edilmedi. Kenarlar yalnız `onkosul`, hat/seviye içindeki
+mevcut `sira`, derslerin `etkilesimli` alanı, ders metninde zaten kullanılan “İlgili
+terimler” eşleşmesi, sözlükteki `karisan` bağlantısı ve Kod Akademisi'nin mevcut
+aşama/sıra yapısından türetiliyor. Kod Akademisi sırası önkoşul diye sunulmuyor.
+Ayrı laboratuvar rotaları için kanonik ilişki alanı bulunmadığından onlara yapay
+kenar eklenmedi; bu veri sınırı sayfada görünür. Önizleme açılsa bile taslak ders ve
+modüller graph'a veya sitemap'e sızmıyor.
+
+Görsel SVG bütün 206 düğümü gösteriyor, fakat okunmaz bir “hairball” üretmemek için
+yalnız seçilen düğümün iki adımlık çevresinin kenarlarını çiziyor. Seçimin nedeni ve
+sonucu aynı kartta görünüyor. Arama, tür ve hat filtreleri ile hiyerarşik sonuç
+listesi klavye/ekran okuyucu için birincil yüzey; yatay harita eşdeğer görsel katman.
+Mobil taşma yok, kaydırılabilir bölge klavyeyle odaklanabiliyor ve renk tek bilgi
+kanalı değil. Sözlük sayfası ilgili keşif bağlantısını taşıyor; rota sitemap'te.
+Sunucu, hesap, telemetri veya yeni bağımlılık eklenmedi.
+
+Test-first kanıtında `knowledgeGraph` importu ve sitemap beklentisi önce kırmızı,
+uygulama sonrası 10/10 yeşil çalıştı. Sayfa yokken E2E sözleşmesi kırmızıydı; hedef
+paket son durumda 12/12 geçti. Tam kapının `npx tsc`, lint, 75 dosyada 957 Vitest,
+içerik/graph/quiz/MDX/review-debt/review-integrity/sensitive-terms, 339 statik
+sayfalı build, 0 taslak sızıntısı, Playwright (417 geçti, 18 koşullu atlandı) ve
+audit (0 açık) adımları temiz.
+
+Performans kapısı temiz değil: yeni sayfaya özgü Tailwind seçicilerini ortak CSS'ten
+azaltan üç gerçek düzeltme denemesi ölçümü 3B ders için 480,2 → 480,1 → ekranda
+480,0 KiB düzeyine indirdi; buna rağmen gerçek bayt değeri 480 KiB sınırının birkaç
+bayt üzerinde kaldığı için script hata koduyla çıktı. Bütçe büyütülmedi, test
+zayıflatılmadı. Üç-deneme kuralı gereği bu kalem atlandı ve faz main'e merge
+edilmedi; commit yığın dalında tutuldu.
+
+Faz öncesi ve teslim öncesi `git status` kontrol edildi. Kök ana daldaki Claude'a
+ait izlenmeyen `lib/robotics/robotState.ts` ile testi sahiplenilmedi; Kod Akademisi,
+Evidence, ders içeriği ve robot-state dosyalarına dokunulmadı.
