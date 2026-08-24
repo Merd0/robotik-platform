@@ -4690,5 +4690,84 @@ olan/kabul edilmiş ödünleşim, yeni bir regresyon sınıfı değil), `npm aud
 (0 zafiyet), e2e **327/327** (18 koşullu atlama, sıfır hata, 4.3 dakika —
 Madde 9'un yeni testi dahil, 3 viewport'ta ayrıca tek tek doğrulandı).
 
-**Sırada — Madde 26 (dağınık telemetriyi tek adlandırılmış panelde topla).**
+### Madde 26 (dağınık telemetriyi tek adlandırılmış panelde topla) — TAMAMLANDI
+
+docs/16-urun-denetimi.md'nin madde 26 tarifi "Faz B zaman grafikleri (bkz.
+`docs/durum-denetim.md` Faz B kaydı) + oyun-alanının TCP satırı zaten VAR
+ama her biri kendi bileşeninde ayrı duruyor" idi. Kod incelemesi tam olarak
+bunu doğruladı: `components/lab/RobotCellMotionCharts.tsx`
+(`/laboratuvar/robot-hucresi`) ve `components/playground/
+CustomRobotPlayground.tsx`'in (`/oyun-alani`) eklem açısı/zaman grafiği
+bloğu, İKİ AYRI dosyada, birbirinden BAĞIMSIZ yazılmış AYNI `<details>`/
+`<summary>` kabuğunu taşıyordu — isim yok, ikisi de kendi elleriyle aynı
+`rounded-xl border p-3` + "min-h-11 cursor-pointer font-semibold" desenini
+tekrarlıyordu.
+
+**Bilinçli olarak KONSOLİDE EDİLMEYEN, olduğu gibi bırakılan parça:**
+`CustomRobotPlayground`'daki HER AN geçerli TCP x/y okuması (satır ~1020-
+1023, tüm konsol sekmelerinde görünür) panele TAŞINMADI — docs/05
+"Görünürlük ve yönelim ilkesi" ("eylem ve sonuç aynı anda, kaydırma/tıklama
+olmadan görünür olmalı") bunu varsayılan kapalı bir panelin arkasına
+gizlemeyi bir gerileme yapardı. Konsolide edilen şey yalnız TAMAMLAYICI,
+arka planda hazır duran zaman-serisi detayı (grafik + ilgili sayılar).
+
+**Yeni bir `TelemetryPanel` bileşeni YAZILMADI.** İlk yazımda yazıldı, ama
+kod incelemesi `components/interactive/NasilHesaplandi.tsx`'in (Faz 7,
+zaten test edilmiş, `key`-tabanlı `open` yeniden-monte düzeltmesini zaten
+taşıyan) BİREBİR aynı şekle sahip olduğunu gösterdi — yeni bileşen bu
+yüzden silindi, ikisi de `NasilHesaplandi`yi kullanacak şekilde yeniden
+yazıldı:
+
+- `RobotCellMotionCharts` artık kendi `<details>`i yerine
+  `<NasilHesaplandi baslik="{label} zaman grafiği" ozet="{süre} s">`
+  kullanıyor — davranış (varsayılan kapalı, aynı üç grafik) birebir korundu.
+- `CustomRobotPlayground`'ın "Eklem açısı / zaman" bloğu artık aynı
+  `NasilHesaplandi`yi `baslik="Hareket telemetrisi"`, `varsayilanAcik` ile
+  kullanıyor — bu sekmede varsayılan AÇIK bırakıldı (robot-hücresi'nden
+  bilinçli fark: az önce öğretilen programın hemen ardındaki TEK geri
+  bildirim, kapalı başlarsa docs/05'in mikro-kazanç ilkesi zedelenir).
+
+Sonuç: platformdaki HER "açılıp kapanabilen detay paneli" artık TEK bir
+bileşenden (`NasilHesaplandi`) geliyor — ders sayfalarındaki (JacobianViz/
+DlsTraceLab) Öğren/Mühendislik paneli, `IkTarget`'ın "Neden?" paneli
+DEĞİL (o `InlineNot` kullanıyor, satır-içi bir metin notu — farklı biçim,
+karıştırılmadı) ve şimdi iki lab'ın zaman-grafiği panelleri de aynı kabuğu
+paylaşıyor.
+
+Test-first/regresyon: `e2e/oyun-alani.spec.ts`'teki eski
+`[data-joint-time-chart]` seçicisi yeni `getByTestId("playground-telemetry-
+panel")` + `summary`'nin "Hareket telemetrisi" içerdiğini doğrulayan
+assertion'a güncellendi; `e2e/robot-hucresi-3d.spec.ts`'teki
+`movej-result`/`movel-result` içindeki `summary` toggle testleri
+DEĞİŞTİRİLMEDİ (DOM şekli — bir `<details>` içinde bir `<summary>` —
+birebir korunduğu için hâlâ geçiyor, bu da refactor'ın davranış-koruyucu
+olduğunun ayrı bir kanıtı).
+
+`CustomRobotPlayground`/`RobotCellMotionCharts` `LAB_DEPENDENCY_REGISTRY`
+kapsamında DEĞİL (`/oyun-alani` ve `/laboratuvar/robot-hucresi` bağımsız
+app route'ları, MDX ders bileşeni değiller) — bu değişiklik hiçbir dersin
+`interactionHash`ini etkilemiyor, doğrulandı.
+
+Performans bütçesi: `git stash` ile ayrıca doğrulandı, baseline (Madde 9
+sonrası) 269.4/268.0 KiB gzip idi, Madde 26 sonrası 269.5/268.0 KiB —
++0.1 KiB, ölçüm gürültüsü düzeyinde (beklenen: `NasilHesaplandi` zaten
+`IkTarget`/`JacobianViz`/`DlsTraceLab` üzerinden bundle'a giriyordu,
+`CustomRobotPlayground`/`RobotCellMotionCharts` "3D'siz ders" temsilci
+sayfasının bundle'ına hiç girmiyor). Aynı önceden var olan/kabul edilmiş
+ödünleşim.
+
+Tam kontrol paketi (izole worktree): `tsc`, `lint`, 838 unit (değişmedi —
+bu iki dosya `components/` altında, `lib/**/*.test.ts` kapsamının dışında,
+platformun mevcut "saf mantık `lib/`de test edilir, UI adaptörü test
+edilmez" ayrımıyla tutarlı), `check-content`, `validate-content-graph`,
+`check-quiz-dagilimi`, `check-mdx-guvenlik`, `check-review-debt`,
+`check-review-integrity`, `check-sensitive-terms`, `build` (temiz `.next`),
+`check-performance-budget` (yukarıdaki gürültü düzeyinde marjinal fark),
+`npm audit` (0 zafiyet), e2e **327/327** (18 koşullu atlama, sıfır hata,
+4.9 dakika — oyun-alani ve robot-hucresi-3d suite'leri ayrıca 3 viewport'ta
+tek tek doğrulandı, 49/49).
+
+**Bu, `docs/durum-denetim.md`'ye kaydedilen onaylı 5 maddelik sıranın
+sonuncusu (Madde 38 → 20 → 33 → 9 → 26). Beşi de test-first, tam kontrol
+paketiyle `main`'e merge edildi.**
 
