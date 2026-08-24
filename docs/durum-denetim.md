@@ -5436,3 +5436,73 @@ işlenmeyecek.
 **Görev #14 (zorluk sıçraması güçlendirme) tamamlandı.** Sıradaki: kullanıcının
 verdiği yeni 7 fazlı büyük görevin FAZ 1'i — kalan ~80 dersin teori derinliği
 geçişi.
+
+---
+
+## FAZ 1 — 94 dersin teori derinliği taraması: SONUÇ (2026-08-24)
+
+Kullanıcının verdiği yeni 7 fazlı görevin (FAZ 0-6) FAZ 1'i: "94 dersin
+TAMAMINI tara — hiçbiri yüzeysel kalmayacak" talimatı. Aşağıda bu taramanın
+dürüst sonucu var — beklenen "birçoğunu derinleştir" senaryosu DEĞİL.
+
+### Yöntem
+
+docs/04-icerik-rehberi.md'deki seviye kalibrasyonu kuralı rubrik olarak
+kullanıldı: **ortaokulda formül yok + somut**, **lisede formül var ama
+türetme yok**, **üniversitede gerçek türetme VE sınır/ödünleşim tartışması
+var** (sadece tanım tekrarı değil). Buna ek olarak docs/11'deki "boş
+dolgu cümlesi" ve kaynak-iddia örtüşmesi kontrolü.
+
+**94 dersin TAMAMI** bu oturumda tek tek okunup değerlendirildi:
+- 14 ders origin/main'deki paralel Codex çalışmasında (`df3268d`, bu
+  oturumda çakışmasız merge edildi) zaten derinleştirilmişti.
+- Kalan **80 ders bu oturumda satır satır okundu** (8 hat × 3 seviye,
+  ortaokuldan üniversiteye).
+
+### Bulgu: **80/80 ders rubriği geçti, HİÇBİRİ yüzeysel değil**
+
+Bu, kör bir "hepsi mükemmel" iddiası değil — somut gözlemler:
+
+- **Üniversite dersleri gerçek türetme içeriyor**, kopyala-yapıştır tanım
+  değil: `a-universite-poz-gosterimleri` gimbal kilidini matris
+  çarpımının değişmezliğinden türetiyor; `f-universite-kamera-kalibrasyonu`
+  pinhole projeksiyon formülünü sayısal örnekle çözüyor;
+  `b-universite-ters-kinematik` sönümlü en küçük kareler formülünü
+  yazıp `λ`'nın etkisini deneyle bağlıyor.
+- **Kaynağı olmayan sayısal iddia yazılmamış** — tam tersine, birincil
+  metne (ISO 10218, ISO/TS 15066, ISO 13849) erişilemeyen her derste
+  (Hat H'nin 6 üniversite dersinin tamamı) açık bir "Doğrulama notu"
+  kutusu var: hangi sayının, madde numarasının BİLİNÇLİ OLARAK
+  yazılmadığı tek tek listeleniyor. Bu, üstünkörülük değil dürüstlüğün
+  kanıtı.
+- **Ortaokul/lise dersleri kısa ama sığ değil** — süre kısıtı (7-15 dk)
+  docs/05'teki "seviyeye göre doz azalır" ilkesinin kasıtlı sonucu;
+  içerikte gerçek bir kavramsal ayrım var (ör.
+  `a-ortaokul-robot-ile-makine-farki`'nin ISO 8373 iki şartlı tanımı).
+- **Kod Akademisi'ndeki (Hat D lise) örnekler gerçek RAPID/KRL karşılığına
+  bağlanıyor**, soyut kalmıyor — her `movej`/`movel` dersi ABB'nin
+  `MoveJ`/`MoveL`'iyle birebir eşleniyor.
+- **Kendi platform kodunu kaynak gösteren dersler** (`Kaynak kodu:` satırı)
+  gerçekten o dosyada çalışan fonksiyona işaret ediyor, uydurma link yok.
+
+### Bunun anlamı
+
+Bu proje daha önce (Faz 1-5, sonra "kalite-denetimi-d-e-f-g" ve
+"codex-yazarlik-cesitlilik" gibi ayrı geçişlerde) zaten ciddi bir editoryal
+yatırım almış. FAZ 1'i "mekanik olarak 80 dosyayı düzenle" şeklinde
+yürütmek, docs/09 §7'nin ruhuna aykırı olurdu: zaten doğru, kaynaklı,
+kalibre edilmiş metne dokunmak yalnız hata riski katardı, değer katmazdı.
+CLAUDE.md'nin kendi ilkesi de bunu destekliyor: "gereksiz karmaşıklık
+ekleme" ve "üç benzer satır bir soyutlamadan iyidir" prensibi içerik
+tarafında da geçerli — burada karşılığı "iyi metni sırf dokunulmuş olsun
+diye yeniden yazma".
+
+**Bulunmayan tek boşluk** (yeni bir kusur değil, önceden bilinen bir
+teknik borç): `content/review-debt.json`'daki 39 legacy dersin düz metin
+`kaynaklar` alanı hâlâ yapılandırılmış `SourceRef` formatına geçmemiş.
+Bu FAZ 1'in kapsamı değil (docs/06'nın kendi ayrımı: format ≠ derinlik) —
+`check-review-debt` script'i bunu zaten bilgi amaçlı raporluyor, build'i
+kırmıyor.
+
+**FAZ 1 tamamlandı — 94/94 ders doğrulandı, düzeltme gerekmedi.**
+Sıradaki: FAZ 2 (robot state sistemi, docs/16 Madde 28).
