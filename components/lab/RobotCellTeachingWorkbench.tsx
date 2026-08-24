@@ -2,9 +2,12 @@
 
 import type { RobotCellMotionKind } from "@/lib/robotics/robotCellMotion";
 import {
+  preflightRobotStateSignals,
   type RobotCellProgramCommand,
   type RobotCellProgramPreflight,
 } from "@/lib/robotics/robotCellProgram";
+import { deriveRobotState } from "@/lib/robotics/robotState";
+import { RobotStateBadge } from "@/components/ui/RobotStateBadge";
 
 function commandLabel(command: RobotCellProgramCommand): string {
   if (command.type === "gripper") return command.action === "open" ? "Tutucuyu aç" : "Tutucuyu kapat";
@@ -144,12 +147,14 @@ export function RobotCellProgramTransport({
   const status = activeCommandIndex === null
     ? completed ? `Program tamamlandı · ${commandCount} satır` : "Program bekliyor"
     : playing ? `Satır ${activeCommandIndex + 1}/${commandCount} yürütülüyor` : `Sıradaki satır ${activeCommandIndex + 1}/${commandCount}`;
+  const robotState = deriveRobotState(preflightRobotStateSignals(preflight, playing, completed));
   return (
     <div className="grid items-center gap-3 lg:grid-cols-[auto_minmax(0,1fr)]">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={onPlay} disabled={preflight.status !== "ready" || stepMode} className="min-h-11 min-w-40 rounded-xl bg-teal-300 px-4 text-sm font-bold text-slate-950 disabled:opacity-40">{stepMode ? "Adım çalışıyor" : playing ? "Programı duraklat" : "Programı oynat"}</button>
         <button type="button" onClick={onStep} disabled={preflight.status !== "ready" || playing} className="min-h-11 rounded-xl border border-slate-600 px-3 text-xs font-bold text-slate-100 disabled:opacity-40">Sonraki adımı çalıştır</button>
         <button type="button" onClick={onReset} disabled={playing && !stepMode} className="min-h-11 rounded-xl border border-slate-600 px-3 text-xs font-bold text-slate-100 disabled:opacity-40">Provayı başa al</button>
+        <RobotStateBadge state={robotState} />
       </div>
       <div className="min-w-0">
         <div className="flex items-center justify-between gap-3 text-xs text-slate-200"><strong>{status}</strong><span className="font-mono">Tutucu {gripperClosed ? "kapalı · parça bağlı" : "açık"}</span></div>

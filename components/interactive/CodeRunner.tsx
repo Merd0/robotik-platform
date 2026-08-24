@@ -7,6 +7,7 @@ import { LazyPythonCodeEditor } from "@/components/interactive/LazyPythonCodeEdi
 import { RobotInfoLine } from "@/components/interactive/RobotInfoLine";
 import { codeRunnerStatusText, roundPose, useCodeRunnerEngine } from "@/components/interactive/useCodeRunnerEngine";
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/Tabs";
+import { RobotStateBadge } from "@/components/ui/RobotStateBadge";
 
 interface CodeRunnerProps {
   /** Editörde başlangıçta görünen kod. */
@@ -123,6 +124,7 @@ export function CodeRunner({
     currentTraceLine,
     testPassed,
     toolPose,
+    robotState,
     handleRun,
     handleStop,
     handleReset,
@@ -149,9 +151,12 @@ export function CodeRunner({
     <div className={`flex flex-col gap-4 rounded-xl border ${t.border} ${t.surface} p-4`}>
       {taskTitle && <div className={`rounded-lg border ${t.outline} ${t.bg} p-3 text-sm ${t.ink}`}><span className="font-bold">Otomatik görev:</span> {taskTitle}</div>}
 
-      <p role="status" aria-live="polite" className={`inline-flex min-h-11 w-fit items-center rounded-full border ${t.outline} ${t.bg} px-4 text-sm font-semibold ${t.ink}`}>
-        {codeRunnerStatusText(state, testPassed)}
-      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <p role="status" aria-live="polite" className={`inline-flex min-h-11 w-fit items-center rounded-full border ${t.outline} ${t.bg} px-4 text-sm font-semibold ${t.ink}`}>
+          {codeRunnerStatusText(state, testPassed)}
+        </p>
+        <RobotStateBadge state={robotState} />
+      </div>
 
       <Tabs
         items={MOBILE_TABS}

@@ -8,6 +8,7 @@ import {
   type RobotCellMotionPlan,
   type RobotCellMotionStatus,
 } from "./robotCellMotion";
+import type { RobotStateSignals } from "./robotState";
 import type { Vec3 } from "./transform";
 
 export interface RobotCellTaughtPose {
@@ -507,6 +508,30 @@ export function preflightRobotCellProgram(
     firstIssue,
     estimatedDurationSeconds,
   };
+}
+
+/**
+ * `RobotCellProgramPreflight` + oynatma durumunu paylaşılan `RobotState`
+ * sözlüğüne çevirir (docs/16-urun-denetimi.md Madde 28). Yeni bir hesap
+ * icat etmez — `preflightRobotCellProgram`in zaten ürettiği `firstIssue`
+ * sınıflandırmasını okur. Fiziksel/mekanik nedenler (çarpışma, IK/eklem
+ * limiti) `collision`/`unreachable`e; prosedürel nedenler (yanlış anda
+ * tutucu açma/kapama, kavrama bölgesi dışı) genel `error`a eşlenir —
+ * ikisi de "program oynatılamıyor" ama biri fiziksel imkânsızlık, diğeri
+ * öğretilen sıranın mantık hatası.
+ */
+export function preflightRobotStateSignals(
+  preflight: RobotCellProgramPreflight,
+  playing: boolean,
+  completed: boolean,
+): RobotStateSignals {
+  if (preflight.status === "blocked") {
+    const reason = preflight.firstIssue?.reason;
+    if (reason === "collision") return { collision: true };
+    if (reason === "ik-failure" || reason === "joint-limit") return { unreachable: true };
+    return { error: true };
+  }
+  return { busy: playing, phase: "moving", completed };
 }
 
 /**

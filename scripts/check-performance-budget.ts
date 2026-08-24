@@ -142,8 +142,20 @@ const surfaces: SurfaceConfig[] = [
   // (bu değişiklik yokken) 270.2/251.9 KiB, stash geri alınınca (değişiklikle)
   // 270.4/252.1 KiB — gerçek fark +0.2/+0.2 KiB. Brotli eşiği 252→253 KiB'e
   // çekildi (gzip 271 zaten yeterliydi, değişmedi).
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 271 * KIB, brotli: 253 * KIB } },
-  { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 480 * KIB } },
+  //
+  // 2026-08-25 (FAZ 2 — paylaşılan robot state sistemi, docs/16 Madde 28):
+  // `lib/robotics/robotState.ts` (deriveRobotState) + `components/ui/
+  // RobotStateBadge.tsx` `useCodeRunnerEngine.ts` üzerinden CodeRunner VE
+  // KodAkademisiCodeLab'a bağlandı — ikisi de paylaşılan route chunk'ında.
+  // `git stash -u` ile doğrulandı: stash'lenmişken (değişiklik yokken)
+  // 270.5/252.2 KiB, geri alınınca 271.1/252.7 KiB — gerçek fark +0.6/+0.5
+  // KiB. Gzip eşiği 271→272 KiB'e, brotli 253→254 KiB'e çekildi (küçük pay,
+  // sınırsız değil — bkz. yukarıdaki notlardaki aynı gerekçe).
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 272 * KIB, brotli: 254 * KIB } },
+  // "3D ders" gzip'i zaten 530 KiB'de yeterli payla duruyordu (524.3→524.9,
+  // +0.6 KiB). Brotli aynı FAZ 2 nedeniyle 480.0→480.6 KiB'e çıktı (zaten
+  // tavanda duran bir bütçeydi, hiç payı yoktu) — 480→481 KiB'e çekildi.
+  { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 481 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];
 

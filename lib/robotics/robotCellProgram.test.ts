@@ -14,7 +14,10 @@ import {
   ROBOT_CELL_SAMPLE_JOB,
   ROBOT_CELL_WORKPIECE,
   preflightRobotCellProgram,
+  preflightRobotStateSignals,
   type RobotCellProgramCommand,
+  type RobotCellProgramIssueReason,
+  type RobotCellProgramPreflight,
 } from "./robotCellProgram";
 
 const toRadians = (degrees: readonly number[]) => degrees.map((value) => value * Math.PI / 180);
@@ -450,5 +453,51 @@ describe("3B robot hücresi öğretim programı", () => {
 
     expect(result.status).toBe("blocked");
     expect(result.firstIssue).toEqual(expect.objectContaining({ commandId: "C4", reason: "collision", obstacleLabel: "Koruyucu çevre (taşınan parça)" }));
+  });
+});
+
+describe("preflightRobotStateSignals", () => {
+  const readyPreflight: RobotCellProgramPreflight = { status: "ready", steps: [], estimatedDurationSeconds: 1.2 };
+  const emptyPreflight: RobotCellProgramPreflight = { status: "empty", steps: [], estimatedDurationSeconds: 0 };
+
+  function blockedPreflight(reason: RobotCellProgramIssueReason): RobotCellProgramPreflight {
+    return {
+      status: "blocked",
+      steps: [],
+      estimatedDurationSeconds: 0,
+      firstIssue: { commandId: "C1", commandIndex: 0, reason },
+    };
+  }
+
+  it("ready ve oynatılıyorken busy+moving sinyali üretir", () => {
+    expect(preflightRobotStateSignals(readyPreflight, true, false)).toEqual({ busy: true, phase: "moving", completed: false });
+  });
+
+  it("ready, oynatılmıyor ve tamamlanmışken completed sinyali üretir", () => {
+    expect(preflightRobotStateSignals(readyPreflight, false, true)).toEqual({ busy: false, phase: "moving", completed: true });
+  });
+
+  it("empty durumda (henüz poz öğretilmemiş) hiçbir sinyal taşımaz — idle'a düşer", () => {
+    expect(preflightRobotStateSignals(emptyPreflight, false, false)).toEqual({ busy: false, phase: "moving", completed: false });
+  });
+
+  it("çarpışma nedeniyle bloklanmışsa collision sinyali üretir", () => {
+    expect(preflightRobotStateSignals(blockedPreflight("collision"), false, false)).toEqual({ collision: true });
+  });
+
+  it("IK çözülemediği için bloklanmışsa unreachable sinyali üretir", () => {
+    expect(preflightRobotStateSignals(blockedPreflight("ik-failure"), false, false)).toEqual({ unreachable: true });
+  });
+
+  it("eklem limiti nedeniyle bloklanmışsa unreachable sinyali üretir", () => {
+    expect(preflightRobotStateSignals(blockedPreflight("joint-limit"), false, false)).toEqual({ unreachable: true });
+  });
+
+  it("prosedürel bir nedenle (kavrama bölgesi dışı) bloklanmışsa genel error sinyali üretir — fiziksel imkânsızlıkla karıştırmaz", () => {
+    expect(preflightRobotStateSignals(blockedPreflight("grip-zone"), false, false)).toEqual({ error: true });
+  });
+
+  it("bloklanma her zaman playing/completed'dan önceliklidir (ör. duraklatılmış oynatma sırasında hata bulunmuş olabilir)", () => {
+    expect(preflightRobotStateSignals(blockedPreflight("collision"), true, true)).toEqual({ collision: true });
   });
 });

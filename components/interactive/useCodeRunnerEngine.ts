@@ -12,6 +12,7 @@ import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider"
 import { evaluateCodeLab } from "@/lib/codeLab";
 import { toolOrientationOf } from "@/components/scene/robotFrames";
 import { createLabShareUrl, useSharedLabState } from "@/components/interactive/LabChallengeUi";
+import { deriveRobotState, type RobotState } from "@/lib/robotics/robotState";
 
 /**
  * CodeRunner'ın (Hat D derslerinde kullanılan, tek-parça dikey yerleşim)
@@ -299,6 +300,12 @@ export function useCodeRunnerEngine({
 
   const running = state === "yukleniyor" || state === "calisiyor";
   const currentTraceLine = activeTraceLine(error, jointTraceLines, traceIndex);
+  const robotState: RobotState = deriveRobotState({
+    busy: running,
+    phase: state === "yukleniyor" ? "planning" : "moving",
+    error: error !== null,
+    completed: state === "bitti" && testPassed !== false,
+  });
 
   return {
     editorId,
@@ -309,6 +316,7 @@ export function useCodeRunnerEngine({
     error,
     state,
     running,
+    robotState,
     jointAngles,
     activeJointIndex,
     jointTrace,

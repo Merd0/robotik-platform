@@ -7,6 +7,7 @@ import { LazyPythonCodeEditor } from "@/components/interactive/LazyPythonCodeEdi
 import { codeRunnerStatusText, roundPose, useCodeRunnerEngine } from "@/components/interactive/useCodeRunnerEngine";
 import { useEvidenceRecorder } from "@/components/lesson/LessonEvidenceProvider";
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/Tabs";
+import { RobotStateBadge } from "@/components/ui/RobotStateBadge";
 
 /**
  * Kod Akademisi'nin masaüstünde yan yana/mobilde sekmeli yerleşimi.
@@ -76,6 +77,7 @@ export function KodAkademisiCodeLab({
     currentTraceLine,
     testPassed,
     toolPose,
+    robotState,
     handleRun,
     handleStop,
     handleReset,
@@ -116,9 +118,12 @@ export function KodAkademisiCodeLab({
 
   return (
     <div className="flex flex-col gap-4">
-      <p role="status" aria-live="polite" className="inline-flex min-h-11 w-fit items-center rounded-full border border-site-border bg-site-soft px-4 text-sm font-semibold text-site-ink">
-        {codeRunnerStatusText(state, testPassed)}
-      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <p role="status" aria-live="polite" className="inline-flex min-h-11 w-fit items-center rounded-full border border-site-border bg-site-soft px-4 text-sm font-semibold text-site-ink">
+          {codeRunnerStatusText(state, testPassed)}
+        </p>
+        <RobotStateBadge state={robotState} />
+      </div>
 
       <Tabs
         items={MOBILE_TABS}
