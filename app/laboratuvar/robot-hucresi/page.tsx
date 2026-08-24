@@ -14,7 +14,7 @@ export default function RobotCellPage() {
     <main id="ana-icerik" className="min-h-screen bg-site-bg">
       <div className="mx-auto max-w-[1500px] px-4 py-10 sm:px-6 sm:py-14">
         <nav className="flex items-center gap-2 text-sm text-site-muted">
-          <Link href="/" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvar</Link>
+          <Link href="/laboratuvar" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvarlar</Link>
           <span aria-hidden="true">/</span>
           Robot hücresi
         </nav>

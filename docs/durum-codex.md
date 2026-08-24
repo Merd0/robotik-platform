@@ -2393,3 +2393,34 @@ Pyodide/worker, yerel ilerleme ve davranışsal değerlendirme sınırları koru
 Bu plan uygulanmadı. Mert'in açık onayı olmadan `docs/15`, Kod Akademisi
 kataloğu, route'ları, bileşenleri, worker veya evidence sözleşmeleri
 değiştirilmeyecek.
+
+## 2026-08-24 — Farklılaştırıcı 1/5: Arıza Enjeksiyonu Kliniği
+
+Deterministik ve tamamen tarayıcı içi çalışan tek eksenli bir arıza teşhis
+laboratuvarı eklendi. Üç vaka encoder sabit ofseti, paket gecikmesi ve aktüatör
+doygunluğunu aynı sürümlü telemetri sözleşmesinde üretir. Kullanıcı en fazla iki
+kanal açar; kök neden hipotezini, riski büyütmeyen ilk eylemi ve hipotezi ayırt
+eden doğrulama testini sırayla seçer. Kök neden sonuç aşamasından önce açıklanmaz;
+güvensiz bir müdahale, arıza adı doğru tahmin edilse bile başarı sayılmaz.
+
+Yeni `/laboratuvar` dizini Arıza Kliniği ile mevcut Robot Hücresi'ni görünür bir
+keşif yüzeyinde birleştirdi. `/laboratuvar/ariza-klinigi` ve dizin sitemap'e
+eklendi; sayfaya özgü metadata yazıldı. Grafikler gerçek simülasyon örneklerinden
+çiziliyor, çizgi biçimi ve metin özeti renk dışında ikinci bir gösterge sağlıyor,
+seçilmeyen telemetri tablosuna sızmıyor. Model sınırı sayfada görünür: bu yüzey
+gerçek servo veya güvenlik denetleyicisi değildir ve gerçek robota komut göndermez.
+
+Test-first kanıtı: motor ve sitemap testleri önce eksik uygulama nedeniyle kırmızı,
+sonra yeşil çalıştırıldı. Seçilmeyen kanalın tabloya sızması ve mobil yatay taşma
+ayrı E2E regresyonlarıyla önce yakalandı, ardından düzeltildi. Faz kapıları temiz:
+`npx tsc`, `npm run lint`, `npm test` (904), içerik/graph/quiz/MDX/review-debt/
+review-integrity/sensitive-terms kontrolleri, `npm run build` (332 statik sayfa,
+0 taslak sızıntısı), performans bütçesi, `npm audit --audit-level=high` (0 açık)
+ve tam Playwright paketi (360 geçti, 18 koşullu atlandı). Yeni faza özel E2E
+matrisi üç viewport'ta 9/9 geçti.
+
+Faz öncesi ve teslim öncesi `git status` kontrol edildi. Paralel Claude çalışması
+Kod Akademisi route/bileşenleri ile `lib/evidence.ts` ve testlerinde sürüyor;
+bu dosyalara dokunulmadı. Laboratuvarın Evidence kaydı bu çakışma nedeniyle bu
+fazın kapsamına alınmadı; teşhis akışı kendi yerel React durumunda ve sunucusuz
+çalışıyor. Yeni bağımlılık eklenmedi.
