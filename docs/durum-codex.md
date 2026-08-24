@@ -2464,3 +2464,38 @@ büyütülmedi: yalnız yeni yüzeylerdeki tekil yardımcı sınıflar mevcut ta
 sınıflarıyla birleştirildi; tekrar ölçüm 480.0/480.0 KiB ile geçti. Faz öncesi,
 Claude birleşimi öncesi ve teslim öncesi `git status` kontrol edildi; Claude'un
 Kod Akademisi, Evidence ve içerik dosyalarına müdahale edilmedi.
+
+## 2026-08-24 — Farklılaştırıcı 3/5: Ters Problem Modu
+
+`/laboratuvar/ters-problem` altında, mevcut otomatik IK çözücüsünden farklı bir
+öğrenme yüzeyi eklendi. Kullanıcı aynı iki eklemli kolu ileri problemde
+“açılar → TCP”, ters problemde “TCP hedefi → açılar” yönünde kullanıyor; iki mod
+arasında geçerken eklem durumu korunuyor. Ters görev, aynı hedefe tolerans içinde
+ulaşan iki ayrı çözümü — dirsek-yukarı ve dirsek-aşağı dallarını — kullanıcının
+bulmasını istiyor. Aynı dalı küçük açı farklarıyla tekrar kaydetmek ikinci çözüm
+sayılmıyor; böylece etkinlik bir slider eşleştirme oyununa indirgenmiyor.
+
+Üç hedef sabit ekran koordinatlarından değil, mevcut `forwardKinematics` modeli ve
+iki eklemli jenerik robotun gerçek bağlantı uzunluklarından türetiliyor. Saf
+`inverseProblem` modeli TCP hatasını metre cinsinden hesaplıyor, 0,035 m kabul
+toleransını uyguluyor ve çözüm dalını J2 işaretinden sınıflandırıyor. SVG kol,
+hedef, hata çizgisi ve sayısal metin karşılığı aynı hesap sonucunu kullanıyor.
+Sayfa bunun iki boyutlu eğitim modeli olduğunu, tekillik/çarpışma/dinamik ve gerçek
+robot güvenliği doğrulaması olmadığını görünür biçimde belirtiyor. Sunucu, hesap,
+gerçek robot bağlantısı veya yeni bağımlılık eklenmedi.
+
+Test-first kanıtında model importu ve sitemap beklentisi önce kırmızı, uygulama
+sonra yeşil çalıştı. Birinci E2E denemesi erişilebilir slider adlarının eksikliğini,
+ikinci deneme birden fazla doğal `status` rolünden doğan belirsizliği yakaladı;
+ürüne açık `aria-label` adları ve isimlendirilmiş canlı geri bildirim bölgesi
+eklenerek üçüncü denemede hedef matris 9/9 geçti. Tam kapı da temiz: `npx tsc`,
+lint, 72 dosyada 942 Vitest, içerik/graph/quiz/MDX/review-debt/review-integrity/
+sensitive-terms kontrolleri, 336 statik sayfalı build, 0 taslak sızıntısı,
+performans bütçesi (3B Brotli toplamı 480,0/480,0 KiB), audit (0 açık) ve
+Playwright (387 geçti, 18 koşullu atlandı).
+
+Faz öncesi, ana dal birleşimi öncesi ve teslim öncesi `git status` kontrol edildi.
+Paralel Claude çalışmasının `lib/robotics/robotState.ts` ve test dosyaları kök
+çalışma ağacında sahiplenilmedi; Evidence, Kod Akademisi ve robot-state yüzeylerine
+dokunulmadı. Ana dal kirli olduğu için doğrulanmış faz commit'i bağımsız dalda
+tutuldu; eşzamanlı dosyalar geri alınmadı veya biçimlendirilmedi.
