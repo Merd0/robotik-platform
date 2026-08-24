@@ -29,26 +29,14 @@ bütün anlaşma bu iki ışığın arasındaki sıradan ibaret.
 
 ## Ne oldu
 
-Şimdi iki satır var. Her satırı kendi başına, birbirinden bağımsız
-olarak AÇIK/KAPALI yapabiliyorsun. "Oynat"a basınca okuma başı ikisini
-de aynı anda tarıyor — bir adımda A açıkken B kapalı olabilir, başka
-bir adımda ikisi de açık olabilir.
+İki bağımsız sinyal birlikte dört durum oluşturur: ikisi kapalı, yalnız A açık,
+yalnız B açık veya ikisi açık. Hangi durumun doğru olduğu, makinelerin o anda
+ne yapması gerektiğine bağlıdır.
 
-Bir sinyalin iki durumu vardır. İki bağımsız sinyali birlikte okuyunca dört
-farklı durum görebilirsin: ikisi de kapalı, yalnız A açık, yalnız B açık veya
-ikisi de açık. Bu dört durumdan hangisinin doğru olduğu, makinelerin o anda ne
-yapması gerektiğine bağlıdır.
-
-Zaman ekseni bu durumların sırasını gösterir. A önce açılıp B sonra açılıyorsa
-bu, B'nin A'ya cevap verdiği bir düzen olabilir. İkisi aynı anda açık kalıyorsa
-başka bir aşamayı gösterebilir. Tek bir kareye bakmak yalnız o anı söyler;
-soldan sağa bütün şeridi okumak ise olayların hangi sırayla gerçekleştiğini
-söyler.
-
-Bu nedenle haberleşme yalnız "sinyal var mı?" sorusu değildir. Hangi hattın
-açıldığı, diğer hattın o sırada ne durumda olduğu ve durumun ne kadar sürdüğü
-birlikte anlam taşır. Sonraki el sıkışma dersinde bu zaman düzenine açık bir
-istek-onay kuralı vereceksin.
+Zaman ekseni durumların sırasını ekler. Tek kare yalnız o anı; bütün şerit hangi
+sinyalin önce açıldığını ve ne kadar sürdüğünü gösterir. Bu yüzden haberleşmede
+bir hattın AÇIK olması yetmez. Diğer hattın aynı andaki durumu ve geçiş sırası
+da anlam taşır. Sonraki derste bu düzene istek-onay kuralı vereceksin.
 
 ## Gerçek dünyada
 

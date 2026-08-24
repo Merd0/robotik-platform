@@ -28,20 +28,15 @@ Ne oluyor?
 
 ## Ne oldu
 
-Robot ucunun ulaşabildiği bütün noktalar birlikte robotun **çalışma uzayını
-(workspace)** oluşturur. Hedef kırmızıya döndüğünde ters kinematik o hedef için
-geçerli bir eklem duruşu bulamamıştır; daha hızlı hesaplamak ya da daha güçlü
-motor kullanmak kolu uzatmaz.
+Robot ucunun ulaşabildiği bütün noktalar **çalışma uzayıdır (workspace)**.
+Kırmızı hedef için geçerli eklem açıları yoktur; daha güçlü motor kolun
+geometrisini değiştirmez.
 
-Dış sınırı görmek kolaydır. İki kol parçasını aynı yöne doğrulttuğunda erişim,
-parçaların toplam uzunluğuyla sınırlanır. Hedef bu sınırın dışındaysa hiçbir
-eklem açısı ucu oraya taşıyamaz.
-
-İçeride de boşluk oluşabilir. İki parçanın uzunlukları farklıysa kolu geriye
-katladığında uzun parça, kısa parçanın yetişemediği bir mesafe bırakır. Bu yüzden
-tabana çok yakın bazı hedefler de kırmızı olabilir. Çalışma uzayı yalnız "ne
-kadar uzağa gider?" sorusunun cevabı değildir; kolun uzanabildiği ve
-uzanamadığı bölgelerin tamamını gösteren bir haritadır.
+Kol aynı yöne açıldığında dış sınırı iki parçanın toplam uzunluğu belirler.
+Parçaların boyları farklıysa kol katlandığında da uzun parça, kısa parçanın
+kapatamadığı bir iç boşluk bırakır. Bu nedenle hem çok uzak hem çok yakın
+hedefler erişim dışında kalabilir. Çalışma uzayı yalnız en uzak noktayı değil,
+ulaşılabilen ve ulaşılamayan bölgelerin tamamını gösterir.
 
 ## Gerçek dünyada
 

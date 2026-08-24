@@ -38,20 +38,14 @@ hareket ediyor — ama sadece BİR eklemin çizebileceği bir yay boyunca.
 
 ## Ne oldu
 
-Bu koldaki her kaydırıcı bir eksene karşılık geliyor. İlk kaydırıcı
-"eksen 1"i, ikincisi "eksen 2"yi oynatıyor. Bir **eksen**, kontrol
-edebildiğin bağımsız bir hareket değişkenidir. Yani birinci kaydırıcıyı
-oynatmak için ikinci kaydırıcının değerini değiştirmek zorunda değilsin.
+Bir **eksen**, bağımsız ayarlayabildiğin hareket değişkenidir. Bu kol 2
+eksenlidir; duruşunu tarif etmek için iki ayrı eklem değeri gerekir.
 
-"Bağımsız" sözü, hareketlerin birbirini hiç etkilemediği anlamına gelmez.
-Eksen 1'i döndürdüğünde eksen 2'nin açısı aynı kalır; fakat ikinci eklem ve
-robotun ucu birinci parçayla birlikte taşınır. Komutlar bağımsızdır, kolun
-uzaydaki parçaları birbirine bağlıdır.
-
-Bu kol 2 eksenli çünkü ayrı ayrı ayarlayabildiğin iki eklem değeri var. Eksen
-sayısı, robotun hareketini tarif etmek için kaç ayrı değere ihtiyaç duyduğunu
-söyler. Daha çok eksen daha çok hareket seçeneği verir; ama her eksen için bir
-değer seçmek ve bu değerlerin birlikte oluşturduğu duruşu kontrol etmek gerekir.
+"Bağımsız", parçalar birbirini etkilemez demek değildir. Eksen 1 döndüğünde
+eksen 2'nin değeri aynı kalır, fakat ikinci eklem ve uç ilk parçayla birlikte
+taşınır. Yani komut değerleri bağımsız, fiziksel zincir bağlıdır. Eksen sayısı
+kaç ayrı değer seçebildiğini; bu değerlerin birleşimi de robotun duruşunu
+belirler.
 
 ## Gerçek dünyada
 

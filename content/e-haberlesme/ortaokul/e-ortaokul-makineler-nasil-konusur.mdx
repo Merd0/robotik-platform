@@ -28,25 +28,14 @@ Bir fırından çıkan tepsiler paketleme bandına geliyor. Bandın tepsiye
 
 ## Ne oldu
 
-Yukarıdaki şerit bir zaman ekseni. Her kutucuğa tıkladığında o anda
-sinyalin AÇIK mı KAPALI mı olacağını sen belirliyorsun. "Oynat"a
-basınca bir okuma başı soldan sağa ilerliyor ve her adımda sinyale
-bakıyor.
+Şerit zaman eksenidir; okuma başı her adımda sinyalin AÇIK mı KAPALI mı
+olduğuna bakar. Buna **dijital sinyal** denir: bir okuma anında iki durumdan
+yalnızca biri vardır.
 
-Bu bir **dijital sinyal**: her okuma anında iki durumdan yalnızca birindedir,
-AÇIK ya da KAPALI. Kutucuğun soldan sağa nerede değiştiği de en az durumu
-kadar önemlidir. AÇIK'a geçiş "tepsi geldi", KAPALI'ya dönüş "tepsi geçti"
-anlamına gelebilir.
-
-Sinyalin kendisi bu Türkçe cümleleri taşımaz. Anlamı, iki makinenin önceden
-üzerinde anlaştığı kurala göre kontrolör verir. Aynı AÇIK durumu başka bir
-hatta "kapı kapalı" veya "işlem bitti" diye yorumlanabilir. Makinelerin
-konuşması, yalnız elektriksel durumu görmek değil; o durumun ne anlama
-geldiğini ve ne zaman okunacağını iki tarafta da aynı tanımlamaktır.
-
-Daha uzun bilgiler de birden çok ikili durumun belirli sırada okunmasıyla
-kurulabilir. Temel yapı yine değişmez: alıcı, doğru hattın doğru andaki AÇIK
-veya KAPALI durumunu okur.
+Sinyal "tepsi geldi" cümlesini taşımaz. Bu anlamı iki makinenin önceden
+paylaştığı kural verir; başka bir hatta aynı AÇIK durumu "kapı kapalı" olabilir.
+Bu yüzden haberleşme yalnız hattı okumak değil, durumun anlamını ve okunacağı
+anı iki tarafta da aynı tanımlamaktır.
 
 ## Gerçek dünyada
 

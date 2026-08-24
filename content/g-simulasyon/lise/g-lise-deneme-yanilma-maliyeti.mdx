@@ -30,22 +30,14 @@ sormadı, hiçbir sayaç işlemedi.
 
 ## Ne oldu
 
-Hedefi erişilemeyecek kadar uzağa sürüklediğinde robot oraya
-ulaşamadı; model kırmızı hedefle "geçerli çözüm yok" sonucunu gösterdi.
-Burada sınanan şey motor gücü değil, geometridir. Ters kinematik hedef için
-eklem açıları arar. Hedef çalışma uzayının dışındaysa açıları daha hızlı
-hesaplamak veya aynı hesabı daha çok tekrarlamak çözüm üretmez.
+Kırmızı hedef "geçerli eklem açısı yok" demektir. Burada motor gücünü değil,
+ters kinematiğin geometrik erişimini sınıyorsun; çalışma uzayı dışındaki hedefi
+daha çok hesaplamak çözüm üretmez.
 
-Simülasyonda her deneme aynı başlangıç koşullarından yeniden kurulabilir.
-Böylece tek bir değişkeni — örneğin hedef uzaklığını — değiştirip sonucun hangi
-noktada "ulaşılabilir"den "ulaşılamaz"a geçtiğini gözlersin. Gerçek robotta
-aynı denemeler zaman tüketir; yanlış hedefler limit duruşlarına ve gereksiz
-hareket isteklerine dönüşebilir.
-
-Yine de ekrandaki başarısızlık bütün gerçek riskleri modellemez. Bu sahne
-geometrik erişimi sınar; motor torkunu, kablo davranışını veya çevredeki gerçek
-nesneleri sınamaz. Simülasyonun kazancı "sonuç kesin doğrudur" demek değil,
-hangi varsayımı düşük bedelle tekrar tekrar sınadığını açıkça bilmektir.
+Simülasyon aynı başlangıcı yeniden kurarak yalnız hedef uzaklığını değiştirmeni
+ve erişim sınırını tekrarlı ölçmeni sağlar. Fakat bu sahne motor torkunu, kabloyu
+ve gerçek çevreyi modellemez. Kazanç, kesin gerçeklik değil; hangi varsayımı
+düşük bedelle ve kontrollü biçimde sınadığını bilmektir.
 
 ## Gerçek dünyada
 
