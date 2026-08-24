@@ -20,6 +20,7 @@ describe("sitemap", () => {
     expect(paths).toContain("/laboratuvar/ariza-klinigi");
     expect(paths).toContain("/laboratuvar/dil-karsilastirici");
     expect(paths).toContain("/laboratuvar/ters-problem");
+    expect(paths).toContain("/laboratuvar/dijital-ikiz-kaymasi");
   });
 
   it("taslak önizlemesi açıkken bile yalnızca yayındaki dersleri listeler", () => {

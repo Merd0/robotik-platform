@@ -35,6 +35,13 @@ const LABS = [
     description: "Sabit bir TCP hedefini üreten iki farklı eklem açısı çözümünü deneyerek bul.",
     detail: "Gerçek FK · çoklu IK çözümü",
   },
+  {
+    href: "/laboratuvar/dijital-ikiz-kaymasi",
+    eyebrow: "Model–ölçüm senkronu",
+    title: "Dijital İkiz Kayması",
+    description: "İkiz tahmini ile sentetik fiziksel ölçüm arasındaki kalıcı farkı bul, yeniden kalibre et ve ayrı pozlarda doğrula.",
+    detail: "TCP artığı · kalıcılık · bağımsız doğrulama",
+  },
 ] as const;
 
 export default function LabsPage() {
