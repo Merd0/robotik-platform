@@ -5116,3 +5116,144 @@ kaynağı hâlâ bilinmiyor. `c8eda0e`'den geriye doğru bisect edilip 268/250
 eşiğinin en son doğru olduğu commit bulunmalı — bu notun kapsamı dışında,
 ayrı bir görev.
 
+---
+
+## Kod Akademisi — Usta ötesi kapanış projesi: "Esnek Hücreyi Devreye Al" (2026-08-24)
+
+Mert'in onayı üzerine `docs/durum-codex.md`'deki "Usta ötesi kapanış projesi"
+planı uygulandı. Asıl talep: Kod Akademisi'nin "hep kolu 45 derece hareket
+ettir" seviyesinde kalmaması, gerçek bir gelişim/ustalaşma hissi vermesi.
+
+### Mimari karar — sıfır yeni worker/backend API'si
+
+Plan "yeni backend eklenmeyecek, mevcut Pyodide/worker sınırları korunmalı"
+diyordu. Bunu gerçekten sağlamanın yolu: `robot.movel`/`movej` (hiç
+değişmeyen `pyodideWorker.ts`) zaten hata durumunda `RobotHatasi` fırlatıyor
+ve her hareketi `jointTrace`'e kaydediyor — bu iki mevcut yetenek "hedefe
+ulaşamama" ve "hareket sırası" kanıtı için yeterliydi. Tek eklenen şey saf
+PYTHON bir `Hucre` sınıfı (`lib/esnekHucre.ts`'teki `buildEsnekHucrePreamble`)
+— öğrencinin kodunun ÖNÜNE string olarak eklenen, worker'a hiç dokunmayan bir
+önek. Durum gözlemlenebilirliği zaten yakalanan `stdout`'a `print()` ile
+yazılıyor; ayrıştırma `parseDurumGecmisi`/`parseHatalar` saf fonksiyonlarında.
+
+### Beş deterministik senaryo, tek şartname
+
+`generic-2dof` kolunun erişimi (0.2–1.8 m) kullanılarak: 3 görünür + 2 gizli
+senaryo — normal tamamlama, geçersiz parça türü (reddedilmeli), gelmeyen
+sensör onayı (güvenli duruşa geçmeli), ulaşılamayan hedef (istisna
+yakalanıp toparlanmalı), ve farklı parça/hedef sayısıyla transfer (aynı
+mantık genellenmeli). Değerlendirme (`evaluateEsnekHucreSenaryo`) kaynak
+kodun METNİNE bakmaz — yalnız `DURUM:`/`HATA:` stdout satırlarına ve gerçek
+`jointTrace` uzunluğuna.
+
+Altı teslim taşı, planın önerdiği dört yeni desenden ikisini somutluyor:
+Milestone 1 "Şartnameden teste" (sözleşme önce yazılı, kod ona karşı
+geliştirilir), Milestone 6 "Davranışı koruyarak yeniden düzenle" (aşağıya
+bkz). Diğer ikisi ("Karşı örnek üret", "Olay-durum orkestrasyonu") sırasıyla
+Milestone 5 (arıza) ve Milestone 3'ün (durum makinesi) içine gömülü.
+
+### Milestone 6 — golden fingerprint ile gerçek refactor kanıtı
+
+İlk kez tüm 5 senaryo geçtiğinde o koşunun kodu + her senaryonun
+(durum geçmişi, hareket sayısı) imzası localStorage'a "altın" kayıt olarak
+yazılıyor. Milestone 6 ancak: kod METİN olarak golden'dan FARKLI VE tüm
+imzalar golden'la BİREBİR aynıysa geçiyor — "aynı dosyayı tekrar gönder"
+kaçamağı `kodDegisti` şartıyla, "davranışı boz ama geçmiş gibi görün"
+kaçamağı imza karşılaştırmasıyla kapatılıyor.
+
+### Canlı bir mimari hata, e2e'de yakalandı ve düzeltildi
+
+İlk yazımda `EsnekHucreLab.tsx` (UI) kendi `kodDegisti`/`refactorGecerli`
+hesabını `useMemo` ile AYRI yapıyordu; `useEsnekHucreLab.ts` (hook) da
+`record()` için AYNI hesabı kendi içinde tekrar yapıyordu — iki bağımsız
+hesap. Gerçek tarayıcıda e2e testi (dolgu+tıklama art arda) bunun bir React
+render'ının GERÇEKTEN çalıştırdığı koddan farklı bir `code` state'i
+görebildiğini kanıtladı: UI "Milestone 6 geçti" gösterdi ama kaydedilen
+Evidence olayı `result: "retry"` idi — golden karşılaştırması hook'un
+içinde ESKİ (henüz güncellenmemiş) `code` kapanışıyla yapılmıştı. Düzeltme:
+hook artık `refactorSonucu`yu STATE olarak hesaplayıp döndürüyor, bileşen
+kendi hesabını YAPMIYOR — tek doğruluk kaynağı. e2e testine de editörün
+`onChange`'inin state'e işlemesi için 150ms bekleme eklendi (mevcut
+satır ~463'teki aynı sınıf, belgelenmiş bir CodeMirror zamanlama notuyla
+aynı gerekçe).
+
+### Doğrulama
+
+Test-first: `lib/esnekHucre.test.ts` (24 senaryo — fixture sağlığı, preamble
+üretimi, stdout ayrıştırma, 5 golden + 8 negatif değerlendirme), `lib/
+evidence.test.ts`'e 2 yeni predicate için 8 test (golden + negatif, UI'ın
+toplam bayrağına güvenmeyen ayrı-ayrı metrik kontrolü dahil). 2 yeni e2e
+senaryosu GERÇEK Pyodide ile: (1) tam referans çözüm — 5 senaryo, 6
+milestone, aynı kodu tekrar göndermenin 6.'yı geçirmediği, gerçek bir
+refactor'ün geçirdiği, iki predicate'in de `passed` yazdığı; (2) eksik
+doğrulama/arıza toparlama içeren bir çözümün ilgili senaryo ve
+milestone'ları GERÇEKTEN başarısız bıraktığı (negatif kanıt).
+
+Performans: `lib/evidence.ts`'e eklenen 2 predicate paylaşılan route
+chunk'ına giriyor — `git stash -u` ile önce/sonra ölçüldü (270.2/251.9 →
+270.4/252.1 KiB), brotli eşiği 252→253 KiB'e çekildi (gzip zaten yeterliydi).
+
+Tam paket: `tsc`, `lint`, `npm test` (884/884), `check-content` (94/94),
+`validate-content-graph`, `check-quiz-dagilimi`, `check-mdx-guvenlik`,
+`check-review-debt`/`check-review-integrity` (bilgi), `check-sensitive-terms`,
+`build`, `check-performance-budget`, `npm audit` (0 zafiyet) — hepsi temiz.
+
+Tam Playwright suite'i (3 viewport, tek koşu): **336 geçti, 9 timeout/oturum
+hatasıyla başarısız, 18 koşullu atlama.** Başarısızlıklardan biri
+("Protocol error: Internal server error, session closed") tarayıcı
+oturumunun koşu sırasında koptuğunu gösteriyor — bu oturumdaki daha önceki
+tam koşularda da (bkz. bu dosyanın FAZ 1/FAZ 2 bölümleri) aynı sınıf 15+3
+flaky sonucu görülmüş ve İZOLE tekrar çalıştırıldığında hepsi geçmişti;
+bu koşuda da ikisi (yeni eklenen "Esnek Hücreyi Devreye Al" e2e testi dahil,
+bu ders az önce TEK BAŞINA 2/2 yeşil geçmişti — bkz. yukarıki "Doğrulama"
+bölümü) ilgisiz dosyalarla ilişkili görünüyor. **Ancak bu koşuda tam liste
+izole tekrar doğrulanmadan durduruldu** (Mert'in "şu an neredeysen dur"
+talimatı) — bu, önceki bölümlerdeki gibi "izole çalıştırıldı, hepsi geçti"
+diye KANITLANMIŞ bir bulgu DEĞİL, yalnız aynı desene uyan bir gözlem.
+**Açık madde:** bir sonraki oturumda bu 9 testi (özellikle Kod Akademisi
+kapanış testi) izole tekrar çalıştırıp gerçekten flaky mi yoksa gerçek bir
+regresyon mu olduğunu doğrula.
+
+### Ekranlar — HENÜZ ALINMADI (açık madde)
+
+`/kod-akademisi/kapanis` sayfası hazır (anlatı + kod editörü + senaryo
+sonuçları + altı teslim taşı paneli) ama ekran görüntüsü ALINMADI/
+gönderilmedi — Mert'in "ekran görüntüleriyle özet yaz" talebi bu commit'te
+karşılanmadı, sıradaki oturumun ilk işi bu olmalı (Task #15).
+
+---
+
+## DURUM KAYDI (2026-08-24, "şu an neredeysen dur" talimatıyla)
+
+**Bitti ve main'e merge edildi (bu commit'le):**
+- Task #7 — Saf motor (`lib/esnekHucre.ts` + 24 test).
+- Task #8-11 — Tek dikey dilimde birleşik: `kapanis` route'u, altı teslim
+  taşının hepsi, `EsnekHucreLab.tsx` + `useEsnekHucreLab.ts`, 2 Evidence
+  predicate'i (+ 8 test), 2 e2e senaryosu (tam referans çözüm + eksik
+  doğrulama negatifi) — İKİSİ DE İZOLE ÇALIŞTIRILDI VE GEÇTİ.
+- Bu sırada canlı bir mimari hata (UI/hook'un ayrı `kodDegisti` hesabı,
+  e2e'de yakalandı) düzeltildi — bkz. yukarıki "Canlı bir mimari hata" notu.
+- Performans bütçesi düzeltmesi (`git stash -u` ile gerçek ölçüm,
+  270.2/251.9 → 270.4/252.1 KiB, brotli eşiği 253'e çekildi).
+
+**Yarım kalan/başlanmamış (sıradaki oturumun TaskList'i, id #12-15):**
+- Task #12 — §13 Lab 2 (tahmin-izle-düzelt genellenmiş çalışma izi modülü,
+  İleri→Usta transfer kapısı). BAŞLANMADI.
+- Task #13 — §13 Lab 4 (NumPy çerçeve zinciri, Usta sonrası uzmanlık
+  stüdyosu). BAŞLANMADI.
+- Task #14 — Aşamalar arası zorluk sıçramasını güçlendirme (docs/
+  durum-codex.md'deki "Teşhis" tablosu — dört eksenin birlikte büyümesi,
+  her aşama sonuna kör transfer görevi). BAŞLANMADI.
+- Task #15 — Ekran görüntüleri + bu notun "tam Playwright suite" bölümündeki
+  9 flaky/regresyon şüphesinin izole doğrulaması. KISMEN (metin yazıldı,
+  ekran görüntüsü yok, izole e2e doğrulaması yapılmadı).
+
+**Yarım kalan dosya YOK** — bu commit'teki her dosya derleniyor (`tsc`
+temiz), lint temiz, ilgili testlerin hepsi (unit + hedefli e2e) geçti.
+Working tree bu commit sonrası temiz olacak (aşağıdaki commit adımıyla).
+
+**Bir sonraki oturum tam olarak buradan devam etmeli:** Task #12'den
+başla (§13 Lab 2), aynı test-first + tam kontrol paketi + main'e merge
+disiplinini sürdür. `/kod-akademisi/kapanis`'in ekran görüntüsünü almayı
+unutma (Task #15, kullanıcı açıkça istedi).
+

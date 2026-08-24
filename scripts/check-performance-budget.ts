@@ -132,7 +132,17 @@ const surfaces: SurfaceConfig[] = [
   // bütçesi bu iki gerçek kaynağı da (+ önceden var olan 1.5/1.3 KiB sapmayı)
   // kapsayacak küçük bir pay bırakıyor; docs/durum-denetim.md'de "FAZ 1 —
   // performans bütçesi düzeltmesi (2026-08-24, ikinci geçiş)" notuna bkz.
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 271 * KIB, brotli: 252 * KIB } },
+  //
+  // 2026-08-24 (Kod Akademisi kapanış projesi — "Esnek Hücreyi Devreye Al"):
+  // `lib/evidence.ts`'e 2 yeni predicate eklendi (`esnek-hucre-capstone-v1`,
+  // `esnek-hucre-refactor-v1`) — bu dosya HER ders sayfasının paylaşılan
+  // route chunk'ına giriyor (yukarıdaki notlarla aynı kök neden sınıfı).
+  // Gerçek ölçüm bu sefer commit ÖNCESİ `git stash -u` ile doğrulandı (bir
+  // önceki notun düzelttiği hatayı tekrarlamamak için): stash'lenmiş hâlde
+  // (bu değişiklik yokken) 270.2/251.9 KiB, stash geri alınınca (değişiklikle)
+  // 270.4/252.1 KiB — gerçek fark +0.2/+0.2 KiB. Brotli eşiği 252→253 KiB'e
+  // çekildi (gzip 271 zaten yeterliydi, değişmedi).
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 271 * KIB, brotli: 253 * KIB } },
   { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 480 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];

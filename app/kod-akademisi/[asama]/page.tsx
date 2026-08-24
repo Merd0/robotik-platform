@@ -61,6 +61,19 @@ export default async function KodAkademisiAsamaPage({ params }: AsamaPageProps) 
             ))}
           </ol>
         )}
+
+        {asama === "usta" && (
+          <Link
+            href="/kod-akademisi/kapanis"
+            className="mt-6 flex min-h-11 items-center justify-between gap-4 rounded-xl border-2 border-site-strong bg-site-surface p-4 hover:bg-site-soft"
+          >
+            <span>
+              <span className="font-mono text-xs text-site-accent-text">Usta ötesi kapanış projesi</span>
+              <span className="mt-1 block font-heading text-lg font-semibold text-site-ink">Esnek Hücreyi Devreye Al</span>
+            </span>
+            <span aria-hidden="true">→</span>
+          </Link>
+        )}
       </div>
     </main>
   );

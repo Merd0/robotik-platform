@@ -2015,3 +2015,133 @@ test("hat sayfası ilerleme özetini gösterir ve bir ders okunduğunda sayaç g
   await page.goto("/seviye/ortaokul/hat/h-guvenlik");
   await expect(page.getByRole("status").filter({ hasText: "ders kanıtlandı" })).toHaveText("0/2 ders kanıtlandı · 1 okundu");
 });
+
+const ESNEK_HUCRE_REFERANS_KOD = [
+  'GECERLI_PARCA_TURLERI = ["kutu", "silindir", "tepsi"]',
+  "",
+  "def is_emri_gecerli_mi(is_emri):",
+  '    if is_emri["parca_turu"] not in GECERLI_PARCA_TURLERI:',
+  "        return False",
+  '    hedef_sayisi = len(is_emri["hedefler"])',
+  "    return 1 <= hedef_sayisi <= 4",
+  "",
+  "def hedeflere_git(hedefler):",
+  "    for hedef in hedefler:",
+  '        robot.movel(hedef["x"], hedef["y"], hedef["z"])',
+  "",
+  "if not is_emri_gecerli_mi(IS_EMRI):",
+  '    hucre.durum_gec("reddedildi")',
+  "elif not hucre.sensor_onayi_bekle():",
+  '    hucre.hata_bildir("sensor-onayi-gelmedi")',
+  '    hucre.durum_gec("fault")',
+  "else:",
+  '    hucre.durum_gec("ready")',
+  '    hucre.durum_gec("running")',
+  "    try:",
+  '        hedeflere_git(IS_EMRI["hedefler"])',
+  '        hucre.durum_gec("tamamlandi")',
+  "    except RobotHatasi as hata:",
+  "        hucre.hata_bildir(str(hata))",
+  '        hucre.durum_gec("fault")',
+].join("\n");
+
+// Aynı davranışı üreten, farklı isimlendirilmiş bir yeniden düzenleme —
+// Milestone 6'nın "kod değişti ama davranış (durum geçmişi + hareket
+// sayısı) korundu" kontrolünü sınamak için.
+const ESNEK_HUCRE_REFACTOR_KOD = [
+  'IZINLI_TURLER = ["kutu", "silindir", "tepsi"]',
+  "",
+  "def gecerli_mi(emri):",
+  '    tur_ok = emri["parca_turu"] in IZINLI_TURLER',
+  '    sayi_ok = 1 <= len(emri["hedefler"]) <= 4',
+  "    return tur_ok and sayi_ok",
+  "",
+  "def git_hedeflere(hedefler):",
+  "    for hedef in hedefler:",
+  '        robot.movel(hedef["x"], hedef["y"], hedef["z"])',
+  "",
+  "if not gecerli_mi(IS_EMRI):",
+  '    hucre.durum_gec("reddedildi")',
+  "elif not hucre.sensor_onayi_bekle():",
+  '    hucre.hata_bildir("sensor-onayi-gelmedi")',
+  '    hucre.durum_gec("fault")',
+  "else:",
+  '    hucre.durum_gec("ready")',
+  '    hucre.durum_gec("running")',
+  "    try:",
+  '        git_hedeflere(IS_EMRI["hedefler"])',
+  '        hucre.durum_gec("tamamlandi")',
+  "    except RobotHatasi as hata:",
+  "        hucre.hata_bildir(str(hata))",
+  '        hucre.durum_gec("fault")',
+].join("\n");
+
+test("Kod Akademisi kapanış (Esnek Hücreyi Devreye Al): tam referans çözüm beş senaryoyu da geçer, predicate'i kanıtlar", async ({ page }) => {
+  await page.goto("/kod-akademisi/kapanis");
+  await expect(page.getByRole("heading", { name: "Esnek Hücreyi Devreye Al" })).toBeVisible();
+
+  await page.getByLabel("Python kodu — hücre yöneticisi").fill(ESNEK_HUCRE_REFERANS_KOD);
+  await page.waitForTimeout(150);
+  await page.getByRole("button", { name: "Tüm senaryoları çalıştır" }).click();
+
+  for (const id of ["gorev-1-normal", "gorev-2-gecersiz-parca", "gorev-3-onay-gelmiyor", "gorev-4-erisilemeyen-hedef", "gorev-5-transfer"]) {
+    await expect(page.getByTestId(`esnek-hucre-sonuc-${id}`)).toContainText("✓", { timeout: 60_000 });
+  }
+  for (let index = 1; index <= 5; index += 1) {
+    await expect(page.getByTestId(`esnek-hucre-milestone-${index}`)).toContainText("✓");
+  }
+  // Henüz yeniden düzenleme yapılmadı — 6. taş beklenmeden geçmemeli.
+  await expect(page.getByTestId("esnek-hucre-milestone-6")).toContainText("○");
+
+  const ilkKanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(ilkKanit.some((e: { skillId?: string; stage?: string; result?: string }) =>
+    e.skillId === "esnek-hucre-capstone" && e.stage === "assessed" && e.result === "success",
+  )).toBe(true);
+
+  // Aynı (değişmemiş) kodu tekrar göndermek Milestone 6'yı geçirmemeli.
+  await page.getByRole("button", { name: "Tüm senaryoları çalıştır" }).click();
+  await expect(page.getByTestId("esnek-hucre-sonuc-gorev-5-transfer")).toContainText("✓", { timeout: 60_000 });
+  await expect(page.getByTestId("esnek-hucre-milestone-6")).toContainText("○");
+
+  // Şimdi davranışı koruyan gerçek bir yeniden düzenleme gönder. Kısa bekleme,
+  // editörün `onChange`'inin React state'ine işlemesi için — aksi hâlde
+  // "Çalıştır" tıklaması, henüz güncellenmemiş bir `runAll` kapanışını
+  // (eski kodu) yakalayabilir (bkz. satır ~463'teki aynı sınıf not).
+  await page.getByLabel("Python kodu — hücre yöneticisi").fill(ESNEK_HUCRE_REFACTOR_KOD);
+  await page.waitForTimeout(150);
+  await page.getByRole("button", { name: "Tüm senaryoları çalıştır" }).click();
+  await expect(page.getByTestId("esnek-hucre-milestone-6")).toContainText("✓", { timeout: 60_000 });
+
+  await expect(page.getByRole("button", { name: "Teslim raporunu indir" })).toBeVisible();
+
+  const sonKanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(sonKanit.some((e: { skillId?: string; stage?: string; result?: string }) =>
+    e.skillId === "esnek-hucre-refactor" && e.stage === "assessed" && e.result === "success",
+  )).toBe(true);
+  expect(sonKanit.some((e: { stage?: string; verification?: string; predicateId?: string }) =>
+    e.stage === "passed" && e.verification === "registry-predicate" && e.predicateId === "esnek-hucre-capstone-v1",
+  )).toBe(true);
+  expect(sonKanit.some((e: { stage?: string; verification?: string; predicateId?: string }) =>
+    e.stage === "passed" && e.verification === "registry-predicate" && e.predicateId === "esnek-hucre-refactor-v1",
+  )).toBe(true);
+});
+
+test("Kod Akademisi kapanış: eksik doğrulama (Milestone 2 atlanmış) çözüm gizli/görünür senaryoları geçmez", async ({ page }) => {
+  await page.goto("/kod-akademisi/kapanis");
+  const eksikKod = [
+    "hucre.durum_gec(\"ready\")",
+    "hucre.durum_gec(\"running\")",
+    "for hedef in IS_EMRI[\"hedefler\"]:",
+    '    robot.movel(hedef["x"], hedef["y"], hedef["z"])',
+    'hucre.durum_gec("tamamlandi")',
+  ].join("\n");
+  await page.getByLabel("Python kodu — hücre yöneticisi").fill(eksikKod);
+  await page.getByRole("button", { name: "Tüm senaryoları çalıştır" }).click();
+
+  // Doğrulama yok: geçersiz parça yine de "tamamlandi" der -> reddedilmeli ama etmiyor -> FAIL beklenir.
+  await expect(page.getByTestId("esnek-hucre-sonuc-gorev-2-gecersiz-parca")).toContainText("○", { timeout: 60_000 });
+  // Arıza toparlama yok: ulaşılamayan hedefte Python istisnası worker'a sızar -> FAIL beklenir.
+  await expect(page.getByTestId("esnek-hucre-sonuc-gorev-4-erisilemeyen-hedef")).toContainText("○");
+  await expect(page.getByTestId("esnek-hucre-milestone-2")).toContainText("○");
+  await expect(page.getByTestId("esnek-hucre-milestone-5")).toContainText("○");
+});

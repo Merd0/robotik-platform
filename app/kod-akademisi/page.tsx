@@ -45,6 +45,18 @@ export default function KodAkademisiPage() {
             );
           })}
         </div>
+
+        <Link
+          href="/kod-akademisi/kapanis"
+          className="mt-4 flex min-h-11 flex-col gap-2 rounded-2xl border-2 border-site-strong bg-site-surface p-5 hover:bg-site-soft"
+        >
+          <span className="text-xs font-semibold uppercase tracking-[.14em] text-site-accent-text">Usta ötesi kapanış projesi</span>
+          <span className="font-heading text-2xl font-semibold text-site-ink">Esnek Hücreyi Devreye Al</span>
+          <span className="text-sm text-site-muted">
+            Dört aşamayı bitirdikten sonra: iş emri doğrulayan, durum makinesi kuran, arızayı
+            toparlayan TEK bir mühendislik projesi — altı teslim taşı aynı dosyayı büyütür.
+          </span>
+        </Link>
       </div>
     </main>
   );

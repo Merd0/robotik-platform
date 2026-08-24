@@ -1497,3 +1497,48 @@ describe("koda-orta-kod-incelemesi-v1: golden + negatif predicate testleri", () 
     expect(predicate.evaluate([run("success", { poseMatches: true, traceSteps: 1 }, "observed")]).passed).toBe(false);
   });
 });
+
+describe("esnek-hucre-capstone-v1: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "esnek-hucre-capstone-v1")!;
+  const run = (metrics: Record<string, number | string | boolean>, result: EvidenceEvent["result"] = "success") =>
+    event("assessed", result, { lessonId: "koda-kapanis-esnek-hucre", skillId: "esnek-hucre-capstone", metrics });
+
+  it("predicate doğru lessonId/skillId'ye kayıtlı", () => {
+    expect(predicate.lessonId).toBe("koda-kapanis-esnek-hucre");
+    expect(predicate.skillId).toBe("esnek-hucre-capstone");
+  });
+
+  it("golden: beş senaryonun hepsi true olan başarılı koşu geçer", () => {
+    expect(predicate.evaluate([run({ gorev1: true, gorev2: true, gorev3: true, gorev4: true, gorev5: true })]).passed).toBe(true);
+  });
+
+  it("negatif: tek bir senaryo bile false ise geçmez (UI'ın toplam bayrağına güvenmez)", () => {
+    expect(predicate.evaluate([run({ gorev1: true, gorev2: true, gorev3: true, gorev4: true, gorev5: false })]).passed).toBe(false);
+  });
+
+  it("negatif: result retry olan bir koşu, metrikler tam olsa bile geçmez", () => {
+    expect(predicate.evaluate([run({ gorev1: true, gorev2: true, gorev3: true, gorev4: true, gorev5: true }, "retry")]).passed).toBe(false);
+  });
+
+  it("negatif: eksik metrik alanı (undefined) geçmez", () => {
+    expect(predicate.evaluate([run({ gorev1: true, gorev2: true, gorev3: true, gorev4: true })]).passed).toBe(false);
+  });
+});
+
+describe("esnek-hucre-refactor-v1: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "esnek-hucre-refactor-v1")!;
+  const run = (metrics: Record<string, number | string | boolean>, result: EvidenceEvent["result"] = "success") =>
+    event("assessed", result, { lessonId: "koda-kapanis-esnek-hucre", skillId: "esnek-hucre-refactor", metrics });
+
+  it("golden: davranış korunmuş VE kod gerçekten değişmiş bir refactor geçer", () => {
+    expect(predicate.evaluate([run({ refactorGecerli: true, kodDegisti: true })]).passed).toBe(true);
+  });
+
+  it("negatif: davranış korunmuş ama kod hiç değişmemiş (aynı dosyayı tekrar göndermek) geçmez", () => {
+    expect(predicate.evaluate([run({ refactorGecerli: true, kodDegisti: false })]).passed).toBe(false);
+  });
+
+  it("negatif: kod değişmiş ama davranış bozulmuş geçmez", () => {
+    expect(predicate.evaluate([run({ refactorGecerli: false, kodDegisti: true })]).passed).toBe(false);
+  });
+});

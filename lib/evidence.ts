@@ -1115,6 +1115,53 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
       };
     },
   },
+  {
+    // Kod Akademisi kapanış projesi ("Esnek Hücreyi Devreye Al", bkz.
+    // docs/durum-codex.md "Usta ötesi kapanış projesi", lib/esnekHucre.ts).
+    // UI'ın tek bir "hepsi geçti" bayrağına GÜVENMİYOR — beş senaryonun her
+    // birinin RAW boolean sonucunu ayrı ayrı kontrol ediyor (bkz. docs/02
+    // "predicate UI'ın result: success iddiasına güvenmemeli" ilkesi).
+    id: "esnek-hucre-capstone-v1",
+    lessonId: "koda-kapanis-esnek-hucre",
+    skillId: "esnek-hucre-capstone",
+    evaluate: (events) => {
+      const basarili = events.filter(
+        (event) =>
+          event.skillId === "esnek-hucre-capstone" &&
+          event.stage === "assessed" &&
+          event.result === "success" &&
+          event.metrics?.gorev1 === true &&
+          event.metrics?.gorev2 === true &&
+          event.metrics?.gorev3 === true &&
+          event.metrics?.gorev4 === true &&
+          event.metrics?.gorev5 === true,
+      );
+      return { passed: basarili.length > 0, metrics: { basariliKosuSayisi: basarili.length } };
+    },
+  },
+  {
+    // Aynı capstone'un altıncı teslim taşı ("Davranışı koruyarak yeniden
+    // düzenle") — ayrı bir skillId/predicate: kapsamı capstone'un TAMAMI
+    // değil, yalnız "kod değişti ama beş senaryonun davranışı (durum
+    // geçmişi + hareket sayısı) birebir korundu" iddiası. Bileşen bu
+    // karşılaştırmayı KENDİSİ yapıp `refactorGecerli` metriğini yazıyor;
+    // predicate ek olarak `kodDegisti`nin de true olduğunu zorunlu kılarak
+    // "hiçbir şey değiştirmeden tekrar gönder" kaçamağını kapatıyor.
+    id: "esnek-hucre-refactor-v1",
+    lessonId: "koda-kapanis-esnek-hucre",
+    skillId: "esnek-hucre-refactor",
+    evaluate: (events) => {
+      const basarili = events.some(
+        (event) =>
+          event.skillId === "esnek-hucre-refactor" &&
+          event.stage === "assessed" &&
+          event.result === "success" &&
+          event.metrics?.refactorGecerli === true &&
+          event.metrics?.kodDegisti === true,
+      );
+      return { passed: basarili };
+    },
+  },
 ] as const;
 
 const listeners = new Set<() => void>();
