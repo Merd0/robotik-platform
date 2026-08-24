@@ -5506,3 +5506,62 @@ kırmıyor.
 
 **FAZ 1 tamamlandı — 94/94 ders doğrulandı, düzeltme gerekmedi.**
 Sıradaki: FAZ 2 (robot state sistemi, docs/16 Madde 28).
+
+## FAZ 2 — Paylaşılan robot state sistemi (docs/16 Madde 28, 2026-08-25)
+
+Madde 28'in tespiti: `CodeRunner` kendi informal `RunState`ini
+(`"hazir"|"yukleniyor"|"calisiyor"|"bitti"`), `RobotCellStudio`
+`RobotCellMotionStatus`i (`"safe"|"collision"|"ik-failure"|"joint-limit"`),
+`IkTarget`/`ReachabilityMap` de `ReachabilityStatus`ü ayrı ayrı taşıyor —
+paylaşılan, tüm robot bileşenlerinin uyduğu ortak bir durum kümesi yok.
+
+**Yaklaşım — yeni hesap icat etmeden normalleştirme.** `lib/robotics/
+robotState.ts`, sekiz durumu (`idle/planning/moving/paused/completed/
+error/collision/unreachable`) tek bir öncelik sıralamasıyla (çarpışma >
+erişilemez > hata > duraklat > meşgul > tamamlandı > boşta) türeten saf bir
+`deriveRobotState(signals)` fonksiyonu. Girdisi (`busy`, `phase`, `paused`,
+`completed`, `error`, `collision`, `unreachable`) var olan bileşenlerin
+ZATEN hesapladığı gerçek sinyaller — 17 birim testle (öncelik sırası dahil)
+doğrulandı. `components/ui/RobotStateBadge.tsx`, `ROBOT_STATE_LABEL`/
+`ROBOT_STATE_TONE`i tutarlı bir rozet olarak çiziyor (renk tek başına anlam
+taşımaz — etiket metni her zaman görünür, docs/02 erişilebilirlik ilkesi).
+
+**Gerçek entegrasyon, iki yer:**
+- `useCodeRunnerEngine.ts`: `running`/`error`/`testPassed`den türetilen
+  `robotState`, CodeRunner VE KodAkademisiCodeLab'da mevcut `role="status"`
+  canlı metnin yanına eklendi (iki `role="status"` bölgesi aynı anda
+  değişip ekran okuyucuya çift okumayacak şekilde rozet `aria-live` taşımıyor).
+- `RobotCellTeachingWorkbench.tsx`'teki program oynatma transportu: yeni
+  `lib/robotics/robotCellProgram.ts::preflightRobotStateSignals()` (8 testli,
+  test-first) `RobotCellProgramPreflight.firstIssue.reason`u eşliyor —
+  `collision`→collision, `ik-failure`/`joint-limit`→unreachable (fiziksel
+  imkânsızlık), `grip-zone`/`release-surface`/`already-holding`/
+  `not-holding`→genel `error` (prosedürel hata, fizik değil).
+
+**Bilinçli olarak dokunulmayan yer:** `lib/robotics/reachability.ts`teki
+`ReachabilityStatus` (`reachable/near-limit/unreachable/singularity-risk`)
+zorla 8 duruma sıkıştırılmadı — bu taksonomi kasıtlı olarak daha zengin
+(tekillik riski gibi 8 durumda karşılığı olmayan bir ara durum taşıyor);
+zorlamak bilgi kaybı olurdu. RobotCellStudio'nun geri kalanı (750+ satır,
+direkt IK öğretme durumu gibi) bu turda değiştirilmedi — "var olan davranışı
+bozma" kısıtı ve gerçek risk/getiri dengesi gereği, en net iki entegrasyon
+noktası tercih edildi.
+
+**Performans bütçesi düzeltmesi (gerçek ölçümle):** yeni kod paylaşılan
+route chunk'ına girdiği için (CodeRunner her ders sayfasının parçası)
+`git stash -u` ile doğrulandı: "3D'siz ders" 270.5→271.1 KiB gzip / 252.2→
+252.7 KiB br (+0.6/+0.5), "3D ders" brotli 480.0→480.6 KiB (+0.6, zaten
+tavandaydı). Bütçe 272/254 KiB ve 481 KiB brotli'ye küçük payla çekildi
+(`scripts/check-performance-budget.ts`, aynı dosyanın önceki notlarıyla
+aynı disiplin: gerçek "önce/sonra" ölçümü, gerekçeli, sınırsız değil).
+
+**Kontrol paketi:** tsc, lint, 951 vitest (17 yeni robotState +8 yeni
+preflightRobotStateSignals testi dahil), check-content/graph/quiz-dağılımı/
+mdx-güvenlik/review-debt/review-integrity/sensitive-terms, build, performans
+bütçesi (düzeltmeyle temiz), `npm audit` (0 zafiyet) — hepsi temiz. E2E: 362
+geçti, 1 (`tablet-768` WCAG testi, 60s timeout) paralel worker kaynak
+çekişmesi nedeniyle daha önce belgelenen aynı flaky kalıp — `--workers=1`
+izole koşuda geçti, gerçek bir regresyon değil.
+
+**FAZ 2 tamamlandı.** Sıradaki: FAZ 3 ("What if" deneyleri, docs/16
+Madde 30).
