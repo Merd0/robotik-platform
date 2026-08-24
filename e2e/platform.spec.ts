@@ -2145,3 +2145,49 @@ test("Kod Akademisi kapanış: eksik doğrulama (Milestone 2 atlanmış) çözü
   await expect(page.getByTestId("esnek-hucre-milestone-2")).toContainText("○");
   await expect(page.getByTestId("esnek-hucre-milestone-5")).toContainText("○");
 });
+
+test("Kod Akademisi geçiş kapısı (Satırdan poza): düzeltilmemiş bug her iki senaryoda da başarısız", async ({ page }) => {
+  await page.goto("/kod-akademisi/gecis-kapisi");
+  await expect(page.getByRole("heading", { name: "Satırdan poza: izle, tahmin et, düzelt" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Çalıştır", exact: true }).click();
+  await expect(page.getByTestId("koda-transfer-sonuc-gorunur")).toContainText("○", { timeout: 60_000 });
+  await expect(page.getByTestId("koda-transfer-sonuc-gizli-transfer")).toContainText("○");
+});
+
+test("Kod Akademisi geçiş kapısı (Satırdan poza): genelleyen düzeltme her iki senaryoyu da geçer, ezberleyen çözüm gizli senaryoda başarısız olur", async ({ page }) => {
+  await page.goto("/kod-akademisi/gecis-kapisi");
+
+  // Genelleyen düzeltme: parametreleri kullanır (x2, y2).
+  const dogruKod = [
+    "def iki_hedefe_git(x1, y1, x2, y2):",
+    "    robot.hedefe_git(x1, y1)",
+    "    robot.hedefe_git(x2, y2)",
+    "",
+    "iki_hedefe_git(HEDEF_X1, HEDEF_Y1, HEDEF_X2, HEDEF_Y2)",
+  ].join("\n");
+  await page.getByLabel("Python kodu").fill(dogruKod);
+  await page.waitForTimeout(150);
+  await page.getByRole("button", { name: "Çalıştır", exact: true }).click();
+  await expect(page.getByTestId("koda-transfer-sonuc-gorunur")).toContainText("✓", { timeout: 60_000 });
+  await expect(page.getByTestId("koda-transfer-sonuc-gizli-transfer")).toContainText("✓");
+
+  const kanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(kanit.some((e: { stage?: string; verification?: string; predicateId?: string }) =>
+    e.stage === "passed" && e.verification === "registry-predicate" && e.predicateId === "koda-gecis-satirdan-poza-v1",
+  )).toBe(true);
+
+  // Ezberleyen çözüm: görünür hedefi sabit sayı olarak yazar — gizli senaryoda başarısız olmalı.
+  const ezberlenenKod = [
+    "def iki_hedefe_git(x1, y1, x2, y2):",
+    "    robot.hedefe_git(x1, y1)",
+    "    robot.hedefe_git(-0.5, 0.8)",
+    "",
+    "iki_hedefe_git(HEDEF_X1, HEDEF_Y1, HEDEF_X2, HEDEF_Y2)",
+  ].join("\n");
+  await page.getByLabel("Python kodu").fill(ezberlenenKod);
+  await page.waitForTimeout(150);
+  await page.getByRole("button", { name: "Çalıştır", exact: true }).click();
+  await expect(page.getByTestId("koda-transfer-sonuc-gorunur")).toContainText("✓", { timeout: 60_000 });
+  await expect(page.getByTestId("koda-transfer-sonuc-gizli-transfer")).toContainText("○");
+});

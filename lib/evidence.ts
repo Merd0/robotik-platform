@@ -1162,6 +1162,27 @@ export const EVIDENCE_PREDICATES: readonly EvidencePredicate[] = [
       return { passed: basarili };
     },
   },
+  {
+    // "Satırdan poza: izle, tahmin et, düzelt" — İleri→Usta geçiş kapısı
+    // (docs/guncel-fikirler.md §13 Lab 2'nin genellenmiş hâli, bkz.
+    // lib/kodaTransferGate.ts). Görünür VE gizli (kör transfer) senaryonun
+    // İKİSİ de aynı koşuda geçmeli — yalnız görünür hedefi ezberleyip gizli
+    // olanı atlamak yetmez.
+    id: "koda-gecis-satirdan-poza-v1",
+    lessonId: "koda-gecis-satirdan-poza",
+    skillId: "koda-transfer-gate",
+    evaluate: (events) => {
+      const basarili = events.filter(
+        (event) =>
+          event.skillId === "koda-transfer-gate" &&
+          event.stage === "assessed" &&
+          event.result === "success" &&
+          event.metrics?.gorunur === true &&
+          event.metrics?.gizliTransfer === true,
+      );
+      return { passed: basarili.length > 0, metrics: { basariliKosuSayisi: basarili.length } };
+    },
+  },
 ] as const;
 
 const listeners = new Set<() => void>();

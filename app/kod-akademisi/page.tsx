@@ -47,6 +47,18 @@ export default function KodAkademisiPage() {
         </div>
 
         <Link
+          href="/kod-akademisi/gecis-kapisi"
+          className="mt-4 flex min-h-11 flex-col gap-2 rounded-2xl border-2 border-site-border bg-site-surface p-5 hover:bg-site-soft"
+        >
+          <span className="text-xs font-semibold uppercase tracking-[.14em] text-site-accent-text">İleri → Usta geçiş kapısı</span>
+          <span className="font-heading text-2xl font-semibold text-site-ink">Satırdan poza: izle, tahmin et, düzelt</span>
+          <span className="text-sm text-site-muted">
+            Bir satırlık hatayı çalışma iziyle bul, düzelt — sonra görmediğin bir hedefe de
+            genellediğini kanıtla.
+          </span>
+        </Link>
+
+        <Link
           href="/kod-akademisi/kapanis"
           className="mt-4 flex min-h-11 flex-col gap-2 rounded-2xl border-2 border-site-strong bg-site-surface p-5 hover:bg-site-soft"
         >

@@ -1542,3 +1542,26 @@ describe("esnek-hucre-refactor-v1: golden + negatif predicate testleri", () => {
     expect(predicate.evaluate([run({ refactorGecerli: false, kodDegisti: true })]).passed).toBe(false);
   });
 });
+
+describe("koda-gecis-satirdan-poza-v1: golden + negatif predicate testleri", () => {
+  const predicate = EVIDENCE_PREDICATES.find((item) => item.id === "koda-gecis-satirdan-poza-v1")!;
+  const run = (metrics: Record<string, number | string | boolean>, result: EvidenceEvent["result"] = "success") =>
+    event("assessed", result, { lessonId: "koda-gecis-satirdan-poza", skillId: "koda-transfer-gate", metrics });
+
+  it("predicate doğru lessonId/skillId'ye kayıtlı", () => {
+    expect(predicate.lessonId).toBe("koda-gecis-satirdan-poza");
+    expect(predicate.skillId).toBe("koda-transfer-gate");
+  });
+
+  it("golden: hem görünür hem gizli senaryo geçen koşu geçer", () => {
+    expect(predicate.evaluate([run({ gorunur: true, gizliTransfer: true })]).passed).toBe(true);
+  });
+
+  it("negatif: yalnız görünür senaryo geçip gizli (kör transfer) geçmezse başarısız", () => {
+    expect(predicate.evaluate([run({ gorunur: true, gizliTransfer: false })]).passed).toBe(false);
+  });
+
+  it("negatif: result retry olursa metrikler tam olsa bile geçmez", () => {
+    expect(predicate.evaluate([run({ gorunur: true, gizliTransfer: true }, "retry")]).passed).toBe(false);
+  });
+});

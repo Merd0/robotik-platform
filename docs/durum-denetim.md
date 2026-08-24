@@ -5266,3 +5266,68 @@ unutma (Task #15, kullanıcı açıkça istedi).
 ekran görüntüleri alınıp gönderildi (yukarıki "Ekranlar" notu). Kalan:
 Task #12 (§13 Lab 2), #13 (§13 Lab 4), #14 (zorluk sıçraması).
 
+---
+
+## Kod Akademisi — İleri→Usta geçiş kapısı: "Satırdan poza: izle, tahmin et, düzelt" (2026-08-24)
+
+`docs/guncel-fikirler.md` §13 Lab 2'nin `docs/durum-codex.md`'de onaylanan
+genellenmiş hâli: Hat D'ye bağlı bir kopya DEĞİL, satır-pozu-iz eşlemesini
+(zaten var olan Madde 9 özelliği) kullanan, kör transferli bağımsız bir
+geçiş kapısı modülü.
+
+### Tasarım — yine sıfır yeni worker API'si
+
+`lib/esnekHucre.ts` ile aynı ilke: `robot.hedefe_git(x, y)` (generic-2dof
+için zaten enjekte edilen analitik IK köprüsü) ve `jointTrace` yeterliydi.
+Tek eklenen: `lib/kodaTransferGate.ts`'teki hedef koordinatlarını enjekte
+eden küçük bir Python öneki (`HEDEF_X1`/`Y1`/`X2`/`Y2`).
+
+### Bug + kör transfer tasarımı
+
+Başlangıç kodu iki hedefe sırayla giden bir fonksiyon; ikinci çağrıda `y2`
+yerine kopyalanmış `y1` kullanılıyor — kasıtlı, gerçekçi bir kopyala-yapıştır
+hatası. Öğrenci, ders sayfalarında zaten var olan satır-senkron çalışma izi
+kaydırıcısıyla hatayı bulup düzeltir. Doğrulama İKİ senaryoyla: (1) görünür
+— gösterilen hedeflerle, (2) gizli — TAMAMEN FARKLI koordinatlarla. Golden
+değerler bu dosyanın kendisinden değil, `inverseKinematicsAnalytical2Dof`
+(bağımsız, zaten test edilmiş oracle) çağrısından türetildi ve test dosyasında
+bu oracle'a karşı doğrulandı.
+
+**Kör transfer koruması gerçekten test edildi:** parametreleri kullanmayıp
+görünür hedefi SABİT SAYI yazan ("ezberleyen") bir çözüm görünür senaryoyu
+geçer ama gizli senaryoda GERÇEKTEN başarısız olur — hem birim testinde hem
+gerçek Pyodide ile e2e'de kanıtlandı (`lib/kodaTransferGate.test.ts`
+"negatif (kör transfer koruması)"; e2e "genelleyen düzeltme... ezberleyen
+çözüm gizli senaryoda başarısız olur").
+
+### Route ve konum
+
+`/kod-akademisi/gecis-kapisi` — standart `[asama]/[modul]` kataloğunun
+DIŞINDA, statik bir route (capstone ile aynı mimari karar: `KodAkademisiCodeLab`/
+`useCodeRunnerEngine`'in tek-senaryolu modeline dokunmadan, 21 mevcut
+modülü riske atmadan). `/kod-akademisi` anasayfasına ve `/kod-akademisi/ileri`
+sayfasının sonuna (İleri aşamasının bittiği yere) bağlantı eklendi.
+
+### Doğrulama
+
+Test-first: `lib/kodaTransferGate.test.ts` (10 senaryo — fixture sağlığı,
+IK oracle'a karşı golden değer doğrulaması, erişim alanı kontrolü, preamble
+üretimi, 2 golden + 4 negatif değerlendirme). `lib/evidence.ts`'e yeni
+`koda-gecis-satirdan-poza-v1` predicate'i (3 test). 2 yeni e2e senaryosu
+GERÇEK Pyodide ile izole çalıştırılıp geçti: (1) düzeltilmemiş bug her iki
+senaryoda da başarısız, (2) genelleyen düzeltme ikisini de geçer + predicate
+`passed` yazar, ezberleyen çözüm gizli senaryoda başarısız kalır.
+
+Tam paket: `tsc`, `lint`, `npm test` (898/898), `check-content` (94/94),
+`validate-content-graph`, `check-quiz-dagilimi`, `check-mdx-guvenlik`,
+`check-review-debt`/`check-review-integrity` (bilgi), `check-sensitive-terms`,
+`build`, `check-performance-budget` (270.5/252.1, bütçe içinde — bütçe
+değişikliği gerekmedi), `npm audit` (0 zafiyet) — hepsi temiz.
+
+Tam Playwright suite'i (3 viewport): **348 geçti, 3 timeout'la başarısız
+(mobile-390'da ThresholdViewer + WCAG, tablet-768'de WCAG — hepsi bu
+görevin dışındaki dosyalarla ilgili), 18 koşullu atlama.** Yeni eklenen
+4 e2e senaryosu (2 kapanış + 2 geçiş kapısı) TAM koşuda da yeşildi. 3
+başarısızlık izole tekrar çalıştırıldı — **üçü de geçti**, aynı kök neden
+(paralel worker yükü) doğrulandı.
+
