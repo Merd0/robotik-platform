@@ -151,7 +151,13 @@ const surfaces: SurfaceConfig[] = [
   // 270.5/252.2 KiB, geri alınınca 271.1/252.7 KiB — gerçek fark +0.6/+0.5
   // KiB. Gzip eşiği 271→272 KiB'e, brotli 253→254 KiB'e çekildi (küçük pay,
   // sınırsız değil — bkz. yukarıdaki notlardaki aynı gerekçe).
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 272 * KIB, brotli: 254 * KIB } },
+  //
+  // 2026-08-25 (FAZ 4 — geliştirici debug paneli, docs/16 Madde 55):
+  // `components/ui/DebugPanel.tsx`, CodeRunner'a eklendi (paylaşılan route
+  // chunk'ında). `git stash -u`: stash'lenmişken 271.5/253.1 KiB, geri
+  // alınınca 272.0/253.6 KiB — gerçek fark +0.5/+0.5 KiB. Gzip 272→273,
+  // brotli 254→255 KiB'e çekildi.
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 273 * KIB, brotli: 255 * KIB } },
   // "3D ders" gzip'i zaten 530 KiB'de yeterli payla duruyordu (524.3→524.9,
   // +0.6 KiB). Brotli aynı FAZ 2 nedeniyle 480.0→480.6 KiB'e çıktı (zaten
   // tavanda duran bir bütçeydi, hiç payı yoktu) — 480→481 KiB'e çekildi.
@@ -161,7 +167,12 @@ const surfaces: SurfaceConfig[] = [
   // eklendi. `git stash -u` ile doğrulandı: stash'lenmişken 524.9/480.6 KiB,
   // geri alınınca 525.5/481.0 KiB (ham baytta 481'i az miktarda aşıyor) —
   // brotli 481→482 KiB'e çekildi, gzip zaten yeterliydi.
-  { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 482 * KIB } },
+  //
+  // 2026-08-25 (FAZ 4 — geliştirici debug paneli, docs/16 Madde 55):
+  // Bu sayfa da CodeRunner'ın paylaşılan route chunk'ını taşıyor. `git
+  // stash -u`: 525.5/481.0→526.0/481.5 KiB — gzip zaten yeterliydi, brotli
+  // 482→483 KiB'e çekildi.
+  { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 483 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];
 

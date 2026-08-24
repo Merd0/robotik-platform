@@ -12,19 +12,25 @@ import { Neden } from "@/components/interactive/Neden";
 import { forwardKinematics, inverseKinematicsNumerical, type NumericalIkResult } from "@/lib/robotics/kinematics";
 import { getRobotById } from "@/lib/robotics/robots";
 import { useComplexityMode, useDeclareComplexityModeSupport } from "@/components/ui/ComplexityModeProvider";
+import { DebugPanel } from "@/components/ui/DebugPanel";
 
 const robot = getRobotById("generic-2dof");
 const round = (value: number, digits = 4) => Number.isFinite(value) ? value.toFixed(digits) : "—";
 const toDegrees = (value: number) => value * 180 / Math.PI;
 const toSvg = (point: { x: number; y: number }) => ({ x: 150 + point.x * 68, y: 150 - point.y * 68 });
 
+const SOLVER_CONFIG = {
+  initialGuess: [-0.55, 1.1],
+  maxIterations: 80,
+  tolerance: 0.001,
+  maxStep: 0.2,
+};
+
 function solve(target: { x: number; y: number }, damping: number): NumericalIkResult {
   return inverseKinematicsNumerical(robot, { ...target, z: 0 }, {
-    initialGuess: [-0.55, 1.1],
+    ...SOLVER_CONFIG,
+    initialGuess: [...SOLVER_CONFIG.initialGuess],
     damping,
-    maxIterations: 80,
-    tolerance: 0.001,
-    maxStep: 0.2,
   });
 }
 
@@ -179,6 +185,17 @@ export function DlsTraceLab() {
           </p>
         )}
       </NasilHesaplandi>
+
+      <DebugPanel
+        className="mt-3"
+        items={[
+          { label: "başlangıç tahmini (θ1, θ2)", value: `${SOLVER_CONFIG.initialGuess[0].toFixed(2)}, ${SOLVER_CONFIG.initialGuess[1].toFixed(2)} rad` },
+          { label: "maksimum iterasyon", value: String(SOLVER_CONFIG.maxIterations) },
+          { label: "yakınsama toleransı", value: `${SOLVER_CONFIG.tolerance} m` },
+          { label: "adım başına eklem sınırı", value: `${SOLVER_CONFIG.maxStep} rad` },
+          ...(result ? [{ label: "bu koşuda kullanılan iterasyon", value: `${result.iterations} / ${SOLVER_CONFIG.maxIterations}` }] : []),
+        ]}
+      />
 
       <ExperimentShareButton
         seviye="universite"

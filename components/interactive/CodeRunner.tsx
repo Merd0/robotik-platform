@@ -8,6 +8,8 @@ import { RobotInfoLine } from "@/components/interactive/RobotInfoLine";
 import { codeRunnerStatusText, roundPose, useCodeRunnerEngine } from "@/components/interactive/useCodeRunnerEngine";
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/Tabs";
 import { RobotStateBadge } from "@/components/ui/RobotStateBadge";
+import { DebugPanel } from "@/components/ui/DebugPanel";
+import { MAX_CODE_RUNTIME_MS, MAX_JOINT_TRACE, MAX_OUTPUT_BYTES, MAX_OUTPUT_EMISSIONS } from "@/lib/workers/executionLimits";
 
 interface CodeRunnerProps {
   /** Editörde başlangıçta görünen kod. */
@@ -248,6 +250,16 @@ export function CodeRunner({
                 </span>
               )}
             </div>
+
+            <DebugPanel
+              label="Geliştirici ayrıntıları · çalışma sınırları"
+              items={[
+                { label: "azami çalışma süresi", value: `${MAX_CODE_RUNTIME_MS / 1000} s` },
+                { label: "azami çıktı boyutu", value: `${MAX_OUTPUT_BYTES / 1024} KiB` },
+                { label: "azami çıktı olayı", value: String(MAX_OUTPUT_EMISSIONS) },
+                { label: "azami eklem izi örneği", value: String(MAX_JOINT_TRACE) },
+              ]}
+            />
 
             {jointTrace.length > 0 && robot && <div className={`rounded-lg border ${t.outline} ${t.bg} p-3`}>
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm">

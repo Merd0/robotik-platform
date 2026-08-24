@@ -63,8 +63,23 @@ export function AramaKutusu() {
         {!aranan && "Aramak için bir şeyler yaz."}
         {aranan && durum === "yukleniyor" && "Arama indeksi yükleniyor…"}
         {aranan && durum === "hata" && "Arama indeksi yüklenemedi. Sayfayı yenilemeyi dene."}
-        {aranan && durum === "hazir" && `${sonuclar.length} ders bulundu.`}
+        {aranan && durum === "hazir" && sonuclar.length > 0 && `${sonuclar.length} ders bulundu.`}
+        {aranan && durum === "hazir" && sonuclar.length === 0 && "Bu terimle eşleşen ders yok."}
       </p>
+
+      {aranan && durum === "hazir" && sonuclar.length === 0 && (
+        <p className="text-sm text-ortaokul-ink/70">
+          Daha kısa bir terim dene (ör. tam cümle yerine tek kelime), ya da{" "}
+          <Link href="/sozluk" className="text-ortaokul-accent-text underline decoration-2 underline-offset-4">
+            sözlükten
+          </Link>{" "}
+          doğru terimi bul. Bütün konu hatlarını görmek için{" "}
+          <Link href="/" className="text-ortaokul-accent-text underline decoration-2 underline-offset-4">
+            ana sayfaya
+          </Link>{" "}
+          dönebilirsin.
+        </p>
+      )}
 
       {sonuclar.length > 0 && (
         <ul className="flex flex-col gap-4">
