@@ -1,6 +1,7 @@
 "use client";
 
 import { jointVelocityProfile, type RobotCellMotionPlan } from "@/lib/robotics/robotCellMotion";
+import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
 
 const RAD_TO_DEG = 180 / Math.PI;
 const JOINT_COLORS = ["#0f766e", "#c2410c", "#7c3aed", "#0369a1", "#b91c1c", "#65a30d"] as const;
@@ -119,20 +120,25 @@ function tcpPositionSeries(plan: RobotCellMotionPlan): ChartSeries[] {
 /**
  * `plan.samples`/`plan.sampleTimesSeconds`/`jointVelocityProfile`in ürettiği
  * zaten hesaplı veriyi üç zaman grafiğine (eklem açısı, eklem hızı, TCP
- * konumu) döker — hiçbiri dekoratif ya da uydurma değil. Varsayılan KAPALI
- * `<details>` içinde (docs/16 "ekranı sürekli doldurma" uyarısı, aynı
- * dosyadaki "Modelin sınırları" panelinin bitişiğinde aynı desen).
+ * konumu) döker — hiçbiri dekoratif ya da uydurma değil. Kendi `<details>`
+ * yerine `NasilHesaplandi`yi (docs/16 madde 4 — Faz 7'de zaten var olan,
+ * test edilmiş açılıp-kapanma kabuğu) kullanır: madde 26 "dağınık
+ * telemetriyi tek, adlandırılmış bir panelde topla" isteği, bu iki bileşenin
+ * bağımsız yazdığı AYNI `<details>` desenini yeni bir üçüncü kabuk yerine
+ * platformdaki TEK kabukta birleştirerek karşılanıyor. Varsayılan KAPALI
+ * (docs/16 "ekranı sürekli doldurma" uyarısı).
  */
 export function RobotCellMotionCharts({ plan, label }: { plan: RobotCellMotionPlan; label: string }) {
   if (plan.samples.length < 2) return null;
   const totalSeconds = plan.sampleTimesSeconds.at(-1) ?? 0;
 
   return (
-    <details className="mt-3 rounded-xl border border-site-border bg-site-soft p-3 text-xs leading-5 text-site-muted">
-      <summary className="min-h-11 cursor-pointer font-semibold text-site-ink">
-        {label} zaman grafiği · {totalSeconds.toFixed(2)} s
-      </summary>
-      <div className="mt-3 grid gap-4">
+    <NasilHesaplandi
+      baslik={`${label} zaman grafiği`}
+      ozet={`${totalSeconds.toFixed(2)} s`}
+      className="mt-3 border-site-border bg-site-soft text-xs leading-5 text-site-muted"
+    >
+      <div className="grid gap-4">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wider text-site-subtle">Eklem açısı / zaman</p>
           <MiniLineChart
@@ -161,6 +167,6 @@ export function RobotCellMotionCharts({ plan, label }: { plan: RobotCellMotionPl
           />
         </div>
       </div>
-    </details>
+    </NasilHesaplandi>
   );
 }

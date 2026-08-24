@@ -80,14 +80,20 @@ test("öğreterek programlama yolu fiziksel provadan geçer, oynatılır ve payl
   await expect(experiment.getByRole("status").filter({ hasText: "Prova hazır" })).toBeVisible();
   await expect(experiment.getByLabel("2 öğretilmiş poz")).toBeVisible();
 
-  // Faz 5 (docs/16 madde 27): eklem açısı/zaman grafiği, gerçek prova
-  // uzunluğuyla (3 eklem — legend θ1/θ2/θ3) görünür oluyor.
-  const zamanGrafigi = experiment.locator("[data-joint-time-chart]");
-  await expect(zamanGrafigi).toBeVisible();
-  await expect(zamanGrafigi.getByRole("img")).toHaveAccessibleName(/3 eklem/);
-  await expect(zamanGrafigi.getByText("θ1")).toBeVisible();
-  await expect(zamanGrafigi.getByText("θ2")).toBeVisible();
-  await expect(zamanGrafigi.getByText("θ3")).toBeVisible();
+  // Faz 5 (docs/16 madde 27) + Madde 26 (docs/16 — dağınık telemetriyi tek,
+  // adlandırılmış TelemetryPanel'de topla, robot-hücresi'nin RobotCellMotionCharts'ıyla
+  // AYNI paylaşılan kabuk): eklem açısı/zaman grafiği, gerçek prova
+  // uzunluğuyla (3 eklem — legend θ1/θ2/θ3) görünür oluyor. Panel bu
+  // sekmede varsayılan AÇIK (robot-hücresi'nden farklı — az önce
+  // öğretilen programın hemen ardındaki tek geri bildirim, kapalı
+  // başlarsa mikro-kazanç kaybolur).
+  const telemetriPaneli = experiment.getByTestId("playground-telemetry-panel");
+  await expect(telemetriPaneli).toBeVisible();
+  await expect(telemetriPaneli.locator("summary")).toContainText("Hareket telemetrisi");
+  await expect(telemetriPaneli.getByRole("img")).toHaveAccessibleName(/3 eklem/);
+  await expect(telemetriPaneli.getByText("θ1")).toBeVisible();
+  await expect(telemetriPaneli.getByText("θ2")).toBeVisible();
+  await expect(telemetriPaneli.getByText("θ3")).toBeVisible();
 
   await experiment.getByRole("button", { name: "Programı oynat" }).click();
   await expect(experiment.getByRole("status").filter({ hasText: "Program tamamlandı" })).toBeVisible({ timeout: 8_000 });

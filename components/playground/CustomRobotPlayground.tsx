@@ -35,6 +35,7 @@ import {
 } from "@/lib/robotics/customRobotMotion";
 import { decodeLabState, encodeLabState, type CustomRobotLabState } from "@/lib/labState";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
+import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
 import { JointTimeChart } from "@/components/playground/JointTimeChart";
 
 const STORAGE_KEY = "robotik-platform:custom-robot:v1";
@@ -1187,9 +1188,16 @@ export function CustomRobotPlayground() {
                   </div>
 
                   {trajectoryPlan?.ok && (
-                    <div data-joint-time-chart className="rounded-xl border border-site-border bg-site-surface p-3">
-                      <p className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-site-muted">Eklem açısı / zaman</p>
-                      <JointTimeChart samples={sampleTrajectoryOverTime(trajectoryPlan.trajectory)} className="mt-1 text-site-ink" />
+                    <div data-testid="playground-telemetry-panel">
+                      <NasilHesaplandi
+                        baslik="Hareket telemetrisi"
+                        ozet={`${round(trajectoryPlan.trajectory.totalDurationSeconds, 2)} s`}
+                        varsayilanAcik
+                        className="border-site-border bg-site-surface text-xs leading-5 text-site-muted"
+                      >
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-site-subtle">Eklem açısı / zaman</p>
+                        <JointTimeChart samples={sampleTrajectoryOverTime(trajectoryPlan.trajectory)} className="mt-1 text-site-ink" />
+                      </NasilHesaplandi>
                     </div>
                   )}
 
