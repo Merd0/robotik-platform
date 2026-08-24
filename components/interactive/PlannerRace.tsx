@@ -21,6 +21,7 @@ import { SCENE_PALETTES } from "@/lib/theme";
 import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
 import { Neden } from "@/components/interactive/Neden";
 import { useComplexityMode, useDeclareComplexityModeSupport } from "@/components/ui/ComplexityModeProvider";
+import { WhatIfSuggestion } from "@/components/ui/WhatIfSuggestion";
 
 interface PlannerRaceProps {
   /** Yarışa girecek algoritmalar; tek algoritma verilirse "yarış" değil tek sahne olur. */
@@ -193,6 +194,17 @@ export function PlannerRace({
     setErrors({});
   }
 
+  /** docs/16 Madde 30 "What if" önerisi — yeni bir çarpışma motoru icat etmiyor, var olan `obstacles` state'ini büyütüyor. */
+  function handleGrowLargestObstacle() {
+    setObstacles((prev) =>
+      prev.length === 0
+        ? [{ kind: "sphere", center: { x: (start.x + goal.x) / 2, y: (start.y + goal.y) / 2, z: 0 }, size: [DEFAULT_OBSTACLE_RADIUS * 2] }]
+        : prev.map((obstacle, index) => (index === 0 ? { ...obstacle, size: obstacle.size.map((value) => value * 2) } : obstacle)),
+    );
+    setResults({});
+    setErrors({});
+  }
+
   function resetChallenge() {
     setObstacles(CHALLENGE_INITIAL_OBSTACLES);
     setResults({});
@@ -323,6 +335,13 @@ export function PlannerRace({
             Bu noktaya engel ekle / kaldır
           </button>
         </div>
+      )}
+
+      {allowObstacleEdit && !challengeActive && (
+        <WhatIfSuggestion
+          question="Bir engelin boyutunu iki katına çıkarsan planlayıcılar hâlâ yol bulur mu?"
+          onApply={handleGrowLargestObstacle}
+        />
       )}
 
       <label className={`flex max-w-56 flex-col gap-1 text-sm ${t.ink}`}>

@@ -155,7 +155,13 @@ const surfaces: SurfaceConfig[] = [
   // "3D ders" gzip'i zaten 530 KiB'de yeterli payla duruyordu (524.3→524.9,
   // +0.6 KiB). Brotli aynı FAZ 2 nedeniyle 480.0→480.6 KiB'e çıktı (zaten
   // tavanda duran bir bütçeydi, hiç payı yoktu) — 480→481 KiB'e çekildi.
-  { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 481 * KIB } },
+  //
+  // 2026-08-25 (FAZ 3 — "What if" önerileri, docs/16 Madde 30):
+  // `components/ui/WhatIfSuggestion.tsx` bu sayfanın kullandığı `IkTarget`e
+  // eklendi. `git stash -u` ile doğrulandı: stash'lenmişken 524.9/480.6 KiB,
+  // geri alınınca 525.5/481.0 KiB (ham baytta 481'i az miktarda aşıyor) —
+  // brotli 481→482 KiB'e çekildi, gzip zaten yeterliydi.
+  { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 482 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];
 

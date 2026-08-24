@@ -37,6 +37,7 @@ import { decodeLabState, encodeLabState, type CustomRobotLabState } from "@/lib/
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
 import { NasilHesaplandi } from "@/components/interactive/NasilHesaplandi";
 import { JointTimeChart } from "@/components/playground/JointTimeChart";
+import { WhatIfSuggestion } from "@/components/ui/WhatIfSuggestion";
 
 const STORAGE_KEY = "robotik-platform:custom-robot:v1";
 const MAX_TRACE_POINTS = 160;
@@ -551,8 +552,14 @@ export function CustomRobotPlayground() {
     setIssues([]);
   }
 
-  function applyDesign() {
-    const result = createCustomRobotSpec(draft);
+  /**
+   * `overrideDefinition` verilirse `draft` state'i yerine doğrudan bu tanım
+   * uygulanır — "What if" önerisinin (docs/16 Madde 30) tek tıkla düzenleyip
+   * uygulaması için: `setDraft(...)` + hemen ardından `applyDesign()`
+   * çağrısı React state batching nedeniyle ESKİ `draft`ı okurdu.
+   */
+  function applyDesign(overrideDefinition?: CustomRobotDefinition) {
+    const result = createCustomRobotSpec(overrideDefinition ?? draft);
     if (!result.ok) {
       setIssues(result.issues);
       setAnnouncement("Tasarım uygulanmadı; işaretli alanları düzelt.");
@@ -574,6 +581,18 @@ export function CustomRobotPlayground() {
     setAnnouncement(storageAvailable === false
       ? "Robot uygulandı; yerel depolama kapalı olduğu için yalnız bu sekmede kalacak."
       : "Robot tarayıcıya kaydedildi.");
+  }
+
+  /** docs/16 Madde 30 "What if" önerisi — ilk bağlantıyı %20 uzatıp gerçek `createCustomRobotSpec` doğrulamasından geçirir, yeni erişimi hemen uygular. */
+  function handleExtendFirstLinkAndApply() {
+    const nextDefinition: CustomRobotDefinition = {
+      ...draft,
+      joints: draft.joints.map((joint, index) =>
+        index === 0 ? { ...joint, linkLength: round(joint.linkLength * 1.2, 3) } : joint,
+      ),
+    };
+    setDraft(nextDefinition);
+    applyDesign(nextDefinition);
   }
 
   function appendRecordedPose(currentProgram: ReturnType<typeof programOf>, angles: number[], force: boolean) {
@@ -981,6 +1000,13 @@ export function CustomRobotPlayground() {
           <p className="mt-1 text-[11px] leading-5 text-site-subtle">
             {storageAvailable === false ? "Kalıcı kayıt kullanılamıyor." : "Kayıt yalnız bu tarayıcıdaki localStorage alanında tutulur; sunucuya gönderilmez."}
           </p>
+
+          <WhatIfSuggestion
+            className="mt-4"
+            question="İlk bağlantıyı %20 uzatsan robotun toplam erişimi ne kadar büyür?"
+            actionLabel="Uzat ve uygula"
+            onApply={handleExtendFirstLinkAndApply}
+          />
         </form>
 
         <section

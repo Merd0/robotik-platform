@@ -23,6 +23,7 @@ import { SCENE_PALETTES } from "@/lib/theme";
 import { Neden } from "@/components/interactive/Neden";
 import { RobotInfoLine } from "@/components/interactive/RobotInfoLine";
 import { useComplexityMode, useDeclareComplexityModeSupport } from "@/components/ui/ComplexityModeProvider";
+import { WhatIfSuggestion } from "@/components/ui/WhatIfSuggestion";
 
 interface IkTargetProps {
   robot: string;
@@ -191,6 +192,13 @@ export function IkTarget({ robot: robotId, solver = "auto", pilot }: IkTargetPro
       </SahneAlani>
       <RobotInfoLine robot={robot} className="text-lise-ink/70" />
       <ReachabilityMap robot={robot} target={target} elbow={elbow} />
+
+      {!challengeActive && (
+        <WhatIfSuggestion
+          question="Hedefi robotun azami erişiminin biraz dışına taşısan robot yine ulaşabilir mi?"
+          onApply={() => commitTarget({ x: maxReach * 1.15, y: 0 }, elbow)}
+        />
+      )}
 
       {/*
         Hedefi sürüklemek dokunmatik/fare için doğal ama klavyeyle imkânsız.
