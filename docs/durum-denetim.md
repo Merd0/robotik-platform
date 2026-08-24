@@ -5210,16 +5210,20 @@ bölümü) ilgisiz dosyalarla ilişkili görünüyor. **Ancak bu koşuda tam lis
 izole tekrar doğrulanmadan durduruldu** (Mert'in "şu an neredeysen dur"
 talimatı) — bu, önceki bölümlerdeki gibi "izole çalıştırıldı, hepsi geçti"
 diye KANITLANMIŞ bir bulgu DEĞİL, yalnız aynı desene uyan bir gözlem.
-**Açık madde:** bir sonraki oturumda bu 9 testi (özellikle Kod Akademisi
-kapanış testi) izole tekrar çalıştırıp gerçekten flaky mi yoksa gerçek bir
-regresyon mu olduğunu doğrula.
+**Kapatıldı (2026-08-24, devam oturumu):** 9 testin TAMAMI (6'sı
+desktop-1440, 2 WCAG testi mobile-390/tablet-768, 1 gripper testi
+mobile-390/tablet-768) izole/düşük paralellikte tekrar çalıştırıldı —
+**hepsi geçti.** Gerçek bir regresyon değil, doğrulandı: paralel
+worker'ların Pyodide/WebGL yüküyle yarışması (bu dosyadaki FAZ 1/FAZ 2
+bulgularıyla aynı, artık üçüncü kez doğrulanan desen).
 
-### Ekranlar — HENÜZ ALINMADI (açık madde)
+### Ekranlar (2026-08-24, devam oturumu)
 
-`/kod-akademisi/kapanis` sayfası hazır (anlatı + kod editörü + senaryo
-sonuçları + altı teslim taşı paneli) ama ekran görüntüsü ALINMADI/
-gönderilmedi — Mert'in "ekran görüntüleriyle özet yaz" talebi bu commit'te
-karşılanmadı, sıradaki oturumun ilk işi bu olmalı (Task #15).
+`/kod-akademisi/kapanis` sayfasının iki durumu Playwright ile yakalanıp
+kullanıcıya gönderildi: (1) başlangıç hâli (anlatı + boş editör), (2)
+referans çözüm çalıştırılıp 5 senaryo + ilk 5 teslim taşı yeşile döndüğü
+an. Geçici ekran görüntüsü script'i (`e2e/tmp-screenshot.spec.ts`) işi
+bitince silindi, kalıcı test suite'ine eklenmedi.
 
 ---
 
@@ -5256,4 +5260,9 @@ Working tree bu commit sonrası temiz olacak (aşağıdaki commit adımıyla).
 başla (§13 Lab 2), aynı test-first + tam kontrol paketi + main'e merge
 disiplinini sürdür. `/kod-akademisi/kapanis`'in ekran görüntüsünü almayı
 unutma (Task #15, kullanıcı açıkça istedi).
+
+**Güncelleme (aynı gün, "kaldığın yerden devam et"):** Task #15 tamamlandı
+— 9 flaky/timeout testin hepsi izole doğrulandı (yukarıki "Kapatıldı" notu),
+ekran görüntüleri alınıp gönderildi (yukarıki "Ekranlar" notu). Kalan:
+Task #12 (§13 Lab 2), #13 (§13 Lab 4), #14 (zorluk sıçraması).
 
