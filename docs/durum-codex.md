@@ -2539,3 +2539,42 @@ izlenmeyen `lib/robotics/robotState.ts` ve testi sürdüğü için bunlara dokun
 Evidence, Kod Akademisi, ders içeriği ve robot-state sözleşmeleri değiştirilmedi.
 Ana dal kirliyken otomatik merge yapılmadı; doğrulanmış commit dal zincirinde
 korundu.
+
+## 2026-08-24 — Farklılaştırıcı 5/5: Hata Müzesi
+
+`/laboratuvar/hata-muzesi` altında, Arıza Kliniği’nin aynı üç deterministik golden
+trace’ini küratörlü karşı örneklere dönüştüren bir keşif yüzeyi eklendi. Encoder
+ofseti, paket gecikmesi ve aktüatör doygunluğu birer “eser” olarak önce semptomu ve
+cazip fakat yanlış zihinsel modeli gösteriyor. Kullanıcı doğru kök neden adını
+ezberden seçmiyor; yanlış iddianın mekanizmasını gerçekten çürüten ölçümü bulmadan
+doğru okuma açılmıyor.
+
+Her eser için bağımsız referans–ölçüm ortalama farkı, en yüksek paket yaşı ve
+istenen–uygulanan en büyük komut farkı doğrudan mevcut `generateFaultScenario`
+örneklerinden hesaplanıyor. Yanlış ölçüm bağlam sağlasa bile doğru okumayı açmıyor.
+Ayırt edici karşı kanıt seçildiğinde yanlış/doğru yorum yan yana gösteriliyor;
+güvenli ilk eylem ve doğrulama testi yeni bir metin sözleşmesinden değil,
+`FAULT_INFO`, `FIRST_ACTION_OPTIONS` ve `VERIFICATION_TEST_OPTIONS` kaynaklarından
+alınıyor. Mevcut `FaultTracePanel` grafik ve tablo karşılığını yeniden kullanıyor;
+renk tek bilgi kanalı değil.
+
+“Anonim” ifadesi sahte topluluk faaliyeti anlamında kullanılmadı: eserler gerçek
+kişilerden veya kullanıcı koşularından toplanmıyor, seed 0/1/2 ile yerelde yeniden
+üretilen sabit sentetik vakalardır. UI bunu her eserde açıkça söylüyor; hesap,
+localStorage, sunucu, telemetri gönderimi veya sosyal kanıt eklenmedi. Model sınırı,
+simülasyondaki bağımsız referansın oracle olan gerçek konum olduğunu ve sahada ayrı
+doğrulanmış ölçüm aracı gerekeceğini görünür tutuyor. Yeni bağımlılık eklenmedi.
+
+Test-first kanıtında `errorMuseum` importu ile sitemap rotası önce kırmızı, model
+sonra 8/8 yeşil çalıştı. UI E2E sözleşmesi sayfa yokken kırmızıya geçti; uygulama
+sonrası ikinci denemede üç viewport 9/9 geçti. Tam kapı temiz: `npx tsc`, lint,
+74 dosyada 951 Vitest, içerik/graph/quiz/MDX/review-debt/review-integrity/
+sensitive-terms, 338 statik sayfalı build, 0 taslak sızıntısı, performans bütçesi
+(3B Brotli toplamı 480,0/480,0 KiB), Playwright (405 geçti, 18 koşullu atlandı)
+ve audit (0 açık).
+
+Faz öncesi ve teslim öncesi `git status` kontrol edildi. Kök ana daldaki Claude’a
+ait izlenmeyen `lib/robotics/robotState.ts` ile testi sahiplenilmedi; Evidence, Kod
+Akademisi, ders içeriği ve robot-state sözleşmeleri değiştirilmedi. Ana dal kirli
+olduğu için otomatik merge yapılmadı; beş farklılaştırıcının doğrulanmış commit
+zinciri bağımsız dalda korunuyor.
