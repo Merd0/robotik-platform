@@ -5649,3 +5649,28 @@ hepsi geçti.
 
 **FAZ 4 tamamlandı.** Sıradaki: FAZ 5 (4 farklılaştırıcı özellik: Robot
 Röportajı, Zaman Kapsülü, Sınır Testi, Kırık Kod Laboratuvarı).
+
+## FAZ 5 — 4 farklılaştırıcı özellik (devam ediyor, 2026-08-25)
+
+**1/4 — Robot Röportajı: TAMAMLANDI.** `/robot-roportaji` — katalogdaki bir
+robota sabit bir soru listesi sorulur, her cevap `lib/robotics/
+robotInterview.ts`teki saf motordan (13 vitest testi) gelir: gerçek eksen
+sayısı, en hızlı/en dar limitli eklem, gerçek Jacobian manipülabilitesiyle
+tekillik yorumu, erişim (metadata varsa kaynağıyla, yoksa "hesaplanan"
+notuyla, genel DH zincirinde hiç uydurmadan). Jenerik robotlar asla marka
+uydurmuyor — `RobotInfoLine`'daki aynı dürüstlük ilkesi. Hesapsız, puansız,
+`/oyun-alani` ile aynı serbest deney ailesi. Nav'a eklendi.
+
+**Yan bulgu ve düzeltme:** 5. nav linkiyle `SiteHeader`'ın `md:` (768px)
+eşiğinde `tablet-768` e2e projesinde gerçek yatay taşma oluştu (dördü bile
+zaten sınırdaydı — bu benim eklentimden önce de kırılgandı). Eşik `lg:`
+(1024px)'e çekildi, `MobileNavMenu` aynı eşikte hamburger'a geçiyor — her
+genişlikte erişim korunuyor, artık gerçek bir pay var. Ayrıca
+`e2e/platform.spec.ts`teki bir test, `RobotStateBadge`nin (FAZ 2) aynı
+"Tamamlandı" metnini bastığı için `exact: true` eşleşmesinde çift bulguya
+düşüyordu — `role="status"` filtresine çevrildi. Tam kontrol paketi (tsc,
+lint, 964 vitest, check-content/graph, `npm audit`, build, performans
+bütçesi, 369 e2e) bu düzeltmelerle temiz.
+
+**2/4, 3/4, 4/4 — Zaman Kapsülü, Sınır Testi, Kırık Kod Laboratuvarı:
+SIRADA.** Sonraki döngüde uygulanacak.
