@@ -2499,3 +2499,43 @@ Paralel Claude çalışmasının `lib/robotics/robotState.ts` ve test dosyaları
 çalışma ağacında sahiplenilmedi; Evidence, Kod Akademisi ve robot-state yüzeylerine
 dokunulmadı. Ana dal kirli olduğu için doğrulanmış faz commit'i bağımsız dalda
 tutuldu; eşzamanlı dosyalar geri alınmadı veya biçimlendirilmedi.
+
+## 2026-08-24 — Farklılaştırıcı 4/5: Dijital İkiz Kayması
+
+`/laboratuvar/dijital-ikiz-kaymasi` altında model–ölçüm senkronunu görünür yapan
+bir eğitim provası eklendi. Başlangıç kalibrasyonunda ikiz tahmini ile sentetik
+fiziksel TCP ölçümü eşik içinde başlıyor; “üç ay sonraki” seed’li akışta J1 sıfır
+noktası 7° kayıyor. Kullanıcı tek bir aykırı değere değil, 60 mm üstündeki en az
+üç ardışık artığa dayanan açık karar kuralıyla kaymayı teşhis ediyor. Güvenli kapı,
+kalıcı fark varken otomatik akışa devam etmeyi veya yalnız izlemeyi başarı saymıyor;
+akışı durdurup yeniden kalibrasyon kararını istiyor.
+
+Ölçümler sabit ekran değerleri değil, mevcut `genericTwoDofRobot` ve
+`forwardKinematics` sonucundan türetiliyor; yalnız seed’li ±1–2 mm ölçüm gürültüsü
+ekleniyor. Kullanıcı J1 sıfır düzeltmesini K1–K6 kalibrasyon pozlarında ayarlıyor,
+ancak başarı aynı örneklere tekrar uyumla verilmez: farklı J2 açıları kullanan
+D1–D4 doğrulama setinin ortalama TCP artığı 12 mm kabul sınırını geçmelidir.
+Grafik, eşik çizgisi, durum/kalıcılık özeti ve açılabilir veri tablosu aynı saf
+hesap çıktısını kullanıyor; renk tek bilgi kanalı değildir.
+
+Sayfa, “fiziksel” akışın tarayıcıda üretilen sentetik veri olduğunu ve kendi
+başına gerçek bir dijital ikiz olmadığını kalıcı biçimde belirtiyor. Gerçek sensör,
+robot, hesap veya sunucu bağlantısı kurulmadı; yeni bağımlılık eklenmedi. Bu faz
+arıza kliniğindeki kök-neden teşhisini tekrarlamak yerine, bağlı bir modelin zamanla
+fiziksel sistemden ayrışabileceğini ve düzeltmenin görülmemiş pozlara taşınmasının
+kanıtlanması gerektiğini öğretiyor.
+
+Test-first kanıtında yeni model importu ve sitemap rotası önce kırmızı, saf model
+eklenince 9/9 yeşil çalıştı. UI E2E sözleşmesi sayfa yokken kırmızıya geçti;
+uygulamadan sonraki ikinci koşuda üç viewport 9/9 geçti. İlk tip kontrolü yanlış
+`Vec3` dışa aktarımını yakaladı ve tür doğrudan kanonik `transform` modülünden
+alınarak düzeltildi. Tam kapı temiz: `npx tsc`, lint, 73 dosyada 947 Vitest,
+içerik/graph/quiz/MDX/review-debt/review-integrity/sensitive-terms, 337 statik
+sayfalı build, 0 taslak sızıntısı, performans bütçesi (3B Brotli toplamı yine
+480,0/480,0 KiB), Playwright (396 geçti, 18 koşullu atlandı) ve audit (0 açık).
+
+Faz öncesi ve teslim öncesi `git status` kontrol edildi. Kök ana dalda Claude’a ait
+izlenmeyen `lib/robotics/robotState.ts` ve testi sürdüğü için bunlara dokunulmadı;
+Evidence, Kod Akademisi, ders içeriği ve robot-state sözleşmeleri değiştirilmedi.
+Ana dal kirliyken otomatik merge yapılmadı; doğrulanmış commit dal zincirinde
+korundu.
