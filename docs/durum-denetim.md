@@ -5331,3 +5331,48 @@ görevin dışındaki dosyalarla ilgili), 18 koşullu atlama.** Yeni eklenen
 başarısızlık izole tekrar çalıştırıldı — **üçü de geçti**, aynı kök neden
 (paralel worker yükü) doğrulandı.
 
+---
+
+## Kod Akademisi — Usta sonrası uzmanlık stüdyosu: "Çerçeve zincirini birleştir" (2026-08-24)
+
+`docs/guncel-fikirler.md` §13 Lab 4'ün `docs/durum-codex.md`'de onaylanan
+hâli: capstone öncesi zorunlu çekirdek değil, Usta sonrası opsiyonel bir
+uzmanlık stüdyosu, "Şartnameden teste" biçiminde.
+
+### Bilinçli sapma: NumPy YOK
+
+`scripts/copy-pyodide-assets.mjs` NumPy'ı kasıtlı olarak kopyalamıyor
+(harici CDN'den çekilmesi gerekirdi — docs/08 "harici CDN yasak"; bir
+bilimsel paketi yerel barındırmak ayrı, büyük bir tedarik zinciri kararı
+olurdu). Aynı pedagojik hedef (kimlik, birleştirme sırası, değişmezlik-
+olmama) SAF PYTHON 4×4 liste-matrisleriyle karşılandı — `mat_carp`/
+`nokta_donustur`/`rotz`/`translation` öğrenciye VERİLİR, bug bunların
+İÇİNDE değil BİRLEŞTİRME SIRASINDA (`rotz·translation` yerine
+`translation·rotz` olmalı). Golden değerler `lib/robotics/transform.ts`'in
+zaten test edilmiş `multiply`/`rotationZ`/`translation`/`transformPoint`
+fonksiyonlarından (bağımsız oracle) türetildi.
+
+Aynı kör-transfer deseni (görünür + gizli senaryo, sabit sayı yazan
+çözümün gizli senaryoda başarısız olması) `lib/kodaTransferGate.ts` ile
+birebir aynı — üçüncü örnek gelirse ortak bir "Kod Akademisi çoklu-senaryo"
+soyutlaması düşünülebilir, şimdi erken olurdu.
+
+`/kod-akademisi/uzmanlik-cerceve-zinciri` — yine standart katalogun
+DIŞINDA statik route. `/kod-akademisi` anasayfasına ve `/kod-akademisi/usta`
+sayfasının sonuna bağlantı eklendi.
+
+### Doğrulama
+
+`lib/kodaFrameChain.test.ts` (13 test — oracle'a karşı golden doğrulama,
+preamble, stdout ayrıştırma, 2 golden + 3 negatif değerlendirme dahil kör
+transfer koruması). `lib/evidence.ts`'e `koda-frame-chain-v1` predicate'i
+(3 test). 2 e2e senaryosu GERÇEK Pyodide ile izole geçti. Tam paket: tsc,
+lint, `npm test` (915/915), içerik/graph/mdx/sensitive-terms, build,
+performans bütçesi (270.5/252.2, bütçe içinde), `npm audit` (0 zafiyet) —
+hepsi temiz.
+
+**Kod Akademisi büyütme planı (docs/durum-codex.md) artık tamamlandı:**
+kapanış projesi (6 teslim taşı), İleri→Usta geçiş kapısı, Usta sonrası
+uzmanlık stüdyosu. Kalan: zorluk sıçramasının aşamalar arası güçlendirilmesi
+(ayrı görev, "Teşhis" tablosu).
+

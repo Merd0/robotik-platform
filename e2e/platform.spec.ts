@@ -2191,3 +2191,33 @@ test("Kod Akademisi geçiş kapısı (Satırdan poza): genelleyen düzeltme her 
   await expect(page.getByTestId("koda-transfer-sonuc-gorunur")).toContainText("✓", { timeout: 60_000 });
   await expect(page.getByTestId("koda-transfer-sonuc-gizli-transfer")).toContainText("○");
 });
+
+test("Kod Akademisi uzmanlık stüdyosu (Çerçeve zinciri): düzeltilmemiş sıra hatası her iki senaryoda da başarısız", async ({ page }) => {
+  await page.goto("/kod-akademisi/uzmanlik-cerceve-zinciri");
+  await expect(page.getByRole("heading", { name: "Çerçeve zincirini birleştir" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Çalıştır", exact: true }).click();
+  await expect(page.getByTestId("koda-frame-chain-sonuc-gorunur")).toContainText("○", { timeout: 60_000 });
+  await expect(page.getByTestId("koda-frame-chain-sonuc-gizli-transfer")).toContainText("○");
+});
+
+test("Kod Akademisi uzmanlık stüdyosu (Çerçeve zinciri): doğru sıra her iki senaryoyu da geçer, predicate'i kanıtlar", async ({ page }) => {
+  await page.goto("/kod-akademisi/uzmanlik-cerceve-zinciri");
+
+  const dogruKod = [
+    "TABAN_TO_WORLD = mat_carp(translation(TABAN_X, TABAN_Y, 0.0), rotz(TABAN_ACI_RAD))",
+    "",
+    "sonuc = nokta_donustur(TABAN_TO_WORLD, (NOKTA_X, NOKTA_Y, NOKTA_Z))",
+    'print(f"{sonuc[0]:.6f},{sonuc[1]:.6f},{sonuc[2]:.6f}")',
+  ].join("\n");
+  await page.getByLabel("Python kodu").fill(dogruKod);
+  await page.waitForTimeout(150);
+  await page.getByRole("button", { name: "Çalıştır", exact: true }).click();
+  await expect(page.getByTestId("koda-frame-chain-sonuc-gorunur")).toContainText("✓", { timeout: 60_000 });
+  await expect(page.getByTestId("koda-frame-chain-sonuc-gizli-transfer")).toContainText("✓");
+
+  const kanit = await page.evaluate(() => JSON.parse(localStorage.getItem("robotik-platform:evidence:v2") ?? "[]"));
+  expect(kanit.some((e: { stage?: string; verification?: string; predicateId?: string }) =>
+    e.stage === "passed" && e.verification === "registry-predicate" && e.predicateId === "koda-frame-chain-v1",
+  )).toBe(true);
+});
