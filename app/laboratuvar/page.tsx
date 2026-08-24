@@ -28,6 +28,13 @@ const LABS = [
     description: "Aynı hareket niyetinin ABB RAPID ve Mecademic komutlarında nerede ayrıştığını karşılaştır.",
     detail: "MoveIntent · 5 ölçütlü semantik iz",
   },
+  {
+    href: "/laboratuvar/ters-problem",
+    eyebrow: "Çıktıdan girdiye",
+    title: "Ters Problem Modu",
+    description: "Sabit bir TCP hedefini üreten iki farklı eklem açısı çözümünü deneyerek bul.",
+    detail: "Gerçek FK · çoklu IK çözümü",
+  },
 ] as const;
 
 export default function LabsPage() {
