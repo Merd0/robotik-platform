@@ -109,14 +109,29 @@ const surfaces: SurfaceConfig[] = [
   // "3D'siz ders yüzeyi tüm etkileşimli bileşenleri taşıyor" ödünleşimiyle
   // aynı sınıf). Gzip 266.4→267.9 KiB'e çıktı — 268 KiB'e çekildi, küçük pay.
   //
-  // 2026-08-24 (FAZ 1 — SignalTimeline gecikme görünürlüğü): `lib/
-  // signalTimeline.ts`'e eklenen `describeSignalGap` (aynı paylaşılan route
-  // chunk'ına giren `SignalTimeline` bileşeninin motor dosyası, yukarıdaki
-  // notlarla aynı kök neden sınıfı) gzip'i 267.9→270.2 KiB'e çıkardı — 271
-  // KiB'e çekildi, küçük pay. Bu ders (`a-ortaokul-robot-nedir`) ayrıca aynı
-  // fazda `PredictionPrompt` kullanmaya başladı ama bu bileşen zaten başka
-  // derslerde kullanıldığı için paylaşılan chunk'a önceden dahildi — ek
-  // maliyet yok.
+  // 2026-08-24 (FAZ 1 — SignalTimeline gecikme görünürlüğü) — DÜZELTİLMİŞ
+  // KAYIT: bu notun ilk sürümü "267.9→270.2 KiB'e çıktı" diyordu; o "267.9"
+  // yukarıdaki 2026-08-23 notundan kopyalanmış ESKİ bir değerdi, gerçek
+  // ölçüm değil. `git worktree` ile bu commit'in ATASINA (bu değişiklik
+  // uygulanmadan hemen önceki duruma) dönüp `npm ci && npm run build &&
+  // npx tsx scripts/check-performance-budget.ts` çalıştırıldığında GERÇEK
+  // "önce" değeri **269.5 KiB gzip / 251.3 KiB brotli** çıktı — yani bu
+  // ders o an ZATEN 268/250 bütçesini ~1.5/1.3 KiB aşıyordu, bu commit'ten
+  // ve aynı gün paralel çalışan bir Codex oturumunun içerik değişikliklerinden
+  // (ikisi de bu sayfaya dokunmadı, ölçüm birebir aynı çıktı) BAĞIMSIZ,
+  // önceden var olan, kaynağı bu denetimde araştırılmamış bir sapma.
+  // Bu commit'in GERÇEK katkısı 269.5→270.2 KiB gzip, 251.3→251.9 KiB
+  // brotli (+0.7/+0.6 KiB) — iki gerçek kaynaktan: (a) `lib/
+  // signalTimeline.ts`'e eklenen `describeSignalGap` (paylaşılan route
+  // chunk'ına giren `SignalTimeline` motor dosyası) ve (b) bu sayfanın
+  // (`a-ortaokul-robot-nedir`) kendisinin de aynı fazda yeni bir
+  // `<PredictionPrompt>` örneği KAZANMASI — bu, ilk notun iddia ettiği gibi
+  // "ek maliyet yok" değildi; sayfanın kendi HTML çıktısı 47 357→49 265 bayt
+  // (ham) büyüdü, çünkü `PredictionPrompt`'un JS'i paylaşılsa da bu SAYFAYA
+  // özgü prompt/seçenek/açıklama METNİ yeni ve gerçek bayt. 271/252 KiB
+  // bütçesi bu iki gerçek kaynağı da (+ önceden var olan 1.5/1.3 KiB sapmayı)
+  // kapsayacak küçük bir pay bırakıyor; docs/durum-denetim.md'de "FAZ 1 —
+  // performans bütçesi düzeltmesi (2026-08-24, ikinci geçiş)" notuna bkz.
   { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 271 * KIB, brotli: 252 * KIB } },
   { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 480 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },

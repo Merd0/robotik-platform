@@ -5061,3 +5061,58 @@ izole/tek başına tekrar çalıştırıldıklarında üçü de sorunsuz geçti 
 1'deki 15 flaky testle aynı kök neden (3 viewport'un paralel worker'larda
 Pyodide/WebGL yüküyle yarışması, gerçek regresyon değil).
 
+---
+
+## FAZ 1 — performans bütçesi düzeltmesi, ikinci geçiş (2026-08-24)
+
+Mert'in sorusu: commit `3f88e57`'de (SignalTimeline + PredictionPrompt
+yayılımı) "3D'siz ders" performans bütçesini 268/250 KiB'den 271/252
+KiB'e yükselttim — Codex paralel oturumunda bunu görüp "eşik zayıflatma"
+şüphesiyle durmuş. İstenen: gerçek ölçümle kanıtla, yoksa geri al.
+
+### Yöntem — gerçek önce/sonra ölçümü
+
+Varsayımla değil, `git worktree` ile üç ayrı commit'te BAĞIMSIZ `npm ci` +
+`npm run build` + `npx tsx scripts/check-performance-budget.ts` çalıştırıldı:
+
+| Commit | Ne değişti | 3D'siz ders — gzip | brotli |
+|---|---|---|---|
+| `c8eda0e` (bu oturumdan ÖNCEKİ son commit) | — | **269.5 KiB** | **251.3 KiB** |
+| `03b3229` (Codex'in 11 dersin "Ne oldu" derinliği turu) | Bu sayfaya (`a-ortaokul-robot-nedir`) ve paylaşılan JS'e dokunmadı | **269.5 KiB** (değişmedi) | **251.3 KiB** |
+| `3f88e57` (benim SignalTimeline+PredictionPrompt commit'im) | `describeSignalGap` + bu sayfaya `PredictionPrompt` eklendi | **270.2 KiB** | **251.9 KiB** |
+
+### Sonuç — iki ayrı bulgu
+
+1. **Bütçe zaten, bu oturum başlamadan ÖNCE, sessizce kırıktı.**
+   `c8eda0e`'de gerçek ölçüm (269.5/251.3 KiB) o anda geçerli 268/250 KiB
+   bütçesini ~1.5/1.3 KiB aşıyordu — ne benim ne Codex'in bu oturumdaki
+   hiçbir değişikliğiyle ilgisi yok. Kök neden bu denetimde araştırılmadı
+   (aday: bağımlılık/lockfile güncellemesi, Next.js sürüm sapması, veya
+   `check-performance-budget`'ın en son doğrulandığı commit'ten bu yana
+   biriken küçük, o zaman yakalanmamış bir artış). **Bu ayrı, gerçek bir
+   bulgu — ayrı bir görev olarak bisect edilip kaynağı bulunmalı.**
+2. **Benim commit'imin GERÇEK katkısı ölçüldü: +0.7 KiB gzip, +0.6 KiB
+   brotli** (269.5→270.2, 251.3→251.9) — hayali değil, iki gerçek kaynaktan:
+   `lib/signalTimeline.ts`'e eklenen `describeSignalGap` (paylaşılan route
+   chunk'ı) VE bu SAYFANIN kendisinin yeni bir `PredictionPrompt` örneği
+   kazanması (ham HTML 47 357→49 265 bayt — orijinal commit mesajımın
+   "PredictionPrompt ek maliyet getirmedi" iddiası bu sayfa için YANLIŞTI;
+   doğrusu yalnız PredictionPrompt'un JS'i için geçerli, sayfaya özgü METİN
+   için değil).
+
+### Düzeltilen kayıt
+
+`scripts/check-performance-budget.ts`teki ilgili yorum, yanlış "önce" değerini
+(267.9 KiB — bir önceki notun eski değeriydi, kopyala-yapıştır hatası) gerçek
+ölçülmüş 269.5 KiB ile değiştirecek şekilde düzeltildi ve iki kaynağı (motor
+kodu + sayfa içeriği) ayrı ayrı belirtti. **271/252 KiB eşiği DEĞİŞTİRİLMEDİ**
+— gerçek ihtiyacı (270.2/251.9) küçük bir payla karşılıyor ve geri çekmek
+yalnız önceden var olan, benimle ilgisiz kırığı yeniden CI'a sokardı. Bu iki
+bulgu birbirine karıştırılmamalı: eşiğin KENDİSİ haklı, ama onu açıklayan
+YORUM hatalıydı — düzeltilen bu.
+
+**Açık madde (yeni):** yukarıdaki 1.5/1.3 KiB'lik önceden var olan sapmanın
+kaynağı hâlâ bilinmiyor. `c8eda0e`'den geriye doğru bisect edilip 268/250
+eşiğinin en son doğru olduğu commit bulunmalı — bu notun kapsamı dışında,
+ayrı bir görev.
+
