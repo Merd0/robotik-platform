@@ -4576,5 +4576,51 @@ geçti, payı yok, bir sonraki küçük eklemede bütçe büyütülmesi gerekebi
 test tam paralel yükte zaman aşımına uğradı, izole tekrarda 6/6 geçti,
 bilinen flake sınıfı).
 
-**Sırada — Madde 33 ("Neden?" bileşenini IkTarget dışına yay).**
+### Madde 33 ("Neden?" bileşenini IkTarget dışına yay) — TAMAMLANDI
+
+`Neden` bileşeni (Faz'da `IkTarget`'ın tek kullanıcısıydı — duruma bağlı,
+canlı bir ekran değerini açıklayan, `InlineNot`/`role="note"`/`aria-expanded`
+tetikleyicili desen; `NasilHesaplandi`'dan farkı: o sabit/her zaman aynı
+mekanizmayı anlatır, `Neden` o ANDAKİ sayıya göre değişen bir gerekçe verir)
+üç bileşene daha yayıldı:
+
+- **`JacobianViz`** — manipülabilite `role="status"` bloğunun içine
+  `<Neden etiket="Neden bu değer?" varsayilanAcik={mode === "engineering"}>`
+  eklendi; Jacobian sütun değerlerini (1. ve 2. eklem katkısı) VE tekil/
+  tekil-olmayan durumu o anki sayılarla açıklıyor.
+- **`DlsTraceLab`** — `role="status"` bloğuna, sönümleme (λ) değeri ve
+  gerçek iterasyon/hata sayılarına göre yakınsama davranışını açıklayan
+  `<Neden etiket="Neden bu sonuç?">` eklendi.
+- **`PlannerRace`** — her algoritma id'si için tek satırlık gerekçe
+  (`ALGORITHM_REASON`) tanımlandı; `successful` sonuçlar hız/düğüm/yol
+  uzunluğuna göre sıralanıp mevcut `NasilHesaplandi` bloğundan ÖNCE
+  `<Neden etiket="Neden bu farklar?">` eklendi.
+
+Üçünde de `varsayilanAcik={mode === "engineering"}` deseni korundu (Learn/
+Engineering global anahtarıyla aynı ilke). Test-first: `e2e/platform.spec.ts`
+her bileşen için tetikleyici düğme + not metni doğrulayan 3 yeni assertion
+bloğu aldı, önce bunlar yazıldı.
+
+**Performans bütçesi araştırması — regresyon DEĞİL, önceden var olan durum.**
+Madde 33'ün değişiklikleriyle `check-performance-budget` kırmızı çıktı
+(268.8/268.0 KiB gzip, 250.5/250.0 KiB brotli — "3D'siz ders" temsilci
+sayfası). Şüpheyle `git stash -u` ile değişiklikler çıkarılıp `.next`
+temizlenip yeniden build alındı: BASELINE (Madde 33 olmadan) da AYNI
+kontrolde başarısız — 268.0/268.0 KiB gzip / 249.8/250.0 KiB brotli, zaten
+sınırın üstünde. Bu, `docs/05-deneyim-ve-guvenlik.md`'deki bilinen/kabul
+edilmiş "3D'siz ders yüzeyi tüm etkileşimli bileşenleri taşıyor" ödünleşimi
+(paylaşılan `[slug]` MDX route'u yüzünden, Faz 5 sonrası cilaya ertelendi)
+— Madde 33'ün kendisi yalnız 0,8 KiB'lik marjinal bir ekleme yapıyor
+(`Neden` zaten `IkTarget` üzerinden bundle'a giriyordu). `git stash pop`
+ile değişiklikler geri getirildi, temiz `.next` ile yeniden build doğrulandı.
+
+Tam kontrol paketi (izole worktree): `tsc`, `lint`, 834 unit
+(`--no-file-parallelism`), `check-content`, `validate-content-graph`,
+`check-quiz-dagilimi`, `check-mdx-guvenlik`, `check-review-debt`,
+`check-review-integrity`, `check-sensitive-terms`, `build` (temiz `.next`),
+`check-performance-budget` (yukarıdaki önceden-var-olan istisna — regresyon
+değil), `npm audit` (0 zafiyet), e2e **324/324** (18 koşullu atlama, sıfır
+hata, 5.8 dakika — Madde 33'ün 3 yeni assertion bloğu dahil).
+
+**Sırada — Madde 9 (editör satır vurgusunu jointTrace adımına senkronla).**
 
