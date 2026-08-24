@@ -1244,7 +1244,7 @@ test("Kod Akademisi: mobilde çalıştırma sonrası otomatik Sonuç sekmesine g
 
   await page.getByRole("button", { name: "Çalıştır" }).click();
   await expect(sonucSekmesi).toHaveAttribute("aria-selected", "true", { timeout: 30_000 });
-  await expect(page.getByText("Tamamlandı", { exact: true })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Tamamlandı" })).toBeVisible();
 });
 
 test("Kod Akademisi: 768px'de (md:) hâlâ sekmeli görünüm var, tam ekran ayrımı yok", async ({ page }, testInfo) => {

@@ -9,10 +9,15 @@ interface NavLink {
 }
 
 /**
- * Dar viewport'ta (< md) SiteHeader'daki bazı bağlantılar (Sözlük, Öğretmen,
- * Canlı lab) satır dışına taşmamak için gizleniyor. Bu bileşen onlara
- * hamburger/overflow menüsüyle erişim sağlar — gizlenen bağlantı, ulaşılamaz
- * bağlantı olmasın diye.
+ * Dar viewport'ta (< lg) SiteHeader'daki bazı bağlantılar (Sözlük, Öğretmen,
+ * Canlı lab, Kod Akademisi, Robot Röportajı) satır dışına taşmamak için
+ * gizleniyor. Bu bileşen onlara hamburger/overflow menüsüyle erişim sağlar
+ * — gizlenen bağlantı, ulaşılamaz bağlantı olmasın diye.
+ *
+ * Eşik `md` (768px) değil `lg` (1024px): beş bağlantı + Ara kutusu + "Oyun
+ * alanı" düğmesi + iki toggle aynı satırda `md` genişliğinde (768px, bkz.
+ * `tablet-768` e2e projesi) yatay taşmaya (`scrollWidth > clientWidth`)
+ * neden oluyordu — Robot Röportajı eklenmeden önce dördü zaten sınırdaydı.
  */
 export function MobileNavMenu({ links }: { links: NavLink[] }) {
   const [open, setOpen] = useState(false);
@@ -45,7 +50,7 @@ export function MobileNavMenu({ links }: { links: NavLink[] }) {
   }, [open]);
 
   return (
-    <div ref={containerRef} className="relative md:hidden">
+    <div ref={containerRef} className="relative lg:hidden">
       <button
         ref={toggleRef}
         type="button"

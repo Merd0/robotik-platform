@@ -8,6 +8,7 @@ const OVERFLOW_NAV_LINKS = [
   { href: "/ogretmen", label: "Öğretmen" },
   { href: "/laboratuvar/robot-hucresi", label: "Canlı lab" },
   { href: "/kod-akademisi", label: "Kod Akademisi" },
+  { href: "/robot-roportaji", label: "Robot Röportajı" },
 ];
 
 export function SiteHeader() {
@@ -27,7 +28,7 @@ export function SiteHeader() {
             <Link
               key={link.href}
               href={link.href}
-              className="hidden min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft md:inline-flex"
+              className="hidden min-h-11 items-center rounded-lg px-3 text-site-muted hover:bg-site-soft lg:inline-flex"
             >
               {link.label}
             </Link>
