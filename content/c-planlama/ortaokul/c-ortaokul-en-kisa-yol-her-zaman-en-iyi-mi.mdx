@@ -30,22 +30,14 @@ gidiyor. İkisi de eve varıyor — ama farklı bir bedel ödeyerek.
 
 ## Ne oldu
 
-Sahnede aynı başlangıç, hedef ve engeller için iki planlayıcı çalıştı. A*,
-haritayı karelerden oluşan bir arama alanı olarak kullanır ve hedefe umut veren
-kareleri maliyetlerine göre inceler. RRT ise boş alanda rastgele noktalar seçip
-başlangıçtan büyüyen bir ağaç kurar. İkisi aynı soruna farklı biçimde bakar.
+A* kareleri maliyetlerine göre arar; RRT rastgele noktalardan bir ağaç büyütür.
+Aynı probleme farklı biçimde baktıkları için sonuçları da değişebilir.
 
-Sonuç tablosundaki "süre", bilgisayarın yolu bulmak için harcadığı zamandır.
-"Yol uzunluğu" ise robotun bulunan çizgiyi izlerken kat edeceği mesafedir.
-Kısa hesaplama süresi ile kısa robot yolu aynı ölçü değildir: planlayıcı hızlı
-cevap verip dolambaçlı bir yol bulabilir veya daha uzun düşünüp daha kısa bir
-yol çıkarabilir.
-
-RRT rastgele örnek kullandığı için aynı sahnede her koşu aynı sonucu vermek
-zorunda değildir. Bu nedenle tek yarıştan "RRT her zaman hızlıdır" ya da "A*
-her zaman daha iyidir" sonucu çıkaramazsın. Kazananı seçmeden önce görevde
-hangi bedelin önemli olduğunu söylemen ve özellikle rastgele yöntemi birkaç
-kez gözlemen gerekir.
+"Süre" bilgisayarın yolu bulma zamanı, "yol uzunluğu" robotun kat edeceği
+mesafedir. Hızlı bulunan yol kısa olmak zorunda değildir. RRT'nin rastgele
+örnekleri de aynı sahnede farklı sonuç üretebilir. Bu yüzden tek yarıştan
+"her zaman" sonucu çıkaramazsın. Önce görevde hesap süresinin mi, yolun mu,
+başarı güvenilirliğinin mi önemli olduğunu seçip tekrarlı ölçmelisin.
 
 ## Gerçek dünyada
 
