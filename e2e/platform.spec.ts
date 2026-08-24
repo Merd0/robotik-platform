@@ -480,6 +480,31 @@ test("Python yazım hatasının kullanıcı kodundaki satırı editörde vurgula
   await expect(errorLine).toContainText("print(");
 });
 
+test("Çalışma izi adımı seçilince editördeki ilgili Python satırı vurgulanır (Madde 9)", async ({ page }) => {
+  await page.goto("/ders/d-lise-python-komut-dizisi");
+  await page.getByRole("button", { name: "Çalıştır" }).click();
+  await expect(page.getByText(/Tamamlandı|Tekrar dene/)).toBeVisible({ timeout: 30_000 });
+
+  const sonucSekmesi = page.getByRole("tab", { name: "Sonuç" });
+  if (await sonucSekmesi.isVisible()) await sonucSekmesi.click();
+  const izAdimi = page.getByRole("slider", { name: "Çalışma izi adımı" });
+  await expect(izAdimi).toHaveValue("1");
+
+  const kodSekmesi = page.getByRole("tab", { name: "Kod" });
+  if (await kodSekmesi.isVisible()) await kodSekmesi.click();
+  const ikinciAdimSatiri = page.locator('.cm-python-traceLine[data-trace-line="3"]');
+  await expect(ikinciAdimSatiri).toBeVisible();
+  await expect(ikinciAdimSatiri).toContainText("eklem_ac(1, 30)");
+
+  if (await sonucSekmesi.isVisible()) await sonucSekmesi.click();
+  await izAdimi.fill("0");
+  if (await kodSekmesi.isVisible()) await kodSekmesi.click();
+  const ilkAdimSatiri = page.locator('.cm-python-traceLine[data-trace-line="2"]');
+  await expect(ilkAdimSatiri).toBeVisible();
+  await expect(ilkAdimSatiri).toContainText("eklem_ac(0, 45)");
+  await expect(page.locator('.cm-python-traceLine[data-trace-line="3"]')).toHaveCount(0);
+});
+
 test("movej geçerli bir açı listesiyle robotu hareket ettirir ve predicate'i kanıtlar", async ({ page }) => {
   await page.goto("/ders/d-lise-degiskenlerle-hareket");
   await page.getByRole("button", { name: "Çalıştır" }).click();

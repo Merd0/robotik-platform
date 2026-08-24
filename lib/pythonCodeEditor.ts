@@ -90,3 +90,19 @@ export function findPythonErrorLine(error: string | null, lineCount: number): nu
   const line = Number(match[1]);
   return Number.isSafeInteger(line) && line >= 1 && line <= lineCount ? line : null;
 }
+
+/**
+ * Editördeki "Çalışma izi" satır vurgusunun hangi satırı göstereceğini
+ * belirler. Bir hata varken bastırılır — hata satırı (kırmızı,
+ * `findPythonErrorLine`) zaten aynı editörde gösteriliyor, iki farklı vurgu
+ * üst üste kafa karıştırır; hata öncesindeki adımlar geriye dönük
+ * incelenebilir ama vurgusuz.
+ */
+export function activeTraceLine(
+  error: string | null,
+  jointTraceLines: readonly (number | null)[],
+  traceIndex: number,
+): number | null {
+  if (error) return null;
+  return jointTraceLines[traceIndex] ?? null;
+}

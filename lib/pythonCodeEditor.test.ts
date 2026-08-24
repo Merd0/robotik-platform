@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ROBOT_API_COMPLETIONS,
+  activeTraceLine,
   findPythonErrorLine,
   robotCompletionPrefix,
 } from "./pythonCodeEditor";
@@ -42,5 +43,23 @@ describe("Python kod editörü", () => {
       ]),
     );
     expect(ROBOT_API_COMPLETIONS.every((completion) => completion.detail && completion.info)).toBe(true);
+  });
+
+  it("çalışma izi adımı için kaydedilmiş satırı vurgular", () => {
+    expect(activeTraceLine(null, [2, 3], 0)).toBe(2);
+    expect(activeTraceLine(null, [2, 3], 1)).toBe(3);
+  });
+
+  it("hata varken çalışma izi satırını bastırır — hata satırı zaten ayrı vurgulanıyor", () => {
+    expect(activeTraceLine("NameError: x tanımsız", [2, 3], 1)).toBeNull();
+  });
+
+  it("iz boşken veya satır çözülemediyse (null kaydı) vurgu üretmez, hata atmaz", () => {
+    expect(activeTraceLine(null, [], 0)).toBeNull();
+    expect(activeTraceLine(null, [null, 4], 0)).toBeNull();
+  });
+
+  it("aralık dışı bir adım indeksinde vurgu üretmez", () => {
+    expect(activeTraceLine(null, [2, 3], 5)).toBeNull();
   });
 });

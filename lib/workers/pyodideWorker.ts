@@ -70,6 +70,13 @@ export interface PyodideWorkerResult {
   stdout: string;
   error: string | null;
   jointTrace: number[][];
+  /**
+   * `jointTrace` ile aynı uzunluk/sıra — her adımı üreten `robot.*` çağrısının
+   * kullanıcı kodundaki satır numarası (1 tabanlı), belirlenemediyse `null`.
+   * Editördeki "Çalışma izi" adım kaydırıcısıyla senkron satır vurgusu için
+   * (bkz. PythonCodeEditor.tsx `traceLine` prop'u).
+   */
+  jointTraceLines: (number | null)[];
   limits: {
     outputTruncated: boolean;
     traceTruncated: boolean;
@@ -98,6 +105,16 @@ function toPlainArray(value: unknown): unknown[] {
     if (Array.isArray(converted)) return converted;
   }
   return [];
+}
+
+/** `_sys._getframe(1).f_lineno`'dan gelen değeri (Pyodide FFI üzerinden düz sayı) doğrular. */
+function toLineNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? Math.trunc(value) : null;
+}
+
+interface TraceStep {
+  angles: number[];
+  line: number | null;
 }
 
 let pyodidePromise: Promise<PyodideAPI> | null = null;
@@ -139,7 +156,7 @@ ctx.onmessage = async (event) => {
   if (event.data.type !== "run") return;
   const { requestId, code, jointCount, robotSpec } = event.data;
   const output = new BoundedTextCollector();
-  const jointTrace = new BoundedTraceCollector<number[]>();
+  const jointTrace = new BoundedTraceCollector<TraceStep>();
   let errorMessage: string | null = null;
 
   try {
@@ -168,43 +185,43 @@ ctx.onmessage = async (event) => {
         // öğretici mesajın önüne ham, ürkütücü bir yığın ekler (bkz.
         // docs/durum-codex.md "Kod Akademisi" — bu senaryo ekran görüntüsüyle
         // yakalandı).
-        namespace.set("_eklem_ac", (index: number, derece: number): string | undefined => {
+        namespace.set("_eklem_ac", (index: number, derece: number, lineno: unknown): string | undefined => {
           if (!Number.isInteger(index) || index < 0 || index >= currentAngles.length) {
             return `Eklem indeksi 0-${currentAngles.length - 1} aralığında olmalı.`;
           }
           if (!Number.isFinite(derece)) return "Eklem açısı sonlu bir sayı olmalı.";
           currentAngles[index] = (derece * Math.PI) / 180;
-          jointTrace.push([...currentAngles]);
+          jointTrace.push({ angles: [...currentAngles], line: toLineNumber(lineno) });
           return undefined;
         });
 
         const canUseIk = robotSpec && robotSpec.joints.length === 2;
         if (canUseIk) {
-          namespace.set("_hedefe_git", (x: number, y: number) => {
+          namespace.set("_hedefe_git", (x: number, y: number, lineno: unknown) => {
             const angles = inverseKinematicsAnalytical2Dof(robotSpec, { x, y });
             if (!angles) return false;
             currentAngles[0] = angles[0];
             currentAngles[1] = angles[1];
-            jointTrace.push([...currentAngles]);
+            jointTrace.push({ angles: [...currentAngles], line: toLineNumber(lineno) });
             return true;
           });
         }
 
         const hasRobotSpec = Boolean(robotSpec);
         if (robotSpec) {
-          namespace.set("_movej", (anglesArg: unknown): string | undefined => {
+          namespace.set("_movej", (anglesArg: unknown, lineno: unknown): string | undefined => {
             const validated = validateJointAnglesDeg(robotSpec, toPlainArray(anglesArg));
             if (!validated.ok) return validated.message;
             validated.value.forEach((angle, index) => (currentAngles[index] = angle));
-            jointTrace.push([...currentAngles]);
+            jointTrace.push({ angles: [...currentAngles], line: toLineNumber(lineno) });
             return undefined;
           });
 
-          namespace.set("_movel", (x: number, y: number, z: number): string | undefined => {
+          namespace.set("_movel", (x: number, y: number, z: number, lineno: unknown): string | undefined => {
             const solved = solveCartesianTarget(robotSpec, { x, y, z }, currentAngles);
             if (!solved.ok) return solved.message;
             solved.value.forEach((angle, index) => (currentAngles[index] = angle));
-            jointTrace.push([...currentAngles]);
+            jointTrace.push({ angles: [...currentAngles], line: toLineNumber(lineno) });
             return undefined;
           });
 
@@ -233,7 +250,8 @@ ctx.onmessage = async (event) => {
         }
 
         await pyodide.runPythonAsync(
-          "class _Pose:\n" +
+          "import sys as _sys\n" +
+            "class _Pose:\n" +
             "    def __init__(self, x, y, z):\n" +
             "        self.x = x\n" +
             "        self.y = y\n" +
@@ -242,20 +260,20 @@ ctx.onmessage = async (event) => {
             '        return f"Pose(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"\n' +
             "class _Robot:\n" +
             "    def eklem_ac(self, index, derece):\n" +
-            "        _hata = _eklem_ac(index, derece)\n" +
+            "        _hata = _eklem_ac(index, derece, _sys._getframe(1).f_lineno)\n" +
             "        if _hata is not None:\n" +
             "            raise RobotHatasi(_hata)\n" +
             (canUseIk
               ? "    def hedefe_git(self, x, y):\n" +
-                "        return _hedefe_git(x, y)\n"
+                "        return _hedefe_git(x, y, _sys._getframe(1).f_lineno)\n"
               : "") +
             (hasRobotSpec
               ? "    def movej(self, acilar):\n" +
-                "        _hata = _movej(acilar)\n" +
+                "        _hata = _movej(acilar, _sys._getframe(1).f_lineno)\n" +
                 "        if _hata is not None:\n" +
                 "            raise RobotHatasi(_hata)\n" +
                 "    def movel(self, x, y, z, speed=None):\n" +
-                "        _hata = _movel(x, y, z)\n" +
+                "        _hata = _movel(x, y, z, _sys._getframe(1).f_lineno)\n" +
                 "        if _hata is not None:\n" +
                 "            raise RobotHatasi(_hata)\n" +
                 "    def get_joints(self):\n" +
@@ -314,7 +332,8 @@ ctx.onmessage = async (event) => {
     requestId,
     stdout: output.toString(),
     error: errorMessage,
-    jointTrace: jointTrace.values,
+    jointTrace: jointTrace.values.map((step) => step.angles),
+    jointTraceLines: jointTrace.values.map((step) => step.line),
     limits: {
       outputTruncated: output.truncated,
       traceTruncated: jointTrace.truncated,

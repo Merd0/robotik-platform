@@ -120,6 +120,7 @@ export function CodeRunner({
     activeJointIndex,
     jointTrace,
     traceIndex,
+    currentTraceLine,
     testPassed,
     toolPose,
     handleRun,
@@ -175,6 +176,7 @@ export function CodeRunner({
               value={code}
               onChange={setCode}
               error={error}
+              traceLine={currentTraceLine}
               labelledBy={editorLabelId}
               tone={theme}
             />

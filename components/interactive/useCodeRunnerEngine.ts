@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { getRobotById } from "@/lib/robotics/robots";
 import { forwardKinematics, type RobotSpec } from "@/lib/robotics/kinematics";
+import { activeTraceLine } from "@/lib/pythonCodeEditor";
 import type {
   PyodideWorkerRequest,
   PyodideWorkerResponse,
@@ -90,6 +91,7 @@ export function useCodeRunnerEngine({
     robot?.joints.length === 6 ? 5 : 0,
   );
   const [jointTrace, setJointTrace] = useState<number[][]>([]);
+  const [jointTraceLines, setJointTraceLines] = useState<(number | null)[]>([]);
   const [traceIndex, setTraceIndex] = useState(0);
   const [testPassed, setTestPassed] = useState<boolean | null>(null);
   const workerRef = useRef<Worker | null>(null);
@@ -114,6 +116,7 @@ export function useCodeRunnerEngine({
     setOutput("");
     setError(null);
     setJointTrace([]);
+    setJointTraceLines([]);
     setTraceIndex(0);
     setTestPassed(null);
   });
@@ -217,6 +220,7 @@ export function useCodeRunnerEngine({
       setOutput([result.stdout, warnings].filter(Boolean).join("\n"));
       setError(result.error);
       setJointTrace(result.jointTrace);
+      setJointTraceLines(result.jointTraceLines);
       setTraceIndex(Math.max(0, result.jointTrace.length - 1));
       if (robot && result.jointTrace.length > 0) {
         setJointAngles(result.jointTrace[result.jointTrace.length - 1]);
@@ -276,6 +280,7 @@ export function useCodeRunnerEngine({
     setOutput("");
     setError(null);
     setJointTrace([]);
+    setJointTraceLines([]);
     setTraceIndex(0);
     setTestPassed(null);
     if (robot) {
@@ -293,6 +298,7 @@ export function useCodeRunnerEngine({
   }
 
   const running = state === "yukleniyor" || state === "calisiyor";
+  const currentTraceLine = activeTraceLine(error, jointTraceLines, traceIndex);
 
   return {
     editorId,
@@ -307,6 +313,7 @@ export function useCodeRunnerEngine({
     activeJointIndex,
     jointTrace,
     traceIndex,
+    currentTraceLine,
     testPassed,
     toolPose,
     handleRun,

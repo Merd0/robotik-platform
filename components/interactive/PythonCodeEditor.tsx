@@ -5,7 +5,7 @@ import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, t
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { HighlightStyle, bracketMatching, indentOnInput, syntaxHighlighting } from "@codemirror/language";
 import { python } from "@codemirror/lang-python";
-import { EditorState, StateEffect, StateField } from "@codemirror/state";
+import { EditorState, StateEffect, StateField, type StateEffectType } from "@codemirror/state";
 import {
   Decoration,
   EditorView,
@@ -31,36 +31,55 @@ export interface PythonCodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   error?: string | null;
+  /**
+   * Çalışma izinde (jointTrace) seçili adımı üreten Python satırı (1
+   * tabanlı) — verilirse o satır, hata vurgusundan ayrı bir stille
+   * işaretlenir. bkz. `lib/pythonCodeEditor.ts` `activeTraceLine`.
+   */
+  traceLine?: number | null;
   tone?: PythonEditorTone;
 }
 
-const setErrorLine = StateEffect.define<number | null>();
-const errorLineDecoration = (line: number) =>
-  Decoration.line({
-    attributes: {
-      class: "cm-python-errorLine",
-      "data-error-line": String(line),
-    },
-  });
+/**
+ * `errorLineField`/`traceLineField`'ın ikisi de aynı desen: bir satır
+ * numarası effect'i, o satırı bir CSS sınıfıyla işaretleyen bir
+ * DecorationSet'e dönüştürür. Belge değiştiğinde (docChanged) vurgu
+ * otomatik temizlenir — eski satır numarası artık kullanıcının düzenlediği
+ * koda karşılık gelmez.
+ */
+function createLineHighlightField(
+  setLine: StateEffectType<number | null>,
+  className: string,
+  dataAttribute: string,
+) {
+  const decorationOf = (line: number) =>
+    Decoration.line({ attributes: { class: className, [dataAttribute]: String(line) } });
 
-const errorLineField = StateField.define<DecorationSet>({
-  create: () => Decoration.none,
-  update(decorations, transaction) {
-    let next = transaction.docChanged ? Decoration.none : decorations;
-    for (const effect of transaction.effects) {
-      if (!effect.is(setErrorLine)) continue;
-      const lineNumber = effect.value;
-      if (lineNumber === null || lineNumber > transaction.state.doc.lines) {
-        next = Decoration.none;
-      } else {
-        const line = transaction.state.doc.line(lineNumber);
-        next = Decoration.set([errorLineDecoration(lineNumber).range(line.from)]);
+  return StateField.define<DecorationSet>({
+    create: () => Decoration.none,
+    update(decorations, transaction) {
+      let next = transaction.docChanged ? Decoration.none : decorations;
+      for (const effect of transaction.effects) {
+        if (!effect.is(setLine)) continue;
+        const lineNumber = effect.value;
+        if (lineNumber === null || lineNumber < 1 || lineNumber > transaction.state.doc.lines) {
+          next = Decoration.none;
+        } else {
+          const line = transaction.state.doc.line(lineNumber);
+          next = Decoration.set([decorationOf(lineNumber).range(line.from)]);
+        }
       }
-    }
-    return next;
-  },
-  provide: (field) => EditorView.decorations.from(field),
-});
+      return next;
+    },
+    provide: (field) => EditorView.decorations.from(field),
+  });
+}
+
+const setErrorLine = StateEffect.define<number | null>();
+const errorLineField = createLineHighlightField(setErrorLine, "cm-python-errorLine", "data-error-line");
+
+const setTraceLine = StateEffect.define<number | null>();
+const traceLineField = createLineHighlightField(setTraceLine, "cm-python-traceLine", "data-trace-line");
 
 const pythonHighlightStyle = HighlightStyle.define([
   { tag: [tags.keyword, tags.controlKeyword, tags.definitionKeyword, tags.moduleKeyword], class: "cm-python-tokenKeyword" },
@@ -136,6 +155,10 @@ const editorTheme = EditorView.theme({
     backgroundColor: "color-mix(in srgb, #dc2626 14%, transparent)",
     boxShadow: "inset 3px 0 #dc2626",
   },
+  ".cm-python-traceLine": {
+    backgroundColor: "color-mix(in srgb, var(--code-editor-accent) 16%, transparent)",
+    boxShadow: "inset 3px 0 var(--code-editor-accent)",
+  },
   ".cm-python-tokenKeyword": {
     color: "var(--code-editor-accent)",
     fontWeight: "700",
@@ -207,6 +230,7 @@ export function PythonCodeEditor({
   value,
   onChange,
   error = null,
+  traceLine = null,
   tone = "site",
 }: PythonCodeEditorProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -246,6 +270,7 @@ export function PythonCodeEditor({
           ...completionKeymap,
         ]),
         errorLineField,
+        traceLineField,
         editorTheme,
         EditorView.contentAttributes.of({
           id: initial.id,
@@ -289,6 +314,10 @@ export function PythonCodeEditor({
   useEffect(() => {
     viewRef.current?.dispatch({ effects: setErrorLine.of(errorLine) });
   }, [errorLine]);
+
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: setTraceLine.of(traceLine) });
+  }, [traceLine]);
 
   return <div ref={hostRef} style={TONE_VARIABLES[tone]} data-testid="python-code-editor" />;
 }

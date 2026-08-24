@@ -73,6 +73,7 @@ export function KodAkademisiCodeLab({
     activeJointIndex,
     jointTrace,
     traceIndex,
+    currentTraceLine,
     testPassed,
     toolPose,
     handleRun,
@@ -142,6 +143,7 @@ export function KodAkademisiCodeLab({
               value={code}
               onChange={setCode}
               error={error}
+              traceLine={currentTraceLine}
               labelledBy={editorLabelId}
               tone="site"
             />
