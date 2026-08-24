@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ContinueLearning } from "@/components/home/ContinueLearning";
 import { HeroExperiment } from "@/components/home/HeroExperiment";
-import { getAllLessons, getPublicLessons, HAT_ETIKET, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
+import { getAllLessons, getPublicLessons, HAT_ETIKET, hatEtiket, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
 import { ETKILESIM_ETIKETI } from "@/lib/etkilesimEtiket";
 import { CURATED_START_ROUTES } from "@/lib/learningRoutes";
 
@@ -35,6 +35,7 @@ export default function HomePage() {
   // (kullanıcının son kaydı 9 rota dersinden biri değilse), bu veriyi
   // ContinueLearning bileşeni /devam-index.json'dan tembel yükler
   // (bkz. scripts/build-continue-index.ts, components/home/ContinueLearning.tsx).
+  const hatSirasi = Object.keys(HAT_ETIKET);
   const continueLessonBySlug = new Map(
     publishedLessons.map((lesson) => [
       lesson.slug,
@@ -43,6 +44,10 @@ export default function HomePage() {
         baslik: lesson.frontmatter.baslik,
         seviye: lesson.frontmatter.seviye,
         seviyeEtiketi: SEVIYE_ETIKET[lesson.frontmatter.seviye],
+        hatIndex: hatSirasi.indexOf(lesson.frontmatter.hat),
+        hatEtiketi: hatEtiket(lesson.frontmatter.hat),
+        sira: lesson.frontmatter.sira ?? 0,
+        onkosul: lesson.frontmatter.onkosul,
       },
     ]),
   );

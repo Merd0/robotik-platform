@@ -108,7 +108,7 @@ export function OrtaokulSeviyesi({ veri }: { veri: SeviyeVerisi }) {
                                 {ders.etkilesim}
                               </span>
                               <span className="rounded-full bg-white px-3 py-1">
-                                <LessonProgressBadge slug={ders.slug} seviye="ortaokul" contentVersion={ders.teachingHash} />
+                                <LessonProgressBadge slug={ders.slug} seviye="ortaokul" contentVersion={ders.contentVersion} />
                               </span>
                             </span>
                           </div>

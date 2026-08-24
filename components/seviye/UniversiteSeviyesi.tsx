@@ -121,7 +121,7 @@ export function UniversiteSeviyesi({ veri }: { veri: SeviyeVerisi }) {
                             <span className="flex flex-wrap items-center justify-end gap-2">
                               <span>{ders.etkilesim}</span>
                               <span className="rounded-full border border-poster-line bg-poster-surface px-2.5 py-1">
-                                <LessonProgressBadge slug={ders.slug} seviye="universite" contentVersion={ders.teachingHash} />
+                                <LessonProgressBadge slug={ders.slug} seviye="universite" contentVersion={ders.contentVersion} />
                               </span>
                             </span>
                           </div>

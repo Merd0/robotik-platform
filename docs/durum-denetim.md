@@ -4936,3 +4936,128 @@ için (docs/05'teki önceden belgelenmiş "3D'siz ders tüm bileşenleri taşıy
 271/252 KiB'e (dated yorumla) çekildi. `PredictionPrompt`'un kendisi zaten
 başka derslerde bulunduğu için ek maliyet getirmedi.
 
+---
+
+## FAZ 2 — Next Best Step / önkoşul zinciri netliği (2026-08-24)
+
+Mert'in isteği: "Sonraki" navigasyonu ve önkoşul zincirini incele, öğrencinin
+nereden nereye gideceğini net görebileceği bir ilerleme göstergesi/yol
+haritası ekle — mevcut hat sayfalarındaki yapıyı genişlet, yeni sistem icat
+etme.
+
+### Bulunan asıl kusur: "Next Best Step" öneri motoru yalnız 9 dersi biliyordu
+
+`lib/continueLearning.ts`'teki `getContinueState`, ana sayfadaki "Kaldığın
+yerden devam et" panelinin sonraki-adım önerisini `lib/learningRoutes.ts`
+içindeki `CURATED_START_ROUTES`'tan (seviye başına yalnız 3, toplam 9 ders,
+hepsi Hat A) hesaplıyordu. Son ziyaret edilen ders bu 9'un DIŞINDAYSA (94
+dersin 85'i) — ki gerçek bir öğrenci hızla bu duruma düşer — öneri hâlâ o 3
+Hat A dersinden birine işaret ediyordu; ziyaretçinin gerçekte ne yaptığıyla
+hiç ilgisi olmayan bir öneri. Bu "belirsiz" değil, **aktif olarak yanlış**
+bir öneriydi.
+
+**Not: `CURATED_START_ROUTES`/`lib/learningRoutes.ts` KALDIRILMADI.** İlk
+planda bunun tamamen gereksizleştiğini düşündüm, ama `components/seviye/
+seviyeVerisi.ts` bunu FARKLI bir amaçla kullanıyor: seviye giriş
+sayfalarında (`/seviye/[seviye]`) hiç kaydı olmayan YENİ ziyaretçiye "buradan
+başla" önerisi. Bu, "devam et" ile karışmayan, ayrı ve geçerli bir özellik —
+dokunulmadı.
+
+### Düzeltme: tam katalog + önkoşul-farkında müfredat sırası
+
+`getContinueState`, artık `routes` parametresi almıyor; `lessons`
+parametresindeki TÜM yayımlı dersler üzerinden çalışıyor (`ContinueLesson`'a
+`hatIndex`, `hatEtiketi`, `sira`, `onkosul` eklendi — `scripts/
+build-continue-index.ts`'te derleme zamanında dolduruluyor). Algoritma:
+
+1. Son yerin AYNI SEVİYESİNDEKİ tüm dersleri müfredat sırasına (hat sırası,
+   sonra `sira`) diz.
+2. Son yerden SONRAKİ, ziyaret edilmemiş dersler havuzunu tercih et; boşsa
+   (öğrenci ileri atlamış) ÖNCEKİ ziyaret edilmemiş derslere düş.
+3. Havuzdaki önkosulları TAMAM olan ilk adayı öner; hiçbiri hazır değilse
+   (döngüsel/karşılıksız önkoşul gibi nadir durum) müfredat sırasındaki ilk
+   adaya düş — öğrenci hiçbir zaman önerisiz bırakılmaz.
+
+**Canlı bir regresyon test-first'te yakalandı ve düzeltildi:** ilk yazımda
+adım 2'deki "önce/sonra" ayrımını unuttum — algoritma her seferinde
+seviyenin EN BAŞINDAKİ (genelde Hat A) ziyaret edilmemiş derse dönüyordu,
+kullanıcı hangi hatta olursa olsun. Birim testlerim bunu YAKALAMADI (test
+fixture'ımda ziyaret edilen ders hep en baştaydı, kaza eseri maskeliyordu) —
+gerçek tarayıcıda e2e testi (`e-ortaokul-makineler-nasil-konusur` okunduktan
+sonra ana sayfa hâlâ `a-ortaokul-robot-nedir` öneriyordu) yakaladı. Düzeltme
+sonrası hem yeni birim testi (`lib/continueLearning.test.ts`, "müfredatın
+BAŞINDAKİ ziyaret edilmemiş bir hattı önermez") hem e2e kırmızıdan yeşile
+geçti. Bu, "birim test yeşil ≠ doğru" örneği — proje disiplini (`docs/02`
+"her başarı testi bir negatifle düşünülür") burada gerçekten işe yaradı.
+
+### Lesson page — çapraz-hat çıkmaz düzeltmesi
+
+`getAdjacentLessons` (lib/content.ts), bir hattın 3 seviyesi de tükendiğinde
+(ör. `a-universite-poz-gosterimleri`, Hat A'nın gerçek son dersi) `next`i
+null bırakıyordu — öğrenci "Sonraki" bağlantısı olmayan bir çıkmazda
+kalıyordu. Artık `HAT_ETIKET` sırasındaki bir sonraki hattın AYNI seviyedeki
+ilk dersine düşüyor (ör. Hat A üniversite bitince → Hat B üniversite'nin
+ilk dersi). `previous` yönü bilinçli olarak GENİŞLETİLMEDİ (geri gitme daha
+az kritik, simetrik çapraz-hat sıçraması "geri" hissi vermez).
+`components/ui/LessonNav.tsx`, bu çapraz-hat durumunu "Sıradaki hat: {ad}"
+etiketiyle açıkça işaretliyor — düz "→" oku hat değiştiğini söylemezdi.
+
+Gerçek müfredatın son dersinde (`h-universite-guvenli-hucre-tasarimi`) `next`
+hâlâ `null` — sahte bir "sonraki" uydurulmuyor, bu doğru terminal durum.
+
+### Hat sayfasına ilerleme göstergesi
+
+`components/ui/HatProgressSummary.tsx` (yeni, küçük istemci bileşeni) hat
+sayfasının başına "X/N ders kanıtlandı · Y denendi · Z okundu" özetini
+ekliyor — satırlardaki mevcut `LessonProgressBadge`'lerin TOPLAMI, yeni bir
+hesap değil. Rekabet/sıralama yok (docs/00), yalnız kendi ilerlemesi.
+
+### Yan bulgu — sistemik, önceden var olan bir hata düzeltildi
+
+`HatProgressSummary`'yi yazarken `LessonProgressBadge`'in TÜM diğer
+kullanım yerlerinin (`app/seviye/[seviye]/hat/[hat]/page.tsx` VE dört seviye
+bileşeni: `OrtaokulSeviyesi`, `LiseSeviyesi`, `UniversiteSeviyesi`,
+`BaslangicRotasi`) `contentVersion` olarak bare `computeTeachingHash(lesson)`
+geçtiği görüldü. Ama gerçek ders sayfası (`app/ders/[slug]/page.tsx`)
+`LessonEvidenceProvider`ı `computeLessonContentVersion` (teaching+interaction+
+predicate BİRLEŞİK kökü) ile besliyor — `lib/interactionManifest.ts`'in
+kendi yorumunun da doğruladığı gibi, bu birleşik köke geçiş docs/03'teki
+"sıradaki sprint" maddesiyle zaten yapılmıştı ama SADECE ders sayfasında;
+`LessonProgressBadge`'in diğer 5 çağrı yeri hiç güncellenmemiş. Sonuç:
+kaydedilen olayların `contentVersion`'ı hiçbir zaman rozetin filtresiyle
+eşleşmiyordu — seviye/hat sayfalarındaki rozetler ders okunsa/denense/
+kanıtlansa bile HER ZAMAN "Başlanmadı" gösteriyordu. Bunu yeni e2e testim
+(`hat sayfası ilerleme özetini...`) canlı olarak yakaladı (0/2 kanıtlandı,
+1 okundu BEKLENIRKEN hep 0/2 kanıtlandı, 0 okundu geldi).
+
+Düzeltme: `components/seviye/seviyeVerisi.ts`teki `DersKarti.teachingHash`
+alanı `contentVersion`'a yeniden adlandırıldı ve değeri
+`computeLessonContentVersion(...)`e çevrildi; dört tüketici bileşen ve hat
+sayfası aynı doğru kökü kullanacak şekilde güncellendi. Bu, FAZ 2'nin
+kapsamı dışında ama AYNI dosyalarda karşılaşılan, gerçek ve site-geneli bir
+kullanıcı-görünür hata olduğu için (kendi eklediğim özelliği doğrularken
+ortaya çıktı) burada düzeltildi — ayrı bir faz açmaya gerek görülmedi.
+
+### Doğrulama
+
+Test-first: `lib/continueLearning.test.ts` (8 senaryo — golden, seviye
+tamamlandı, önkoşul atlama, döngüsel önkoşul fallback, listede olmayan
+önkoşul, ve regresyonu yakalayan iki yeni senaryo), `lib/content.test.ts`
+(3 yeni senaryo — çapraz-hat sıçrama, erken sıçramama, gerçek son ders).
+3 yeni e2e senaryosu (`Sıradaki hat`, `Kaldığın yerden devam et paneli
+küratörlü rota dışında`, `hat sayfası ilerleme özeti`) 3 viewport'ta yeşil.
+
+Tam paket: `tsc`, `lint`, `npm test` (852/852), `check-content` (94/94),
+`validate-content-graph`, `check-quiz-dagilimi`, `check-mdx-guvenlik`,
+`check-review-debt`/`check-review-integrity` (bilgi), `check-sensitive-terms`,
+`build`, `check-performance-budget` (bütçe içinde, ek dosyalar küçük),
+`npm audit` (0 zafiyet) — hepsi temiz.
+
+Tam Playwright suite'i: **336 geçti, 3 timeout'la başarısız (mobile-390 ve
+tablet-768'de WCAG testi, desktop-1440'ta TransformOrderLab), 18 koşullu
+atlama.** Üçü de bu FAZ'ın değiştirdiği hiçbir dosyayla ilgili değil
+(WCAG testi genel sayfa taraması, TransformOrderLab tamamen ayrı bir lab);
+izole/tek başına tekrar çalıştırıldıklarında üçü de sorunsuz geçti — FAZ
+1'deki 15 flaky testle aynı kök neden (3 viewport'un paralel worker'larda
+Pyodide/WebGL yüküyle yarışması, gerçek regresyon değil).
+

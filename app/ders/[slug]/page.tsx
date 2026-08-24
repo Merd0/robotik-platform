@@ -181,7 +181,7 @@ export default async function DersPage({ params }: DersPageProps) {
               <article className="ders-icerik mt-8 flex min-w-0 flex-col gap-5">{content}</article>
               <div className="mt-10"><LessonCompletionPanel seviye={seviye} /></div>
               <LessonRelatedTerms terms={relatedTerms} />
-              <LessonNav previous={previous} next={next} seviye={seviye} />
+              <LessonNav previous={previous} next={next} seviye={seviye} currentHat={lesson.frontmatter.hat} />
             </div>
             <LessonTrustPanel lesson={lesson} />
           </div>

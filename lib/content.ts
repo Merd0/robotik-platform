@@ -295,6 +295,13 @@ export function getPrerequisites(lesson: Lesson): Lesson[] {
  * Aynı hat içinde bir önceki/sonraki ders. Seviyenin son dersindeyse bir üst
  * seviyenin ilk dersine, ilk dersindeyse bir alt seviyenin son dersine
  * atlar — bkz. docs/01-mufredat.md "ders yapısı: sonraki adım".
+ *
+ * Hattın kendi 3 seviyesi de tükendiyse (bu, o hattın gerçekten SON dersiyse)
+ * `next`, HAT_ETIKET sırasındaki bir sonraki hattın AYNI seviyedeki ilk
+ * dersine düşer — aksi hâlde bir hattı bitiren öğrenci "sıradaki" bağlantısı
+ * olmayan bir çıkmazda kalırdı (FAZ 2, docs/durum-denetim.md). `previous`
+ * bilinçli olarak bu şekilde GENİŞLETİLMEDİ: geri gitme yönü daha az kritik
+ * ve simetrik bir çapraz-hat sıçraması "geri" hissi vermezdi.
  */
 export function getAdjacentLessons(lesson: Lesson): { previous: Lesson | null; next: Lesson | null } {
   const { hat, seviye } = lesson.frontmatter;
@@ -312,6 +319,17 @@ export function getAdjacentLessons(lesson: Lesson): { previous: Lesson | null; n
   if (!next && seviyeIndex < SEVIYE_ORDER.length - 1) {
     const higherTrack = getOrderedLessons(hat, SEVIYE_ORDER[seviyeIndex + 1]);
     next = higherTrack.length > 0 ? higherTrack[0] : null;
+  }
+
+  if (!next) {
+    const hatSirasi = Object.keys(HAT_ETIKET);
+    for (let i = hatSirasi.indexOf(hat) + 1; i < hatSirasi.length; i += 1) {
+      const nextHatTrack = getOrderedLessons(hatSirasi[i], seviye);
+      if (nextHatTrack.length > 0) {
+        next = nextHatTrack[0];
+        break;
+      }
+    }
   }
 
   return { previous, next };

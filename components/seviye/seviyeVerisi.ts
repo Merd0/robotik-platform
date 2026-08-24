@@ -1,5 +1,6 @@
 import { getPublicTracksByLevel, hatEtiket, type Seviye } from "@/lib/content";
 import { computeTeachingHash } from "@/lib/lessonArtifact";
+import { computeLessonContentVersion } from "@/lib/interactionManifest";
 import { etkilesimEtiketi } from "@/lib/etkilesimEtiket";
 import { CURATED_START_ROUTES } from "@/lib/learningRoutes";
 import { kanalKodu, onizlemeTuru, type OnizlemeTuru } from "./LessonPreview";
@@ -18,7 +19,15 @@ export interface DersKarti {
   etkilesim: string;
   onizleme: OnizlemeTuru;
   kanal: string;
-  teachingHash: string;
+  /**
+   * `LessonProgressBadge`'e verilen tam sürüm kökü — yalnız `teachingHash`
+   * DEĞİL, `computeLessonContentVersion` (teaching+interaction+predicate).
+   * Ders sayfası (`app/ders/[slug]/page.tsx`) `LessonEvidenceProvider`ı bu
+   * kökle besliyor; buradaki rozetler bare `teachingHash` kullansaydı
+   * kaydedilen olayların `contentVersion`'ıyla asla eşleşmez, rozet hep
+   * "Başlanmadı" görünürdü (FAZ 2'de bir e2e testiyle yakalandı).
+   */
+  contentVersion: string;
 }
 
 export interface HatBlogu {
@@ -52,7 +61,7 @@ export function seviyeVerisi(seviye: Seviye): SeviyeVerisi {
           etkilesim: etkilesimEtiketi(lesson.frontmatter.etkilesimli),
           onizleme,
           kanal: kanalKodu(onizleme),
-          teachingHash: computeTeachingHash(lesson),
+          contentVersion: computeLessonContentVersion(lesson.slug, lesson.body, computeTeachingHash(lesson)),
         };
       }),
     }));

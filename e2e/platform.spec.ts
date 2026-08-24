@@ -1985,3 +1985,33 @@ test("J6 TCP konumunu sabit tutarken görünür alet yönelimini değiştirir", 
   await expect(position).toHaveText(beforePosition!);
   await expect(orientation).not.toHaveText(beforeOrientation!);
 });
+
+test("hat sonunda 'Sıradaki hat' etiketiyle bir sonraki hatta geçilir (FAZ 2 çıkmaz düzeltmesi)", async ({ page }) => {
+  await page.goto("/ders/a-universite-poz-gosterimleri");
+  const sonrakiLink = page.getByRole("link", { name: /Sıradaki hat: Hareket ve kinematik/ });
+  await expect(sonrakiLink).toBeVisible();
+  await sonrakiLink.click();
+  await expect(page).toHaveURL(/\/ders\/b-universite-dh-ileri-kinematik$/);
+});
+
+test("Kaldığın yerden devam et paneli küratörlü rota dışındaki bir dersten sonra da doğru sonraki adımı önerir (FAZ 2)", async ({ page }) => {
+  await page.goto("/ders/e-ortaokul-makineler-nasil-konusur");
+  await page.getByRole("button", { name: "Okumayı kaydet" }).click();
+
+  await page.goto("/");
+  const panel = page.getByTestId("continue-learning");
+  await expect(panel).toBeVisible();
+  await expect(panel.getByRole("link", { name: 'Makineler birbiriyle nasıl "konuşur"' })).toBeVisible();
+  await expect(panel.getByRole("link", { name: "Devam et" })).toHaveAttribute("href", "/ders/e-ortaokul-sinyal-var-yok");
+});
+
+test("hat sayfası ilerleme özetini gösterir ve bir ders okunduğunda sayaç güncellenir (FAZ 2)", async ({ page }) => {
+  await page.goto("/seviye/ortaokul/hat/h-guvenlik");
+  await expect(page.getByRole("status").filter({ hasText: "ders kanıtlandı" })).toHaveText("0/2 ders kanıtlandı");
+
+  await page.goto("/ders/h-ortaokul-robotlar-neden-tehlikeli");
+  await page.getByRole("button", { name: "Okumayı kaydet" }).click();
+
+  await page.goto("/seviye/ortaokul/hat/h-guvenlik");
+  await expect(page.getByRole("status").filter({ hasText: "ders kanıtlandı" })).toHaveText("0/2 ders kanıtlandı · 1 okundu");
+});

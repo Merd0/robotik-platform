@@ -19,7 +19,7 @@ export function BaslangicRotasi({ seviye, dersler }: { seviye: Seviye; dersler: 
               <span className="flex items-center justify-between gap-3">
                 <span className="font-mono text-xs font-bold text-poster-subtle">{index + 1} / 3</span>
                 <span className="rounded-full border border-poster-line bg-poster-surface px-2.5 py-1">
-                  <LessonProgressBadge slug={ders.slug} seviye={seviye} contentVersion={ders.teachingHash} />
+                  <LessonProgressBadge slug={ders.slug} seviye={seviye} contentVersion={ders.contentVersion} />
                 </span>
               </span>
               <strong className="mt-3 font-heading text-xl leading-tight">{ders.baslik}</strong>

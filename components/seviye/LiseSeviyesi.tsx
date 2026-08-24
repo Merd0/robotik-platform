@@ -98,7 +98,7 @@ export function LiseSeviyesi({ veri }: { veri: SeviyeVerisi }) {
                         <div className="flex items-center justify-between gap-3 border-b border-poster-line px-4 py-2.5 font-mono text-[9.5px] font-bold uppercase tracking-[0.06em] text-poster-subtle">
                           <span>{harf} · {ders.kanal}</span>
                           <span className="flex items-center gap-2">
-                            <LessonProgressBadge slug={ders.slug} seviye="lise" contentVersion={ders.teachingHash} />
+                            <LessonProgressBadge slug={ders.slug} seviye="lise" contentVersion={ders.contentVersion} />
                             <span>{ders.sure} dk</span>
                           </span>
                         </div>

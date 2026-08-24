@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   DEFAULT_LESSON_SABLON,
+  getAdjacentLessons,
   getAllLessons,
   getLessonBySlug,
   getPublicLessonBySlug,
@@ -113,6 +114,29 @@ describe("getPublicLessons — geliştirme", () => {
   it("taslaklar dahil hepsini döndürür (yazarken önizleme gerekiyor)", () => {
     ortamiAyarla("development");
     expect(getPublicLessons().length).toBe(getAllLessons().length);
+  });
+});
+
+describe("getAdjacentLessons — çapraz-hat çıkmaz düzeltmesi (FAZ 2)", () => {
+  it("bir hattın son dersinden sonra HAT_ETIKET sırasındaki bir sonraki hattın aynı seviyedeki ilk dersine gider", () => {
+    const sonDers = getLessonBySlug("a-universite-poz-gosterimleri");
+    expect(sonDers).toBeDefined();
+    const { next } = getAdjacentLessons(sonDers!);
+    expect(next?.slug).toBe("b-universite-dh-ileri-kinematik");
+  });
+
+  it("negatif: hattın kendi seviye merdiveni bitmeden çapraz-hat sıçraması yapmaz", () => {
+    const ortaSeviye = getLessonBySlug("a-lise-serbestlik-derecesi");
+    expect(ortaSeviye).toBeDefined();
+    const { next } = getAdjacentLessons(ortaSeviye!);
+    expect(next?.frontmatter.hat).toBe("a-temeller");
+  });
+
+  it("gerçekten müfredatın son dersinde (Hat H üniversite) next null kalır — sahte bir sonraki durak uydurulmaz", () => {
+    const gercekSon = getLessonBySlug("h-universite-guvenli-hucre-tasarimi");
+    expect(gercekSon).toBeDefined();
+    const { next } = getAdjacentLessons(gercekSon!);
+    expect(next).toBeNull();
   });
 });
 

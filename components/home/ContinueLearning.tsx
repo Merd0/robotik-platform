@@ -34,7 +34,7 @@ export function ContinueLearning({ routes }: { routes: readonly ContinueRoute[] 
   }, [events.length]);
 
   const lessons = devamIndeksi ?? routeLessons(routes);
-  const state = getContinueState(events, lessons, routes);
+  const state = getContinueState(events, lessons);
   if (!state) return null;
 
   return (

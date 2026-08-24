@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getAllLessons, SEVIYE_ETIKET } from "../lib/content";
+import { getAllLessons, HAT_ETIKET, hatEtiket, SEVIYE_ETIKET } from "../lib/content";
 import type { ContinueLesson } from "../lib/continueLearning";
 
 /**
@@ -34,6 +34,7 @@ function main(): void {
   // olayında oluşamaz (ders sayfası üretime girmedi), ama aynı editoryal
   // kural burada da tutarlılık için uygulanır.
   const dersler = getAllLessons().filter((ders) => ders.frontmatter.durum === "yayinda");
+  const hatSirasi = Object.keys(HAT_ETIKET);
 
   const kayitlar: ContinueLesson[] = dersler
     .map((ders) => ({
@@ -41,6 +42,10 @@ function main(): void {
       baslik: ders.frontmatter.baslik,
       seviye: ders.frontmatter.seviye,
       seviyeEtiketi: SEVIYE_ETIKET[ders.frontmatter.seviye],
+      hatIndex: hatSirasi.indexOf(ders.frontmatter.hat),
+      hatEtiketi: hatEtiket(ders.frontmatter.hat),
+      sira: ders.frontmatter.sira ?? 0,
+      onkosul: ders.frontmatter.onkosul,
     }))
     .sort((a, b) => a.slug.localeCompare(b.slug, "tr"));
 
