@@ -104,10 +104,10 @@ export function FaultInjectionLab() {
         : "Doğrulama testi hipotezi ayırt etmiyor. Kök nedeni doğrudan sınayan bir ölçüm seç.";
 
   return (
-    <section aria-labelledby="fault-lab-title" className="rounded-[2rem] border border-site-border bg-site-soft p-4 shadow-sm sm:p-6 lg:p-8">
-      <header className="flex flex-col gap-4 border-b border-site-border pb-6 sm:flex-row sm:items-start sm:justify-between">
+    <section aria-labelledby="fault-lab-title" className="rounded-[2rem] border border-site-border bg-site-soft p-4 shadow-sm sm:p-6">
+      <header className="flex flex-col gap-4 border-b border-site-border pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="font-mono text-xs font-bold uppercase tracking-[.15em] text-site-accent-text">Vaka {caseIndex + 1}/3 · seed {scenario.seed}</p>
+          <p className="font-mono text-xs font-bold uppercase tracking-[.14em] text-site-accent-text">Vaka {caseIndex + 1}/3 · seed {scenario.seed}</p>
           <h2 id="fault-lab-title" className="mt-2 font-heading text-3xl font-semibold text-site-ink">Bilinmeyen arıza izi</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-site-muted">Arıza türünü seçmedin. En fazla iki telemetri kanalı aç, kök nedeni savun, önce güvenli eylemi seç ve hipotezini ayırt eden testi belirle.</p>
         </div>
@@ -119,7 +119,7 @@ export function FaultInjectionLab() {
         <p className="text-xs text-site-muted">Arıza t = {scenario.faultStartsAtSeconds.toFixed(2)} s anında enjekte edildi.</p>
       </div>
 
-      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(280px,380px)_minmax(0,1fr)]">
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-3">
         <div className="rounded-2xl border border-site-border bg-site-surface p-4 sm:p-5">
           {stage === "observe" && (
             <div>

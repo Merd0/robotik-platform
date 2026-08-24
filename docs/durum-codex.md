@@ -2424,3 +2424,43 @@ Kod Akademisi route/bileşenleri ile `lib/evidence.ts` ve testlerinde sürüyor;
 bu dosyalara dokunulmadı. Laboratuvarın Evidence kaydı bu çakışma nedeniyle bu
 fazın kapsamına alınmadı; teşhis akışı kendi yerel React durumunda ve sunucusuz
 çalışıyor. Yeni bağımlılık eklenmedi.
+
+## 2026-08-24 — Farklılaştırıcı 2/5: Vendor Dil Karşılaştırıcı
+
+`/laboratuvar/dil-karsilastirici` altında salt-okunur bir Vendor Rosetta
+laboratuvarı eklendi. Kullanıcı iki sentetik görev arasında geçiş yapabiliyor:
+öğretilmiş pose'a eklem yoluyla gidip tam durmak veya aynı pose'a 100 mm/s TCP
+niyetiyle doğrusal gidip yumuşak geçmek. Ortak `MoveIntent` formu hedef pose,
+iş çerçevesi, takım/TCP, hız niyeti ve hedef geçişini tek yerde gösteriyor;
+ABB RAPID ve Mecademic TCP/Text çıktıları bunun altında yan yana okunuyor.
+
+Bu araç kod çevirici veya program üretici değildir: çıktı çalıştırılamaz,
+indirilemez ve robota gönderilemez. Beş satırlı semantik iz özellikle sahte
+eşdeğerlikleri reddeder. RAPID `v100` ile Mecademic `SetJointVel(25)` aynı ölçek
+değildir; `z10` ile `SetBlending(50)` birbirine çevrilebilen toleranslar değildir;
+RAPID'de `wobj`/`tooldata` hareket satırında görünürken Mecademic'de WRF/TRF
+önceki controller durumu olarak ayarlanır. Hedef ve duruş-konfigürasyonu taşıma
+biçimleri de ayrı açıklanır.
+
+İddialar iki erişilebilir resmî kaynağa sürümle bağlandı: ABB
+`3HAC050917-001 Rev F` RAPID referansı ve Mecademic Meca500 Programming Manual
+`Firmware 11.3 · Revision A · 2026-04-28`. Depodaki KUKA dersinin kaynağı
+“doküman numarası doğrulanamadı” durumda olduğu için KRL ilk sürüme alınmadı;
+doğrulanmamış snippet çoğaltılmadı. Yeni bağımlılık eklenmedi.
+
+Test-first kanıtı: `vendorRosetta` importu ve yeni sitemap rotası önce kırmızı,
+uygulama sonrası yeşil çalıştı. Saf model beş ölçütü, iki hareket türünü,
+salt-okunur sınırı ve kaynak alan adlarını test ediyor. Üç viewport'lu hedef E2E
+matrisi Faz 1 regresyonlarıyla birlikte 15/15 geçti; yatay taşma ve kritik/ciddi
+axe bulgusu yok. Güncel Claude commit'leri faz dalına alındıktan sonra tam kapı
+yeniden çalıştırıldı: `npx tsc`, lint, 71 dosyada 937 Vitest, içerik/graph/quiz/
+MDX/review-debt/review-integrity/sensitive-terms, 335 statik sayfalı build,
+0 taslak sızıntısı, performans bütçesi, audit (0 açık) ve Playwright (378 geçti,
+18 koşullu atlandı) temiz.
+
+İlk bütünleşik performans ölçümünde yeni laboratuvarların ortak Tailwind CSS
+seçicileri 3B dersin Brotli toplamını 480.0 sınırında 480.1 KiB'e taşıdı. Bütçe
+büyütülmedi: yalnız yeni yüzeylerdeki tekil yardımcı sınıflar mevcut tasarım
+sınıflarıyla birleştirildi; tekrar ölçüm 480.0/480.0 KiB ile geçti. Faz öncesi,
+Claude birleşimi öncesi ve teslim öncesi `git status` kontrol edildi; Claude'un
+Kod Akademisi, Evidence ve içerik dosyalarına müdahale edilmedi.

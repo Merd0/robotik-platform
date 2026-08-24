@@ -40,14 +40,14 @@ export default function LabsPage() {
           <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight text-site-ink sm:text-6xl">Robotik kararlarını çalışan deneylerde sınayabilirsin.</h1>
           <p className="mt-4 text-lg leading-8 text-site-muted">Her laboratuvar tarayıcıda ve hesapsız çalışır. Sayılar ile grafikler simülasyonun gerçek hesaplarından gelir; gerçek robota komut gönderilmez.</p>
         </header>
-        <section className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3" aria-label="Yayındaki laboratuvarlar">
+        <section className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3" aria-label="Yayındaki laboratuvarlar">
           {LABS.map((lab) => (
-            <Link key={lab.href} href={lab.href} className="group flex min-h-72 flex-col rounded-3xl border border-site-border bg-site-surface p-6 transition-colors hover:border-site-accent">
+            <Link key={lab.href} href={lab.href} className="group flex min-h-72 flex-col rounded-2xl border border-site-border bg-site-surface p-6 transition-colors hover:border-site-accent">
               <p className="font-mono text-xs font-bold uppercase tracking-[.14em] text-site-accent-text">{lab.eyebrow}</p>
               <h2 className="mt-3 font-heading text-3xl font-semibold text-site-ink">{lab.title}</h2>
               <p className="mt-3 text-base leading-7 text-site-muted">{lab.description}</p>
               <p className="mt-auto pt-8 text-xs font-semibold text-site-muted">{lab.detail}</p>
-              <span className="mt-3 inline-flex min-h-11 items-center font-semibold text-site-ink underline decoration-site-accent underline-offset-4">Laboratuvarı aç →</span>
+              <span className="mt-3 inline-flex min-h-11 items-center font-semibold text-site-ink underline underline-offset-4">Laboratuvarı aç →</span>
             </Link>
           ))}
         </section>

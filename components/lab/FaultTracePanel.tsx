@@ -103,7 +103,7 @@ function FaultChart({ channel, samples, faultStartsAtSeconds }: {
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs text-site-muted">
         {config.series.map((serie) => (
           <span key={serie.label} className="inline-flex items-center gap-2">
-            <span aria-hidden="true" className="inline-block h-0.5 w-5" style={{ backgroundColor: serie.color }} />
+            <span aria-hidden="true" className="inline-block h-px w-5" style={{ backgroundColor: serie.color }} />
             {serie.label}{serie.dash ? " (kesikli)" : " (düz)"}
           </span>
         ))}
@@ -146,19 +146,19 @@ export function FaultTracePanel({ channels, samples, faultStartsAtSeconds }: {
   ];
 
   return (
-    <aside className="grid min-w-0 content-start gap-4" aria-label="Seçilen telemetri kanalları">
+    <aside className="grid min-w-0 content-start gap-4 lg:col-span-2" aria-label="Seçilen telemetri kanalları">
       {channels.map((channel) => (
         <FaultChart key={channel} channel={channel} samples={samples} faultStartsAtSeconds={faultStartsAtSeconds} />
       ))}
       <details className="min-w-0 rounded-xl border border-site-border bg-site-surface p-4 text-sm text-site-muted">
         <summary className="min-h-11 cursor-pointer font-semibold text-site-ink">Örneklenmiş veriyi tablo olarak göster</summary>
         <div className="mt-3 w-full max-w-full overflow-x-auto">
-          <table className="min-w-[560px] border-collapse text-left font-mono text-xs">
+          <table className="w-full border-collapse text-left font-mono text-xs">
             <caption className="sr-only">Seçilen telemetri izinden yaklaşık birer saniyelik örnekler</caption>
             <thead><tr className="border-b border-site-border">{tableColumns.map((column) => <th key={column.label} className="p-2">{column.label}</th>)}</tr></thead>
             <tbody>
               {tableSamples.map((sample) => (
-                <tr key={sample.tSeconds} className="border-b border-site-border/60">
+                <tr key={sample.tSeconds} className="border-b border-site-border">
                   {tableColumns.map((column) => <td key={column.label} className="p-2">{column.value(sample)}</td>)}
                 </tr>
               ))}

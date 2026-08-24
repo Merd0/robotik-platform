@@ -12,7 +12,7 @@ function CodePanel({ label, lines }: { label: string; lines: readonly string[] }
   return (
     <article className="min-w-0 rounded-2xl border border-site-border bg-slate-950 p-4 text-slate-100 sm:p-5">
       <h3 className="font-heading text-xl font-semibold text-white">{label}</h3>
-      <pre className="mt-4 overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-white/10 bg-black/25 p-4 text-sm leading-7" aria-label={`${label} salt okunur komut görünümü`}>
+      <pre className="mt-4 overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-white/10 bg-slate-900 p-4 text-sm leading-7" aria-label={`${label} salt okunur komut görünümü`}>
         <code>{lines.join("\n")}</code>
       </pre>
     </article>
@@ -25,9 +25,9 @@ export function VendorRosettaLab() {
   const { intent } = comparison.task;
 
   return (
-    <section aria-labelledby="rosetta-title" className="rounded-[2rem] border border-site-border bg-site-soft p-4 shadow-sm sm:p-6 lg:p-8">
+    <section aria-labelledby="rosetta-title" className="rounded-[2rem] border border-site-border bg-site-soft p-4 shadow-sm sm:p-6">
       <header className="max-w-4xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-[.15em] text-site-accent-text">MoveIntent v1 · salt okunur</p>
+        <p className="font-mono text-xs font-bold uppercase tracking-[.14em] text-site-accent-text">MoveIntent v1 · salt okunur</p>
         <h2 id="rosetta-title" className="mt-2 font-heading text-3xl font-semibold text-site-ink">Önce hareket niyeti, sonra üretici sözdizimi</h2>
         <p className="mt-3 text-sm leading-6 text-site-muted">Bu araç kod dönüştürmez. Aynı sentetik görevin iki kontrolör modelinde nerede ayrıştığını gösterir; çıktı indirilemez, çalıştırılamaz ve robota gönderilemez.</p>
       </header>
@@ -36,7 +36,7 @@ export function VendorRosettaLab() {
         <legend className="font-heading text-xl font-semibold text-site-ink">Karşılaştırılacak görev</legend>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           {ROSETTA_TASKS.map((task) => (
-            <label key={task.id} className={`flex min-h-24 cursor-pointer items-start gap-3 rounded-2xl border p-4 ${taskId === task.id ? "border-site-accent bg-site-accent-soft" : "border-site-border bg-site-surface"}`}>
+            <label key={task.id} className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 ${taskId === task.id ? "border-site-accent bg-site-accent-soft" : "border-site-border bg-site-surface"}`}>
               <input type="radio" name="rosetta-task" value={task.id} checked={taskId === task.id} onChange={() => setTaskId(task.id)} className="mt-1 size-4 shrink-0 accent-teal-700" />
               <span>
                 <strong className="block text-sm text-site-ink">{task.title}</strong>
@@ -52,7 +52,7 @@ export function VendorRosettaLab() {
           <h3 id="move-intent-heading" className="font-heading text-xl font-semibold text-site-ink">Ortak semantik form</h3>
           <span className="rounded-full border border-site-border px-3 py-1 font-mono text-xs text-site-muted">{intent.motion === "joint" ? "joint-space" : "cartesian-linear"}</span>
         </div>
-        <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-5">
+        <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-xl bg-site-soft p-3"><dt className="font-semibold text-site-muted">Hedef pose</dt><dd className="mt-1 font-mono text-xs leading-5 text-site-ink">[{intent.targetPose.join(", ")}]</dd></div>
           <div className="rounded-xl bg-site-soft p-3"><dt className="font-semibold text-site-muted">İş çerçevesi</dt><dd className="mt-1 text-site-ink">fixture A · [{intent.workFramePose.slice(0, 3).join(", ")}] mm</dd></div>
           <div className="rounded-xl bg-site-soft p-3"><dt className="font-semibold text-site-muted">Takım</dt><dd className="mt-1 text-site-ink">toolLab · Z={intent.toolFramePose[2]} mm</dd></div>
@@ -92,7 +92,7 @@ export function VendorRosettaLab() {
         <p><strong className="text-site-ink">Kaynak sınırı:</strong> Komut adları ve semantik notlar aşağıdaki sürümlü üretici kılavuzlarına dayanır. Controller seçeneği, robot modeli ve firmware değişirse davranış yeniden doğrulanmalıdır.</p>
         <ul className="mt-3 grid gap-2">
           {Object.values(ROSETTA_SOURCES).map((source) => (
-            <li key={source.publisher}><a href={source.url} target="_blank" rel="noreferrer" className="font-semibold text-site-ink underline decoration-site-accent underline-offset-4">{source.publisher}: {source.document}</a></li>
+            <li key={source.publisher}><a href={source.url} target="_blank" rel="noreferrer" className="font-semibold text-site-ink underline underline-offset-4">{source.publisher}: {source.document}</a></li>
           ))}
         </ul>
       </footer>
