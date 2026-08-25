@@ -32,4 +32,19 @@ describe("BROKEN_CODE_CARDS", () => {
   it("en az 4 farklı arıza türü içerir", () => {
     expect(BROKEN_CODE_CARDS.length).toBeGreaterThanOrEqual(4);
   });
+
+  it("her kart en az 2 kademeli ipucu taşır ve ipuçları boş değildir", () => {
+    for (const card of BROKEN_CODE_CARDS) {
+      expect(card.hints.length).toBeGreaterThanOrEqual(2);
+      for (const hint of card.hints) {
+        expect(hint.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("her kartın çözüm sonrası 'neden' açıklaması vardır", () => {
+    for (const card of BROKEN_CODE_CARDS) {
+      expect(card.explanation.length).toBeGreaterThan(20);
+    }
+  });
 });

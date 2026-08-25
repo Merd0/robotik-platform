@@ -23,6 +23,10 @@ interface CodeRunnerProps {
   expectedFinalDegrees?: number[];
   toleranceDegrees?: number;
   skillId?: string;
+  /** Kademeli ipucu — en belirsizden en somuta. Verilirse, tek tek açılabilen bir ipucu paneli gösterilir. */
+  hints?: readonly string[];
+  /** Otomatik test geçtikten SONRA gösterilen "neden" açıklaması. */
+  explanation?: string;
 }
 
 const THEME = {
@@ -100,6 +104,8 @@ export function CodeRunner({
   expectedFinalDegrees,
   toleranceDegrees = 0.5,
   skillId = "python-robot-programming",
+  hints,
+  explanation,
 }: CodeRunnerProps) {
   const t = THEME[theme];
   const engine = useCodeRunnerEngine({
@@ -135,6 +141,7 @@ export function CodeRunner({
   } = engine;
 
   const [activeTab, setActiveTab] = useState<"kod" | "sonuc">("kod");
+  const [hintsRevealed, setHintsRevealed] = useState(0);
 
   useEffect(() => {
     if (state !== "bitti") return;
@@ -207,6 +214,30 @@ export function CodeRunner({
               </button>
             </div>
 
+            {hints && hints.length > 0 && (
+              <div className={`rounded-lg border ${t.outline} ${t.bg} p-3`}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className={`text-sm font-semibold ${t.ink}`}>İpucu</span>
+                  {hintsRevealed < hints.length && (
+                    <button
+                      type="button"
+                      onClick={() => setHintsRevealed((n) => n + 1)}
+                      className={`min-h-11 rounded-md border ${t.outline} px-3 text-sm font-semibold ${t.ink}`}
+                    >
+                      {hintsRevealed === 0 ? "İpucu göster" : `Bir ipucu daha göster (${hintsRevealed + 1}/${hints.length})`}
+                    </button>
+                  )}
+                </div>
+                {hintsRevealed > 0 && (
+                  <ol className={`mt-2 flex list-decimal flex-col gap-1.5 pl-5 text-sm ${t.inkMuted}`}>
+                    {hints.slice(0, hintsRevealed).map((hint, index) => (
+                      <li key={index}>{hint}</li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            )}
+
             <ExperimentShareButton seviye={theme} createShareUrl={createShareUrl} />
           </div>
         </TabPanel>
@@ -271,6 +302,13 @@ export function CodeRunner({
             </div>}
 
             {testPassed !== null && <p className={`rounded-lg border p-3 text-sm font-semibold ${testPassed ? "border-success-border bg-success-surface text-success-ink" : "border-warning-border bg-warning-surface text-warning-ink"}`} role="status">{testPassed ? "Otomatik test geçti. Çıktı ve robot duruşu görevle uyuşuyor." : "Otomatik test henüz geçmedi. Çıktıyı veya son eklem açılarını görevle karşılaştır."}</p>}
+
+            {testPassed === true && explanation && (
+              <div className={`rounded-lg border ${t.outline} ${t.bg} p-3`}>
+                <span className={`text-sm font-semibold ${t.ink}`}>Neden bu hataydı?</span>
+                <p className={`mt-1.5 text-sm leading-6 ${t.inkMuted}`}>{explanation}</p>
+              </div>
+            )}
           </div>
         </TabPanel>
       </div>

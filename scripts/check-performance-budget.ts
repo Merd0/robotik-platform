@@ -175,7 +175,12 @@ const surfaces: SurfaceConfig[] = [
   // 2026-08-25 (FAZ 6 — Kavram Haritası, kendi fikir): SiteHeader nav'ına
   // eklenen link. `git stash -u`: 274.0/255.8→274.2/255.9 KiB — gerçek
   // fark +0.2 KiB gzip (brotli zaten yeterliydi). 274→275 KiB'e çekildi.
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 275 * KIB, brotli: 256 * KIB } },
+  //
+  // 2026-08-25 (Kırık Kod Lab — kademeli ipucu + "neden" paneli):
+  // `CodeRunner.tsx`e eklenen ipucu/açıklama UI'ı paylaşılan route chunk'ını
+  // büyüttü. `git stash -u`: 274.1/255.9→274.1/256.1 KiB — gerçek fark
+  // +0.2 KiB brotli (gzip zaten yeterliydi). 256→257 KiB'e çekildi.
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 275 * KIB, brotli: 257 * KIB } },
   // "3D ders" gzip'i zaten 530 KiB'de yeterli payla duruyordu (524.3→524.9,
   // +0.6 KiB). Brotli aynı FAZ 2 nedeniyle 480.0→480.6 KiB'e çıktı (zaten
   // tavanda duran bir bütçeydi, hiç payı yoktu) — 480→481 KiB'e çekildi.
@@ -194,7 +199,12 @@ const surfaces: SurfaceConfig[] = [
   // 2026-08-25 (FAZ 5 — Kırık Kod Laboratuvarı): aynı paylaşılan chunk
   // büyümesi. `git stash -u`: 526.8/482.2→527.8/483.3 KiB — gzip zaten
   // yeterliydi (527.8 < 530), brotli 483→484 KiB'e çekildi.
-  { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 484 * KIB } },
+  //
+  // 2026-08-25 (Kırık Kod Lab — kademeli ipucu + "neden" paneli): aynı
+  // `CodeRunner.tsx` büyümesi, aynı paylaşılan chunk. `git stash -u`:
+  // 528.9/483.9→528.9/484.1 KiB — gerçek fark +0.2 KiB brotli (gzip zaten
+  // yeterliydi). 484→485 KiB'e çekildi.
+  { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 485 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];
 

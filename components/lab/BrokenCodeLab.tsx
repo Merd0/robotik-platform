@@ -78,6 +78,8 @@ function BrokenCodeCardRunner({ card }: { card: BrokenCodeCard }) {
         expectedFinalDegrees={card.expectedFinalDegrees}
         toleranceDegrees={card.toleranceDegrees}
         skillId={card.skillId}
+        hints={card.hints}
+        explanation={card.explanation}
       />
     </LessonEvidenceProvider>
   );
