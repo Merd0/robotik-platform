@@ -5970,3 +5970,35 @@ bırakıldı.
 **Sırada:** madde 2/7 Bilgi Haritası (ilk kullanımda kısa yönlendirme),
 sonra Ters Problem Modu, Arıza Kliniği, Dijital İkiz Kayması, Hata
 Müzesi, Robot Röportajı (son karar: yeniden yorumla ya da kaldır).
+
+### Parça 2/7: Bilgi Haritası (2026-08-25)
+
+`components/knowledge/KnowledgeGraphExplorer.tsx`'e `FirstVisitIntro`
+bileşeni eklendi — 206 düğüm/360 ilişkili harita hiçbir açıklama
+olmadan (önceki hâliyle doğrudan arama kutusu + SVG) kafa karıştırıyordu.
+Yalnız ilk ziyarette görünen, "Anladım, kapat" ile kapatılan ve
+`robotik-platform:bilgi-haritasi-tanitim:v1` localStorage anahtarına
+yazılan bir not: listeden seç/haritada tıkla, beyaz halka = seçili düğüm,
+harita yatay kaydırılabilir. `setState`'i efekt gövdesinde değil
+`setTimeout(…, 0)` ile bir sonraki tikte çağırma deseni bu dosyada zaten
+var olan `ready` state'iyle aynı (`react-hooks/set-state-in-effect`
+kuralına uymak için).
+
+**Doğrulama:** `tsc`, hedefli `eslint` temiz. `e2e/knowledge-graph.spec.ts`e
+yeni bir test eklendi (banner ilk ziyarette görünür, kapatılınca
+`toHaveCount(0)`, sayfa yenilenince bir daha çıkmaz) — üç viewport'ta da
+(mobile-390/tablet-768/desktop-1440) toplam 15/15 test geçti, mevcut axe
+erişilebilirlik testi (`role="note"` dahil) etkilenmedi. Performans
+bütçesi: `/bilgi-haritasi` izlenen 4 yüzeyden (Ana sayfa, 3D'siz ders, 3D
+ders, CodeRunner) biri değil, bütçe scripti değişmeden temiz geçti. Tam
+`npm test`: 1047/1047 geçti (önceki parçada rapor edilen `lib/seo.test.ts`/
+`lib/staticRoutes.test.ts` başarısızlığı bu turda YOK — Codex'in paralel
+SEO işi bu arada tamamlanmış görünüyor, kendi dosyalarıma dokunmadım).
+check-content/graph/quiz/mdx-güvenlik/sensitive-terms hepsi temiz.
+Commit `5c68f1a` — yalnız kendi 2 dosyam (`KnowledgeGraphExplorer.tsx`,
+`knowledge-graph.spec.ts`) eklendi; Codex bu sırada ~30 `app/*/page.tsx`
+dosyasını (muhtemelen SEO metadata/canonical eklemesi) değiştirmiş
+durumda — hiçbirine dokunulmadı.
+
+**Sırada:** madde 3/7 Ters Problem Modu (amacını ilk bakışta anlaşılır
+kıl, basit örnekle başlat).
