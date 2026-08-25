@@ -2682,13 +2682,16 @@ kalemlerdir.
 Test-first kanıtında metadata/structured-data, sitemap rota keşfi, HTML semantiği,
 metadata kimliği, script-dışı görünür içerik, redirect güvenliği, görsel erişilebilirliği
 ve statik link tarayıcısı önce kırmızı, uygulama sonrası yeşil çalıştı. Son kapıda
-`npx tsc`, lint, 87 dosyada 1056 Vitest, içerik/graph/quiz/MDX/review-debt/
+`npx tsc`, lint, 87 dosyada 1055 Vitest, içerik/graph/quiz/MDX/review-debt/
 review-integrity/sensitive-terms, 345 statik sayfalı build, 241 sayfalı yayın denetimi
 ve performans bütçesi temizdi. İlk 10 işçili Playwright koşusunda 444 test geçti,
 dört kaynak-zaman aşımı çıktı; üçü değişikliksiz seri tekrarında geçti. Kalan R3F
-canvas testi SEO dalında sahne yükleme durumunda zaman aşımına uğrarken aynı commit
-ailesinin temiz `main` çıktısında 1,4 saniyede geçti; yeniden build ve düşük eşzamanlı
-tam koşu ile nihai kapı ayrıca kayda geçirilecek.
+canvas testi, taze export sonrasında 1,7 saniyede geçti; önceki çıktıdaki dinamik chunk
+tutarsızlığıydı. Güncel `main` tabanında hiçbir test veya timeout değiştirilmeden dört
+işçili tam Playwright kapısı temiz tamamlandı: 451 geçti, 20 viewport/proje koşuluyla
+atlandı. Vitest'in varsayılan dosya paralelliği iki katalog testini 5 saniye sınırına
+taşıdığı için tam paket ayrıca `--maxWorkers=1` ile çalıştırıldı; 87/87 dosya ve
+1055/1055 test geçti. `npm audit` 0 açık verdi.
 
 Kökte görevde adı verilen `ROBOTİK_PLATFORM_MASTER_PROMPT.md` dosyası çalışma ağacında,
 git geçmişinde ve yakın üst dizinde bulunamadı. Bu nedenle buradaki denetim kullanıcının
