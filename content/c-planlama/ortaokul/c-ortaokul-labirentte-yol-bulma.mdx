@@ -15,6 +15,7 @@ incelendi_tarafindan: "Mert"
 incelendi_tarih: "2026-08-02"
 etkilesimli:
   - PlannerRace
+  - PredictionPrompt
 durum: yayinda
 ---
 
@@ -49,20 +50,30 @@ dersteki A* modeli tam olarak bu soruyu çözüyor.
 ## Dene
 
 Önce tek geçit bırakan bir raf duvarı kur. Aracı çalıştırmadan rotanın
-hangi taraftan geçeceğini tahmin et. Sonra geçidi de kapat: algoritmayı
-"kırabildin" mi, yoksa sana dürüstçe yol olmadığını mı söyledi?
+hangi taraftan geçeceğini tahmin et, sonra çalıştırıp karşılaştır.
+
+Şimdi son geçidi de kapat — başlangıçla hedef arasında artık hiçbir yol
+kalmasın. Robotu çalıştırmadan önce tahminini kilitle:
+
+<PredictionPrompt
+  skillId="c-ortaokul-labirentte-tam-kapali"
+  prompt="Başlangıç ile hedef arasındaki SON geçidi de kapatıp robotu çalıştırırsan ne olur?"
+  options={["Robot duvarın içinden geçmenin bir yolunu bulur", "Sonuç panelinde dürüstçe \"yol bulunamadı\" yazar, robot hiç hareket etmez", "Uygulama hata verip durur"]}
+  correct={1}
+  explanation="Yol yoksa algoritma bunu asla icat etmez ya da gizlemez — dürüstçe başarısız der. Var olmayan bir çözümü var gibi göstermemek, gerçek bir planlayıcının en önemli özelliklerinden biridir."
+/>
 
 <Quiz
   sorular={[
     {
-      soru: "Başlangıç ile hedef arasında hiçbir geçit yoksa (tamamen kapalı) ne olur?",
+      soru: "Bir kare \"engelli\" işaretlenince planlayıcı bu kareyi nasıl ele alır?",
       secenekler: [
-        "Robot duvarın içinden geçer",
-        "Sonuç tablosunda \"başarısız\" yazar, yol bulunamaz",
-        "Program çöker",
+        "Kareyi karar haritasından tamamen çıkarır, oradan geçen hiçbir rota kurulamaz",
+        "Kareden geçmeyi dener ama yavaşlar",
+        "Kareyi yok sayıp düz çizgiyle geçer",
       ],
-      dogru: 1,
-      aciklama: "Yol yoksa algoritma bunu dürüstçe bildirir: başarısız. Var olmayan bir yolu icat etmez.",
+      dogru: 0,
+      aciklama: "\"Ne oldu\" bölümündeki gibi: engelli kareler karar haritasından çıkarılır, komşu boş kareler arasında hiç bağlantı kurulmaz.",
     },
   ]}
 />

@@ -64,8 +64,22 @@ iter. Şimdi başlangıçla hedef arasına, robotun büyük bir çevreleme
 yapmasını gerektirecek geniş bir engel duvarı koy ve tekrar çalıştır.
 Düğüm sayısı neden birdenbire artıyor?
 
+Şimdi kâğıt üstünde hesapla: açık listede iki aday hücre var. P hücresinin
+`g`si 3, `h`si 5. Q hücresinin `g`si 4, `h`si 3. A* önceliği `g + h`
+toplamının EN DÜŞÜK olduğu hücreyi seçer — hangisi önce genişler?
+
 <Quiz
   sorular={[
+    {
+      soru: "P hücresi g=3, h=5 (öncelik 8); Q hücresi g=4, h=3 (öncelik 7). A* hangisini önce genişletir?",
+      secenekler: [
+        "P — çünkü g değeri daha küçük",
+        "Q — çünkü g + h toplamı daha küçük (7 < 8)",
+        "İkisi de aynı anda genişler",
+      ],
+      dogru: 1,
+      aciklama: "A* yalnız g'ye değil, g + h toplamına bakar. P'nin g'si küçük olsa da toplam önceliği (8) Q'nunkinden (7) yüksek; A* önce Q'yu genişletir.",
+    },
     {
       soru: "Sezgisel fonksiyon (h) olmasaydı A* algoritması ne olurdu?",
       secenekler: [
