@@ -6,7 +6,7 @@ import { ThemeToggle } from "./ThemeToggle";
 const OVERFLOW_NAV_LINKS = [
   { href: "/sozluk", label: "Sözlük" },
   { href: "/ogretmen", label: "Öğretmen" },
-  { href: "/laboratuvar/robot-hucresi", label: "Canlı lab" },
+  { href: "/laboratuvar", label: "Laboratuvarlar" },
   { href: "/kod-akademisi", label: "Kod Akademisi" },
   { href: "/robot-roportaji", label: "Robot Röportajı" },
   { href: "/zaman-kapsulu", label: "Zaman Kapsülü" },

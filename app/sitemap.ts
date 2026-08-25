@@ -15,7 +15,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/oyun-alani`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE_URL}/ogretmen`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${SITE_URL}/sozluk`, lastModified: sozlukModified, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${SITE_URL}/laboratuvar`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE_URL}/laboratuvar/robot-hucresi`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE_URL}/laboratuvar/ariza-klinigi`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE_URL}/laboratuvar/dil-karsilastirici`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE_URL}/laboratuvar/ters-problem`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE_URL}/laboratuvar/dijital-ikiz-kaymasi`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE_URL}/laboratuvar/hata-muzesi`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE_URL}/bilgi-haritasi`, changeFrequency: "weekly", priority: 0.9 },
   ];
   const levels: MetadataRoute.Sitemap = LEVELS.map((level) => ({ url: `${SITE_URL}/seviye/${level}`, changeFrequency: "weekly", priority: 0.8 }));
   const tracks: MetadataRoute.Sitemap = LEVELS.flatMap((level) => getPublicTracksByLevel(level).filter((track) => track.lessons.some((lesson) => lesson.frontmatter.durum === "yayinda")).map((track) => ({ url: `${SITE_URL}/seviye/${level}/hat/${track.hat}`, changeFrequency: "weekly" as const, priority: 0.7 })));

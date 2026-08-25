@@ -2393,3 +2393,232 @@ Pyodide/worker, yerel ilerleme ve davranışsal değerlendirme sınırları koru
 Bu plan uygulanmadı. Mert'in açık onayı olmadan `docs/15`, Kod Akademisi
 kataloğu, route'ları, bileşenleri, worker veya evidence sözleşmeleri
 değiştirilmeyecek.
+
+## 2026-08-24 — Farklılaştırıcı 1/5: Arıza Enjeksiyonu Kliniği
+
+Deterministik ve tamamen tarayıcı içi çalışan tek eksenli bir arıza teşhis
+laboratuvarı eklendi. Üç vaka encoder sabit ofseti, paket gecikmesi ve aktüatör
+doygunluğunu aynı sürümlü telemetri sözleşmesinde üretir. Kullanıcı en fazla iki
+kanal açar; kök neden hipotezini, riski büyütmeyen ilk eylemi ve hipotezi ayırt
+eden doğrulama testini sırayla seçer. Kök neden sonuç aşamasından önce açıklanmaz;
+güvensiz bir müdahale, arıza adı doğru tahmin edilse bile başarı sayılmaz.
+
+Yeni `/laboratuvar` dizini Arıza Kliniği ile mevcut Robot Hücresi'ni görünür bir
+keşif yüzeyinde birleştirdi. `/laboratuvar/ariza-klinigi` ve dizin sitemap'e
+eklendi; sayfaya özgü metadata yazıldı. Grafikler gerçek simülasyon örneklerinden
+çiziliyor, çizgi biçimi ve metin özeti renk dışında ikinci bir gösterge sağlıyor,
+seçilmeyen telemetri tablosuna sızmıyor. Model sınırı sayfada görünür: bu yüzey
+gerçek servo veya güvenlik denetleyicisi değildir ve gerçek robota komut göndermez.
+
+Test-first kanıtı: motor ve sitemap testleri önce eksik uygulama nedeniyle kırmızı,
+sonra yeşil çalıştırıldı. Seçilmeyen kanalın tabloya sızması ve mobil yatay taşma
+ayrı E2E regresyonlarıyla önce yakalandı, ardından düzeltildi. Faz kapıları temiz:
+`npx tsc`, `npm run lint`, `npm test` (904), içerik/graph/quiz/MDX/review-debt/
+review-integrity/sensitive-terms kontrolleri, `npm run build` (332 statik sayfa,
+0 taslak sızıntısı), performans bütçesi, `npm audit --audit-level=high` (0 açık)
+ve tam Playwright paketi (360 geçti, 18 koşullu atlandı). Yeni faza özel E2E
+matrisi üç viewport'ta 9/9 geçti.
+
+Faz öncesi ve teslim öncesi `git status` kontrol edildi. Paralel Claude çalışması
+Kod Akademisi route/bileşenleri ile `lib/evidence.ts` ve testlerinde sürüyor;
+bu dosyalara dokunulmadı. Laboratuvarın Evidence kaydı bu çakışma nedeniyle bu
+fazın kapsamına alınmadı; teşhis akışı kendi yerel React durumunda ve sunucusuz
+çalışıyor. Yeni bağımlılık eklenmedi.
+
+## 2026-08-24 — Farklılaştırıcı 2/5: Vendor Dil Karşılaştırıcı
+
+`/laboratuvar/dil-karsilastirici` altında salt-okunur bir Vendor Rosetta
+laboratuvarı eklendi. Kullanıcı iki sentetik görev arasında geçiş yapabiliyor:
+öğretilmiş pose'a eklem yoluyla gidip tam durmak veya aynı pose'a 100 mm/s TCP
+niyetiyle doğrusal gidip yumuşak geçmek. Ortak `MoveIntent` formu hedef pose,
+iş çerçevesi, takım/TCP, hız niyeti ve hedef geçişini tek yerde gösteriyor;
+ABB RAPID ve Mecademic TCP/Text çıktıları bunun altında yan yana okunuyor.
+
+Bu araç kod çevirici veya program üretici değildir: çıktı çalıştırılamaz,
+indirilemez ve robota gönderilemez. Beş satırlı semantik iz özellikle sahte
+eşdeğerlikleri reddeder. RAPID `v100` ile Mecademic `SetJointVel(25)` aynı ölçek
+değildir; `z10` ile `SetBlending(50)` birbirine çevrilebilen toleranslar değildir;
+RAPID'de `wobj`/`tooldata` hareket satırında görünürken Mecademic'de WRF/TRF
+önceki controller durumu olarak ayarlanır. Hedef ve duruş-konfigürasyonu taşıma
+biçimleri de ayrı açıklanır.
+
+İddialar iki erişilebilir resmî kaynağa sürümle bağlandı: ABB
+`3HAC050917-001 Rev F` RAPID referansı ve Mecademic Meca500 Programming Manual
+`Firmware 11.3 · Revision A · 2026-04-28`. Depodaki KUKA dersinin kaynağı
+“doküman numarası doğrulanamadı” durumda olduğu için KRL ilk sürüme alınmadı;
+doğrulanmamış snippet çoğaltılmadı. Yeni bağımlılık eklenmedi.
+
+Test-first kanıtı: `vendorRosetta` importu ve yeni sitemap rotası önce kırmızı,
+uygulama sonrası yeşil çalıştı. Saf model beş ölçütü, iki hareket türünü,
+salt-okunur sınırı ve kaynak alan adlarını test ediyor. Üç viewport'lu hedef E2E
+matrisi Faz 1 regresyonlarıyla birlikte 15/15 geçti; yatay taşma ve kritik/ciddi
+axe bulgusu yok. Güncel Claude commit'leri faz dalına alındıktan sonra tam kapı
+yeniden çalıştırıldı: `npx tsc`, lint, 71 dosyada 937 Vitest, içerik/graph/quiz/
+MDX/review-debt/review-integrity/sensitive-terms, 335 statik sayfalı build,
+0 taslak sızıntısı, performans bütçesi, audit (0 açık) ve Playwright (378 geçti,
+18 koşullu atlandı) temiz.
+
+İlk bütünleşik performans ölçümünde yeni laboratuvarların ortak Tailwind CSS
+seçicileri 3B dersin Brotli toplamını 480.0 sınırında 480.1 KiB'e taşıdı. Bütçe
+büyütülmedi: yalnız yeni yüzeylerdeki tekil yardımcı sınıflar mevcut tasarım
+sınıflarıyla birleştirildi; tekrar ölçüm 480.0/480.0 KiB ile geçti. Faz öncesi,
+Claude birleşimi öncesi ve teslim öncesi `git status` kontrol edildi; Claude'un
+Kod Akademisi, Evidence ve içerik dosyalarına müdahale edilmedi.
+
+## 2026-08-24 — Farklılaştırıcı 3/5: Ters Problem Modu
+
+`/laboratuvar/ters-problem` altında, mevcut otomatik IK çözücüsünden farklı bir
+öğrenme yüzeyi eklendi. Kullanıcı aynı iki eklemli kolu ileri problemde
+“açılar → TCP”, ters problemde “TCP hedefi → açılar” yönünde kullanıyor; iki mod
+arasında geçerken eklem durumu korunuyor. Ters görev, aynı hedefe tolerans içinde
+ulaşan iki ayrı çözümü — dirsek-yukarı ve dirsek-aşağı dallarını — kullanıcının
+bulmasını istiyor. Aynı dalı küçük açı farklarıyla tekrar kaydetmek ikinci çözüm
+sayılmıyor; böylece etkinlik bir slider eşleştirme oyununa indirgenmiyor.
+
+Üç hedef sabit ekran koordinatlarından değil, mevcut `forwardKinematics` modeli ve
+iki eklemli jenerik robotun gerçek bağlantı uzunluklarından türetiliyor. Saf
+`inverseProblem` modeli TCP hatasını metre cinsinden hesaplıyor, 0,035 m kabul
+toleransını uyguluyor ve çözüm dalını J2 işaretinden sınıflandırıyor. SVG kol,
+hedef, hata çizgisi ve sayısal metin karşılığı aynı hesap sonucunu kullanıyor.
+Sayfa bunun iki boyutlu eğitim modeli olduğunu, tekillik/çarpışma/dinamik ve gerçek
+robot güvenliği doğrulaması olmadığını görünür biçimde belirtiyor. Sunucu, hesap,
+gerçek robot bağlantısı veya yeni bağımlılık eklenmedi.
+
+Test-first kanıtında model importu ve sitemap beklentisi önce kırmızı, uygulama
+sonra yeşil çalıştı. Birinci E2E denemesi erişilebilir slider adlarının eksikliğini,
+ikinci deneme birden fazla doğal `status` rolünden doğan belirsizliği yakaladı;
+ürüne açık `aria-label` adları ve isimlendirilmiş canlı geri bildirim bölgesi
+eklenerek üçüncü denemede hedef matris 9/9 geçti. Tam kapı da temiz: `npx tsc`,
+lint, 72 dosyada 942 Vitest, içerik/graph/quiz/MDX/review-debt/review-integrity/
+sensitive-terms kontrolleri, 336 statik sayfalı build, 0 taslak sızıntısı,
+performans bütçesi (3B Brotli toplamı 480,0/480,0 KiB), audit (0 açık) ve
+Playwright (387 geçti, 18 koşullu atlandı).
+
+Faz öncesi, ana dal birleşimi öncesi ve teslim öncesi `git status` kontrol edildi.
+Paralel Claude çalışmasının `lib/robotics/robotState.ts` ve test dosyaları kök
+çalışma ağacında sahiplenilmedi; Evidence, Kod Akademisi ve robot-state yüzeylerine
+dokunulmadı. Ana dal kirli olduğu için doğrulanmış faz commit'i bağımsız dalda
+tutuldu; eşzamanlı dosyalar geri alınmadı veya biçimlendirilmedi.
+
+## 2026-08-24 — Farklılaştırıcı 4/5: Dijital İkiz Kayması
+
+`/laboratuvar/dijital-ikiz-kaymasi` altında model–ölçüm senkronunu görünür yapan
+bir eğitim provası eklendi. Başlangıç kalibrasyonunda ikiz tahmini ile sentetik
+fiziksel TCP ölçümü eşik içinde başlıyor; “üç ay sonraki” seed’li akışta J1 sıfır
+noktası 7° kayıyor. Kullanıcı tek bir aykırı değere değil, 60 mm üstündeki en az
+üç ardışık artığa dayanan açık karar kuralıyla kaymayı teşhis ediyor. Güvenli kapı,
+kalıcı fark varken otomatik akışa devam etmeyi veya yalnız izlemeyi başarı saymıyor;
+akışı durdurup yeniden kalibrasyon kararını istiyor.
+
+Ölçümler sabit ekran değerleri değil, mevcut `genericTwoDofRobot` ve
+`forwardKinematics` sonucundan türetiliyor; yalnız seed’li ±1–2 mm ölçüm gürültüsü
+ekleniyor. Kullanıcı J1 sıfır düzeltmesini K1–K6 kalibrasyon pozlarında ayarlıyor,
+ancak başarı aynı örneklere tekrar uyumla verilmez: farklı J2 açıları kullanan
+D1–D4 doğrulama setinin ortalama TCP artığı 12 mm kabul sınırını geçmelidir.
+Grafik, eşik çizgisi, durum/kalıcılık özeti ve açılabilir veri tablosu aynı saf
+hesap çıktısını kullanıyor; renk tek bilgi kanalı değildir.
+
+Sayfa, “fiziksel” akışın tarayıcıda üretilen sentetik veri olduğunu ve kendi
+başına gerçek bir dijital ikiz olmadığını kalıcı biçimde belirtiyor. Gerçek sensör,
+robot, hesap veya sunucu bağlantısı kurulmadı; yeni bağımlılık eklenmedi. Bu faz
+arıza kliniğindeki kök-neden teşhisini tekrarlamak yerine, bağlı bir modelin zamanla
+fiziksel sistemden ayrışabileceğini ve düzeltmenin görülmemiş pozlara taşınmasının
+kanıtlanması gerektiğini öğretiyor.
+
+Test-first kanıtında yeni model importu ve sitemap rotası önce kırmızı, saf model
+eklenince 9/9 yeşil çalıştı. UI E2E sözleşmesi sayfa yokken kırmızıya geçti;
+uygulamadan sonraki ikinci koşuda üç viewport 9/9 geçti. İlk tip kontrolü yanlış
+`Vec3` dışa aktarımını yakaladı ve tür doğrudan kanonik `transform` modülünden
+alınarak düzeltildi. Tam kapı temiz: `npx tsc`, lint, 73 dosyada 947 Vitest,
+içerik/graph/quiz/MDX/review-debt/review-integrity/sensitive-terms, 337 statik
+sayfalı build, 0 taslak sızıntısı, performans bütçesi (3B Brotli toplamı yine
+480,0/480,0 KiB), Playwright (396 geçti, 18 koşullu atlandı) ve audit (0 açık).
+
+Faz öncesi ve teslim öncesi `git status` kontrol edildi. Kök ana dalda Claude’a ait
+izlenmeyen `lib/robotics/robotState.ts` ve testi sürdüğü için bunlara dokunulmadı;
+Evidence, Kod Akademisi, ders içeriği ve robot-state sözleşmeleri değiştirilmedi.
+Ana dal kirliyken otomatik merge yapılmadı; doğrulanmış commit dal zincirinde
+korundu.
+
+## 2026-08-24 — Farklılaştırıcı 5/5: Hata Müzesi
+
+`/laboratuvar/hata-muzesi` altında, Arıza Kliniği’nin aynı üç deterministik golden
+trace’ini küratörlü karşı örneklere dönüştüren bir keşif yüzeyi eklendi. Encoder
+ofseti, paket gecikmesi ve aktüatör doygunluğu birer “eser” olarak önce semptomu ve
+cazip fakat yanlış zihinsel modeli gösteriyor. Kullanıcı doğru kök neden adını
+ezberden seçmiyor; yanlış iddianın mekanizmasını gerçekten çürüten ölçümü bulmadan
+doğru okuma açılmıyor.
+
+Her eser için bağımsız referans–ölçüm ortalama farkı, en yüksek paket yaşı ve
+istenen–uygulanan en büyük komut farkı doğrudan mevcut `generateFaultScenario`
+örneklerinden hesaplanıyor. Yanlış ölçüm bağlam sağlasa bile doğru okumayı açmıyor.
+Ayırt edici karşı kanıt seçildiğinde yanlış/doğru yorum yan yana gösteriliyor;
+güvenli ilk eylem ve doğrulama testi yeni bir metin sözleşmesinden değil,
+`FAULT_INFO`, `FIRST_ACTION_OPTIONS` ve `VERIFICATION_TEST_OPTIONS` kaynaklarından
+alınıyor. Mevcut `FaultTracePanel` grafik ve tablo karşılığını yeniden kullanıyor;
+renk tek bilgi kanalı değil.
+
+“Anonim” ifadesi sahte topluluk faaliyeti anlamında kullanılmadı: eserler gerçek
+kişilerden veya kullanıcı koşularından toplanmıyor, seed 0/1/2 ile yerelde yeniden
+üretilen sabit sentetik vakalardır. UI bunu her eserde açıkça söylüyor; hesap,
+localStorage, sunucu, telemetri gönderimi veya sosyal kanıt eklenmedi. Model sınırı,
+simülasyondaki bağımsız referansın oracle olan gerçek konum olduğunu ve sahada ayrı
+doğrulanmış ölçüm aracı gerekeceğini görünür tutuyor. Yeni bağımlılık eklenmedi.
+
+Test-first kanıtında `errorMuseum` importu ile sitemap rotası önce kırmızı, model
+sonra 8/8 yeşil çalıştı. UI E2E sözleşmesi sayfa yokken kırmızıya geçti; uygulama
+sonrası ikinci denemede üç viewport 9/9 geçti. Tam kapı temiz: `npx tsc`, lint,
+74 dosyada 951 Vitest, içerik/graph/quiz/MDX/review-debt/review-integrity/
+sensitive-terms, 338 statik sayfalı build, 0 taslak sızıntısı, performans bütçesi
+(3B Brotli toplamı 480,0/480,0 KiB), Playwright (405 geçti, 18 koşullu atlandı)
+ve audit (0 açık).
+
+Faz öncesi ve teslim öncesi `git status` kontrol edildi. Kök ana daldaki Claude’a
+ait izlenmeyen `lib/robotics/robotState.ts` ile testi sahiplenilmedi; Evidence, Kod
+Akademisi, ders içeriği ve robot-state sözleşmeleri değiştirilmedi. Ana dal kirli
+olduğu için otomatik merge yapılmadı; beş farklılaştırıcının doğrulanmış commit
+zinciri bağımsız dalda korunuyor.
+
+## 2026-08-24 — Faz 6: Robotics Knowledge Graph
+
+`/bilgi-haritasi` altında platformun mevcut bilgi yapısını keşfedilebilir kılan
+erişilebilir ve etkileşimli bir harita eklendi. Sayılar sabit pazarlama metni değil,
+yayın kataloglarından build sırasında hesaplanıyor: 94 ders, 72 sözlük terimi,
+ders frontmatter'ında kullanılan 19 etkileşim/lab bileşeni ve 21 yayınlı Kod
+Akademisi modülü olmak üzere 206 düğüm; bunlar arasında 360 gerçek ilişki var.
+Varsayılan TCP düğümü, onu kullanan dört dersi doğrudan; bu derslerin bağlı
+etkileşimlerini ve komşu içeriklerini iki adımda gösteriyor.
+
+Yeni bir bilgi modeli icat edilmedi. Kenarlar yalnız `onkosul`, hat/seviye içindeki
+mevcut `sira`, derslerin `etkilesimli` alanı, ders metninde zaten kullanılan “İlgili
+terimler” eşleşmesi, sözlükteki `karisan` bağlantısı ve Kod Akademisi'nin mevcut
+aşama/sıra yapısından türetiliyor. Kod Akademisi sırası önkoşul diye sunulmuyor.
+Ayrı laboratuvar rotaları için kanonik ilişki alanı bulunmadığından onlara yapay
+kenar eklenmedi; bu veri sınırı sayfada görünür. Önizleme açılsa bile taslak ders ve
+modüller graph'a veya sitemap'e sızmıyor.
+
+Görsel SVG bütün 206 düğümü gösteriyor, fakat okunmaz bir “hairball” üretmemek için
+yalnız seçilen düğümün iki adımlık çevresinin kenarlarını çiziyor. Seçimin nedeni ve
+sonucu aynı kartta görünüyor. Arama, tür ve hat filtreleri ile hiyerarşik sonuç
+listesi klavye/ekran okuyucu için birincil yüzey; yatay harita eşdeğer görsel katman.
+Mobil taşma yok, kaydırılabilir bölge klavyeyle odaklanabiliyor ve renk tek bilgi
+kanalı değil. Sözlük sayfası ilgili keşif bağlantısını taşıyor; rota sitemap'te.
+Sunucu, hesap, telemetri veya yeni bağımlılık eklenmedi.
+
+Test-first kanıtında `knowledgeGraph` importu ve sitemap beklentisi önce kırmızı,
+uygulama sonrası 10/10 yeşil çalıştı. Sayfa yokken E2E sözleşmesi kırmızıydı; hedef
+paket son durumda 12/12 geçti. Tam kapının `npx tsc`, lint, 75 dosyada 957 Vitest,
+içerik/graph/quiz/MDX/review-debt/review-integrity/sensitive-terms, 339 statik
+sayfalı build, 0 taslak sızıntısı, Playwright (417 geçti, 18 koşullu atlandı) ve
+audit (0 açık) adımları temiz.
+
+Performans kapısı temiz değil: yeni sayfaya özgü Tailwind seçicilerini ortak CSS'ten
+azaltan üç gerçek düzeltme denemesi ölçümü 3B ders için 480,2 → 480,1 → ekranda
+480,0 KiB düzeyine indirdi; buna rağmen gerçek bayt değeri 480 KiB sınırının birkaç
+bayt üzerinde kaldığı için script hata koduyla çıktı. Bütçe büyütülmedi, test
+zayıflatılmadı. Üç-deneme kuralı gereği bu kalem atlandı ve faz main'e merge
+edilmedi; commit yığın dalında tutuldu.
+
+Faz öncesi ve teslim öncesi `git status` kontrol edildi. Kök ana daldaki Claude'a
+ait izlenmeyen `lib/robotics/robotState.ts` ile testi sahiplenilmedi; Kod Akademisi,
+Evidence, ders içeriği ve robot-state dosyalarına dokunulmadı.

@@ -50,6 +50,13 @@ export default function SozlukPage() {
         terimden farkı da var.
       </p>
 
+      <Link
+        href="/bilgi-haritasi"
+        className="mt-6 inline-flex min-h-11 items-center rounded-xl border border-ortaokul-accent/40 bg-ortaokul-surface px-4 font-medium text-ortaokul-accent-text hover:border-ortaokul-accent"
+      >
+        Bu terimlerin ders ve laboratuvar bağlantılarını haritada gör →
+      </Link>
+
       <nav aria-label="Konu hatları" className="mt-8 flex flex-wrap gap-2">
         {gruplar.map(({ hat }) => (
           <a
