@@ -11,6 +11,7 @@ const OVERFLOW_NAV_LINKS = [
   { href: "/robot-roportaji", label: "Robot Röportajı" },
   { href: "/zaman-kapsulu", label: "Zaman Kapsülü" },
   { href: "/sinir-testi", label: "Sınır Testi" },
+  { href: "/kirik-kod-laboratuvari", label: "Kırık Kod Laboratuvarı" },
 ];
 
 export function SiteHeader() {

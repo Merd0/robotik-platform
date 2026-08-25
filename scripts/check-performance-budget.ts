@@ -163,7 +163,15 @@ const surfaces: SurfaceConfig[] = [
   // chunk'ında). `git stash -u`: stash'lenmişken 271.5/253.1 KiB, geri
   // alınınca 272.0/253.6 KiB — gerçek fark +0.5/+0.5 KiB. Gzip 272→273,
   // brotli 254→255 KiB'e çekildi.
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 273 * KIB, brotli: 255 * KIB } },
+  //
+  // 2026-08-25 (FAZ 5 — Kırık Kod Laboratuvarı, docs/16 FAZ 5): yeni
+  // `/kirik-kod-laboratuvari` sayfası `CodeRunner`ı doğrudan import ediyor
+  // — Next'in paylaşılan chunk sınırı bu yeni erişilebilirlik yüzünden
+  // kaydı, HER route'un paylaşılan chunk'ını büyüttü (aynı kök neden
+  // sınıfı: docs/05 "3D'siz ders yüzeyi tüm etkileşimli bileşenleri
+  // taşıyor"). `git stash -u`: 272.6/254.2→273.4/255.3 KiB — gerçek fark
+  // +0.8/+1.1 KiB. Gzip 273→274, brotli 255→256 KiB'e çekildi.
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 274 * KIB, brotli: 256 * KIB } },
   // "3D ders" gzip'i zaten 530 KiB'de yeterli payla duruyordu (524.3→524.9,
   // +0.6 KiB). Brotli aynı FAZ 2 nedeniyle 480.0→480.6 KiB'e çıktı (zaten
   // tavanda duran bir bütçeydi, hiç payı yoktu) — 480→481 KiB'e çekildi.
@@ -178,7 +186,11 @@ const surfaces: SurfaceConfig[] = [
   // Bu sayfa da CodeRunner'ın paylaşılan route chunk'ını taşıyor. `git
   // stash -u`: 525.5/481.0→526.0/481.5 KiB — gzip zaten yeterliydi, brotli
   // 482→483 KiB'e çekildi.
-  { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 483 * KIB } },
+  //
+  // 2026-08-25 (FAZ 5 — Kırık Kod Laboratuvarı): aynı paylaşılan chunk
+  // büyümesi. `git stash -u`: 526.8/482.2→527.8/483.3 KiB — gzip zaten
+  // yeterliydi (527.8 < 530), brotli 483→484 KiB'e çekildi.
+  { name: "3D ders", html: "ders/b-lise-geometrik-ters-kinematik.html", deferred: "scene", budget: { gzip: 530 * KIB, brotli: 484 * KIB } },
   { name: "CodeRunner", html: "ders/d-lise-python-komut-dizisi.html", deferred: "code-runner", budget: { gzip: 7 * MIB, brotli: 6.25 * MIB } },
 ];
 
