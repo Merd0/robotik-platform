@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ContinueLearning } from "@/components/home/ContinueLearning";
 import { HeroExperiment } from "@/components/home/HeroExperiment";
+import { RandomLessonButton } from "@/components/home/RandomLessonButton";
 import { getAllLessons, getPublicLessons, HAT_ETIKET, hatEtiket, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
 import { ETKILESIM_ETIKETI } from "@/lib/etkilesimEtiket";
 import { CURATED_START_ROUTES } from "@/lib/learningRoutes";
@@ -143,6 +144,10 @@ export default function HomePage() {
         {allLessons.length > publishedLessons.length && (
           <p className="-mt-12 text-center text-xs text-poster-subtle">{allLessons.length - publishedLessons.length} taslak içerik production sayfalarına dahil değildir.</p>
         )}
+
+        <section aria-label="Rastgele keşif" className="flex justify-center">
+          <RandomLessonButton />
+        </section>
       </div>
     </main>
   );
