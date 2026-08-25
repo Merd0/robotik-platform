@@ -5672,5 +5672,17 @@ düşüyordu — `role="status"` filtresine çevrildi. Tam kontrol paketi (tsc,
 lint, 964 vitest, check-content/graph, `npm audit`, build, performans
 bütçesi, 369 e2e) bu düzeltmelerle temiz.
 
-**2/4, 3/4, 4/4 — Zaman Kapsülü, Sınır Testi, Kırık Kod Laboratuvarı:
-SIRADA.** Sonraki döngüde uygulanacak.
+**2/4 — Zaman Kapsülü: TAMAMLANDI.** `/zaman-kapsulu` — tamamen tarayıcıda:
+kullanıcının gerçek `EvidenceEvent` geçmişini (`lib/timeCapsule.ts`, 12
+vitest testi) sabit zaman çapalarıyla (1 hafta/1 ay/3 ay/1 yıl önce + ilk
+kayıt, tolerans bantlı) karşılaştırır. Bir çapaya yakın gerçek bir olay
+yoksa o çapa hiç gösterilmez — fake istatistik yok. Lesson başlığı için
+var olan `/devam-index.json` (ContinueLearning ile aynı kaynak) kullanıldı,
+yeni veri kaynağı eklenmedi. Boş durumlar (Madde 64 disipliniyle) "hiç
+kayıt yok" ve "kayıt var ama henüz hiçbir çapaya yakın değil" ayrı ayrı ele
+alınıyor. 3 e2e testi (localStorage'a `addInitScript` ile gerçekçi zaman
+damgalı olay ekleyerek) geçti. Tam kontrol paketi (tsc, lint, 976 vitest,
+build, performans bütçesi, 377 e2e) temiz.
+
+**3/4, 4/4 — Sınır Testi, Kırık Kod Laboratuvarı: SIRADA.** Sonraki
+döngüde uygulanacak.
