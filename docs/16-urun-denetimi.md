@@ -445,3 +445,28 @@ içerik projesi), Madde 21 (workspace görselleştirme — yeni bir görsel
 katman), Madde 41 (bilgi grafiği — yeni bir sayfa/görselleştirme), Madde
 5'in literal 3-etiketli fidelity sistemi (mevcut 2-durumlu toggle'ın
 üstüne yeniden etiketleme riski, muhtemelen gerekmiyor).
+
+---
+
+## F. Son güncelleme (2026-08-25) — FAZ 0-6 tamamlandı
+
+Yukarıdaki E bölümünde "kasıtlı olarak dışarıda bırakılan" listesindeki
+**Madde 41 (bilgi grafiği) artık yapıldı** — o zamanki "yeni bir sayfa/
+görselleştirme" risk değerlendirmesi FAZ 6'da (kendi fikir turu) tekrar
+ele alındı ve düşük riskli bir biçimde (statik, sunucu taraflı üretilen
+SVG + tam metin özeti, client JS yok) uygulandı: `/kavram-haritasi`,
+bkz. `docs/durum-denetim.md` "FAZ 6" bölümü.
+
+Ayrıca doğrudan bu dosyada adı geçen **Madde 28 (robot state sistemi)**
+ve **Madde 30 ("What if" deneyleri)**, **Madde 55 (debug modu)** ve
+**Madde 64 (boş durumlar)** FAZ 2-4'te uygulandı — detay ve gerçek
+bulgular (performans bütçesi ölçümleri, yakalanan regresyonlar) için
+`docs/durum-denetim.md`'nin ilgili FAZ bölümlerine bakın.
+
+Bu oturumda ayrıca 4 farklılaştırıcı özellik (Robot Röportajı, Zaman
+Kapsülü, Sınır Testi, Kırık Kod Laboratuvarı — FAZ 5) ve 3 kendi fikir
+(Sesli Anlatım, Kavram Haritası, Rastgele Ders — FAZ 6) eklendi; hiçbiri
+bu dokümanın A/B/C listelerinde adı geçmiyordu, hepsi platformun kendi
+ilkelerinden (hesapsız/sunucusuz, gerçek veri, docs/00 keşif hissi)
+türetildi. Bu denetim dosyası artık dondurulmuş bir tarihsel kayıt —
+güncel platform durumu için `docs/durum-denetim.md` birincil kaynaktır.

@@ -5717,3 +5717,49 @@ Toplam kontrol paketi (tsc, lint, 992 vitest, check-content/mdx-güvenlik/
 sensitive-terms, `npm audit`, build, performans bütçesi, 382 e2e — 2
 bilinen flaky tablet-768 testi izole doğrulandı) temiz. Sıradaki: FAZ 6
 (kendi 2-3 yaratıcı fikrini üret ve uygula).
+
+## FAZ 6 — Kendi fikrini üret ve uygula (2026-08-25)
+
+docs/00-16'yı ve mevcut platformu değerlendirip 3 fikir üretildi ve
+uygulandı. Her biri "gerçekten değer katıyor mu, yoksa ekranı mı
+dolduruyor" testinden geçirildi — sonucun EVET olduğu tek gerekçe: hepsi
+gerçek veri/altyapı kullanıyor, yeni bir sunucu/hesap/bağımlılık
+gerektirmiyor ve platformun kendi ilkelerinden (docs/00 keşif hissi,
+docs/02 erişilebilirlik, docs/05 gizlilik) doğrudan türüyor.
+
+**1/3 — Sesli Anlatım.** Tarayıcının kendi `speechSynthesis` API'siyle
+ders metnini okuyor — yeni bağımlılık yok, ses cihazda üretiliyor,
+sunucuya hiçbir şey gitmiyor. `lib/lessonPlainText.ts` (7 vitest testi)
+ham MDX'ten JSX bileşen bloklarını ve kod bloklarını atlayıp yalnız
+düzyazıyı çıkarıyor; 94 dersin gerçek gövde yapısına karşı sınandı.
+Erişilebilirlik gerekçesi: görme güçlüğü, disleksi, elleri meşgul öğrenme.
+
+**2/3 — Kavram Haritası.** docs/16 Madde 41'in işaret ettiği, kendi
+denetiminin adını koyduğu boşluk: görsel bir onkoşul grafiği yoktu.
+`/kavram-haritasi`, 94 dersi hat×seviye SVG düzeninde, gerçek onkoşul
+kenarlarıyla (hatlar arası olanlar vurgulu) gösteriyor —
+`scripts/validate-content-graph.ts`in zaten doğruladığı aynı grafiği
+konumlandırıyor, yeni ilişki icat etmiyor (`lib/curriculumGraph.ts`, 8
+vitest testi). SVG altında tam metin özeti var (docs/02 kuralı). **Gerçek
+bulgu:** SVG içindeki gerçek `<a>` bağlantıları `role="img"` ile
+birleşince axe'de "Element has focusable descendants" (wcag412) ihlali
+üretti — `aria-labelledby`+`<title>`e çevrilerek düzeltildi, e2e testiyle
+kilitlendi.
+
+**3/3 — Rastgele Ders.** Ana sayfaya "🎲 Rastgele bir ders dene" düğmesi
+— arama sayfasıyla aynı `/arama-index.json`ı kullanıyor, yeni veri kaynağı
+yok, sahte "önerilen ders" algoritması yok. docs/00'daki "yarım saat
+oynasın" keşif hissini destekliyor (`lib/randomLesson.ts`, 4 vitest
+testi, enjekte edilebilir `random()` ile test edilebilir).
+
+**Performans bütçesi:** her üç özellik de site genelinde (ders sayfaları
+veya ana sayfa) küçük gerçek artışlar yarattı; her biri `git stash -u`
+ile ölçülüp dürüstçe belgelendi (aynı disiplin, bkz. FAZ 2-5 notları).
+
+**Kontrol paketi:** tsc, lint, 1011 vitest, check-content/mdx-güvenlik/
+sensitive-terms, `npm audit` (0 zafiyet), build, performans bütçesi — hepsi
+temiz. Tam e2e taraması 396 geçti, 18 atlandı (proje-özel), 0 gerçek
+başarısızlık (bir tablet-768 WCAG zaman aşımı daha önce de görülen
+paralel-worker rekabeti, bu turda hiç tekrarlanmadı).
+
+**FAZ 6 tamamlandı. Tüm fazlar (0-6) bitti.**
