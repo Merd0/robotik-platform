@@ -6255,3 +6255,27 @@ ama doğrulanmadı.
 
 **Sırada:** Hat C'nin kalan 2 "çıplak" dersi, sonra 94+ dersin içerik
 doygunluğu taraması.
+
+## Ders tekrarı çeşitlendirme turu — 2. parça, Hat C tamamlandı (2026-08-25)
+
+Kalan 2 "çıplak" ders de tamamlandı (commit `d4f8b63`):
+- `c-universite-carpisma-kontrolu`: HESAPLAMA türü — dersteki
+  `adım sayısı = round(mesafe/resolution)` formülünü elle uygulatan,
+  doğrulanabilir sayısal bir soru (0,5 m → 4 adım, 0,1 m → 20 adım).
+- `c-universite-yol-duzlestirme`: KARAR VERME türü — üç aday kısayoldan
+  hangisinin/hangilerinin gerçekten uygulanacağını sorduran soru (en çok
+  kısaltan ama çarpışmalı aday kasıtlı bir çeldirici; kural "en iyiyi
+  değil, güvenli olanı seç").
+
+**Hat C özeti:** 11 dersin 4'ü ("çıplak" olanlar) artık PlannerRace/Quiz
+ikilisinin üstüne farklı bilişsel egzersiz türü taşıyor (tahmin ×1,
+hesaplama ×2, karar verme ×1); kalan 5'i zaten `sablon`/`Terim`
+çeşitliliğine sahipti. Doğrulama (her iki parçada da): `check-content`,
+`validate-content-graph`, `check-mdx-guvenlik`, `check-quiz-dagilimi`
+(142 soru, en yüksek konum %36.6, sınır %50), tam `npm test` (1056/1056),
+`npm run build`, performans bütçesi — hepsi temiz. Gerçek statik build
+üzerinden Chrome ile her 4 ders de elle doğrulandı.
+
+**Sırada:** 94+ dersin içerik doygunluğu taraması (yüzeysel kalan
+dersleri bul, genişlet; "daha çok ders olsun" diye gereksiz içerik
+üretme).
