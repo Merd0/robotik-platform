@@ -60,7 +60,13 @@ const surfaces: SurfaceConfig[] = [
   // HER sayfada yüklü (SiteHeader'daki toggle "supported" sayfalarda görünür
   // olmalı, bu yüzden context her yerde mevcut olmak zorunda). brotli
   // 202.0→202.4 KiB'e çıktı — küçük pay, 203 KiB'e çekildi.
-  { name: "Ana sayfa", html: "index.html", deferred: "none", initialScriptGzip: 200 * KIB, budget: { gzip: 220 * KIB, brotli: 203 * KIB } },
+  //
+  // 2026-08-25 (FAZ 5 — SiteHeader nav genişlemesi, Robot Röportajı/Zaman
+  // Kapsülü/Sınır Testi): `OVERFLOW_NAV_LINKS`e üç yeni bağlantı eklendi,
+  // SiteHeader kök layout'ta HER sayfada (ana sayfa dahil) yüklü. `git
+  // stash -u`: 202.9→203.1 KiB brotli — gerçek fark +0.2 KiB. 203→204
+  // KiB'e çekildi, gzip zaten yeterliydi.
+  { name: "Ana sayfa", html: "index.html", deferred: "none", initialScriptGzip: 200 * KIB, budget: { gzip: 220 * KIB, brotli: 204 * KIB } },
   // 255/240 KiB (2026-08-01 kalibrasyonu) 2026-08-15'te 257.0/239.4 KiB'e
   // taştı — kök neden araştırıldı: components/interactive/index.ts, TÜM 19
   // etkileşimli bileşeni statik import ediyor ve next-mdx-remote/rsc'nin
