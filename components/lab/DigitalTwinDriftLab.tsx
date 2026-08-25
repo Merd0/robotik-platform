@@ -11,6 +11,9 @@ import {
   type TwinDriftSample,
   type TwinSyncStatus,
 } from "@/lib/robotics/digitalTwinDrift";
+import { FirstVisitNote } from "@/components/ui/FirstVisitNote";
+
+const INTRO_STORAGE_KEY = "robotik-platform:dijital-ikiz-kaymasi-tanitim:v1";
 
 const STATUS_LABELS: Record<TwinSyncStatus, string> = {
   synced: "Senkron",
@@ -100,6 +103,17 @@ export function DigitalTwinDriftLab() {
         <h2 id="twin-drift-title" className="mt-2 font-heading text-3xl font-semibold text-site-ink">İkizin tahmini ile ölçümü aynı eksende karşılaştır.</h2>
         <p className="mt-3 text-sm leading-6 text-site-muted">Sürekli veri akışı yalnız bağlantıyı kanıtlar. Senkronu kanıtlamak için ikizin tahmini ile bağımsız fiziksel ölçüm arasındaki TCP artığını ve bu farkın kalıcılığını izle.</p>
       </header>
+
+      <FirstVisitNote storageKey={INTRO_STORAGE_KEY} ariaLabel="Kayma ne demek, neden olur">
+        <p className="font-heading text-base font-semibold">“Kayma” (drift) ne demek, neden olur?</p>
+        <p className="mt-1.5">
+          Dijital ikiz kurulduğunda modelin tahmini ile robotun gerçek davranışı örtüşür. Zamanla bu örtüşme
+          bozulabilir: sıcaklık değişimi bağlantı uzunluklarını hafifçe genleştirir, eklem sürtünmesi aşınmayla
+          değişir, encoder referansı küçük bir sıfır kaymasıyla kayabilir. Bağlantının açık olması (veri akıyor
+          olması) bunu göstermez — göstergesi, ikizin tahmini ile bağımsız bir ölçüm arasındaki farkın (artık)
+          tek seferlik değil, art arda tekrarlanan ve büyüyen bir sapma olmasıdır.
+        </p>
+      </FirstVisitNote>
 
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-3">
         <div className="rounded-2xl border border-site-border bg-site-surface p-4">

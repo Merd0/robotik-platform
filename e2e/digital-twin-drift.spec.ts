@@ -33,6 +33,21 @@ test("dijital ikiz kayması tek eşik yerine kalıcılık kuralını ve güvenli
   await expect(page.getByText(/3 ardışık örnek/i)).toBeVisible();
 });
 
+test("ilk ziyarette kayma ne demek neden olur açıklaması görünür, kapatılınca yeniden yüklemede çıkmaz", async ({ page }) => {
+  await page.goto("/laboratuvar/dijital-ikiz-kaymasi");
+  const intro = page.getByRole("note", { name: "Kayma ne demek, neden olur" });
+  await expect(intro).toBeVisible();
+  await expect(intro).toContainText("sıcaklık değişimi");
+  await expect(intro).toContainText("encoder referansı");
+
+  await intro.getByRole("button", { name: "Anladım, kapat" }).click();
+  await expect(intro).toHaveCount(0);
+
+  await page.reload();
+  await expect(page.getByText("Senkron", { exact: true })).toBeVisible();
+  await expect(page.getByRole("note", { name: "Kayma ne demek, neden olur" })).toHaveCount(0);
+});
+
 test("dijital ikiz kayması laboratuvarı kritik WCAG ihlali üretmez", async ({ page }) => {
   await page.goto("/laboratuvar/dijital-ikiz-kaymasi");
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
