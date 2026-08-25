@@ -6393,3 +6393,41 @@ dosyası değiştirilmedi, kendiliğinden pay arttı.
 
 **Sırada:** kullanıcının yeni talebi — 3D robot hücresi mobil performans
 araştırması (Codex'in Lighthouse 72 / 4x CPU 272ms bulgusu).
+
+## 3D Robot Hücresi mobil performans araştırması — SONUÇ (2026-08-26)
+
+Commit `7dd52c3`. Tam bulgu ve gerekçe `docs/05-deneyim-ve-guvenlik.md`
+"Alt-durum: `/laboratuvar/robot-hucresi`" bölümünde — özet:
+
+- **Codex'in bulgusu (72/272ms) doğrulandı**, ama önce bir metodoloji
+  hatası bulundu ve düzeltildi: yerel `scripts/serve-static.mjs` test
+  sunucusu sıkıştırma yapmıyor — bu sunucuya karşı ölçüm 912 KiB'lik
+  three.js parçasını ham indirtip sayıları yapay şişiriyordu. Geçici,
+  commit edilmeyen bir gzip sunucusuyla ölçülünce Codex'in sayısıyla
+  neredeyse birebir eşleşen gerçek sonuç (73 puan) çıktı.
+- **İki hipotez çürütüldü, doğrulama yapılmadan varsayılmadı:**
+  lazy-load/`frameloop="demand"`/DPR optimizasyonları gerçekten bağlı
+  (kod okunarak doğrulandı); Arıza Kliniği/Dijital İkiz (SVG/2D,
+  `three` import etmiyor) bu sayfayı ağırlaştırmadı (bayt ölçümü
+  robot-hucresi'nin referans "3D ders" sayfasından daha HAFİF olduğunu
+  gösterdi).
+- **Gerçek bulunan verimsizlik:** `RobotCellScene.tsx` aynı render'da
+  `forwardKinematics`'i iki kez çağırıyordu (tek çağrı yeterliydi);
+  prop almayan `Table`/`SafetyFence` `memo()` ile sarılmamıştı. İkisi
+  de düzeltildi — kesin doğru, sıfır riskli.
+- **Dürüst sonuç:** `git stash` ile önce/sonra dörder Lighthouse
+  koşusuyla ölçülen iyileşme (TBT 320-710→310-350 ms) makine gürültüsü
+  içinde kayboluyor, güvenilir nicelenemedi. Asıl maliyet (platformun
+  en zengin 3D sahnesi + ~900 KiB three.js ayrıştırma maliyeti) mimari
+  bir yeniden tasarım gerektiriyor — bu oturumun kapsamı dışında,
+  gerekçesiyle docs/05'e kaydedildi (kullanıcının "mümkün değilse
+  gerekçesiyle kaydet" talimatı).
+
+**Doğrulama:** `tsc`, hedefli `eslint` temiz. `e2e/robot-hucresi-3d.spec.ts`
+(27 test) üç viewport'ta değişmeden geçti (bir kere paralel yük altında
+tek test flaky çıktı, izole koşuda ve tam 3-viewport tekrar koşusunda
+27/27 geçti — bu oturumda tekrar tekrar görülen bilinen flaky kalıp).
+Tam `npm test` 1056/1056, build temiz, performans bütçesi değişmedi.
+
+**Kullanıcının bu oturumdaki tüm talepleri (navbar konsolidasyonu + 3D
+robot hücresi performans araştırması) tamamlandı.**
