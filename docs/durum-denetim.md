@@ -6042,3 +6042,54 @@ da kullanılacak.
 
 **Sırada:** madde 4/7 Arıza Kliniği ("Belirti → Olası nedenler → Kontrol
 → Bulgular → Eleme → Teşhis → Çözüm" akışını ilk kullanımda örnekle göster).
+
+### Parça 4/7: Arıza Kliniği (2026-08-25) + paylaşılan bileşen + Codex eşzamanlılık notu
+
+`components/lab/FaultInjectionLab.tsx`'e, mevcut "1/4 Gözlem → 2/4
+Hipotez → 3/4 Güvenli ilk eylem → 4/4 Doğrulama" aşama göstergesinin
+üstüne, ilk ziyarette görünen bir `FirstVisitNote` eklendi: somut tek
+cümlelik bir örnek vakayla (konum sapması) belirti→gözlem→eleme→hipotez
+→güvenli eylem→doğrulama sırasını önceden anlatıyor. Bilgi Haritası'ndaki
+aynı deseni (localStorage bayrağı + "Anladım, kapat") ikinci kez elle
+kopyalamak yerine `components/ui/FirstVisitNote.tsx` adında paylaşılan
+bir bileşene çıkarıldı; `KnowledgeGraphExplorer` bu bileşene refactor
+edildi (aynı DOM/metin/rol — mevcut e2e testi değişmeden geçti).
+
+**Doğrulama:** `tsc`, hedefli `eslint` temiz. Mevcut
+`e2e/fault-injection.spec.ts` (3 test) hiç değişmeden geçti (not kesme
+sağlamadığı için akışa müdahale etmiyor); yeni bir test eklendi (not ilk
+ziyarette görünür, kapatılınca kaybolur, sayfa yenilenince çıkmaz).
+Üç dosyayı (fault-injection, knowledge-graph, inverse-problem specs)
+üç viewport'ta topluca çalıştırdım: 36/36 geçti. Tam `npm test`:
+1036/1036. Performans bütçesi temiz (ne Arıza Kliniği ne Bilgi Haritası
+izlenen 4 yüzeyden biri).
+
+**Not (component test altyapısı yok):** İlk yazdığım
+`FirstVisitNote.test.tsx` (React Testing Library ile) `vitest.config.ts`
+kapsamının (`include: ["lib/**/*.test.ts"]`) ve `package.json`
+bağımlılıklarının (ne `@testing-library/react` ne `jsdom` var) DIŞINDA
+kaldığını fark edince silindi — bu depo UI/bileşen davranışını Playwright
+e2e ile doğruluyor, Vitest yalnız `lib/` saf mantığı için. Yeni bağımlılık
+eklemek (docs/08 minimum bağımlılık ilkesi) e2e zaten aynı kapsamı
+karşılarken gereksiz olurdu.
+
+**Codex eşzamanlılık — "kayıp" değil, gerçek bir merge:** Bu parçanın
+doğrulamasını `git stash push --keep-index -u` ile Codex'in commit
+edilmemiş SEO işini bir kenara alarak yaptım (parça 3'teki gibi). Stash'i
+geri koyarken (`git stash pop`) "nothing to commit, working tree clean"
+çıktısı alarak endişelendim — Codex'in ~30+ dosyalık değişikliği görünürde
+"kaybolmuş" gibiydi. `git fsck --no-reflog` ile dangling commit'leri
+tarayıp iki stash'in (parça 3 ve parça 4) untracked-tree parent'larını
+karşılaştırdım: parça 3'ün stash'i (17:05) Codex'in dosyalarını hâlâ
+taşıyordu, parça 4'ün stash'i (17:12) TAMAMEN BOŞTU. Aradaki pencerede
+Codex kendi işini **kendi `codex/seo-release` dalından `main`'e merge
+etmişti** (`09b177c` merge commit, `d55dc89`/`9a8ac6d` içeriyor) — yani
+dosyalar kaybolmadı, düzgünce commit'lendi; ben yalnız zamanlamayı
+kaçırdım. `git merge-base --is-ancestor` ile kendi 4 commit'imin
+(`8b92c99`…`385c715`) merge sonrası HEAD'in atası olduğu doğrulandı —
+hiçbir iş kaybolmadı, hiçbir commit'im ezilmedi. Ders: bundan sonra bir
+stash pop "boş" çıkarsa önce `git log --oneline -10` ile HEAD'in ilerleyip
+ilerlemediğine bakılacak, panik yapılmayacak.
+
+**Sırada:** madde 5/7 Dijital İkiz Kayması ("kayma ne demek, neden olur"
+ön açıklaması).
