@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { createPageMetadata } from "@/lib/seo";
 import { TimeCapsule } from "@/components/lab/TimeCapsule";
 
@@ -12,7 +13,8 @@ export default function ZamanKapsuluPage() {
   return (
     <main id="ana-icerik" className="min-h-screen bg-site-bg text-site-ink">
       <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
-        <p className="text-xs font-semibold uppercase tracking-[.18em] text-site-accent-text">Serbest deney</p>
+        <nav className="text-sm text-site-muted"><Link href="/laboratuvar" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvarlar</Link> <span aria-hidden="true">/</span> Zaman Kapsülü</nav>
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[.18em] text-site-accent-text">Serbest deney</p>
         <h1 className="mt-2 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">Zaman Kapsülü</h1>
         <p className="mt-4 max-w-xl text-base leading-7 text-site-muted">
           Tarayıcında biriken gerçek deney kaydın, 1 hafta, 1 ay, 3 ay ve 1 yıl önceye gerçekten karşılık gelen bir

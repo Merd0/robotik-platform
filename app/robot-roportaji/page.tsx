@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { createPageMetadata } from "@/lib/seo";
 import { RobotInterview } from "@/components/lab/RobotInterview";
 
@@ -12,7 +13,8 @@ export default function RobotRoportajiPage() {
   return (
     <main id="ana-icerik" className="min-h-screen bg-site-bg text-site-ink">
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
-        <p className="text-xs font-semibold uppercase tracking-[.18em] text-site-accent-text">Serbest deney · devreye alma mülakatı</p>
+        <nav className="text-sm text-site-muted"><Link href="/laboratuvar" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvarlar</Link> <span aria-hidden="true">/</span> Robot Röportajı</nav>
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[.18em] text-site-accent-text">Serbest deney · devreye alma mülakatı</p>
         <h1 className="mt-2 font-heading text-4xl font-semibold tracking-tight sm:text-5xl">Robot Röportajı</h1>
         <p className="mt-4 max-w-2xl text-base leading-7 text-site-muted">
           Bir saha mühendisi, hiç tanımadığı bir robotla çalışmaya başlamadan önce belli soruların cevabını bilmek

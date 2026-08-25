@@ -3,16 +3,21 @@ import { ComplexityModeToggle } from "./ComplexityModeToggle";
 import { MobileNavMenu } from "./MobileNavMenu";
 import { ThemeToggle } from "./ThemeToggle";
 
+/**
+ * Yalnız ANA kategoriler — tekil laboratuvar/deney sayfaları (Robot
+ * Röportajı, Zaman Kapsülü, Sınır Testi, Kırık Kod Laboratuvarı, Bilgi
+ * Haritası vb.) burada AYRI AYRI listelenmez. Hepsi `/laboratuvar` hub
+ * sayfası üzerinden, kategorize edilmiş kartlarla erişilir — tek kaynak
+ * (docs/05 "Görünürlük ve yönelim ilkesi": kullanıcı her an nerede
+ * olduğunu bilmeli; her yeni deney kendi nav linkini eklediğinde navbar
+ * tarihsel olarak dağınıklaşmıştı, bkz. docs/durum-denetim.md 2026-08-25
+ * "Genel anlaşılırlık" bulgusu).
+ */
 const OVERFLOW_NAV_LINKS = [
   { href: "/sozluk", label: "Sözlük" },
   { href: "/ogretmen", label: "Öğretmen" },
   { href: "/laboratuvar", label: "Laboratuvarlar" },
   { href: "/kod-akademisi", label: "Kod Akademisi" },
-  { href: "/robot-roportaji", label: "Robot Röportajı" },
-  { href: "/zaman-kapsulu", label: "Zaman Kapsülü" },
-  { href: "/sinir-testi", label: "Sınır Testi" },
-  { href: "/kirik-kod-laboratuvari", label: "Kırık Kod Laboratuvarı" },
-  { href: "/bilgi-haritasi", label: "Bilgi Haritası" },
 ];
 
 export function SiteHeader() {

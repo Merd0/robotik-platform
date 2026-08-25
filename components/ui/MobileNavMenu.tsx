@@ -9,15 +9,17 @@ interface NavLink {
 }
 
 /**
- * Dar viewport'ta (< lg) SiteHeader'daki bazı bağlantılar (Sözlük, Öğretmen,
- * Canlı lab, Kod Akademisi, Robot Röportajı) satır dışına taşmamak için
+ * Dar viewport'ta (< lg) SiteHeader'daki ana kategori bağlantıları (Sözlük,
+ * Öğretmen, Laboratuvarlar, Kod Akademisi) satır dışına taşmamak için
  * gizleniyor. Bu bileşen onlara hamburger/overflow menüsüyle erişim sağlar
  * — gizlenen bağlantı, ulaşılamaz bağlantı olmasın diye.
  *
- * Eşik `md` (768px) değil `lg` (1024px): beş bağlantı + Ara kutusu + "Oyun
+ * Eşik `md` (768px) değil `lg` (1024px): bağlantılar + Ara kutusu + "Oyun
  * alanı" düğmesi + iki toggle aynı satırda `md` genişliğinde (768px, bkz.
  * `tablet-768` e2e projesi) yatay taşmaya (`scrollWidth > clientWidth`)
- * neden oluyordu — Robot Röportajı eklenmeden önce dördü zaten sınırdaydı.
+ * neden oluyordu. Tekil laboratuvar sayfaları (Robot Röportajı, Zaman
+ * Kapsülü vb.) artık burada değil — 2026-08-26'da `/laboratuvar` hub'ına
+ * konsolide edildi (bkz. docs/durum-denetim.md).
  */
 export function MobileNavMenu({ links }: { links: NavLink[] }) {
   const [open, setOpen] = useState(false);
