@@ -30,6 +30,19 @@ test("Hata Müzesi ayırt etmeyen ölçümle doğru okumayı açmaz", async ({ p
   await expect(page.getByText(/seed 0.*kullanıcı kaydı değildir/i)).toBeVisible();
 });
 
+test("Hata Müzesi eserleri temelden ileriye zorluk etiketiyle sıralanır", async ({ page }) => {
+  await page.goto("/laboratuvar/hata-muzesi");
+  await expect(page.getByText("Eserler kademeli zorlukla sıralı")).toBeVisible();
+
+  const nav = page.getByRole("navigation", { name: "Hata Müzesi eserleri" });
+  await expect(nav.getByText("Temel · 1 kanal")).toBeVisible();
+  await expect(nav.getByText("Orta · 2 kanal, gecikme")).toBeVisible();
+  await expect(nav.getByText("İleri · 2 kanal, komut karşılaştırması")).toBeVisible();
+
+  const exhibit = page.getByRole("article");
+  await expect(exhibit.getByText("Temel · 1 kanal")).toBeVisible();
+});
+
 test("Hata Müzesi kritik WCAG ihlali üretmez", async ({ page }) => {
   await page.goto("/laboratuvar/hata-muzesi");
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();

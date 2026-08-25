@@ -15,10 +15,13 @@ export interface ErrorMuseumMetrics {
   maxActuationGap: number;
 }
 
+export type ErrorMuseumLevel = "temel" | "orta" | "ileri";
+
 export interface ErrorMuseumExhibit {
   id: string;
   seed: number;
   fault: FaultKind;
+  level: ErrorMuseumLevel;
   title: string;
   symptom: string;
   misconception: string;
@@ -33,6 +36,7 @@ export interface ErrorMuseumExhibit {
 }
 
 const EXHIBIT_COPY: Record<FaultKind, {
+  level: ErrorMuseumLevel;
   title: string;
   symptom: string;
   misconception: string;
@@ -41,6 +45,7 @@ const EXHIBIT_COPY: Record<FaultKind, {
   channels: readonly MuseumTraceChannel[];
 }> = {
   "encoder-bias": {
+    level: "temel",
     title: "Eser 01 · Yerinde duran sapma",
     symptom: "Ölçülen konum hedefin çevresinde kararlı görünüyor; buna rağmen bağımsız konum referansı başka bir değer söylüyor.",
     misconception: "“Takip zayıf; kontrol kazancını artırırsak hedef hatası kapanır.”",
@@ -49,6 +54,7 @@ const EXHIBIT_COPY: Record<FaultKind, {
     channels: ["position"],
   },
   "packet-delay": {
+    level: "orta",
     title: "Eser 02 · Geçmişten gelen konum",
     symptom: "Ölçülen konum hareketi izliyor, fakat yön değişimlerinde güncel fiziksel durumun gerisinde kalıyor.",
     misconception: "“Encoder sıfırı kaydı; tek bir referans ayarı tüm izi düzeltir.”",
@@ -57,6 +63,7 @@ const EXHIBIT_COPY: Record<FaultKind, {
     channels: ["position", "network"],
   },
   "actuator-saturation": {
+    level: "ileri",
     title: "Eser 03 · Komut büyürken hareketin durması",
     symptom: "Denetleyici daha büyük komut istiyor, fakat fiziksel tepki aynı hızda artmıyor ve hedef geç yakalanıyor.",
     misconception: "“Konum sensörü gürültülü; daha güçlü filtre uygularsak hareket düzelir.”",

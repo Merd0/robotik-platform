@@ -35,6 +35,11 @@ describe("Hata Müzesi", () => {
     expect(evaluateMuseumEvidence(exhibit, "requested-applied")).toMatchObject({ status: "correct", reveal: true });
   });
 
+  it("temelden ileriye kademeli zorluk sırasını taşır (kanal sayısı artan)", () => {
+    expect(ERROR_MUSEUM_EXHIBITS.map((exhibit) => exhibit.level)).toEqual(["temel", "orta", "ileri"]);
+    expect(ERROR_MUSEUM_EXHIBITS.map((exhibit) => exhibit.channels.length)).toEqual([1, 2, 2]);
+  });
+
   it("doğru okuma ve güvenli sıra mevcut fault sözleşmesiyle çelişmez", () => {
     for (const exhibit of ERROR_MUSEUM_EXHIBITS) {
       expect(exhibit.correctInterpretation).toBe(FAULT_INFO[exhibit.fault].signature);
