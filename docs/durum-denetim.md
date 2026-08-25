@@ -5894,3 +5894,79 @@ audit` (0 açık) — hepsi temiz. Tam e2e: 441 geçti, 18 atlandı, 3 test
 paralel yük altında başarısız oldu, `--workers=1` izole koşuda üçü de
 geçti — bu oturumda tekrar tekrar doğrulanan aynı bilinen flaky kalıp,
 gerçek bir regresyon değil.
+
+---
+
+## "Öğret → Göster → Denet → İpucu → Test → Açıkla" turu — parça 1/7: Kırık Kod Lab (2026-08-25)
+
+**Bağlam:** Ayrı bir görev, `docs/16` kapsamı DIŞINDA — kullanıcının 7
+mevcut farklılaştırıcı özelliğe (Kırık Kod Lab, Bilgi Haritası, Ters
+Problem Modu, Arıza Kliniği, Dijital İkiz Kayması, Hata Müzesi, Robot
+Röportajı) "öğret→göster→denet→ipucu→test→açıkla" desenini (zorunlu tek
+şablon değil, konuya göre uyarlanmış) uygulama talebi. Referans verilen
+`ROBOTİK_PLATFORM_MASTER_PROMPT.md` repo kökünde **bulunamadı** (aranan
+tüm bölüm başlıkları — Kırık Kod Lab, Bilgi Haritası vb. — yalnız
+`docs/16`, `docs/guncel-fikirler.md`, `docs/durum-denetim.md`,
+`docs/durum-codex.md` içinde geçiyor, ayrı bir master-prompt dosyası
+olarak değil). Bu dosya olmadan, kullanıcının sohbet mesajındaki somut
+madde madde talimatlar doğrudan kaynak alındı — bloklayıcı bir eksiklik
+değil, çalışmaya devam edildi.
+
+**Bulgu — "sağ üstteki iki logo" (ACİL madde):** Kod tabanında
+`ThemeToggle` yalnız `SiteHeader.tsx`'te TEK yerde render ediliyor,
+`SiteHeader` da yalnız kök `app/layout.tsx`'te TEK yerde. Canlı dev
+sunucusunda (mevcut çalışan `localhost:3000`, PID önceki bir oturumdan
+kalma) ve üç Playwright viewport'unda (`mobile-390`/`tablet-768`/
+`desktop-1440`) ekran görüntüsüyle doğrulandı: navbar'da tek tema
+butonu var, ikinci bir logo/buton yok. En olası açıklama: bu bulgu,
+`32a37ec` commit'inden ÖNCEKİ kırık merge durumunun (bkz. yukarıdaki
+"56b8f7a" bölümü — iki paralel oturumun `SiteHeader.tsx`'e bağımsız
+ekleme yaptığı, sonra elle düzeltilen an) bir ekran görüntüsüydü; `main`
+tip'i zaten temiz. Kod değişikliği yapılmadı — yapılacak bir şey yoktu.
+
+**Yapılan — Kırık Kod Lab (madde 1/7):** `lib/brokenCodeGallery.ts`
+içindeki 4 arıza kartına `hints: readonly string[]` (2-3 kademeli, en
+belirsizden en somuta) ve `explanation: string` (yalnız test geçtikten
+SONRA görünen "neden" açıklaması) alanları eklendi. `CodeRunner.tsx`'e
+bu ikisi OPSİYONEL prop olarak eklendi (`hints?`, `explanation?`) —
+Kod Akademisi dahil diğer ~90 kullanım yeri prop vermediği için hiçbir
+görsel değişiklik görmüyor. UI: "İpucu göster" butonu tıklandıkça bir
+öncekini gizlemeden yeni ipucu ekliyor (numaralı liste); `testPassed
+=== true` olduğunda "Neden bu hataydı?" paneli açılıyor.
+
+**Doğrulama:** `lib/brokenCodeGallery.test.ts`'e iki yeni test
+(her kartta ≥2 dolu ipucu, dolu açıklama) eklendi — 7/7 geçti. `tsc`,
+hedefli `eslint` temiz. `e2e/kirik-kod-laboratuvari.spec.ts` genişletildi
+(ipucu tıklama + açıklama görünürlüğü) ve üç viewport'ta da (mobile-390,
+tablet-768, desktop-1440) geçti. Gerçek dev sunucusunda Chrome ile elle
+de doğrulandı (ekran görüntüsü: ipucu paneli, kademeli açılma).
+
+**Performans bütçesi — küçük, gerçek bir aşım:** `CodeRunner.tsx`
+büyümesi paylaşılan route chunk'ını etkiliyor (Kırık Kod Lab dahil
+tüm CodeRunner kullanan sayfalar aynı chunk'ı taşıyor — bkz. docs/05
+"3D'siz ders yüzeyi tüm etkileşimli bileşenleri taşıyor" bilinen
+ödünleşimi). `git stash -u` ile ölçüldü: "3D'siz ders" brotli
+255,9→256,1 KiB (+0,2), "3D ders" brotli 483,9→484,1 KiB (+0,2) —
+ikisi de o an sıfır payla duran bütçeyi aştı. `scripts/check-
+performance-budget.ts`'teki yerleşik desene (ölçülmüş delta + tarihli
+yorum) göre 256→257 ve 484→485 KiB'e çekildi; build sonrası bütçe
+tekrar çalıştırılıp temiz geçtiği doğrulandı.
+
+**Kontrol paketi:** tsc, hedefli eslint, `npm test` (yalnız
+`lib/seo.test.ts`/`lib/staticRoutes.test.ts` başarısız — bu benim
+değişikliğimle İLGİSİZ, Codex'in aynı çalışma dizininde eşzamanlı
+sürdürdüğü SEO işinin (uncommitted `lib/seo.ts`, `lib/staticRoutes.ts`,
+`app/sitemap.ts`, `lib/htmlSeoAudit.ts`) ara durumu; bu dosyalara
+dokunulmadı, commit'e dahil edilmedi), `npm run build`, hedefli e2e (3
+viewport), check-content/graph/quiz/mdx-güvenlik/review-debt/review-
+integrity/sensitive-terms, performans bütçesi (düzeltmeyle temiz),
+`npm audit --audit-level=high` (0 açık). Commit `8b92c99` — yalnız
+kendi 6 dosyam (`CodeRunner.tsx`, `BrokenCodeLab.tsx`,
+`brokenCodeGallery.ts`/`.test.ts`, `check-performance-budget.ts`,
+`kirik-kod-laboratuvari.spec.ts`) `git add` ile tek tek eklendi, Codex'in
+çalışma dizinindeki commit edilmemiş SEO dosyaları hiç dokunulmadan
+bırakıldı.
+
+**Sırada:** madde 2/7 Bilgi Haritası (ilk kullanımda kısa yönlendirme),
+sonra Ters Problem Modu, Arıza Kliniği, Dijital İkiz Kayması, Hata
+Müzesi, Robot Röportajı (son karar: yeniden yorumla ya da kaldır).
