@@ -323,6 +323,66 @@ WebGL sahnesiyle açılan sayfa için gerçekçi olmayabilir).
 Ölçüm ayrıntısı ve yapılan üç optimizasyon: `docs/durum-denetim.md`,
 "Faz 5 tamamlandı" bölümü.
 
+### Alt-durum: `/laboratuvar/robot-hucresi` (2026-08-26'da ayrıca araştırıldı)
+
+Codex'in Lighthouse ölçümü bu sayfa için mobilde 72 puan, 4x CPU
+kısıtlamasında ~272 ms etkileşim gecikmesi bulmuştu — yukarıdaki tablonun
+73-76 aralığından biraz daha kötü. Araştırma sorusu: optimizasyonlar
+(lazy-load, `frameloop="demand"`, cihaza göre DPR) gerçekten çalışıyor mu,
+yoksa yeni özellikler (Arıza Kliniği, Dijital İkiz Kayması gibi) sahneyi
+mi ağırlaştırdı?
+
+**Doğrulanan: optimizasyonlar gerçek ve doğru bağlı.**
+`components/scene/LazyScene.tsx` (`next/dynamic({ssr:false})` +
+`IntersectionObserver` ile görünür olana kadar bağlanmama) ve
+`components/scene/SceneCanvas.tsx` (`frameloop={active ? "demand" : "never"}`,
+cihaza göre `dpr` seçimi) `RobotCellScene`'e gerçekten uygulanıyor —
+uydurma veya bağlantısı kopmuş değil.
+
+**Çürütülen: Arıza Kliniği/Dijital İkiz kaynaklı bir ağırlaşma yok.**
+İkisi de SVG/2D bileşenler (`FaultTracePanel`, `ResidualChart`), `three`/
+`@react-three/fiber` hiç import etmiyor, `RobotCellScene`nin paylaşılan
+chunk'ına dokunmuyorlar. Bayt ölçümü bunu doğruladı: `robot-hucresi.html`
+yüzeyi (başlangıç+ertelenen toplam ~492,8 KiB gzip) mevcut "3D ders"
+referans sayfasından (528,0 KiB) daha AZ, anormal bir şişme yok.
+
+**Gerçek kök neden — ölçüm metodolojisi + gerçek bir kod verimsizliği:**
+- Yerel `scripts/serve-static.mjs` test sunucusu SIKIŞTIRMA yapmıyor
+  (`content-encoding` yok). Lighthouse'u bu sunucuya karşı çalıştırmak
+  912 KiB'lik three.js/r3f/drei parçasını HAM olarak indirtiyor, ağ
+  süresini (LCP/TTI) yapay olarak şişiriyor. Gzip'leyen bir sunucuyla
+  (bu araştırma için geçici, commit edilmeyen bir script) ölçülünce
+  gerçek puan (73) docs/05'in üstteki tablosundaki aralıkla eşleşti —
+  Codex'in 72'si de bu aynı, doğru metodolojiyle tutarlı.
+- `RobotCellScene.tsx` aynı `forwardKinematics(robot, jointAngles)`
+  çağrısını AYNI render'da iki kez yapıyordu (bir kez `tcpTransform`
+  için, bir kez `tcp` için) — tek çağrı ikisini de veriyor
+  (`ForwardKinematicsResult.jointTransforms` + `.endEffector`). Ayrıca
+  hiçbir prop almayan `Table`/`SafetyFence` (masa+4 ayak, güvenlik
+  çiti+3 çizgi) bileşenleri `memo` ile sarılmamıştı — eksen sürüklenirken
+  HER karede React bu sabit alt ağaçları da yeniden değerlendiriyordu.
+
+**Yapılan düzeltme:** Tekil `forwardKinematics` çağrısı ve `Table`/
+`SafetyFence`'in `memo()` ile sarılması (`components/scene/
+RobotCellScene.tsx`) — ikisi de kesin doğru, sıfır riskli düzeltmeler
+(gereksiz hesap kaldırma, girdisi hiç değişmeyen alt ağacı atlatma).
+27 testlik `e2e/robot-hucresi-3d.spec.ts` üç viewport'ta değişmeden geçti.
+
+**Dürüst sonuç — ölçülemeyecek kadar gürültülü bir kazanım.** Aynı build
+üzerinde `git stash` ile önce/sonra dörder Lighthouse koşusu alındı:
+düzeltme ÖNCESİ TBT 320-710 ms (4 koşu), SONRASI 310-350 ms (2 koşu) —
+yönü doğru ama bu makinedeki koşu-arası gürültü (aynı kodda 320 ile 710 ms
+arası) etkiyi güvenilir şekilde ölçmeye yetmiyor. Kalıcı iddia: bu iki
+düzeltme kesin doğru ve zararsız, ama **asıl maliyet başka bir yerde** —
+bu, platformdaki en zengin 3D sahnesi (masa+fikstür+kutu+güvenlik çiti+
+6 eksenli kol+tutucu+hareket izleri+hedef işaretleri, referans "3D ders"
+sayfasındaki tek robot koluna karşı) ve ~900 KiB three.js/r3f/drei'nin
+ayrıştırma+ilk çalıştırma maliyeti kısıtlı mobil CPU'da doğası gereği
+yukarıdaki 73-76 aralığına ya da biraz altına düşüyor. Daha derin bir
+iyileştirme (ör. sürükleme sırasında sık değişen kısımları imperative
+ref güncellemesine taşımak, sahneyi daha küçük parçalara bölmek) mimari
+bir yeniden tasarım gerektirir — bu oturumun kapsamı dışında bırakıldı.
+
 ## Bilinen ödünleşim: "3D'siz ders" yüzeyi tüm etkileşimli bileşenleri taşıyor
 
 **2026-08-15'te bulundu, kök nedeni araştırıldı, bilinçli olarak açık

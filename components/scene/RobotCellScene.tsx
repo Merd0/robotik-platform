@@ -2,7 +2,7 @@
 
 import { Box, Cylinder, Grid, Line, OrbitControls, Sphere, Torus } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { useEffect } from "react";
+import { memo, useEffect } from "react";
 import * as THREE from "three";
 import { useTheme } from "@/components/ui/ThemeProvider";
 import { cameraPresetOf, type RobotCellCameraPreset } from "@/lib/robotics/robotCellStudio";
@@ -45,7 +45,15 @@ function CameraRig({ preset, directControl }: { preset: RobotCellCameraPreset; d
 
   return <OrbitControls makeDefault target={definition.target} enableDamping={false} enableRotate={!directControl} enablePan={!directControl} minDistance={1.4} maxDistance={6} />;
 }
-function Table() {
+/**
+ * Prop almıyor, girdisi asla değişmiyor — ama eksen kaydırırken (her
+ * karede) `RobotCellScene` yeniden render oluyor ve bu iki sabit mobilya
+ * grubunu (masa + 4 ayak, güvenlik çiti + 3 çizgi) da her seferinde
+ * yeniden değerlendiriyordu. `memo` ile React bu alt ağaçları atlıyor —
+ * etkileşim sırasında gerçekten değişen (kol, tutucu, hedef) dışında
+ * hiçbir şeyi yeniden hesaplamıyoruz.
+ */
+const Table = memo(function Table() {
   const table = requiredObstacle("table");
   return (
     <group>
@@ -59,9 +67,9 @@ function Table() {
       ))}
     </group>
   );
-}
+});
 
-function SafetyFence() {
+const SafetyFence = memo(function SafetyFence() {
   const posts: Array<[number, number, number]> = [
     [-0.45, 0.58, -0.85], [-0.45, 0.58, 0.85], [1.55, 0.58, -0.85], [1.55, 0.58, 0.85],
   ];
@@ -77,7 +85,7 @@ function SafetyFence() {
       <Line points={[posts[1], posts[3]]} color="#64748b" lineWidth={1.5} transparent opacity={0.55} />
     </group>
   );
-}
+});
 
 export function RobotCellScene({
   robot,
@@ -108,7 +116,11 @@ export function RobotCellScene({
 }) {
   const { theme } = useTheme();
   const palette = SCENE_PALETTES[theme];
-  const tcpTransform = forwardKinematics(robot, jointAngles).jointTransforms.at(-1)!;
+  // Tek FK çağrısı hem eklem dönüşümlerini hem uç noktayı verir (bkz.
+  // ForwardKinematicsResult) — önceden aynı girdiyle iki kez çağrılıyordu;
+  // her render'da (ör. eksen kaydırırken her kare) çift hesap yapılıyordu.
+  const fk = forwardKinematics(robot, jointAngles);
+  const tcpTransform = fk.jointTransforms.at(-1)!;
   const toolFrame = roboticsFrameToScene(frameAxesOf(tcpTransform));
   const gripperQuaternion = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(
     new THREE.Vector3(toolFrame.x.x, toolFrame.x.y, toolFrame.x.z),
@@ -117,7 +129,7 @@ export function RobotCellScene({
   ));
   const fixture = requiredObstacle("fixture");
   const bin = requiredObstacle("bin");
-  const tcp = forwardKinematics(robot, jointAngles).endEffector;
+  const tcp = fk.endEffector;
   const gripperScenePosition = toSceneTuple(tcp);
   const fingerOffset = gripperClosed
     ? ROBOT_CELL_GRIPPER_VISUAL.closedFingerOffset
