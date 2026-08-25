@@ -6327,3 +6327,39 @@ tamamlandı.
 
 **Doğrulama:** `check-content`/`check-mdx-guvenlik`/`check-quiz-dagilimi`
 (142 soru, dağılım bozulmadı) temiz, tam `npm test` 1056/1056 geçti.
+
+## Genel anlaşılırlık — gerçek kullanıcı akışı taraması (2026-08-25)
+
+docs/16 madde 63'ün "gerçek kullanıcı testi hâlâ yapılmadı" notunu
+kapatmak için Chrome ile gerçek statik build üzerinde bir ilk-ziyaretçi
+akışı denendi: ana sayfa → "Seviyeni seç" → Ortaokul seviye sayfası →
+`/ara` boş durumu → rastgele bir sorguyla sıfır sonuç durumu →
+`/laboratuvar` hub'ı. Hepsi net, yönlendirici, kancasız kalmıyor —
+docs/05 "kaybolma hissi vermemeli" ilkesi karşılanıyor. Boş arama durumu
+zaten iyi (sözlüğe ve ana sayfaya yönlendiriyor, madde 64 zaten kapalıydı).
+
+**Bulunan gerçek ama KASITLI OLARAK UYGULANMAYAN bir tutarsızlık:**
+`/laboratuvar` hub'ı 6 serbest-deney aracını (Robot Hücresi, Arıza
+Kliniği, Dil Karşılaştırıcı, Ters Problem Modu, Dijital İkiz Kayması,
+Hata Müzesi) kart olarak listeliyor. Ama üst navbar bunlardan HİÇBİRİNİ
+doğrudan taşımıyor — bunun yerine BAŞKA 5 serbest-deney aracını (Robot
+Röportajı, Zaman Kapsülü, Sınır Testi, Kırık Kod Laboratuvarı, Bilgi
+Haritası) tek tek navbar'a sabitliyor, "Laboratuvarlar" bağlantısının
+yanında. Bu ayrım prensipli değil, tarihsel: her özellik kendi FAZ'ında
+kendi nav linkini SiteHeader.tsx'e ekledi (git log bunu doğruluyor — her
+`feat(lab): X - FAZ Y farklılaştırıcı özellik` commit'i aynı satırı
+ekliyor). Sonuç: 9 ayrı üst-seviye nav linki + Ara + Oyun alanı + 2
+toggle — ilk bakışta kalabalık, ve "hangi araç nerede" sorusunun cevabı
+tutarlı bir kurala dayanmıyor.
+
+**Bilinçli olarak DEĞİŞTİRİLMEDİ.** Bu, iki makul seçeneğin sonuçlarının
+gerçekten farklı olduğu bir tasarım kararı (navbar'ı 6 dersin de bulunduğu
+hub'a yönlendirip sadeleştirmek mi, yoksa mevcut düz yapıyı (her aracın
+kendi linki) korumak mı) — CLAUDE.md'nin "dur ve sor" eşiğine giriyor,
+ve bir IA (bilgi mimarisi) değişikliği mevcut kullanıcı beklentilerini/
+yer imlerini etkileyebilir. Bu oturum bağımsız/gözetimsiz çalıştığı için
+soru sorulamadı; bulgu burada kaydedildi, karar kullanıcıya bırakıldı.
+Hiçbir dosya değiştirilmedi.
+
+**Kullanıcının orijinal 10 maddelik listesi (7 özellik + tekrar +
+doygunluk + anlaşılırlık + logo hatası) burada tam olarak tamamlandı.**
