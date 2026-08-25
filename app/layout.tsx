@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: { default: "Robotik Laboratuvarı", template: "%s · Robotik Laboratuvarı" },
   description:
     "Robotiği tarayıcıda oynayarak öğreten, ortaokuldan mühendis seviyesine kadar kademeli ilerleyen, açık ve ücretsiz bir Türkçe kaynak.",
+  verification: {
+    google: "DibAa49IF8gKzTdq7OsiqONjokKDHIeCcw23YcqyXEI",
+  },
 };
 
 export default function RootLayout({
