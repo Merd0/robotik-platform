@@ -5684,5 +5684,36 @@ alınıyor. 3 e2e testi (localStorage'a `addInitScript` ile gerçekçi zaman
 damgalı olay ekleyerek) geçti. Tam kontrol paketi (tsc, lint, 976 vitest,
 build, performans bütçesi, 377 e2e) temiz.
 
-**3/4, 4/4 — Sınır Testi, Kırık Kod Laboratuvarı: SIRADA.** Sonraki
-döngüde uygulanacak.
+**3/4 — Sınır Testi: TAMAMLANDI.** `/sinir-testi` — kullanıcı bir hedefin
+robotun çalışma uzayına girip girmediğini tahmin eder ("Ulaşılabilir mi?"),
+sonra gerçek cevabı `lib/robotics/reachability.ts`teki var olan analitik
+sınıflandırıcıdan görür (yeni hesap yok). Round'lar robotun gerçek
+geometrisinden (a1, a2) türetiliyor — orta/çok uzak/tam kenar (tekilliğe
+yakın)/iç boşluk/iç boşluk kenarı; hiçbir cevap önceden yazılmadı
+(`lib/robotics/boundaryTest.ts`, 11 vitest testi). Tahminden önce
+`ReachabilityMap` gizli (cevabı spoyler etmesin diye), tahminden sonra
+açılıyor. Performans bütçesi +0.2 KiB brotli artışla güncellendi.
+
+**4/4 — Kırık Kod Laboratuvarı: TAMAMLANDI.** `/kirik-kod-laboratuvari` —
+Kod Akademisi'nin sıralı dersi değil, bağımsız bir arıza galerisi: 4 kart,
+her biri gerçek, yaygın bir Python hatası (yanlış işaret, son-nokta
+atlanıyor/off-by-one, yanlış eklem indeksi, parametre sırası karışmış).
+`CodeRunner`ın zaten çalışan Pyodide/`movej` köprüsünü ve
+`expectedFinalDegrees` doğrulamasını kullanıyor — yeni motor yok
+(`lib/brokenCodeGallery.ts`, 5 vitest yapısal testi). **Gerçek hata
+yakalandı ve düzeltildi:** ilk sürümde `CodeRunner`, `LessonEvidenceProvider`
+olmadan kullanılmıştı — `useEvidenceRecorder()` sağlayıcı yoksa sessizce
+no-op döner, yani hiçbir çözüm kaydedilmiyordu; e2e testi (çözüp "Çözüldü"
+rozetinin gerçekten görünmesini doğrulayarak) bunu yakaladı. Her karta
+kendi `lessonId`/`contentVersion`i sağlayan bir `LessonEvidenceProvider`
+eklenerek düzeltildi. Performans bütçesi +0.8/+1.1 KiB artışla güncellendi
+(yeni sayfa `CodeRunner`ı doğrudan import ettiği için paylaşılan route
+chunk'ı büyüdü — docs/05'teki bilinen mimari kısıtın aynı sınıfı).
+
+**FAZ 5 tamamlandı — 4/4 farklılaştırıcı özellik.** Ortak disiplin: hepsi
+hesapsız/sunucusuz/puansız, var olan motorları (reachability, evidence,
+CodeRunner, devam-index) tüketiyor, hiçbir cevap/istatistik uydurulmadı.
+Toplam kontrol paketi (tsc, lint, 992 vitest, check-content/mdx-güvenlik/
+sensitive-terms, `npm audit`, build, performans bütçesi, 382 e2e — 2
+bilinen flaky tablet-768 testi izole doğrulandı) temiz. Sıradaki: FAZ 6
+(kendi 2-3 yaratıcı fikrini üret ve uygula).
