@@ -5763,3 +5763,80 @@ başarısızlık (bir tablet-768 WCAG zaman aşımı daha önce de görülen
 paralel-worker rekabeti, bu turda hiç tekrarlanmadı).
 
 **FAZ 6 tamamlandı. Tüm fazlar (0-6) bitti.**
+
+## Ek — Codex'in paralel "Robotics Knowledge Graph"ı ile karşılaştırma ve karar (2026-08-25)
+
+Mert'in uyarısı üzerine: Codex, benim `/kavram-haritasi`mla (FAZ 6, Madde
+41) AYNI boşluğa paralel bir çözüm üretmiş — `feat/robotics-knowledge-graph`
+adlı, main'e hiç girmemiş ve pushlanmamış bir dalda. Bu bölüm o karşılaştırmayı
+ve alınan kararı kaydediyor.
+
+**Dosya/route çakışması taraması.** İki dalın da ortak atası `35b4fb9`e
+(benim FAZ 1 sonucu) göre değişen dosyalar karşılaştırıldı: **tek bir**
+dosya çakışıyor — `components/ui/SiteHeader.tsx` (ikimiz de
+`OVERFLOW_NAV_LINKS`e kendi linklerimizi eklemişiz; Codex ayrıca
+`/laboratuvar/robot-hucresi` linkini kendi `/laboratuvar` hub sayfasına
+çevirmiş). Route isimleri farklı (`/kavram-haritasi` vs `/bilgi-haritasi`),
+başka hiçbir dosya kesişmiyor.
+
+**robotState* sorusu.** Codex'in log'unda iki kez tekrarlanan not
+("Kök ana daldaki Claude'a ait izlenmeyen `lib/robotics/robotState.ts`
+ile testi sahiplenilmedi") bir çakışma değil, bir temkin notuydu — FAZ 2
+sırasında dosya henüz commit'lenmemişken Codex `git status` çalıştırıp
+gördüğü bilinmeyen bir dosyaya dokunmadığını kaydetmiş. Doğrulandı:
+`lib/robotics/robotState.ts`nin hiçbir bağımlılığı yok, Codex'in 6 paralel
+dalından (`feat/robotics-knowledge-graph`, `feat/inverse-problem-mode`,
+`feat/digital-twin-drift`, `feat/error-museum`, `feat/fault-injection-lab`,
+`feat/language-comparator-lab`) hiçbiri `robotState.ts`,
+`robotCellProgram.ts`, `useCodeRunnerEngine.ts`,
+`RobotCellTeachingWorkbench.tsx` veya `CodeRunner.tsx`ye dokunmuyor. Ek
+işlem gerekmiyor.
+
+**Karşılaştırma.** Codex'in grafiği objektif olarak daha kapsamlı: 206
+düğüm (94 ders + 72 sözlük terimi + 19 etkileşim/lab bileşeni + 21 Kod
+Akademisi modülü) ve 360 gerçek ilişki (6 ilişki türü), tam etkileşimli
+client-side explorer (arama/filtre, tıklayınca 2 adımlık komşuluk
+vurgusu), a11y-first tasarım (hiyerarşik metin listesi birincil yüzey).
+Benimki 94 düğüm (yalnız ders), 95 kenar (yalnız önkoşul), tamamen sunucu
+taraflı statik SVG + metin özeti, sıfır client JS.
+
+**Codex'in dalı neden main'de değil — kök neden araştırıldı.** Codex'in
+kendi log'u "3D ders" sayfasının performans bütçesini (480 KiB brotli)
+birkaç bayt aştığını, üç gerçek düzeltme denemesinden sonra da
+kapatamadığını söylüyor. Mert'in hipotezi: bu bir kod-bölme/lazy-load
+hatası olabilir (grafiğin client JS'i yanlış bir paylaşılan route'a
+sızıyor olabilir). **İzole bir git worktree'de gerçek build ile A/B
+ölçümle araştırıldı** (ana çalışma dizinine dokunulmadan):
+
+1. `lib/knowledgeGraph.ts` ve `KnowledgeGraphExplorer.tsx`'in TEK
+   tüketicisi `app/bilgi-haritasi/page.tsx` — başka hiçbir dosya import
+   etmiyor (`git grep` ile doğrulandı).
+2. `ders/b-lise-geometrik-ters-kinematik.html`nin (bütçesi aşılan "3D
+   ders" yüzeyi) script listesi Codex'in commit'i öncesi/sonrası **birebir
+   aynı** (12 JS chunk, sadece paylaşılan bir chunk'ın içerik-hash'i
+   değişmiş — yeni script yok).
+3. Ama aynı sayfanın `<link rel="stylesheet">`si Codex'in commit'inden
+   sonra **büyüdü**: 93.616 → 94.221 bayt ham (+605), 17.234 → 17.305 bayt
+   gzip (+71), 15.207 → 15.266 bayt brotli (+59) — ve bu CSS dosyası
+   `/bilgi-haritasi` ile "3D ders" sayfası arasında **birebir aynı dosya**
+   (`git`in içerik-hash'lediği tek paylaşılan Tailwind stylesheet'i).
+
+**Sonuç: bu bir kod-bölme hatası DEĞİL.** JS tarafında sızıntı yok,
+dynamic import/route-özel chunk'lama bu sorunu çözmez — çünkü sorun hiç
+JS'te değil. Bu proje Next.js + Tailwind ile TEK, site geneline paylaşılan
+bir CSS dosyası üretiyor (statik export mimarisinin doğal sonucu); yeni
+sayfanın kendine özgü Tailwind sınıfları o ortak dosyayı büyütüyor ve bu
+büyüme zaten bütçesinin ucunda duran "3D ders" sayfasına da yansıyor —
+tam olarak docs/05'teki bilinen ödünleşimle ("3D'siz ders yüzeyi tüm
+etkileşimli bileşenleri taşıyor") aynı kök neden ailesi, ve bu oturumda
+benim kendi 5 özelliğimin (FAZ 2-6) her birinin performans bütçesini aynı
+şekilde (küçük ama gerçek artışlarla) etkilediği mekanizmanın aynısı.
+Codex'in kendi log'u da bunu doğruluyor — üç denemesinin üçü de "CSS
+azaltma" denemesiydi, JS/lazy-load değil.
+
+**Karar (Mert'in talimatındaki "kök neden doğası gereği ağır" dalı
+uygulandı):** Codex'in dalı main'e alınmadı, kendi `/kavram-haritasi`m
+korundu — bkz. `docs/fikirler.md` "Daha zengin bilgi grafiği" notu.
+`components/ui/SiteHeader.tsx` çakışması bu kararla birlikte ortadan
+kalktı (Codex'in dalı hiç merge edilmediği için gerçek bir git conflict'i
+hiç oluşmadı). 28 (+ bu oturumun commit'leri) commit push edilmedi.

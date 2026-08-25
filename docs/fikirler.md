@@ -74,3 +74,39 @@ koymak için konulmuş" şikayetine cevaben). Sürekli tek anlatı bu kararı
 geri sarar. İleride denenmek istenirse, mevcut 17+ modüle dokunmadan,
 YENİ bir aşama veya paralel bir "hikaye modu" olarak ele alınmalı —
 var olan modüllerin senaryo çeşitliliğini bozmadan.
+
+## Daha zengin bilgi grafiği (Codex'in "Robotics Knowledge Graph"ı, 2026-08-25)
+
+Codex paralel bir dalda (`feat/robotics-knowledge-graph`, main'e hiç
+girmedi, pushlanmadı) benim `/kavram-haritasi`mdan çok daha kapsamlı bir
+bilgi grafiği yaptı: 206 düğüm (94 ders + 72 sözlük terimi + 19
+etkileşim/lab bileşeni + 21 Kod Akademisi modülü), 360 gerçek ilişki
+(önkoşul + hat sırası + terim geçişi + sözlük "karışan" çiftleri +
+etkileşim bağlantısı + Kod Akademisi sırası), tam etkileşimli client-side
+explorer (arama/filtre, tıklayınca 2 adımlık komşuluk vurgusu), a11y-first
+tasarım (hiyerarşik metin listesi birincil yüzey, SVG eşdeğer katman).
+
+Main'e alınmadı çünkü performans bütçesi temiz değildi: "3D ders" sayfası
+brotli sınırını (480 KiB) birkaç bayt aşıyordu. Kök neden araştırıldı
+(izole worktree'de gerçek build ile A/B ölçüm) — **kod bölme/lazy-load
+hatası DEĞİL**: yeni sayfanın JS'i başka hiçbir dosyadan import edilmiyor,
+`/ders/...` sayfasının script listesi bire bir aynı kaldı. Aşan şey CSS —
+Next.js + Tailwind bu projede TEK, site geneline paylaşılan bir stylesheet
+üretiyor (`/bilgi-haritasi` ile "3D ders" sayfası aynı `.css` dosyasını
+referans alıyor); `KnowledgeGraphExplorer`ın kendine özgü Tailwind
+sınıfları bu ortak dosyayı büyütüyor (ölçülen gerçek fark: +605 bayt ham,
++59 bayt brotli), ve bu ortak dosya her sayfaya (aralarında zaten
+bütçesinin ucunda duran "3D ders" de var) yükleniyor. Codex'in kendi log'u
+da bunu doğruluyor: üç gerçek deneme (480,2→480,1→480,0 KiB) yapılmış,
+üçü de CSS azaltma denemesiymiş — JS tarafında yapacak bir "lazy import"
+düzeltmesi yok, çünkü sızıntı hiç JS'te değil.
+
+Bu yüzden main'e alınmadı, kendi (daha basit, tamamen sunucu taraflı SVG,
+sıfır client JS, temiz bütçeli) `/kavram-haritasi`m korundu. İleride
+tekrar denenebilir — iki gerçek yol var: (1) `KnowledgeGraphExplorer`ın
+Tailwind sınıflarını projede zaten kullanılan sınıflara indirgeyip yeni
+CSS eklemeden aynı görseli üretmek, ya da (2) bu projede Tailwind/Next'in
+tek-paylaşılan-stylesheet mimarisini route bazlı CSS'e bölecek daha büyük
+bir yapısal karar almak (docs/05'teki "3D'siz ders yüzeyi tüm etkileşimli
+bileşenleri taşıyor" bilinen ödünleşimiyle aynı kök neden ailesi — ayrı
+ayrı çözülecek küçük bir şey değil).
