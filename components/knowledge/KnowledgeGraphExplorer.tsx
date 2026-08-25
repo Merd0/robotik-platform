@@ -222,7 +222,13 @@ export function KnowledgeGraphExplorer({ graph }: { graph: KnowledgeGraphData })
   const selected = graph.nodes.find((node) => node.id === selectedId) ?? graph.nodes[0];
   const distances = useMemo(() => neighborhood(graph, selected.id), [graph, selected.id]);
 
-  useEffect(() => setReady(true), []);
+  useEffect(() => {
+    // Efekt gövdesinde doğrudan setState zincirleme render üretir
+    // (react-hooks/set-state-in-effect); bir sonraki tik'e bırakılıyor
+    // (bkz. components/interactive/CodeRunner.tsx'teki aynı desen).
+    const zamanlayici = setTimeout(() => setReady(true), 0);
+    return () => clearTimeout(zamanlayici);
+  }, []);
 
   const results = useMemo(() => {
     const needle = normalize(query.trim());

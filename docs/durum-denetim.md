@@ -5840,3 +5840,57 @@ korundu — bkz. `docs/fikirler.md` "Daha zengin bilgi grafiği" notu.
 `components/ui/SiteHeader.tsx` çakışması bu kararla birlikte ortadan
 kalktı (Codex'in dalı hiç merge edilmediği için gerçek bir git conflict'i
 hiç oluşmadı). 28 (+ bu oturumun commit'leri) commit push edilmedi.
+
+## Düzeltme — kök neden yanlış ölçülmüştü, gerçek durum farklı çıktı (2026-08-25, devam)
+
+Mert kararı gözden geçirdi: "137 baytlık aşım, Codex'in çok daha zengin
+grafiğini rafa kaldırmaya değmez" diyerek CSS küçültmeyi deneyip
+gerekirse dürüst bir bütçe büyütmesiyle merge etmemi istedi. Bunu
+uygularken **yukarıdaki kök neden bulgusunun kendisi yanlış çıktı** —
+kayıt bunu düzeltiyor:
+
+**Neden yanlıştı.** Önceki turda "önce/sonra" CSS ölçümü tek bir
+worktree'de art arda iki `npm run build` çalıştırılarak yapılmıştı,
+aralarında `.next` cache'i temizlenmeden. Next/Turbopack'ın artımlı
+derleme önbelleği, farklı commit'lerin build çıktısını kirletebiliyor —
+tam olarak olan da buydu.
+
+**Yeniden, doğru ölçüldü.** İzole bir worktree'de, **her commit için**
+`.next` ve `out` tamamen silinip sıfırdan build alınarak Codex'in tüm
+6 özellikli yığını (`4dfedf6` arıza kliniği → `3da7d38` dil
+karşılaştırıcı → `cc04f00` → `739e673` ters problem → `3b5bb9a` dijital
+ikiz → `9a18fea` hata müzesi → `7393b65` bilgi haritası) tek tek ölçüldü.
+Sonuç: **"3D ders" sayfasının CSS/JS toplamı bu 6 commit boyunca hiç
+değişmedi** — hepsi birebir aynı `3xvtk61li5uz9.css` dosyasını üretti.
+Geçici bir debug satırıyla ham bayt cinsinden doğrulandı: dalın
+ayrıldığı **`35b4fb9`in kendisinde** "3D ders" brotli toplamı zaten
+**491.540 bayt / 491.520 bayt sınır — yani 20 bayt aşkın**, Codex'in
+hiçbir özelliği eklenmeden önce. Bu, benim FAZ 1 sonrası bıraktığım
+commit'te zaten var olan, tamamen içerik-hacmi kaynaklı (94 dersin
+birikmiş ağırlığı) bir durumdu — ne Codex'in ne de benim bu turdaki
+hiçbir kodumuzla ilgisi yok.
+
+**Sonuç: CSS küçültme cerrahisi yapılmadı** — `KnowledgeGraphExplorer`de
+küçültülecek gerçek bir ağırlık yoktu (kendi katkısı ölçülebilir
+sıfırdı). Doğrudan merge'e geçildi. Merge sonucu (main zaten kendi
+FAZ 2-6 çalışmamla "3D ders" bütçesini 484 KiB'e çıkarmıştı, ve kendi
+`/kavram-haritasi`mın kaldırılması Codex'in 6 özelliğinin net ağırlığını
+büyük ölçüde dengeledi) **hiçbir bütçe değişikliği gerektirmeden
+temiz geçti**: 483,9 / 484,0 KiB brotli. Bkz. commit `56b8f7a` — tam
+gerekçe orada.
+
+Ders: aynı worktree'de art arda birden fazla commit build edip
+karşılaştırırken `.next`/`out`u temizlemeden ölçüm almak, bu oturumun
+kendi disiplinine (her ölçümü `git stash -u` ile temiz bir öncesi/sonrası
+üzerinden yapmak) aykırıydı — bu sefer stash değil doğrudan checkout
+kullanıldığı için cache temizliği atlandı. Düzeltme: bundan sonraki
+her çoklu-commit karşılaştırmasında `.next`/`out` açıkça silinecek.
+
+**Tam kontrol paketi (merge sonrası):** tsc, lint, 1034 vitest,
+check-content/graph/quiz/mdx-güvenlik/review-debt/review-integrity/
+sensitive-terms, build, performans bütçesi (değiştirmeden temiz), `npm
+audit` (0 açık) — hepsi temiz. Tam e2e: 441 geçti, 18 atlandı, 3 test
+(ThresholdViewer paylaşım, tablet-768 WCAG, R3F canvas DPR) ilk koşuda
+paralel yük altında başarısız oldu, `--workers=1` izole koşuda üçü de
+geçti — bu oturumda tekrar tekrar doğrulanan aynı bilinen flaky kalıp,
+gerçek bir regresyon değil.
