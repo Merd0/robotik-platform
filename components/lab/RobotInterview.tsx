@@ -66,11 +66,24 @@ export function RobotInterview() {
         </select>
       </div>
 
+      <details className="rounded-xl border border-site-border bg-site-surface p-3">
+        <summary className="min-h-11 cursor-pointer py-1 text-sm font-semibold text-site-ink">Bir mühendis bu soruları neden sorar?</summary>
+        <dl className="mt-3 grid gap-2 text-sm text-site-muted sm:grid-cols-2">
+          {ROBOT_INTERVIEW_QUESTIONS.map((question) => (
+            <div key={question.id} className="rounded-lg bg-site-soft p-2.5">
+              <dt className="font-semibold text-site-ink">{question.soru}</dt>
+              <dd className="mt-0.5 leading-5">{question.neden}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
+
       <div className="flex flex-wrap gap-2" role="group" aria-label="Sorulacak sorular">
         {ROBOT_INTERVIEW_QUESTIONS.map((question) => (
           <button
             key={question.id}
             type="button"
+            title={question.neden}
             onClick={() => ask(question.id, question.soru)}
             className="min-h-11 rounded-full border border-site-border bg-site-surface px-4 text-sm font-semibold text-site-ink hover:bg-site-soft"
           >

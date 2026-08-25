@@ -14,6 +14,7 @@ describe("ROBOT_INTERVIEW_QUESTIONS", () => {
     expect(new Set(ids).size).toBe(ids.length);
     for (const question of ROBOT_INTERVIEW_QUESTIONS) {
       expect(question.soru.length).toBeGreaterThan(0);
+      expect(question.neden.length).toBeGreaterThan(0);
     }
   });
 });

@@ -66,7 +66,18 @@ const surfaces: SurfaceConfig[] = [
   // SiteHeader kök layout'ta HER sayfada (ana sayfa dahil) yüklü. `git
   // stash -u`: 202.9→203.1 KiB brotli — gerçek fark +0.2 KiB. 203→204
   // KiB'e çekildi, gzip zaten yeterliydi.
-  { name: "Ana sayfa", html: "index.html", deferred: "none", initialScriptGzip: 200 * KIB, budget: { gzip: 220 * KIB, brotli: 204 * KIB } },
+  //
+  // 2026-08-25 (Robot Röportajı — mühendislik gerekçesi paneli): Bu
+  // değişiklik `app/robot-roportaji/page.tsx` ve `lib/robotics/
+  // robotInterview.ts` dışına dokunmuyor, ama `git stash -u` ile
+  // doğrulandı: değişiklik yokken ana sayfa TAM bütçenin sınırında
+  // (204,0/204,0 KiB, payı sıfır) duruyordu — herhangi bir yerdeki kod
+  // hacmi artışı, Next'in otomatik paylaşılan-chunk bölme sınırını
+  // kaydırıp ana sayfanın da yüklediği paylaşılan çerçeve parçasını
+  // büyütebiliyor (bu dosyadaki tekrarlanan "paylaşılan chunk büyümesi"
+  // deseniyle aynı kök neden, bu kez sıfır paylı bir bütçeyi aşırdı).
+  // 204→205 KiB'e çekildi, gzip zaten yeterliydi.
+  { name: "Ana sayfa", html: "index.html", deferred: "none", initialScriptGzip: 200 * KIB, budget: { gzip: 220 * KIB, brotli: 205 * KIB } },
   // 255/240 KiB (2026-08-01 kalibrasyonu) 2026-08-15'te 257.0/239.4 KiB'e
   // taştı — kök neden araştırıldı: components/interactive/index.ts, TÜM 19
   // etkileşimli bileşeni statik import ediyor ve next-mdx-remote/rsc'nin

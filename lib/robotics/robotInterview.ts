@@ -22,16 +22,18 @@ export type RobotInterviewQuestionId =
 export interface RobotInterviewQuestion {
   id: RobotInterviewQuestionId;
   soru: string;
+  /** Bir saha mühendisi bu soruyu neden sorar — devreye alma mülakatı çerçevesinin gerekçesi. */
+  neden: string;
 }
 
 export const ROBOT_INTERVIEW_QUESTIONS: readonly RobotInterviewQuestion[] = [
-  { id: "kimlik", soru: "Sen kimsin?" },
-  { id: "eksen-sayisi", soru: "Kaç eksenin var?" },
-  { id: "erisim", soru: "Azami erişimin ne kadar?" },
-  { id: "en-hizli-eklem", soru: "En hızlı eklemin hangisi?" },
-  { id: "en-dar-limit", soru: "En dar hareket aralığına sahip eklemin hangisi?" },
-  { id: "tekillik", soru: "Şu anki tipik duruşunda tekilliğe yakın mısın?" },
-  { id: "kaynak", soru: "Bilgilerinin kaynağı ne?" },
+  { id: "kimlik", soru: "Sen kimsin?", neden: "Hangi ürünle çalıştığını bilmeden dokümantasyon aramaya bile başlayamazsın." },
+  { id: "eksen-sayisi", soru: "Kaç eksenin var?", neden: "Serbestlik derecesi, hangi hareketlerin mümkün olduğunu belirler." },
+  { id: "erisim", soru: "Azami erişimin ne kadar?", neden: "Hücre/çalışma alanı yerleşimini bu sayı olmadan planlayamazsın." },
+  { id: "en-hizli-eklem", soru: "En hızlı eklemin hangisi?", neden: "Çevrim süresi tahmininde hangi eklemin darboğaz olacağını önceden bilmek gerekir." },
+  { id: "en-dar-limit", soru: "En dar hareket aralığına sahip eklemin hangisi?", neden: "Programlarken seni en çok kısıtlayacak eklem budur." },
+  { id: "tekillik", soru: "Şu anki tipik duruşunda tekilliğe yakın mısın?", neden: "Güvenlik: tekillik yakınında hız/ivme davranışı öngörülemez hale gelir." },
+  { id: "kaynak", soru: "Bilgilerinin kaynağı ne?", neden: "Bir sayıya ne kadar güvenebileceğin, onun nereden geldiğine bağlıdır." },
 ];
 
 const RAD_TO_DEG = 180 / Math.PI;

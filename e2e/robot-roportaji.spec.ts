@@ -18,6 +18,17 @@ test("Robot Röportajı: Meca500 seçilince gerçek marka/kaynak cevabı verir, 
   await expect(genericAnswer).not.toContainText("Mecademic");
 });
 
+test("Robot Röportajı: mühendislik gerekçesi genişletilebilir panelde görünür", async ({ page }) => {
+  await page.goto("/robot-roportaji");
+  await expect(page.getByText("Serbest deney · devreye alma mülakatı")).toBeVisible();
+  await expect(page.getByText("saha mühendisi")).toBeVisible();
+
+  const details = page.getByText("Bir mühendis bu soruları neden sorar?");
+  await expect(page.getByText("Güvenlik: tekillik yakınında")).not.toBeVisible();
+  await details.click();
+  await expect(page.getByText("Güvenlik: tekillik yakınında")).toBeVisible();
+});
+
 test("Robot Röportajı: robot değiştirilince geçmiş sıfırlanır, 'Röportajı sıfırla' geçmişi temizler", async ({ page }) => {
   await page.goto("/robot-roportaji");
   await page.getByRole("button", { name: "Kaç eksenin var?" }).click();
