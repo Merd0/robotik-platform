@@ -6116,3 +6116,27 @@ merge edilmişti) — stash-aside tekniğine gerek kalmadı, doğrudan
 `git add` + commit.
 
 **Sırada:** madde 6/7 Hata Müzesi (temelden ileriye kademeli keşif).
+
+### Parça 6/7: Hata Müzesi (2026-08-25)
+
+`lib/robotics/errorMuseum.ts`'deki üç eser (`encoder-bias`, `packet-delay`,
+`actuator-saturation`) zaten doğal bir zorluk artışı taşıyordu (1 kanal →
+2 kanal + gecikme muhakemesi → 2 kanal + komut/tepki karşılaştırması
+gerektiren dolaylı okuma) ama bu **hiç görünür değildi** — kullanıcı
+üçünü de eşit ağırlıkta, herhangi bir sırada açabiliyordu. Yeni `level:
+"temel"|"orta"|"ileri"` alanı eklendi (mevcut sıraya/veriye dokunmadan,
+yalnız etiketleyerek); `ErrorMuseum.tsx`'te hem galeri kartlarında hem
+seçili eser başlığında rozet olarak gösteriliyor, üst bilgiye sıralı
+ilerlemeyi öneren (zorunlu kılmayan) bir cümle eklendi.
+
+**Doğrulama:** `tsc`, hedefli `eslint` temiz. `lib/robotics/
+errorMuseum.test.ts`'e yeni bir test eklendi (level sırası temel/orta/
+ileri, kanal sayısı artan 1/2/2) — 5/5 geçti. Mevcut
+`e2e/error-museum.spec.ts` (3 test) değişmeden geçti; yeni bir test
+eklendi (üç rozet metni galeri kartlarında + seçili eserin başlığında
+görünür) — üç viewport'ta 12/12 geçti. Tam `npm test`: 1056/1056.
+Performans bütçesi, check-content/mdx-güvenlik/sensitive-terms hepsi
+temiz. Codex eşzamanlı işi yoktu, doğrudan commit.
+
+**Sırada:** madde 7/7 Robot Röportajı (dosyadaki öneriye göre yeniden
+yorumla; gerçek değer katmıyorsa kaldırmayı değerlendir).
