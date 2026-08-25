@@ -171,7 +171,11 @@ const surfaces: SurfaceConfig[] = [
   // sınıfı: docs/05 "3D'siz ders yüzeyi tüm etkileşimli bileşenleri
   // taşıyor"). `git stash -u`: 272.6/254.2→273.4/255.3 KiB — gerçek fark
   // +0.8/+1.1 KiB. Gzip 273→274, brotli 255→256 KiB'e çekildi.
-  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 274 * KIB, brotli: 256 * KIB } },
+  //
+  // 2026-08-25 (FAZ 6 — Kavram Haritası, kendi fikir): SiteHeader nav'ına
+  // eklenen link. `git stash -u`: 274.0/255.8→274.2/255.9 KiB — gerçek
+  // fark +0.2 KiB gzip (brotli zaten yeterliydi). 274→275 KiB'e çekildi.
+  { name: "3D'siz ders", html: "ders/a-ortaokul-robot-nedir.html", deferred: "none", budget: { gzip: 275 * KIB, brotli: 256 * KIB } },
   // "3D ders" gzip'i zaten 530 KiB'de yeterli payla duruyordu (524.3→524.9,
   // +0.6 KiB). Brotli aynı FAZ 2 nedeniyle 480.0→480.6 KiB'e çıktı (zaten
   // tavanda duran bir bütçeydi, hiç payı yoktu) — 480→481 KiB'e çekildi.
