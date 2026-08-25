@@ -22,6 +22,8 @@ import { LessonTrustPanel } from "@/components/lesson/LessonTrustPanel";
 import { LessonPrerequisiteNotice } from "@/components/lesson/LessonPrerequisiteNotice";
 import { LessonRelatedTerms } from "@/components/lesson/LessonRelatedTerms";
 import { getSeoAnchorTermsInText } from "@/lib/sozluk";
+import { extractPlainText } from "@/lib/lessonPlainText";
+import { ReadAloud } from "@/components/lesson/ReadAloud";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { computeTeachingHash } from "@/lib/lessonArtifact";
 import { computeLessonContentVersion } from "@/lib/interactionManifest";
@@ -163,6 +165,7 @@ export default async function DersPage({ params }: DersPageProps) {
   const { previous, next } = getAdjacentLessons(lesson);
   const jsonLd = lessonJsonLd(lesson, prerequisites.map((prerequisite) => prerequisite.slug));
   const relatedTerms = getSeoAnchorTermsInText(lesson.body);
+  const plainTextForReadAloud = extractPlainText(lesson.body);
 
   return (
     <main id="ana-icerik" data-seviye={seviye} className={`min-h-screen ${theme.page}`}>
@@ -178,6 +181,9 @@ export default async function DersPage({ params }: DersPageProps) {
               <p className={`text-xs font-semibold uppercase tracking-[.18em] ${theme.accentText}`}>Deney dersi · {lesson.frontmatter.sure} dakika</p>
               <h1 className={`mt-3 max-w-4xl font-heading text-4xl font-semibold tracking-tight sm:text-5xl ${theme.ink}`}>{lesson.frontmatter.baslik}</h1>
               <LessonPrerequisiteNotice prerequisites={prerequisites} seviye={seviye} />
+              <div className="mt-4">
+                <ReadAloud text={plainTextForReadAloud} />
+              </div>
               <article className="ders-icerik mt-8 flex min-w-0 flex-col gap-5">{content}</article>
               <div className="mt-10"><LessonCompletionPanel seviye={seviye} /></div>
               <LessonRelatedTerms terms={relatedTerms} />
