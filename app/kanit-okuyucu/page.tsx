@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EvidenceJsonReader } from "@/components/tools/EvidenceJsonReader";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Kanıt JSON Okuyucu",
   description: "Kendi tarayıcından dışa aktardığın deney kaydını aç; şema, ders sürümü ve predicate durumunu kontrol et. Hiçbir şey sunucuya gönderilmez.",
-};
+  path: "/kanit-okuyucu",
+  index: false,
+});
 
 export default function KanitOkuyucuPage() {
   return (

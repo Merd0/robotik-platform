@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { createPageMetadata, learningResourceJsonLd } from "@/lib/seo";
 import Link from "next/link";
 import { RobotCellStudio } from "@/components/lab/RobotCellStudio";
 import { RobotCellCapstone } from "@/components/lab/RobotCellCapstone";
 import { LessonEvidenceProvider } from "@/components/lesson/LessonEvidenceProvider";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "3B Robot Hücresi Laboratuvarı",
   description: "Altı eksenli robotu üç boyutta sür, gerçek FK ile TCP pozunu gözlemle ve hücre devreye alma görevlerini çöz.",
-};
+  path: "/laboratuvar/robot-hucresi",
+});
 
 export default function RobotCellPage() {
   return (
     <main id="ana-icerik" className="min-h-screen bg-site-bg">
+      <JsonLd data={learningResourceJsonLd({ name: "3B Robot Hücresi Laboratuvarı", description: "Altı eksenli robotu üç boyutta sür, gerçek FK ile TCP pozunu gözlemle ve hücre devreye alma görevlerini çöz.", path: "/laboratuvar/robot-hucresi", learningResourceType: "Etkileşimli laboratuvar" })} />
       <div className="mx-auto max-w-[1500px] px-4 py-10 sm:px-6 sm:py-14">
         <nav className="flex items-center gap-2 text-sm text-site-muted">
           <Link href="/laboratuvar" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvarlar</Link>

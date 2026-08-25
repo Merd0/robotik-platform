@@ -4,12 +4,14 @@ import { TeacherPilotActions } from "@/components/teacher/TeacherPilotActions";
 import { TeacherPilotSwitcher } from "@/components/teacher/TeacherPilotSwitcher";
 import { TEACHER_PILOT_TASK_URL } from "@/lib/teacherPilot";
 import styles from "./page.module.css";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Öğretmen pilotu · Hat B",
   description:
     "Hat B için 40 dakikalık ders akışı, önceden ayarlanmış öğrenci görevi, yazdırılabilir çalışma kâğıdı ve yerel kanıt kontrol rehberi.",
-};
+  path: "/ogretmen",
+});
 
 const LESSON_FLOW = [
   {

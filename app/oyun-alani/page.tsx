@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { CustomRobotPlayground } from "@/components/playground/CustomRobotPlayground";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Kendi robotun",
   description: "1–6 eksenli özel robotunu tanımla; TCP’yi elle yönlendir, hareketi öğret, fiziksel ön kontrolden geçir ve bağlantıyla paylaş.",
-};
+  path: "/oyun-alani",
+});
 
 export default function OyunAlaniPage() {
   return (

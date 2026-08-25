@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { LessonEvidenceProvider } from "@/components/lesson/LessonEvidenceProvider";
 import { KodaTransferLab } from "@/components/kod-akademisi/KodaTransferLab";
 import { Quiz } from "@/components/interactive/Quiz";
 import { computeKodaTransferContentVersion } from "@/lib/kodaTransferArtifact";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Satırdan poza: izle, tahmin et, düzelt · Kod Akademisi",
   description: "İleri → Usta geçiş kapısı: satır-poz-iz eşlemesiyle bir hatayı bul, düzelt ve görmediğin bir hedefe genellediğini kanıtla.",
-  alternates: { canonical: "/kod-akademisi/gecis-kapisi" },
-};
+  path: "/kod-akademisi/gecis-kapisi",
+});
 
 export default function KodaTransferKapisiPage() {
   const contentVersion = computeKodaTransferContentVersion();

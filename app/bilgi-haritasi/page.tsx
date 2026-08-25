@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { KnowledgeGraphExplorer } from "@/components/knowledge/KnowledgeGraphExplorer";
 import { buildKnowledgeGraph } from "@/lib/knowledgeGraph";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Robotik Bilgi Haritası — ders, kavram ve laboratuvar bağlantıları",
   description: "Robotik dersleri, sözlük terimleri, etkileşimli laboratuvarları ve Kod Akademisi modüllerini önkoşul ve içerik ilişkileriyle keşfet.",
-};
+  path: "/bilgi-haritasi",
+});
 
 export default function KnowledgeGraphPage() {
   const graph = buildKnowledgeGraph();

@@ -8,7 +8,7 @@ import {
   SEVIYE_ETIKET,
   type Seviye,
 } from "@/lib/content";
-import { SITE_URL } from "@/lib/seo";
+import { createPageMetadata, SITE_URL } from "@/lib/seo";
 import { getSozluk, getTerimBySlug, terimSlug } from "@/lib/sozluk";
 
 const SEVIYELER: Seviye[] = ["ortaokul", "lise", "universite"];
@@ -30,14 +30,12 @@ export async function generateMetadata({ params }: SozlukTerimPageProps): Promis
 
   const title = `${terim.tr} nedir?`;
   const description = `${terim.tr} (${terim.en}): ${terim.tanim}`;
-  const url = `${SITE_URL}/sozluk/${slug}`;
-
-  return {
+  return createPageMetadata({
     title,
     description,
-    alternates: { canonical: `/sozluk/${slug}` },
-    openGraph: { type: "article", locale: "tr_TR", url, title, description },
-  };
+    path: `/sozluk/${slug}`,
+    type: "article",
+  });
 }
 
 export default async function SozlukTerimPage({ params }: SozlukTerimPageProps) {

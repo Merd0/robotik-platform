@@ -27,7 +27,7 @@ import { ReadAloud } from "@/components/lesson/ReadAloud";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { computeTeachingHash } from "@/lib/lessonArtifact";
 import { computeLessonContentVersion } from "@/lib/interactionManifest";
-import { lessonJsonLd, lessonUrl } from "@/lib/seo";
+import { createPageMetadata, lessonJsonLd } from "@/lib/seo";
 import Link from "next/link";
 
 /**
@@ -55,20 +55,15 @@ export async function generateMetadata({ params }: DersPageProps): Promise<Metad
 
   const taslak = lesson.frontmatter.durum !== "yayinda";
   const description = lesson.frontmatter.kazanimlar[0];
-  const url = lessonUrl(lesson.slug);
-  return {
+  const metadata = createPageMetadata({
     title: lesson.frontmatter.baslik,
     description,
-    alternates: { canonical: `/ders/${lesson.slug}` },
-    openGraph: {
-      type: "article",
-      locale: "tr_TR",
-      url,
-      title: lesson.frontmatter.baslik,
-      description,
-    },
-    ...(taslak ? { robots: { index: false, follow: false } } : {}),
-  };
+    path: `/ders/${lesson.slug}`,
+    type: "article",
+    index: !taslak,
+  });
+  if (taslak) metadata.robots = { index: false, follow: false };
+  return metadata;
 }
 
 /**

@@ -67,7 +67,7 @@ export function ChallengeHeader({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-2xl">
           <p className={`text-xs font-bold uppercase tracking-[.14em] ${theme.accent}`}>{eyebrow}</p>
-          <h4 className="mt-1 font-heading text-lg font-bold">{title}</h4>
+          <h3 className="mt-1 font-heading text-lg font-bold">{title}</h3>
           <p id={detailsId} className={`mt-1 text-sm leading-6 ${theme.muted}`}>{description}</p>
         </div>
         <button
@@ -116,7 +116,7 @@ export function ChallengeResult({
       className="mt-4 rounded-xl border-2 border-success-border bg-success-surface p-4 text-success-ink"
     >
       <p className="text-xs font-bold uppercase tracking-[.14em]">Doğrulama tamamlandı</p>
-      <h4 className="mt-1 font-heading text-xl font-bold">{title}</h4>
+      <h3 className="mt-1 font-heading text-xl font-bold">{title}</h3>
       <p className="mt-1 text-sm leading-6">{summary}</p>
       <dl className="mt-3 grid gap-2 sm:grid-cols-3">
         {metrics.map((metric) => (
