@@ -6363,3 +6363,33 @@ Hiçbir dosya değiştirilmedi.
 
 **Kullanıcının orijinal 10 maddelik listesi (7 özellik + tekrar +
 doygunluk + anlaşılırlık + logo hatası) burada tam olarak tamamlandı.**
+
+## Navbar konsolidasyonu — kullanıcı onayıyla uygulandı (2026-08-26)
+
+Yukarıdaki "genel anlaşılırlık" bulgusundaki navbar tutarsızlığı,
+kullanıcı onayıyla giderildi (commit `24c5d2f`):
+
+- `SiteHeader.tsx`: `OVERFLOW_NAV_LINKS` 9 maddeden 4'e indi (Sözlük,
+  Öğretmen, Laboratuvarlar, Kod Akademisi). Robot Röportajı, Zaman
+  Kapsülü, Sınır Testi, Kırık Kod Laboratuvarı, Bilgi Haritası artık
+  navbar'da tekil link olarak yok.
+- `/laboratuvar` hub'ı TEK KAYNAK oldu: 11 laboratuvarın tamamı 4
+  kategoride (Teşhis laboratuvarları, Kinematik deneyleri, Karşılaştırma
+  ve keşif araçları, Kendi ilerlemen) kart olarak listeleniyor; üstte
+  kategoriye atlayan çapa linkli bir pil grubu var.
+- Konsolide edilen 5 sayfaya (`kirik-kod-laboratuvari`, `robot-roportaji`,
+  `zaman-kapsulu`, `sinir-testi`, `bilgi-haritasi`) "Laboratuvarlar"
+  breadcrumb'i eklendi — artık hub dışında giriş noktaları olmadığından
+  docs/05'in "kullanıcı her an nerede olduğunu bilmeli" ilkesi için gerekli.
+
+**Doğrulama:** `tsc`, hedefli `eslint` temiz. Yeni `e2e/laboratuvar-
+hub.spec.ts` (5 test) üç viewport'ta 15/15 geçti — mobil/tablet'te
+`MobileNavMenu`'nun `role="menuitem"` kullandığı (role="link" değil)
+keşfedilip test buna göre href-tabanlı sorguya çevrildi. Etkilenen 6
+mevcut e2e dosyası değişmeden 17/17 geçti. Tam `npm test` 1056/1056,
+build temiz. **Performans bütçesi iyileşti** (navbar küçüldüğü için
+paylaşılan chunk hafifledi): Ana sayfa 204,0→203,6 KiB brotli — bütçe
+dosyası değiştirilmedi, kendiliğinden pay arttı.
+
+**Sırada:** kullanıcının yeni talebi — 3D robot hücresi mobil performans
+araştırması (Codex'in Lighthouse 72 / 4x CPU 272ms bulgusu).
