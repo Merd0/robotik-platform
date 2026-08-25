@@ -44,6 +44,20 @@ test("bilgi haritası kritik erişilebilirlik ihlali üretmez", async ({ page })
   expect(results.violations.filter((violation) => ["critical", "serious"].includes(violation.impact ?? ""))).toEqual([]);
 });
 
+test("ilk ziyarette kısa yönlendirme görünür, kapatılınca yeniden yüklemede çıkmaz", async ({ page }) => {
+  await page.goto("/bilgi-haritasi");
+  const intro = page.getByRole("note", { name: "Bilgi haritası nasıl kullanılır" });
+  await expect(intro).toBeVisible();
+  await expect(intro).toContainText("bir noktaya tıkla");
+
+  await intro.getByRole("button", { name: "Anladım, kapat" }).click();
+  await expect(intro).toHaveCount(0);
+
+  await page.reload();
+  await expect(page.getByRole("region", { name: "Seçili düğüm" })).toBeVisible();
+  await expect(page.getByRole("note", { name: "Bilgi haritası nasıl kullanılır" })).toHaveCount(0);
+});
+
 test("sözlük keşif yüzeyi bilgi haritasına ulaştırır", async ({ page }) => {
   await page.goto("/sozluk");
   await expect(page.getByRole("link", { name: /bağlantılarını haritada gör/ })).toHaveAttribute("href", "/bilgi-haritasi");

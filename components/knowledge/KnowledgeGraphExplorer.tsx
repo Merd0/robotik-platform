@@ -36,6 +36,61 @@ const RELATION_LABEL: Record<KnowledgeRelation, string> = {
 const LEVEL_INDEX = { ortaokul: 0, lise: 1, universite: 2 } as const;
 const MAP_WIDTH = 1240;
 const MAP_HEIGHT = 820;
+const INTRO_STORAGE_KEY = "robotik-platform:bilgi-haritasi-tanitim:v1";
+
+/**
+ * İlk kullanımda kısa yönlendirme — harita 206 düğüm/360 ilişkiyle karmaşık,
+ * hiçbir açıklama olmadan "bir SVG'ye tıkla" demek kafa karıştırır. Yalnız
+ * ilk ziyarette görünür (localStorage bayrağı), kapatınca bir daha çıkmaz.
+ * `docs/05` ilkesiyle uyumlu: hesap/çerez değil, yalnız bu tarayıcıda kalan
+ * bir tercih.
+ */
+function FirstVisitIntro() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    // Efekt gövdesinde doğrudan setState zincirleme render üretir
+    // (react-hooks/set-state-in-effect); bir sonraki tik'e bırakılıyor
+    // (bkz. bu dosyadaki `ready` state'i ve components/interactive/
+    // CodeRunner.tsx'teki aynı desen).
+    const zamanlayici = setTimeout(() => {
+      try {
+        setVisible(window.localStorage.getItem(INTRO_STORAGE_KEY) !== "gorundu");
+      } catch {
+        setVisible(true);
+      }
+    }, 0);
+    return () => clearTimeout(zamanlayici);
+  }, []);
+
+  function dismiss() {
+    setVisible(false);
+    try {
+      window.localStorage.setItem(INTRO_STORAGE_KEY, "gorundu");
+    } catch {
+      // localStorage engellenmişse sessizce yut — bir sonraki ziyarette tekrar görünür, o kadar.
+    }
+  }
+
+  if (!visible) return null;
+
+  return (
+    <div role="note" aria-label="Bilgi haritası nasıl kullanılır" className="flex flex-col gap-3 rounded-2xl border border-site-strong bg-site-soft p-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="max-w-3xl text-sm leading-6 text-site-ink">
+        <p className="font-heading text-base font-semibold">Bu harita nasıl çalışır?</p>
+        <p className="mt-1.5">
+          Aşağıdaki listeden bir kavram seç ya da haritadaki bir noktaya tıkla — o kavramın hangi derslerde,
+          terimlerde, laboratuvarlarda ve Kod Akademisi modüllerinde geçtiğini görürsün. Beyaz halkalı nokta
+          seçtiğin kavram, çevresindeki noktalar bir veya iki adımda ona bağlı olanlar. Harita geniş; yatay
+          kaydırarak tamamını görebilirsin.
+        </p>
+      </div>
+      <button type="button" onClick={dismiss} className="min-h-11 shrink-0 rounded-xl border border-site-border bg-site-bg px-4 text-sm font-semibold text-site-ink hover:bg-site-surface">
+        Anladım, kapat
+      </button>
+    </div>
+  );
+}
 
 interface PositionedNode extends KnowledgeGraphNode {
   x: number;
@@ -255,6 +310,8 @@ export function KnowledgeGraphExplorer({ graph }: { graph: KnowledgeGraphData })
 
   return (
     <div data-graph-ready={ready ? "true" : "false"} className="space-y-8">
+      <FirstVisitIntro />
+
       <section aria-labelledby="katalog-baslik" className="grid min-w-0 grid-cols-1 gap-6 rounded-2xl border border-site-border bg-site-surface p-5 shadow-sm lg:grid-cols-3 lg:p-6">
         <div className="min-w-0 lg:col-span-2">
           <div className="flex flex-wrap items-end justify-between gap-3">
