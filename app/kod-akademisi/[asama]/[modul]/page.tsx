@@ -16,6 +16,7 @@ import { EVIDENCE_PREDICATES } from "@/lib/evidence";
 import { LessonEvidenceProvider } from "@/components/lesson/LessonEvidenceProvider";
 import { KodAkademisiCodeLab } from "@/components/kod-akademisi/KodAkademisiCodeLab";
 import { Quiz } from "@/components/interactive/Quiz";
+import { createPageMetadata } from "@/lib/seo";
 
 export function generateStaticParams() {
   return getPublicModules().map((mod) => ({ asama: mod.frontmatter.asama, modul: mod.slug }));
@@ -29,11 +30,12 @@ export async function generateMetadata({ params }: ModulePageProps): Promise<Met
   const { modul } = await params;
   const mod = getPublicModuleBySlug(modul);
   if (!mod) return {};
-  return {
+  return createPageMetadata({
     title: `${mod.frontmatter.baslik} · Kod Akademisi`,
     description: mod.frontmatter.kazanimlar[0],
-    alternates: { canonical: `/kod-akademisi/${mod.frontmatter.asama}/${mod.slug}` },
-  };
+    path: `/kod-akademisi/${mod.frontmatter.asama}/${mod.slug}`,
+    type: "article",
+  });
 }
 
 export default async function KodAkademisiModulePage({ params }: ModulePageProps) {

@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import sitemap from "../app/sitemap";
 import { getAllLessons, getPublishedLessons } from "./content";
 import { getFileLastModified } from "./fileModified";
+import { KOD_AKADEMISI_ASAMALAR, getPublicModules } from "./kodAkademisi";
 import { getSozluk, terimSlug } from "./sozluk";
+import { NOINDEX_STATIC_ROUTES, getIndexableStaticPageRoutes } from "./staticRoutes";
 
 const ORIJINAL_ONIZLEME = process.env.ICERIK_TASLAK_ONIZLEME;
 
@@ -23,6 +25,31 @@ describe("sitemap", () => {
     expect(paths).toContain("/laboratuvar/dijital-ikiz-kaymasi");
     expect(paths).toContain("/laboratuvar/hata-muzesi");
     expect(paths).toContain("/bilgi-haritasi");
+  });
+
+  it("bütün indekslenebilir statik sayfaları otomatik kapsar", () => {
+    const entries = sitemap();
+    const paths = entries.map((entry) => new URL(entry.url).pathname);
+
+    expect(paths).toEqual(expect.arrayContaining(getIndexableStaticPageRoutes()));
+    for (const noindexRoute of NOINDEX_STATIC_ROUTES) {
+      expect(paths).not.toContain(noindexRoute);
+    }
+    expect(entries.find((entry) => new URL(entry.url).pathname === "/laboratuvar")?.lastModified).toBeInstanceOf(Date);
+  });
+
+  it("yayındaki Kod Akademisi aşama ve modül rotalarını listeler", () => {
+    const paths = sitemap().map((entry) => new URL(entry.url).pathname);
+    const publishedModules = getPublicModules().filter((academyModule) => academyModule.frontmatter.durum === "yayinda");
+
+    for (const stage of KOD_AKADEMISI_ASAMALAR) {
+      if (publishedModules.some((academyModule) => academyModule.frontmatter.asama === stage)) {
+        expect(paths).toContain(`/kod-akademisi/${stage}`);
+      }
+    }
+    for (const academyModule of publishedModules) {
+      expect(paths).toContain(`/kod-akademisi/${academyModule.frontmatter.asama}/${academyModule.slug}`);
+    }
   });
 
   it("taslak önizlemesi açıkken bile yalnızca yayındaki dersleri listeler", () => {

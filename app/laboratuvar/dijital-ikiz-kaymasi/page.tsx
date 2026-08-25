@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { createPageMetadata, learningResourceJsonLd } from "@/lib/seo";
 import Link from "next/link";
 import { DigitalTwinDriftLab } from "@/components/lab/DigitalTwinDriftLab";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Dijital ikiz kayması — model ile ölçümü yeniden eşleştir",
   description: "İkiz tahmini ile sentetik fiziksel TCP ölçümünün artık hatasını izle; kalıcı kaymayı teşhis et, modeli yeniden kalibre edip ayrı pozlarda doğrula.",
-};
+  path: "/laboratuvar/dijital-ikiz-kaymasi",
+});
 
 export default function DigitalTwinDriftPage() {
   return (
     <main id="ana-icerik" className="min-h-screen bg-site-bg">
+      <JsonLd data={learningResourceJsonLd({ name: "Dijital ikiz kayması", description: "İkiz tahmini ile sentetik fiziksel TCP ölçümünün artık hatasını izle; kalıcı kaymayı teşhis et, modeli yeniden kalibre edip ayrı pozlarda doğrula.", path: "/laboratuvar/dijital-ikiz-kaymasi", learningResourceType: "Etkileşimli laboratuvar" })} />
       <div className="mx-auto max-w-[1500px] px-4 py-10 sm:px-6 sm:py-14">
         <nav className="flex flex-wrap items-center gap-2 text-sm text-site-muted">
           <Link href="/laboratuvar" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvarlar</Link>

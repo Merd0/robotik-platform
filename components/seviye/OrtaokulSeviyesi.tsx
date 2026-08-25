@@ -58,7 +58,7 @@ export function OrtaokulSeviyesi({ veri }: { veri: SeviyeVerisi }) {
 
           <div aria-hidden="true" className="relative hidden h-64 place-items-center lg:grid">
             <div className="grid size-40 place-items-center rounded-full border-[5px] border-[#0a0a0a] bg-[#ff8a5b] [animation:bob_3.2s_ease-in-out_infinite]">
-              <svg viewBox="0 0 100 100" className="size-20">
+              <svg aria-hidden="true" viewBox="0 0 100 100" className="size-20">
                 <line x1="30" y1="80" x2="30" y2="35" stroke="#0a0a0a" strokeWidth="9" strokeLinecap="round" />
                 <line x1="30" y1="35" x2="70" y2="50" stroke="#0a0a0a" strokeWidth="9" strokeLinecap="round" />
                 <circle cx="70" cy="50" r="7" fill="#0a0a0a" />

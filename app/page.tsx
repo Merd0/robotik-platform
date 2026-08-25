@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ContinueLearning } from "@/components/home/ContinueLearning";
 import { HeroExperiment } from "@/components/home/HeroExperiment";
@@ -5,6 +6,14 @@ import { RandomLessonButton } from "@/components/home/RandomLessonButton";
 import { getAllLessons, getPublicLessons, HAT_ETIKET, hatEtiket, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
 import { ETKILESIM_ETIKETI } from "@/lib/etkilesimEtiket";
 import { CURATED_START_ROUTES } from "@/lib/learningRoutes";
+import { createPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "İnteraktif Türkçe robotik öğrenme laboratuvarı",
+  description:
+    "Robot kollarını, kinematiği, hareket planlamayı ve endüstriyel robotiği tarayıcıda deneyerek öğren; ücretsiz Türkçe kaynak.",
+  path: "/",
+});
 
 const SEVIYELER: { seviye: Seviye; aciklama: string }[] = [
   { seviye: "ortaokul", aciklama: "Robot kavramı, eklem hareketi ve labirent planlamayı görerek dene." },

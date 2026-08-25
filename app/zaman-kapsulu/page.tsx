@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { TimeCapsule } from "@/components/lab/TimeCapsule";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Zaman Kapsülü",
   description: "Tarayıcındaki gerçek deney kaydından 1 hafta, 1 ay, 3 ay ve 1 yıl önceki anları geri getirir. Hesap yok, sunucuya hiçbir şey gönderilmez.",
-};
+  path: "/zaman-kapsulu",
+});
 
 export default function ZamanKapsuluPage() {
   return (

@@ -4,12 +4,14 @@ import { TeacherPilotActions } from "@/components/teacher/TeacherPilotActions";
 import { TeacherPilotSwitcher } from "@/components/teacher/TeacherPilotSwitcher";
 import { HAT_C_TEACHER_PILOT_LESSON_SLUG, HAT_C_TEACHER_PILOT_TASK_URL } from "@/lib/teacherPilot";
 import styles from "../page.module.css";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Öğretmen pilotu · Hat C",
   description:
     "Hat C için 40 dakikalık planlayıcı karşılaştırma akışı, önceden ayarlanmış dar-koridor sahnesi, yazdırılabilir çalışma kâğıdı ve yerel kanıt kontrol rehberi.",
-};
+  path: "/ogretmen/hat-c",
+});
 
 const LESSON_FLOW = [
   {

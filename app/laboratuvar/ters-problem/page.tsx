@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { createPageMetadata, learningResourceJsonLd } from "@/lib/seo";
 import Link from "next/link";
 import { InverseProblemLab } from "@/components/lab/InverseProblemLab";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Ters problem modu — aynı TCP için iki robot duruşu",
   description: "Bir TCP hedefini üreten eklem açılarını deneyerek bul; aynı hedef için dirsek yukarı ve aşağı iki geçerli ters kinematik çözümünü doğrula.",
-};
+  path: "/laboratuvar/ters-problem",
+});
 
 export default function InverseProblemPage() {
   return (
     <main id="ana-icerik" className="min-h-screen bg-site-bg">
+      <JsonLd data={learningResourceJsonLd({ name: "Ters problem modu", description: "Bir TCP hedefini üreten eklem açılarını deneyerek bul; aynı hedef için dirsek yukarı ve aşağı iki geçerli ters kinematik çözümünü doğrula.", path: "/laboratuvar/ters-problem", learningResourceType: "Etkileşimli laboratuvar" })} />
       <div className="mx-auto max-w-[1500px] px-4 py-10 sm:px-6 sm:py-14">
         <nav className="flex flex-wrap items-center gap-2 text-sm text-site-muted">
           <Link href="/laboratuvar" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvarlar</Link>

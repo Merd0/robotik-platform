@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { LessonEvidenceProvider } from "@/components/lesson/LessonEvidenceProvider";
 import { KodaParametreLab } from "@/components/kod-akademisi/KodaParametreLab";
 import { computeKodaParametreContentVersion } from "@/lib/kodaParametreArtifact";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Aynı komutu farklı hedefe genelle · Kod Akademisi",
   description: "Temel → Orta geçiş kapısı: bir fonksiyonu parametrelerini kullanacak şekilde düzelt, görmediğin bir hedefe de genellediğini kanıtla.",
-  alternates: { canonical: "/kod-akademisi/gecis-parametre-transferi" },
-};
+  path: "/kod-akademisi/gecis-parametre-transferi",
+});
 
 export default function KodaParametreKapisiPage() {
   const contentVersion = computeKodaParametreContentVersion();

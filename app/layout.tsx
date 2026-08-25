@@ -12,12 +12,6 @@ export const metadata: Metadata = {
   title: { default: "Robotik Laboratuvarı", template: "%s · Robotik Laboratuvarı" },
   description:
     "Robotiği tarayıcıda oynayarak öğreten, ortaokuldan mühendis seviyesine kadar kademeli ilerleyen, açık ve ücretsiz bir Türkçe kaynak.",
-  openGraph: {
-    type: "website",
-    locale: "tr_TR",
-    title: "Robotik Laboratuvarı",
-    description: "Tahmin et, robotu çalıştır, farkı gör ve seçili görevlerde öğrendiğini kanıtla.",
-  },
 };
 
 export default function RootLayout({

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ASAMA_ETIKET, getPublicModulesByAsama, KOD_AKADEMISI_ASAMALAR } from "@/lib/kodAkademisi";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Kod Akademisi",
   description: "Python'u sıfırdan, robotikle, aşama aşama öğren — gözlemden yazmaya.",
-};
+  path: "/kod-akademisi",
+});
 
 const ASAMA_ACIKLAMA: Record<(typeof KOD_AKADEMISI_ASAMALAR)[number], string> = {
   temel: "Hiç kod yazmadın mı? Buradan başla. Hazır kodu çalıştır, küçük değerler değiştir.",

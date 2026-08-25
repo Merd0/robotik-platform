@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ASAMA_ETIKET, getPublicModulesByAsama, KOD_AKADEMISI_ASAMALAR } from "@/lib/kodAkademisi";
 import type { KodAkademisiAsama } from "@/lib/kodAkademisiArtifact";
+import { createPageMetadata } from "@/lib/seo";
 
 export function generateStaticParams() {
   return KOD_AKADEMISI_ASAMALAR.map((asama) => ({ asama }));
@@ -19,7 +20,12 @@ function isAsama(value: string): value is KodAkademisiAsama {
 export async function generateMetadata({ params }: AsamaPageProps): Promise<Metadata> {
   const { asama } = await params;
   if (!isAsama(asama)) return {};
-  return { title: `${ASAMA_ETIKET[asama]} · Kod Akademisi`, alternates: { canonical: `/kod-akademisi/${asama}` } };
+  const modules = getPublicModulesByAsama(asama).filter((module) => module.frontmatter.durum === "yayinda");
+  return createPageMetadata({
+    title: `${ASAMA_ETIKET[asama]} robot programlama · Kod Akademisi`,
+    description: `${ASAMA_ETIKET[asama]} aşamasındaki ${modules.length} tarayıcı tabanlı Python robot programlama modülünü sırayla tamamla.`,
+    path: `/kod-akademisi/${asama}`,
+  });
 }
 
 export default async function KodAkademisiAsamaPage({ params }: AsamaPageProps) {

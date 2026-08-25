@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { BoundaryTest } from "@/components/lab/BoundaryTest";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Sınır Testi",
   description: "Bir hedefin robot kolunun çalışma uzayına girip girmediğini tahmin et; gerçek cevap analitik ters kinematikle hesaplanır.",
-};
+  path: "/sinir-testi",
+});
 
 export default function SinirTestiPage() {
   return (

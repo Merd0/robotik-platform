@@ -4,12 +4,14 @@ import { TeacherPilotActions } from "@/components/teacher/TeacherPilotActions";
 import { TeacherPilotSwitcher } from "@/components/teacher/TeacherPilotSwitcher";
 import { KOD_AKADEMISI_TEACHER_PILOT_MODULES, KOD_AKADEMISI_TEACHER_PILOT_TASK_URLS } from "@/lib/teacherPilot";
 import styles from "../page.module.css";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Öğretmen pilotu · Kod Akademisi",
   description:
     "Kod Akademisi'ne 40 dakikalık giriş akışı, üç modüllük hazır sıra, yazdırılabilir çalışma kâğıdı ve yerel kanıt kontrol rehberi.",
-};
+  path: "/ogretmen/kod-akademisi",
+});
 
 const LESSON_FLOW = [
   {

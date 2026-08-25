@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { BrokenCodeLab } from "@/components/lab/BrokenCodeLab";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Kırık Kod Laboratuvarı",
   description: "Gerçek, çalışan robot kodundaki yaygın hataları bul ve düzelt — her düzeltme gerçek Pyodide çalıştırmasıyla doğrulanır.",
-};
+  path: "/kirik-kod-laboratuvari",
+});
 
 export default function KirikKodLaboratuvariPage() {
   return (

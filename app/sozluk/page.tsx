@@ -2,21 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { hatEtiket } from "@/lib/content";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { SITE_URL } from "@/lib/seo";
+import { createPageMetadata, SITE_URL } from "@/lib/seo";
 import { getSozluk, getSozlukByHat, terimSlug } from "@/lib/sozluk";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Robotik sözlüğü",
   description:
     "Robotik terimlerinin Türkçe-İngilizce karşılıkları, anlaşılır tanımları ve kısa örnekleri, konu hatlarına göre.",
-  alternates: { canonical: "/sozluk" },
-  openGraph: {
-    type: "website",
-    url: `${SITE_URL}/sozluk`,
-    title: "Robotik sözlüğü",
-    description: "Robotik terimlerinin Türkçe-İngilizce karşılıkları ve anlaşılır tanımları.",
-  },
-};
+  path: "/sozluk",
+});
 
 export default function SozlukPage() {
   const gruplar = getSozlukByHat();

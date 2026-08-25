@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { createPageMetadata, learningResourceJsonLd } from "@/lib/seo";
 import Link from "next/link";
 import { ErrorMuseum } from "@/components/lab/ErrorMuseum";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Hata Müzesi — robot arızalarında yanlış ve doğru iz okuma",
   description: "Encoder ofseti, paket gecikmesi ve aktüatör doygunluğu izlerini yanlış zihinsel modellerle karşılaştır; doğru yorumu ayırt eden ölçümü bul.",
-};
+  path: "/laboratuvar/hata-muzesi",
+});
 
 export default function ErrorMuseumPage() {
   return (
     <main id="ana-icerik" className="min-h-screen bg-site-bg">
+      <JsonLd data={learningResourceJsonLd({ name: "Hata Müzesi", description: "Encoder ofseti, paket gecikmesi ve aktüatör doygunluğu izlerini yanlış zihinsel modellerle karşılaştır; doğru yorumu ayırt eden ölçümü bul.", path: "/laboratuvar/hata-muzesi", learningResourceType: "Etkileşimli laboratuvar" })} />
       <div className="mx-auto max-w-[1500px] px-4 py-10 sm:px-6 sm:py-14">
         <nav className="flex flex-wrap items-center gap-2 text-sm text-site-muted">
           <Link href="/laboratuvar" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvarlar</Link>

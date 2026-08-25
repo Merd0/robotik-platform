@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { LessonEvidenceProvider } from "@/components/lesson/LessonEvidenceProvider";
 import { KodaFrameChainLab } from "@/components/kod-akademisi/KodaFrameChainLab";
 import { computeKodaFrameChainContentVersion } from "@/lib/kodaFrameChainArtifact";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Çerçeve zincirini birleştir · Kod Akademisi",
   description: "Usta sonrası uzmanlık stüdyosu: taban-dünya dönüşümünü doğru sırayla birleştir, görmediğin bir zincire de genelle.",
-  alternates: { canonical: "/kod-akademisi/uzmanlik-cerceve-zinciri" },
-};
+  path: "/kod-akademisi/uzmanlik-cerceve-zinciri",
+});
 
 export default function KodaFrameChainPage() {
   const contentVersion = computeKodaFrameChainContentVersion();

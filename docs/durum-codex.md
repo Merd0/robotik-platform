@@ -2622,3 +2622,80 @@ edilmedi; commit yığın dalında tutuldu.
 Faz öncesi ve teslim öncesi `git status` kontrol edildi. Kök ana daldaki Claude'a
 ait izlenmeyen `lib/robotics/robotState.ts` ile testi sahiplenilmedi; Kod Akademisi,
 Evidence, ders içeriği ve robot-state dosyalarına dokunulmadı.
+
+## 2026-08-25 — SEO ve piyasaya sürülme hazırlığı
+
+Bu parçada URL sözleşmesi korunarak platformun arama görünürlüğü ve statik yayın
+kapıları uçtan uca otomatikleştirildi. `/ders/*`, `/laboratuvar/*`, hash ve `labState`
+taşıyan paylaşım bağlantılarının hiçbiri değiştirilmedi. Yalnız git geçmişinde gerçek
+eski rota olarak doğrulanan `/kavram-haritasi`, `/bilgi-haritasi` hedefine kesin eşleşen
+301 ile korunuyor; ders/laboratuvar/oyun alanı için toplu veya tahmine dayalı redirect
+yok.
+
+Türkçe SERP incelemesi mevcut hat ve sözlük yapısına eşlendi. Hacim verisi varmış gibi
+bir iddia kurulmadan, arama niyeti ve mevcut sonuçların niteliğine göre yüksek fırsatlı
+uzun kuyruk kümeleri belirlendi: “robot kolu nasıl çalışır”, “6 eksenli robot kolu
+koordinat sistemi”, “robot kolu çalışma uzayı”, “ileri/ters kinematik örnek”, “DH
+parametreleri nasıl bulunur”, “robot tekillik/Jacobian”, “MoveJ MoveL farkı”, “TCP
+nedir robot”, “tool center point kalibrasyonu”, “base/tool/world frame farkı”, “A*
+RRT C-space”, “ABB RAPID/KUKA KRL”, “robot PLC handshake”, “ROS 2 node topic service
+Türkçe”, “hand-eye/piksel-mm/point cloud”, “URDF/PyBullet/dijital ikiz/sim-to-real”
+ve robot güvenliği niyetleri. Yeni silo icat edilmedi: seviye → hat → ders,
+önkoşul/sonraki ders, mevcut sözlük ilişkileri ve bilgi haritası topic-cluster omurgası
+olarak kullanıldı; hat sayfalarına yalnız aynı hattın kanonik sözlük kayıtlarından
+bağlantılar eklendi.
+
+Tüm önemli sayfalara kendine özgü title, description, canonical, Open Graph ve Twitter
+metadata sözleşmesi uygulandı. Arama ve kanıt okuyucu indeks dışı bırakıldı. 1200×630
+OG/Twitter görselleri statik üretildi. Derslerde görünür içeriğe uymayan `Course`
+işaretlemesi kaldırıldı; gerçek içerik için `LearningResource`, laboratuvar/seviye/hat
+koleksiyonları için `CollectionPage` + `ItemList`, sözlükte mevcut `DefinedTermSet`
+korundu. Sitemap artık statik sayfaları ve yayımlı ders, sözlük, seviye, hat ve Kod
+Akademisi rotalarını kaynak kataloglardan otomatik çıkarıyor.
+
+Build-sonrası yayın denetimi 241 kanonik sayfanın metadata benzersizliğini, canonical/
+OG/Twitter alanlarını, tek H1 ve tek `main` sözleşmesini, atlanmayan heading sırasını,
+kritik metnin script dışında ham HTML'de bulunmasını, tüm iç bağlantı hedeflerini,
+404/noindex çıktısını, 94 dersin görünür başlık-kazanım-`LearningResource` sözleşmesini
+ve 72 sözlük sayfasını doğruluyor. Global loading fallback'inin ikinci bir `main`
+üretmesi ile üç H2→H4 atlaması düzeltildi. İçerik SVG'leri için erişilebilir ad veya
+`aria-hidden` zorunluluğu test edildi; repoda SEO'ya konu raster içerik görseli yok.
+
+Mobil yayın smoke testi kritik yedi rotada yatay taşma ve engelleyici console/page/
+request hatalarını denetliyor. Production Lighthouse mobil ölçümünde ana sayfa
+96/100 performans ve 2.306 sn LCP; TCP dersi 91/100 ve 2.619 sn LCP; bilinen 3B robot
+hücresi istisnası 72/100, 4.102 sn LCP ve 455 ms TBT verdi. Dört kat CPU yavaşlatmalı
+yerel Event Timing laboratuvarında sırasıyla 24/64/272 ms etkileşim gecikmesi ölçüldü;
+bu son değer CrUX saha INP'si değil, risk göstergesidir. PSI kota yanıtı nedeniyle
+saha verisi alınamadı. Performans bütçesi yükseltilmedi: ana sayfa toplamı 204,0/204
+KiB Brotli sınırında 6 bayt payla geçti; bu dar pay izlenmesi gereken açık risktir.
+
+Yayın checklist'i: mobil/responsive, loading/error/empty yüzeyleri, kırık bağlantı,
+404, favicon, OG, temel accessibility, console smoke ve env allowlist denetimleri
+tamam. Hesap/auth maddeleri kalıcı hesapsız mimari nedeniyle geçerli değil. Statik
+export'ta uygulama kaynaklı 500 rotası yok; 5xx yüzeyi hosting katmanının sorumluluğu.
+Headless WebGL `ReadPixels` ve upstream `THREE.Clock` deprecation uyarıları filtrede
+açıkça adlandırılan, engelleyici olmayan bilinen uyarılar. Robot hücresi mobil CWV
+riski, CrUX saha verisinin olmayışı ve deploy öncesi 301'in canlı doğrulanamaması açık
+kalemlerdir.
+
+Test-first kanıtında metadata/structured-data, sitemap rota keşfi, HTML semantiği,
+metadata kimliği, script-dışı görünür içerik, redirect güvenliği, görsel erişilebilirliği
+ve statik link tarayıcısı önce kırmızı, uygulama sonrası yeşil çalıştı. Son kapıda
+`npx tsc`, lint, 87 dosyada 1055 Vitest, içerik/graph/quiz/MDX/review-debt/
+review-integrity/sensitive-terms, 345 statik sayfalı build, 241 sayfalı yayın denetimi
+ve performans bütçesi temizdi. İlk 10 işçili Playwright koşusunda 444 test geçti,
+dört kaynak-zaman aşımı çıktı; üçü değişikliksiz seri tekrarında geçti. Kalan R3F
+canvas testi, taze export sonrasında 1,7 saniyede geçti; önceki çıktıdaki dinamik chunk
+tutarsızlığıydı. Güncel `main` tabanında hiçbir test veya timeout değiştirilmeden dört
+işçili tam Playwright kapısı temiz tamamlandı: 451 geçti, 20 viewport/proje koşuluyla
+atlandı. Vitest'in varsayılan dosya paralelliği iki katalog testini 5 saniye sınırına
+taşıdığı için tam paket ayrıca `--maxWorkers=1` ile çalıştırıldı; 87/87 dosya ve
+1055/1055 test geçti. `npm audit` 0 açık verdi.
+
+Kökte görevde adı verilen `ROBOTİK_PLATFORM_MASTER_PROMPT.md` dosyası çalışma ağacında,
+git geçmişinde ve yakın üst dizinde bulunamadı. Bu nedenle buradaki denetim kullanıcının
+mesajında verdiği on maddelik kapsamı tamamlar; kayıp dosyadaki “Piyasaya sürülme
+hazırlığı” listesinin sözcüğü sözcüğüne kapsandığı iddia edilmez. Özellik anlaşılırlığı
+ve ders içeriği Claude Code'un alanı olarak bırakıldı; yalnız SEO semantiği, metadata,
+indeksleme, performans ölçümü ve yayın otomasyonu dosyalarına dokunuldu.

@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { createPageMetadata, pageCollectionJsonLd } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Robotik laboratuvarları",
   description: "Robot hücresi, arıza teşhisi ve tarayıcıda çalışan diğer robotik deneylerini keşfet.",
-};
+  path: "/laboratuvar",
+});
 
 const LABS = [
   {
@@ -52,8 +55,16 @@ const LABS = [
 ] as const;
 
 export default function LabsPage() {
+  const jsonLd = pageCollectionJsonLd({
+    name: "Robotik laboratuvarları",
+    description: "Robot hücresi, arıza teşhisi ve tarayıcıda çalışan diğer robotik deneyleri.",
+    path: "/laboratuvar",
+    items: LABS.map((lab) => ({ name: lab.title, path: lab.href })),
+  });
+
   return (
     <main id="ana-icerik" className="min-h-screen bg-site-bg">
+      <JsonLd data={jsonLd} />
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         <nav className="text-sm text-site-muted"><Link href="/" className="inline-flex min-h-11 items-center underline underline-offset-4">Ana sayfa</Link> <span aria-hidden="true">/</span> Laboratuvarlar</nav>
         <header className="mt-8 max-w-3xl">

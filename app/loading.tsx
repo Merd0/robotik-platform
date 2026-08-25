@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <main id="ana-icerik" aria-busy="true" aria-label="Laboratuvar yükleniyor" className="min-h-[70vh] px-4 py-16 sm:px-6 sm:py-24">
+    <div role="status" aria-live="polite" aria-busy="true" aria-label="Laboratuvar yükleniyor" className="min-h-[70vh] px-4 py-16 sm:px-6 sm:py-24">
       <div className="lab-panel mx-auto max-w-4xl p-6 sm:p-8">
         <span className="sr-only">Laboratuvar yükleniyor.</span>
         <div aria-hidden="true" className="animate-pulse space-y-5">
@@ -14,6 +14,6 @@ export default function Loading() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

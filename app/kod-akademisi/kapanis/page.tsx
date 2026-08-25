@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { LessonEvidenceProvider } from "@/components/lesson/LessonEvidenceProvider";
 import { EsnekHucreLab } from "@/components/kod-akademisi/EsnekHucreLab";
 import { computeEsnekHucreContentVersion } from "@/lib/esnekHucreArtifact";
 import { GECERLI_PARCA_TURLERI, HEDEF_SAYISI_ARALIGI } from "@/lib/esnekHucre";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Esnek Hücreyi Devreye Al · Kod Akademisi",
   description: "Usta ötesi kapanış projesi: iş emri doğrulayan, durum makinesi kuran, arızayı toparlayan bir hücre yöneticisi yaz.",
-  alternates: { canonical: "/kod-akademisi/kapanis" },
-};
+  path: "/kod-akademisi/kapanis",
+});
 
 export default function EsnekHucreKapanisPage() {
   const contentVersion = computeEsnekHucreContentVersion();

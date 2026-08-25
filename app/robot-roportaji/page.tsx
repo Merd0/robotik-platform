@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/seo";
 import { RobotInterview } from "@/components/lab/RobotInterview";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Robot Röportajı",
   description: "Katalogdaki bir robota sorular sor; cevaplar gerçek RobotSpec verisinden ve üretici kaynağından gelir.",
-};
+  path: "/robot-roportaji",
+});
 
 export default function RobotRoportajiPage() {
   return (

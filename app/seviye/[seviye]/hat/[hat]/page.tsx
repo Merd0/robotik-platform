@@ -1,11 +1,15 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getPublicTracksByLevel, hatEtiket, HAT_ETIKET, SEVIYE_ETIKET, type Seviye } from "@/lib/content";
 import { LessonProgressBadge } from "@/components/ui/LessonProgressBadge";
 import { HatProgressSummary } from "@/components/ui/HatProgressSummary";
 import { SEVIYE_THEME } from "@/lib/seviyeTheme";
 import { computeTeachingHash } from "@/lib/lessonArtifact";
 import { computeLessonContentVersion } from "@/lib/interactionManifest";
+import type { Metadata } from "next";
+import { createPageMetadata, pageCollectionJsonLd } from "@/lib/seo";
+import { getSozluk, terimSlug } from "@/lib/sozluk";
 
 const LEVELS: Seviye[] = ["ortaokul", "lise", "universite"];
 
@@ -13,6 +17,21 @@ export function generateStaticParams() {
   return LEVELS.flatMap((seviye) => getPublicTracksByLevel(seviye)
     .filter((track) => track.lessons.some((lesson) => lesson.frontmatter.durum === "yayinda"))
     .map((track) => ({ seviye, hat: track.hat })));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ seviye: string; hat: string }> }): Promise<Metadata> {
+  const { seviye, hat } = await params;
+  if (!LEVELS.includes(seviye as Seviye) || !(hat in HAT_ETIKET)) return {};
+  const level = seviye as Seviye;
+  const lessons = getPublicTracksByLevel(level).find((track) => track.hat === hat)?.lessons
+    .filter((lesson) => lesson.frontmatter.durum === "yayinda") ?? [];
+  if (lessons.length === 0) return {};
+  const trackName = hatEtiket(hat);
+  return createPageMetadata({
+    title: `${trackName} · ${SEVIYE_ETIKET[level]} robotik dersleri`,
+    description: `${SEVIYE_ETIKET[level]} seviyesinde ${trackName.toLocaleLowerCase("tr-TR")} hattındaki ${lessons.length} etkileşimli Türkçe dersi sırayla keşfet.`,
+    path: `/seviye/${level}/hat/${hat}`,
+  });
 }
 
 export default async function HatPage({ params }: { params: Promise<{ seviye: string; hat: string }> }) {
@@ -27,9 +46,18 @@ export default async function HatPage({ params }: { params: Promise<{ seviye: st
     contentVersion: computeLessonContentVersion(lesson.slug, lesson.body, computeTeachingHash(lesson)),
   }));
   const contentVersionBySlug = new Map(lessonsWithVersion.map((lesson) => [lesson.slug, lesson.contentVersion]));
+  const trackName = hatEtiket(hat);
+  const relatedTerms = getSozluk().filter((term) => term.hat === hat);
+  const jsonLd = pageCollectionJsonLd({
+    name: `${trackName} · ${SEVIYE_ETIKET[level]} robotik dersleri`,
+    description: `${SEVIYE_ETIKET[level]} seviyesindeki ${trackName.toLocaleLowerCase("tr-TR")} dersleri.`,
+    path: `/seviye/${level}/hat/${hat}`,
+    items: lessons.map((lesson) => ({ name: lesson.frontmatter.baslik, path: `/ders/${lesson.slug}` })),
+  });
 
   return (
     <main id="ana-icerik" data-seviye={level} className={`min-h-screen ${theme.page}`}>
+      <JsonLd data={jsonLd} />
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
         <nav aria-label="İçerik yolu" className={`flex flex-wrap items-center gap-2 text-sm ${theme.muted}`}><Link href="/" className="inline-flex min-h-11 items-center underline underline-offset-4">Laboratuvar</Link><span>/</span><Link href={`/seviye/${level}`} className="inline-flex min-h-11 items-center underline underline-offset-4">{SEVIYE_ETIKET[level]}</Link><span>/</span><span>{hatEtiket(hat)}</span></nav>
         <header className="mt-8"><p className={`text-xs font-semibold uppercase tracking-[.18em] ${theme.accentText}`}>Öğrenme hattı</p><h1 className={`mt-3 font-heading text-4xl font-semibold tracking-tight sm:text-5xl ${theme.ink}`}>{hatEtiket(hat)}</h1><p className={`mt-3 max-w-2xl leading-7 ${theme.muted}`}>Her durak bir önceki gözlemi kullanır. Okumak başlangıç; denemek ve transfer görevini çözmek gerçek ilerlemedir.</p><HatProgressSummary lessons={lessonsWithVersion} seviye={level} /></header>
@@ -45,6 +73,22 @@ export default async function HatPage({ params }: { params: Promise<{ seviye: st
             </li>
           ))}
         </ol>
+
+        {relatedTerms.length > 0 ? (
+          <section aria-labelledby="hat-sozluk-baslik" className={`mt-12 rounded-2xl border p-6 ${theme.border} ${theme.surface}`}>
+            <h2 id="hat-sozluk-baslik" className={`font-heading text-2xl font-semibold ${theme.ink}`}>Bu hattın robotik sözlüğü</h2>
+            <p className={`mt-2 text-sm ${theme.muted}`}>Derslerde karşılaşacağın Türkçe ve İngilizce terimlere hızlıca dön.</p>
+            <ul className="mt-4 flex flex-wrap gap-2">
+              {relatedTerms.map((term) => (
+                <li key={term.tr}>
+                  <Link href={`/sozluk/${terimSlug(term.tr)}`} className={`inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm underline-offset-4 hover:underline ${theme.border} ${theme.ink}`}>
+                    {term.tr} <span lang="en" className={`ml-1 ${theme.muted}`}>({term.en})</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <aside className="mt-12 rounded-2xl bg-slate-950 p-6 text-white sm:flex sm:items-center sm:justify-between sm:gap-6"><div><p className="text-xs font-semibold uppercase tracking-[.16em] text-teal-300">Hatları birleştir</p><h2 className="mt-2 font-heading text-2xl font-semibold">Bu beceriyi robot hücresinde kullan</h2></div><Link href="/laboratuvar/robot-hucresi" className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-teal-300 px-4 py-2 text-sm font-bold text-slate-950 sm:mt-0">Capstone’u aç</Link></aside>
       </div>
