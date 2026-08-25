@@ -94,6 +94,11 @@ export function InverseProblemLab() {
         <p className="mt-3 text-sm leading-6 text-site-muted">İleri problem “bu açılarda TCP nerede?” diye sorar. Ters problem yönü değiştirir: TCP hedefi sabittir; onu üreten eklem açılarını sen bulursun.</p>
       </header>
 
+      <div className="mt-5 max-w-4xl rounded-xl border border-site-border bg-site-surface p-4 text-sm leading-6 text-site-muted">
+        <p><strong className="text-site-ink">Basit örnekle başla:</strong> iki eklem de 0° dursun — kol düz ileri uzanır, uç nokta x&nbsp;1.80&nbsp;m, y&nbsp;0&nbsp;m&apos;de olur (1.0&nbsp;m + 0.8&nbsp;m bağlantı uzunluklarının toplamı). Şimdi soruyu tersine çevir: “uç nokta (1.80, 0) olacak şekilde eklemler nasıl durmalı?” Bu örnekte doğal cevap tek: (0°, 0°).</p>
+        <p className="mt-2">Aşağıdaki gerçek görevde durum farklı — aynı hedefe <strong className="text-site-ink">iki ayrı açı çiftiyle</strong> ulaşabilirsin (dirsek yukarı / aşağı). Ters problemin can alıcı noktası bu: çıktı sabitken girdi tek olmayabilir.</p>
+      </div>
+
       <fieldset className="mt-6">
         <legend className="font-heading text-xl font-semibold text-site-ink">Problem yönü</legend>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
