@@ -6202,3 +6202,56 @@ veri kaybı olmadı (bkz. parça 3 ve 4 notları).
 
 **Sırada:** Derslerdeki "engel" senaryosu tekrarını doğrulama ve
 çeşitlendirme; ardından 94+ dersin içerik doygunluğu taraması.
+
+## Ders tekrarı çeşitlendirme turu — 1. parça (2026-08-25)
+
+**Doğrulama:** "engel" kelimesi 25 dosyada geçiyor ama bunların çoğu
+(Hat C'nin 11 dersi + Hat G'nin birkaç PyBullet dersi) konusu zaten
+engel/çarpışma olan içerik — kelime tekrarı kendi başına sorun değil.
+Gerçek sorun kelimede değil, **etkileşim TÜRÜNDE**: `grep -oE "<[A-Z]"`
+ile Hat C'nin 11 dersinin bileşen kullanımı tek tek çıkarıldı — **9/11
+ders yalnız `<PlannerRace>` + `<Quiz>` ikilisini** kullanıyor, 4'ü
+(`c-ortaokul-labirentte-yol-bulma`, `c-lise-a-yildiz-sezgisel`,
+`c-universite-carpisma-kontrolu`, `c-universite-yol-duzlestirme`) hiçbir
+ek çeşitlilik (Terim, PredictionPrompt, TransferChallenge, farklı
+`sablon`) taşımıyor. Bu, docs/16 madde 7'nin (sabit 5 başlıklı sayfa
+iskeleti) bulduğu sorunla AYNI aile ama farklı bir eksen: metin yapısı
+değil, kullanıcının fiilen YAPTIĞI egzersiz TÜRÜ (her zaman "simülasyonu
+çalıştır + çoktan seçmeli" ikilisi) tekrar ediyor.
+
+**Yapılan (2/4):** İki "çıplak" dersten ikisi, kullanıcının istediği 10
+egzersiz türünden ikisiyle (tahmin, hesaplama) zenginleştirildi —
+`PlannerRace`/`Quiz` KALDIRILMADI, üstüne farklı bilişsel görev türü
+eklendi:
+- `c-ortaokul-labirentte-yol-bulma`: "Dene" bölümündeki pasif ("aklından
+  tahmin et" diyen ama hiçbir yere kaydetmeyen) cümle gerçek bir
+  `<PredictionPrompt>` komitine çevrildi (kilitle → çalıştır → karşılaştır).
+  Quiz sorusu, PredictionPrompt ile birebir aynı soruyu tekrarlamasın diye
+  "ne olur" sorusundan "nasıl çalışır" (mekanizma) sorusuna kaydırıldı.
+- `c-lise-a-yildiz-sezgisel`: g+h önceliğini elle hesaplatan, somut ve
+  doğrulanabilir (P: g=3,h=5 → öncelik 8; Q: g=4,h=3 → öncelik 7) bir
+  HESAPLAMA sorusu eklendi — önceki tek soru yalnız kavramsaldı (h=0
+  olsaydı ne olurdu).
+
+**Doğrulama:** `check-content`/`validate-content-graph`/`check-mdx-guvenlik`/
+`check-quiz-dagilimi` (140 soru, en yüksek konum dağılımı %36.4, sınır
+%50 — bozulmadı) hepsi temiz. Tam `npm test`: 1056/1056. `npm run build`
+temiz. Performans bütçesi temiz. Gerçek statik build'den (`scripts/
+serve-static.mjs`) Chrome ile her iki ders de elle doğrulandı: yeni
+PredictionPrompt kilitleniyor, yeni Quiz soruları doğru şıklarla render
+oluyor.
+
+**Kalan (2/4 + tam tur):** `c-universite-carpisma-kontrolu` ve
+`c-universite-yol-duzlestirme` (üniversite seviyesi, "hesaplama"/"karar
+verme" türleri daha uygun düşer — çarpışma kontrolünde çözünürlük/
+tolerans hesabı, yol düzleştirmede "bu segmenti kısalt/kısaltma" kararı).
+Ardından geri kalan 5 Hat C dersi (zaten `sablon`/`Terim` çeşitliliği
+taşıyanlar) gözden geçirilip gerekiyorsa bir tur daha egzersiz-türü
+çeşitliliği eklenecek. Hat C dışında "saha senaryosu"/"kod analizi"/
+"sürükle-bırak" türleri için Hat E/F/G taranacak — bu hatlar zaten farklı
+bileşenler (SignalTimeline, PixelToWorld, ThresholdViewer, ScanPath)
+kullanıyor, ilk bakışta aynı tekrar riski Hat C kadar yüksek görünmüyor
+ama doğrulanmadı.
+
+**Sırada:** Hat C'nin kalan 2 "çıplak" dersi, sonra 94+ dersin içerik
+doygunluğu taraması.
