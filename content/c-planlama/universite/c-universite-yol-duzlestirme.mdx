@@ -67,8 +67,21 @@ köşe sayabiliyorsun? Zihninde, yol üzerindeki uzak iki noktayı düz bir
 çizgiyle birleştirmeyi dene (kağıt-kalemle üstüne çizebilirsin) — çizgi
 bir engelin içinden mi geçiyor, yoksa güvenli mi?
 
+Şimdi bir karar ver: aşağıda üç aday kısayol var. Kısaltma algoritması
+HANGİLERİNİ gerçekten uygular?
+
 <Quiz
   sorular={[
+    {
+      soru: "Üç aday kısayol: A) doğru çizgi hiçbir engele değmiyor. B) doğru çizgi bir engelin İÇİNDEN geçiyor ama yolu %40 kısaltıyor. C) doğru çizgi engelin birkaç santim dışından geçiyor (güvenli). Algoritma hangilerini uygular?",
+      secenekler: [
+        "Yalnız A ve C — segment testini geçen kısayollar, ne kadar kısalttığına bakılmaksızın",
+        "Yalnız B — en büyük kısalmayı sağladığı için diğerlerinden öncelikli",
+        "Üçü de — kısayol her zaman uygulanır, testten bağımsızdır",
+      ],
+      dogru: 0,
+      aciklama: "Kısayol kararı YALNIZ segment testinin sonucuna bakar: çarpışmasız mı? B, en çok kısaltsa bile çarpışmalı olduğu için reddedilir — ne kadar cazip görünürse görünsün, güvenlik testi geçmeyen bir kısayol asla uygulanmaz.",
+    },
     {
       soru: "Kısayol (shortcutting) yöntemi bir yol segmentini ne zaman kısaltır?",
       secenekler: [

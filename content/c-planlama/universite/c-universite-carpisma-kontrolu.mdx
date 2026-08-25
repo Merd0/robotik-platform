@@ -78,8 +78,22 @@ kürenin hemen iki yanına denk gelecek şekilde hayal ederek engeller
 ekle. A*'ın bu dar geçidi bulup bulamadığını gözlemle — ızgara
 çözünürlüğü (0.05 birim) geçitten daha genişse ne olur dersin?
 
+Şimdi formülü kâğıt üstünde uygula: `adım sayısı = round(mesafe / resolution)`.
+2,0 metrelik bir segmenti önce `resolution = 0,5` m ile, sonra
+`resolution = 0,1` m ile örneklersen kaç adım test edilir?
+
 <Quiz
   sorular={[
+    {
+      soru: "2,0 m'lik bir segment, önce 0,5 m sonra 0,1 m çözünürlükle örnekleniyor. Kaç adım test edilir (round(mesafe/resolution))?",
+      secenekler: [
+        "4 adım, sonra 20 adım — çözünürlük 5 kat küçülünce test sayısı 5 kat artar",
+        "4 adım, sonra 4 adım — adım sayısı çözünürlükten bağımsızdır",
+        "0,5 adım, sonra 0,1 adım",
+      ],
+      dogru: 0,
+      aciklama: "round(2,0/0,5)=4, round(2,0/0,1)=20. Çözünürlüğü küçültmek doğruluğu artırır ama aynı oranda daha çok nokta test etmeyi (daha yavaş hesaplama) gerektirir — metindeki ödünleşim tam bu.",
+    },
     {
       soru: "Segment testinin çözünürlüğünü çok büyük (kaba) seçersek ne riski doğar?",
       secenekler: [
