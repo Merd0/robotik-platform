@@ -13,8 +13,10 @@ import {
   type FaultKind,
   type FaultVerificationTest,
 } from "@/lib/robotics/faultInjection";
+import { FirstVisitNote } from "@/components/ui/FirstVisitNote";
 import { FaultTracePanel, type FaultChannel } from "./FaultTracePanel";
 
+const INTRO_STORAGE_KEY = "robotik-platform:ariza-klinigi-tanitim:v1";
 const CASE_SEEDS = [240823, 240824, 240825] as const;
 const CHANNEL_OPTIONS: readonly { id: FaultChannel; label: string; description: string }[] = [
   { id: "position", label: "Konum", description: "Hedef ile ölçülen konumu karşılaştırır." },
@@ -105,6 +107,19 @@ export function FaultInjectionLab() {
 
   return (
     <section aria-labelledby="fault-lab-title" className="rounded-[2rem] border border-site-border bg-site-soft p-4 shadow-sm sm:p-6">
+      <FirstVisitNote storageKey={INTRO_STORAGE_KEY} ariaLabel="Arıza kliniği nasıl çalışır">
+        <p className="font-heading text-base font-semibold">Teşhis 4 adımda ilerler.</p>
+        <p className="mt-1.5">
+          Örnek bir vakayı düşün: robotun konumu beklenenden sürekli az bir miktar sapıyor —
+          bu bir <strong>belirti</strong>, ama tek başına nedenini söylemiyor (encoder kayması mı,
+          gecikmeli veri mi, aktüatör mü doygun?). Önce en fazla iki telemetri <strong>kanalını aç</strong> ve
+          hangi imzayı gördüğünü <strong>gözlemle</strong>. Sonra bu imzanın hangi arıza türleriyle uyuştuğunu
+          <strong> eleyerek</strong> bir <strong>hipotez</strong> kur. Ardından teşhis kesinleşmeden riski
+          büyütmeyen <strong>güvenli bir ilk eylem</strong> seç. Son olarak hipotezini kesin
+          <strong> doğrulayacak</strong> testi belirle. Aşağıdaki gerçek vaka bu sırayla ilerliyor.
+        </p>
+      </FirstVisitNote>
+
       <header className="flex flex-col gap-4 border-b border-site-border pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="font-mono text-xs font-bold uppercase tracking-[.14em] text-site-accent-text">Vaka {caseIndex + 1}/3 · seed {scenario.seed}</p>

@@ -6002,3 +6002,43 @@ durumda — hiçbirine dokunulmadı.
 
 **Sırada:** madde 3/7 Ters Problem Modu (amacını ilk bakışta anlaşılır
 kıl, basit örnekle başlat).
+
+### Parça 3/7: Ters Problem Modu (2026-08-25)
+
+`components/lab/InverseProblemLab.tsx`'e, başlığın hemen altına, gerçek
+`forwardKinematics`'ten hesaplanmış (uydurma değil — `npx tsx` ile
+doğrulandı: θ1=θ2=0° için TCP tam olarak (1.80, 0) m, 1.0+0.8 m bağlantı
+toplamı) somut bir "Basit örnekle başla" kutusu eklendi: sıfır açıda tek
+doğal cevap var; hemen ardından gerçek görevde AYNI hedefe iki farklı açı
+çiftiyle ulaşılabildiği vurgulanıyor. Amaç: sayfa doğrudan soyut
+ileri/ters çerçevelemeye ve gerçek (seed'li, daha az sezgisel sayılı)
+göreve atlamak yerine, "çıktı sabit, girdi tek değil" fikrini önce en
+basit sayılarla anlaşılır kılmak. Varsayılan mod (ters) ve mevcut
+zorluklar değiştirilmedi — yalnız bir açıklayıcı örnek eklendi, mevcut
+davranış/testler bozulmadı.
+
+**Doğrulama:** `tsc`, hedefli `eslint` temiz (bir kaçış karakteri hatası
+— `react/no-unescaped-entities` — düzeltildi). `e2e/inverse-problem.spec.ts`
+üç viewport'ta (9/9) geçti, `scrollWidth` taşması yok (kutu `max-w-4xl`).
+Tam `npm test`: 1036/1036. Performans bütçesi temiz.
+
+**Codex eşzamanlılığı — yeni bir mesele:** Bu turda `npm run build`
+Codex'in commit edilmemiş, henüz yarım `app/opengraph-image.tsx`
+(+ `social-image.tsx`, `twitter-image.tsx`, `lib/releaseConfig.ts`,
+`scripts/check-release-output.ts`, `vercel.json` değişiklikleri) yüzünden
+kırık çıktı (`force-static`/`revalidate` yapılandırılmamış hatası) —
+kendi değişikliğimle ilgisizdi. Bunu kanıtlamak ve yine de temiz bir
+build/e2e/performans doğrulaması almak için: yalnız kendi dosyamı
+`git add` ile stage edip `git stash push --keep-index -u` ile Codex'in
+TÜM commit edilmemiş işini (staged olmayanlar + untracked) geçici olarak
+bir kenara aldım, temiz bir ağaçta build/test/e2e/bütçe çalıştırdım,
+commit ettim (`359066d`), sonra `git stash pop` + `git diff stash@{0}`
+ile içerik eşleşmesini doğrulayıp stash'i düşürdüm. Codex'in çalışma
+dizinindeki hiçbir dosyaya elle dokunulmadı, yalnız geçici olarak bir
+kenara alınıp aynen geri kondu. Bu teknik (`stash --keep-index -u`),
+Codex aynı dizinde eşzamanlı çalışırken benim tarafımdan yapılan her
+değişikliğin bağımsız doğrulanabilmesi için bundan sonraki parçalarda
+da kullanılacak.
+
+**Sırada:** madde 4/7 Arıza Kliniği ("Belirti → Olası nedenler → Kontrol
+→ Bulgular → Eleme → Teşhis → Çözüm" akışını ilk kullanımda örnekle göster).

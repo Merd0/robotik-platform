@@ -42,6 +42,21 @@ test("arıza kliniği güvenli olmayan ilk eylemi başarı saymaz", async ({ pag
   await expect(page.getByRole("button", { name: "Aynı vakayı yeniden incele" })).toBeVisible();
 });
 
+test("ilk ziyarette teşhis akışı örnekle anlatılır, kapatılınca yeniden yüklemede çıkmaz", async ({ page }) => {
+  await page.goto("/laboratuvar/ariza-klinigi");
+  const intro = page.getByRole("note", { name: "Arıza kliniği nasıl çalışır" });
+  await expect(intro).toBeVisible();
+  await expect(intro).toContainText("Teşhis 4 adımda ilerler.");
+  await expect(intro).toContainText("belirti");
+
+  await intro.getByRole("button", { name: "Anladım, kapat" }).click();
+  await expect(intro).toHaveCount(0);
+
+  await page.reload();
+  await expect(page.getByText("1/4 · Gözlem")).toBeVisible();
+  await expect(page.getByRole("note", { name: "Arıza kliniği nasıl çalışır" })).toHaveCount(0);
+});
+
 test("laboratuvar dizini ve arıza kliniği kritik WCAG ihlali üretmez", async ({ page }) => {
   for (const url of ["/laboratuvar", "/laboratuvar/ariza-klinigi"]) {
     await page.goto(url);
