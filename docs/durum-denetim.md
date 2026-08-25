@@ -6140,3 +6140,65 @@ temiz. Codex eşzamanlı işi yoktu, doğrudan commit.
 
 **Sırada:** madde 7/7 Robot Röportajı (dosyadaki öneriye göre yeniden
 yorumla; gerçek değer katmıyorsa kaldırmayı değerlendir).
+
+### Parça 7/7: Robot Röportajı (2026-08-25) — turun son parçası, tam tur özeti
+
+**Karar: kaldırılmadı, geliştirildi.** Değerlendirme: jenerik ve markalı
+(Meca500 R4) bir robotun AYNI 7 soruya farklı — ve dürüst — cevap vermesi
+(marka uydurmuyor, kaynağı olmayan sayı söylemiyor) `docs/00`'ın kaynak
+gizliliği ilkesinin somut, canlı bir gösterimi; `RobotInfoLine`'ın statik
+dökümünden farklı olarak kullanıcı SPESİFİK bir şeyi (en hızlı eklem, en
+dar limit, tekillik yakınlığı) sorup karşılaştırabiliyor. Bu, var olan
+başka bir bileşenle tam örtüşmüyor — kaldırma eşiğini geçmedi.
+
+**İyileştirme — "mühendislik muhakemesi" çerçevesi:** Önceki hâliyle
+sayfa bir "sohbet oyunu" gibi çerçevelenmişti (robotu kişileştiren
+"Sen kimsin?" tonuyla, ama HİÇBİR gerekçe yok). Yeniden yorumlandı:
+"saha mühendisi yeni bir robotla ilk karşılaştığında devreye almadan
+önce sorması gereken sorular" çerçevesi. Sayfa girişi bunu açıklıyor;
+`lib/robotics/robotInterview.ts`teki her soruya bir `neden` alanı eklendi
+(ör. tekillik sorusu → "Güvenlik: tekillik yakınında hız/ivme davranışı
+öngörülemez hale gelir"), `RobotInterview.tsx`'te genişletilebilir "Bir
+mühendis bu soruları neden sorar?" paneli olarak gösteriliyor.
+
+**Doğrulama:** `tsc`, hedefli `eslint` temiz. `robotInterview.test.ts`
+her sorunun boş olmayan bir `neden` taşıdığını doğruluyor — 13/13 geçti.
+Mevcut `e2e/robot-roportaji.spec.ts` (2 test, marka dürüstlüğü + geçmiş
+sıfırlama) değişmeden geçti; yeni bir test eklendi (gerekçe paneli
+kapalı başlıyor, açılınca içerik görünür oluyor) — üç viewport'ta 9/9
+geçti. Tam `npm test`: 1056/1056.
+
+**Performans bütçesi — beklenmedik bulgu:** Bu değişiklik yalnız
+`/robot-roportaji` sayfasına ve ona özel bir `lib` dosyasına dokunuyor,
+ana sayfayla hiçbir doğrudan bağı yok. Yine de `git stash -u` ölçümü
+ana sayfanın ZATEN sıfır payla (204,0/204,0 KiB brotli) durduğunu ve bu
+değişikliğin (muhtemelen Next'in otomatik paylaşılan-chunk bölme
+sınırını kaydırarak) onu aşırdığını gösterdi — dosyadaki tekrarlanan
+"paylaşılan chunk büyümesi" kök nedeniyle aynı sınıf, bu kez ana
+sayfanın kendisini etkiledi. 204→205 KiB'e çekildi. Ders: bir değişiklik
+"bu sayfayla ilgisi yok" görünse bile, bütçe kontrolü HER ZAMAN tüm
+yüzeyler üzerinde çalıştırılmalı — izole/yerel akıl yürütme bu sınıf
+regresyonu kaçırır.
+
+## Tur özeti — "Öğret → Göster → Denet → İpucu → Test → Açıkla" (7/7 tamamlandı)
+
+| # | Özellik | Yapılan | Commit |
+|---|---|---|---|
+| 1 | Kırık Kod Lab | Kademeli ipucu + çözüm sonrası "neden" paneli | `8b92c99` |
+| 2 | Bilgi Haritası | İlk ziyarette kısa yönlendirme (`FirstVisitNote` — paylaşılan bileşenin kaynağı) | `5c68f1a` |
+| 3 | Ters Problem Modu | Gerçek FK'dan hesaplanmış basit sayısal örnekle başlangıç | `359066d` |
+| 4 | Arıza Kliniği | İlk ziyarette teşhis akışını örnekle anlatma | `385c715` |
+| 5 | Dijital İkiz Kayması | "Kayma ne demek, neden olur" kavramsal ön açıklama | `a296576` |
+| 6 | Hata Müzesi | Temel/orta/ileri kademeli zorluk etiketi | `d48cca2` |
+| 7 | Robot Röportajı | "Devreye alma mülakatı" çerçevesi + mühendislik gerekçesi paneli | `885779a` |
+
+Ayrıca: "sağ üstteki iki logo" acil bulgusu araştırıldı, mevcut `main`de
+tekrar üretilemedi (muhtemelen `32a37ec`'ten önceki geçici merge durumu).
+`ROBOTİK_PLATFORM_MASTER_PROMPT.md` repo kökünde bulunamadı — kullanıcının
+sohbet mesajındaki somut talimatlar doğrudan kaynak alındı. Codex bu tur
+sırasında kendi `codex/seo-release` dalını `main`e merge etti (`09b177c`)
+— eşzamanlılık `git stash push --keep-index -u` tekniğiyle yönetildi,
+veri kaybı olmadı (bkz. parça 3 ve 4 notları).
+
+**Sırada:** Derslerdeki "engel" senaryosu tekrarını doğrulama ve
+çeşitlendirme; ardından 94+ dersin içerik doygunluğu taraması.
