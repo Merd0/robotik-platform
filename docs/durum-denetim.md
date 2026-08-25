@@ -6279,3 +6279,51 @@ hesaplama ×2, karar verme ×1); kalan 5'i zaten `sablon`/`Terim`
 **Sırada:** 94+ dersin içerik doygunluğu taraması (yüzeysel kalan
 dersleri bul, genişlet; "daha çok ders olsun" diye gereksiz içerik
 üretme).
+
+## İçerik doygunluğu taraması — SONUÇ (2026-08-25)
+
+**Önce doğrulama: bu tarama daha ÖNCE, dün yapılmış.** `docs/durum-
+denetim.md` "FAZ 1 — 94 dersin teori derinliği taraması" (2026-08-24,
+satır ~5442) kaydı: docs/04'ün seviye kalibrasyonu rubriğiyle 94 dersin
+TAMAMI tek tek okunmuş, sonuç **"80/80 ders rubriği geçti, HİÇBİRİ
+yüzeysel değil."** `git log 35b4fb9..HEAD -- 'content/*/*/*.mdx'`
+(35b4fb9 = o günkü kapanış commit'i) bu aradan bugüne yalnız KENDİ iki
+ders-çeşitlendirme commit'imin (067184e, d4f8b63 — 4 dosya, hepsi
+Hat C, egzersiz EKLEME) geçtiğini gösteriyor — başka hiçbir içerik
+dosyası değişmemiş. Yani dünkü "yüzeysel yok" bulgusu bugün de geçerli;
+sıfırdan 94 dosyayı tekrar okumak aynı sonucu üretecek, `docs/09 §7`'nin
+"iyi metni sırf dokunulmuş olsun diye yeniden yazma" ilkesine aykırı bir
+zaman/risk harcaması olurdu.
+
+**Yapılan: kör tekrar yerine hedefli örneklem doğrulaması.** Dünkü
+bulguyu kendi gözümle sınamak için 5 ders (3 hat'tan üniversite + 1 lise
++ önceki oturumda okunan `b-universite-tekillik`) satır satır okundu:
+`e-universite-cycle-time-jitter` (gerçek kaynaklı sayılar, dürüst
+idealize-sahne uyarısı), `f-universite-olcum-belirsizligi-tekrarlanabilirlik`,
+`h-universite-guc-ve-kuvvet-sinirlama` (birincil kaynağa erişilemeyen
+her sayının açıkça "yazılmadı" dendiği doğrulama notu), `c-lise-grid-
+arama-maliyet` (lise rubriği: formül var, türetme yok — doğru
+kalibrasyon). Hepsi rubriği geçti — dünkü bulguyla tutarlı.
+
+**Bulunan gerçek sorun — "yüzeysel" değil, SAYISAL TUTARSIZLIK.**
+`f-universite-olcum-belirsizligi-tekrarlanabilirlik`'in Quiz sorusu,
+"Ne oldu" bölümündeki hesaplanmış örnekten (9,97/10,04/10,01/9,98/10,02
+mm → ortalama 10,004, std ≈0,029) FARKLI beş rakam listeliyordu
+(10,01/10,03/9,98/10,02/9,98 mm) ama AYNI istatistikleri iddia ediyordu.
+Python ile doğrulandı: bu ikinci settin ortalaması tesadüfen aynı
+(10,004) ama gerçek standart sapması ≈0,023, iddia edilen 0,029 değil.
+Muhtemelen bir düzenleme sırasında örnek rakamlar değişmiş, iddia edilen
+sonuç güncellenmemiş. Düzeltme: Quiz sorusundaki rakamlar "Ne oldu"nun
+kendi setiyle birebir aynı yapıldı (commit `f626b88`) — artık iddia
+edilen istatistikler gerçekten o rakamlardan geliyor.
+
+**Sonuç:** İçerik doygunluğu bulgusu (94/94, yüzeysel yok) DOĞRULANDI.
+Bulunan tek gerçek kusur (bir Quiz'in rakam-sonuç uyuşmazlığı) yüzeysellik
+değil, ayrı bir dürüstlük/doğruluk sorunuydu — düzeltildi. **94 dersi
+"daha çok içerik" için mekanik olarak genişletmek bu bulguyla
+gerekçelendirilemez** — CLAUDE.md'nin "gereksiz karmaşıklık ekleme"
+ilkesiyle çelişirdi. Kullanıcının orijinal 7 maddelik listesi burada
+tamamlandı.
+
+**Doğrulama:** `check-content`/`check-mdx-guvenlik`/`check-quiz-dagilimi`
+(142 soru, dağılım bozulmadı) temiz, tam `npm test` 1056/1056 geçti.
