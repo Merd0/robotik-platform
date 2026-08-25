@@ -6093,3 +6093,26 @@ ilerlemediğine bakılacak, panik yapılmayacak.
 
 **Sırada:** madde 5/7 Dijital İkiz Kayması ("kayma ne demek, neden olur"
 ön açıklaması).
+
+### Parça 5/7: Dijital İkiz Kayması (2026-08-25)
+
+`components/lab/DigitalTwinDriftLab.tsx`'e `FirstVisitNote` ile bir
+kavram tanımı eklendi — önceki hâliyle sayfa doğrudan "Senkron/Kayma"
+durumuna ve TCP artık grafiğine atlıyordu, "kayma" terimini hiç
+tanımlamadan. Yeni not: kayma nedir (model tahmini ile gerçek davranış
+örtüşmesinin zamanla bozulması), tipik nedenleri (sıcaklık genleşmesi,
+eklem sürtünmesi/aşınma, encoder sıfır kayması) ve neden TEK bir ölçümün
+değil, kalıcı/tekrarlanan sapmanın kayma göstergesi sayıldığı. Diğer 4
+parçadan farklı olarak bu bir UI-mekaniği turu değil, kavramsal bir ön
+açıklama (görev tanımıyla birebir eşleşiyor: "kayma ne demek, neden olur").
+
+**Doğrulama:** `tsc`, hedefli `eslint` temiz. Mevcut
+`e2e/digital-twin-drift.spec.ts` (3 test) değişmeden geçti; yeni bir test
+eklendi (not görünür, "sıcaklık değişimi"/"encoder referansı" içeriyor,
+kapatılınca kaybolur, sayfa yenilenince çıkmaz) — üç viewport'ta 12/12
+geçti. Tam `npm test`: 1055/1055. Performans bütçesi temiz. Bu turda
+Codex'in çalışma dizininde eşzamanlı iş yoktu (bir önceki parçada
+merge edilmişti) — stash-aside tekniğine gerek kalmadı, doğrudan
+`git add` + commit.
+
+**Sırada:** madde 6/7 Hata Müzesi (temelden ileriye kademeli keşif).
