@@ -1,7 +1,16 @@
 # Robotik Öğrenme Platformu
 
+[![Canlı demo](https://img.shields.io/badge/canl%C4%B1%20demo-robotik--platform.vercel.app-14b8a6)](https://robotik-platform.vercel.app/)
+[![CI](https://github.com/Merd0/robotik-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Merd0/robotik-platform/actions/workflows/ci.yml)
+[![Lisans: Kod MIT](https://img.shields.io/badge/kod-MIT-blue)](LICENSE)
+[![Lisans: İçerik CC BY-SA 4.0](https://img.shields.io/badge/i%C3%A7erik-CC%20BY--SA%204.0-lightgrey)](LICENSE-CONTENT)
+[![Node 24](https://img.shields.io/badge/node-24.x-339933?logo=node.js&logoColor=white)](package.json)
+
 Robotiği tarayıcıda oynayarak öğreten, ortaokuldan mühendis seviyesine kadar
 kademeli ilerleyen, açık ve ücretsiz bir Türkçe kaynak.
+
+**[→ Canlı demoyu aç](https://robotik-platform.vercel.app/)** — hesap, kurulum
+veya ödeme yok; direkt tarayıcıda dene.
 
 Türkçe robotik kaynağı üç kategoriye sıkışmış durumda: kuru MEB PDF'leri,
 bağlamsız üniversite slaytları ve ürün odaklı satıcı sayfaları. İngilizce
@@ -9,6 +18,42 @@ tarafta parçalar var ama dağınık — iyi müfredatlar video tabanlı ve ağ�
 tarayıcıda çalışan simülatörlerde ise araç var ders yok. Bu proje şu dördün
 kesişiminde duruyor: **seviyeli müfredat + tarayıcıda anında etkileşim +
 endüstriyel gerçeklik (protokoller, robot dilleri, güvenlik) + Türkçe.**
+
+## Ekran görüntüleri
+
+| | |
+|---|---|
+| ![Ana sayfa — canlı iz laboratuvarı](docs/assets/readme/01-anasayfa.jpg) | ![3B Robot Hücresi — altı eksenli kolu sür](docs/assets/readme/02-robot-hucresi.jpg) |
+| Ana sayfa — canlı iz laboratuvarı | 3B Robot Hücresi — altı eksenli kolu gerçek kinematik zinciriyle sür |
+| ![Laboratuvarlar hub'ı](docs/assets/readme/03-laboratuvarlar.jpg) | ![Bilgi haritası — 206 düğümlü kavram grafiği](docs/assets/readme/04-bilgi-haritasi.jpg) |
+| Laboratuvarlar hub'ı — teşhis, kinematik ve keşif araçları | Bilgi haritası — 206 düğümlü, ders/terim/laboratuvar ilişki grafiği |
+| ![Ders sayfası — önce tahmin et, sonra çalıştır](docs/assets/readme/05-ders-sayfasi.jpg) | |
+| Ders sayfası — "önce tahmin et, sonra çalıştır, farkı gör" deseni | |
+
+## Öne çıkanlar
+
+Bu proje bir robot simülatörü değil, **kendi kalite kapılarını kendine
+zorunlu kılan bir üretim hattı**:
+
+- **94 ders, 3 seviye, 8 konu hattı** — ortaokuldan mühendisliğe kademeli,
+  hepsi ön koşul grafiğiyle birbirine bağlı ve `npm run
+  validate-content-graph` ile döngü/kopukluk denetimden geçiyor.
+- **Matematik test edilmiş, uydurulmamış** — ileri/ters kinematik, Jacobian,
+  yol planlama TypeScript'te; `reference-python/` altındaki Python/PyBullet
+  fixture'larına karşı doğrulanıyor.
+- **Yayın şartı olarak kaynak zorunluluğu** — `kaynaklar` alanı boş olan bir
+  ders yayınlanamaz; bu hem doğruluk hem gizlilik koruması, CI ve git hook'u
+  ile otomatik zorlanıyor.
+- **Ölçülen performans ve erişilebilirlik** — Lighthouse erişilebilirlik
+  100/100, performans bütçesi brotli byte cinsinden takip ediliyor; bir
+  sayfa bütçeyi aştığında kök nedeni ölçülerek (varsayılarak değil)
+  düzeltiliyor.
+- **1056 otomatik test, sıfır sunucu bağımlılığı** — hesaplama tamamen
+  tarayıcıda; kişisel veri, hesap, çerez veya üçüncü taraf izleyici yok.
+- **İki bağımsız AI ajanının (Claude Code + Codex) denetim disipliniyle
+  paralel çalışması** — kararlar ve gerekçeleri `docs/durum-denetim.md` ve
+  `docs/durum-codex.md`'de tam kronolojik olarak kayıtlı; hiçbir "yayında"
+  etiketi kanıtsız değil.
 
 ## Nasıl çalışır
 
@@ -26,7 +71,8 @@ endüstriyel gerçeklik (protokoller, robot dilleri, güvenlik) + Türkçe.**
 
 ## Nerede
 
-8 konu hattı, 3 seviye (ortaokul / lise / üniversite), **89 ders dosyası**:
+8 konu hattı, 3 seviye (ortaokul / lise / üniversite), **94 ders**, hepsi
+`durum: yayinda`:
 
 | Hat | Konu |
 |---|---|
@@ -116,11 +162,14 @@ sırasıyla:
 | [`07-tasarim-sistemi.md`](docs/07-tasarim-sistemi.md) | Görsel kimlik, tipografi, mobil |
 | [`08-guvenlik-sertlestirme.md`](docs/08-guvenlik-sertlestirme.md) | Tedarik zinciri, PR güvenliği, HTTP başlıkları |
 | [`09-ai-muhendisligi.md`](docs/09-ai-muhendisligi.md) | Üretim süreci; dal ve merge kuralı |
-| [`durum-denetim.md`](docs/durum-denetim.md) | Faz faz denetim kaydı — neyin gerçekten doğrulandığı |
+| [`durum-denetim.md`](docs/durum-denetim.md) | Claude Code'un faz faz denetim kaydı — neyin gerçekten doğrulandığı |
+| [`durum-codex.md`](docs/durum-codex.md) | Codex'in ayrı worktree'lerde yürüttüğü paralel iş kaydı |
 
-`docs/durum-denetim.md` özellikle önemli: bu projede "yayında" statüsü tek
-başına "bir insan bunu satır satır okudu" garantisi vermez. Hangi dersin
-gerçekten okunduğu o dosyada yazar.
+`docs/durum-denetim.md` ve `docs/durum-codex.md` özellikle önemli: bu
+projede "yayında" statüsü tek başına "bir insan bunu satır satır okudu"
+garantisi vermez. Hangi dersin gerçekten okunduğu, hangi ölçümün nasıl
+yapıldığı ve hangi kararın neden alındığı bu iki dosyada kronolojik olarak
+yazar.
 
 ## Kalite
 
