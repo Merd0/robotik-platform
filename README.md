@@ -1,214 +1,152 @@
-# Robotik Öğrenme Platformu
+# Robotics Learning Platform
 
-[![Canlı demo](https://img.shields.io/badge/canl%C4%B1%20demo-robotik--platform.vercel.app-14b8a6)](https://robotik-platform.vercel.app/)
+**English | [Türkçe](README.tr.md)**
+
+[![Live demo](https://img.shields.io/badge/live%20demo-robotik--platform.vercel.app-14b8a6)](https://robotik-platform.vercel.app/)
 [![CI](https://github.com/Merd0/robotik-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Merd0/robotik-platform/actions/workflows/ci.yml)
-[![Lisans: Kod MIT](https://img.shields.io/badge/kod-MIT-blue)](LICENSE)
-[![Lisans: İçerik CC BY-SA 4.0](https://img.shields.io/badge/i%C3%A7erik-CC%20BY--SA%204.0-lightgrey)](LICENSE-CONTENT)
-[![Node 24](https://img.shields.io/badge/node-24.x-339933?logo=node.js&logoColor=white)](package.json)
+[![Code MIT](https://img.shields.io/badge/code-MIT-blue)](LICENSE)
+[![Content CC BY-SA 4.0](https://img.shields.io/badge/content-CC%20BY--SA%204.0-lightgrey)](LICENSE-CONTENT)
+[![Node 24](https://img.shields.io/badge/node-24.x-339933?logo=node.js)](package.json)
 
-Robotiği tarayıcıda oynayarak öğreten, ortaokuldan mühendis seviyesine kadar
-kademeli ilerleyen, açık ve ücretsiz bir Türkçe kaynak.
+An open, free **Turkish-language robotics learning platform** for middle-school, high-school, and engineering-level learners. Interactive 3D laboratories connect a structured curriculum to robotics mathematics, programming, and industrial contexts.
 
-**[→ Canlı demoyu aç](https://robotik-platform.vercel.app/)** — hesap, kurulum
-veya ödeme yok; direkt tarayıcıda dene.
+**[Try the live platform](https://robotik-platform.vercel.app/)** — no account, installation, or payment required.
 
-Türkçe robotik kaynağı üç kategoriye sıkışmış durumda: kuru MEB PDF'leri,
-bağlamsız üniversite slaytları ve ürün odaklı satıcı sayfaları. İngilizce
-tarafta parçalar var ama dağınık — iyi müfredatlar video tabanlı ve ağır,
-tarayıcıda çalışan simülatörlerde ise araç var ders yok. Bu proje şu dördün
-kesişiminde duruyor: **seviyeli müfredat + tarayıcıda anında etkileşim +
-endüstriyel gerçeklik (protokoller, robot dilleri, güvenlik) + Türkçe.**
+> **Language scope:** The website and its 94 lessons currently remain **in Turkish**. The English README and [English curriculum roadmap](LEARNING_PATH.md) make the project understandable internationally; they do not imply English UI or English lessons.
 
-## Ekran görüntüleri
+## Screenshots
 
 | | |
-|---|---|
-| ![Ana sayfa — canlı iz laboratuvarı](docs/assets/readme/01-anasayfa.jpg) | ![3B Robot Hücresi — altı eksenli kolu sür](docs/assets/readme/02-robot-hucresi.jpg) |
-| Ana sayfa — canlı iz laboratuvarı | 3B Robot Hücresi — altı eksenli kolu gerçek kinematik zinciriyle sür |
-| ![Laboratuvarlar hub'ı](docs/assets/readme/03-laboratuvarlar.jpg) | ![Bilgi haritası — 206 düğümlü kavram grafiği](docs/assets/readme/04-bilgi-haritasi.jpg) |
-| Laboratuvarlar hub'ı — teşhis, kinematik ve keşif araçları | Bilgi haritası — 206 düğümlü, ders/terim/laboratuvar ilişki grafiği |
-| ![Ders sayfası — önce tahmin et, sonra çalıştır](docs/assets/readme/05-ders-sayfasi.jpg) | |
-| Ders sayfası — "önce tahmin et, sonra çalıştır, farkı gör" deseni | |
+| --- | --- |
+| ![Home and live lab](docs/assets/readme/01-anasayfa.jpg) | ![Six-axis robot cell](docs/assets/readme/02-robot-hucresi.jpg) |
+| Home page with a live exploration laboratory | Six-axis robot cell and interactive kinematics |
+| ![Laboratories](docs/assets/readme/03-laboratuvarlar.jpg) | ![Knowledge graph](docs/assets/readme/04-bilgi-haritasi.jpg) |
+| Diagnostic, kinematics, and exploration laboratories | 206-node graph linking lessons, terms, and labs |
+| ![Lesson page](docs/assets/readme/05-ders-sayfasi.jpg) | |
+| Predict first, interact, then inspect the explanation | |
 
-## Öne çıkanlar
+## Engineering highlights
 
-Bu proje bir robot simülatörü değil, **kendi kalite kapılarını kendine
-zorunlu kılan bir üretim hattı**:
+- **94 lessons, 3 levels, 8 tracks.** The prerequisite graph is checked for cycles and missing references with `npm run validate-content-graph`.
+- **Validated mathematics.** Forward/inverse kinematics, Jacobians, and path-planning algorithms in TypeScript are checked against Python/PyBullet fixtures.
+- **Source requirement.** Lessons must include a populated source field; CI and Git hooks enforce this structural requirement.
+- **Measured accessibility/performance.** The project documents a Lighthouse accessibility score of **100/100** and tracks compressed-size budgets. These recorded measurements are not universal guarantees.
+- **1,056 automated tests** reported in the project; computation runs in the browser without a required application server.
+- **Traceable development.** Separate AI-assisted implementation and review histories are documented in `docs/durum-codex.md` and `docs/durum-denetim.md`. A passed check does not prove that every paragraph was manually reviewed.
 
-- **94 ders, 3 seviye, 8 konu hattı** — ortaokuldan mühendisliğe kademeli,
-  hepsi ön koşul grafiğiyle birbirine bağlı ve `npm run
-  validate-content-graph` ile döngü/kopukluk denetimden geçiyor.
-- **Matematik test edilmiş, uydurulmamış** — ileri/ters kinematik, Jacobian,
-  yol planlama TypeScript'te; `reference-python/` altındaki Python/PyBullet
-  fixture'larına karşı doğrulanıyor.
-- **Yayın şartı olarak kaynak zorunluluğu** — `kaynaklar` alanı boş olan bir
-  ders yayınlanamaz; bu hem doğruluk hem gizlilik koruması, CI ve git hook'u
-  ile otomatik zorlanıyor.
-- **Ölçülen performans ve erişilebilirlik** — Lighthouse erişilebilirlik
-  100/100, performans bütçesi brotli byte cinsinden takip ediliyor; bir
-  sayfa bütçeyi aştığında kök nedeni ölçülerek (varsayılarak değil)
-  düzeltiliyor.
-- **1056 otomatik test, sıfır sunucu bağımlılığı** — hesaplama tamamen
-  tarayıcıda; kişisel veri, hesap, çerez veya üçüncü taraf izleyici yok.
-- **İki bağımsız AI ajanının (Claude Code + Codex) denetim disipliniyle
-  paralel çalışması** — kararlar ve gerekçeleri `docs/durum-denetim.md` ve
-  `docs/durum-codex.md`'de tam kronolojik olarak kayıtlı; hiçbir "yayında"
-  etiketi kanıtsız değil.
+## How it works
 
-## Nasıl çalışır
+- **Interact first, read afterward:** each lesson invites exploration before explanation.
+- **No installation for visitors:** use the hosted site in a browser.
+- **Client-side computation:** robotics mathematics and planning live under `lib/robotics/`; advanced exercises provide Python via Pyodide.
+- **Privacy-aware design:** no account, cookies, or third-party tracking are part of the described experience; progress stays in browser `localStorage`.
+- **Content architecture:** lesson data lives in `content/` (MDX and glossary data) separately from application code.
 
-- **Önce oyna, sonra oku.** Her ders etkileşimli bir sahneyle açılır; metin
-  oynadıktan sonra "ne oldu"yu anlatır.
-- **Kurulum yok.** Her şey tarayıcıda. İndirme, hesap, ödeme yok.
-- **Hesaplama tarayıcıda.** İleri/ters kinematik, Jacobian, yol planlama,
-  çarpışma kontrolü — hepsi TypeScript'te, `lib/robotics/` altında. Sunucuya
-  istek gitmez. İleri derslerde öğrenci Pyodide ile gerçek Python yazar.
-- **Kişisel veri toplanmaz.** Hesap, giriş, e-posta, çerez, üçüncü taraf
-  izleyici yok. İlerleme yalnızca tarayıcının `localStorage`'ında durur.
-  Hedef kitlede çocuklar var; bu karar tartışmaya kapalı.
-- **İçerik koddan ayrı.** Ders eklemek `content/` altına bir MDX dosyası
-  eklemektir, kod yazmak değil.
+## Curriculum and learning roadmap
 
-## Nerede
+The published Turkish curriculum spans **middle-school, high-school, and university/engineering** levels.
 
-8 konu hattı, 3 seviye (ortaokul / lise / üniversite), **94 ders**, hepsi
-`durum: yayinda`:
+| Track | Topic |
+| --- | --- |
+| A | Fundamentals |
+| B | Motion and kinematics |
+| C | Path planning |
+| D | Robot languages: RAPID, KRL, Mecademic, FANUC TP, ROS 2 |
+| E | Communications and integration |
+| F | Perception: sensors and computer vision |
+| G | Simulation and digital twins |
+| H | Safety and industrial practice |
 
-| Hat | Konu |
-|---|---|
-| A | Temeller |
-| B | Hareket ve kinematik |
-| C | Yol planlama |
-| D | Robot programlama dilleri (RAPID, KRL, Mecademic, FANUC TP, ROS 2) |
-| E | Haberleşme ve entegrasyon |
-| F | Algılama: sensör ve görü |
-| G | Simülasyon ve dijital ikiz |
-| H | Güvenlik ve endüstriyel gerçeklik |
+**[English curriculum overview](LEARNING_PATH.md) · [Türkçe öğrenme haritası](LEARNING_PATH.tr.md)**
 
-Sitede yalnızca `durum: yayinda` işaretli dersler listelenir. Bir dersin
-yayınlanması, bir insanın onu kaynaklarıyla karşılaştırarak okumasını
-gerektirir — bkz. aşağıda "Kalite".
+Only lessons marked `durum: yayinda` are visible on the site. A published status does not automatically mean every statement has been reviewed by a human.
 
-## Kurulum
+## Local installation
 
-Node.js 20+ gerekir.
+Use the repository's **Node 24.x** setup and locked dependencies:
 
 ```bash
 git clone https://github.com/Merd0/robotik-platform.git
 cd robotik-platform
-npm ci        # npm install değil — kilitli sürümler kullanılır
-npm run dev   # http://localhost:3000
+npm ci
+npm run dev
 ```
 
-`npm run dev` ve `npm run build` başlamadan önce üç üretim adımı otomatik
-koşar (`predev` / `prebuild`): Pyodide varlıklarının kopyalanması, Web
-Worker'ların esbuild ile derlenmesi ve arama indeksinin üretilmesi. Bunların
-çıktısı `public/` altına yazılır ve `.gitignore`'dadır — kaynak değil,
-üretilen dosyadır. **Dosya izlemezler:** bir worker'ı veya ders metnini
-değiştirip aramada görmek istersen dev sunucusunu yeniden başlat.
+Open `http://localhost:3000`.
 
-### Komutlar
+The `predev` and `prebuild` steps copy Pyodide assets, bundle Web Workers using esbuild, and generate the search index into ignored `public/` assets. They are not file watchers; restart the development server if updated worker or lesson content does not appear.
+
+### Development commands
 
 ```bash
-npm run dev                     # geliştirme sunucusu
-npm run build                   # statik dışa aktarım → out/
-npm test                        # Vitest birim testleri
+npm run dev                     # Development server
+npm run build                   # Static export to out/
+npm test                        # Vitest unit tests
 npm run lint
-npx tsc --noEmit                # tip kontrolü
-npm run check-content           # frontmatter + kaynaklar doğrulaması
-npm run validate-content-graph  # ön koşul grafiği: döngü, eksik referans
-npm run generate-fixtures       # Python referansından test verisi üret
+npx tsc --noEmit                # Type checking
+npm run check-content           # Frontmatter and source fields
+npm run validate-content-graph  # Prerequisite graph
+npm run generate-fixtures       # Python reference fixtures
 ```
 
-CI (`.github/workflows/ci.yml`) her push ve PR'da bunların hepsini
-(+ `npm audit --audit-level=high`) koşar.
+CI runs these quality checks on pushes and pull requests, with `npm audit --audit-level=high`. See [CI configuration](.github/workflows/ci.yml).
 
-## Yapı
+## Project structure
 
-```
-app/           Next.js sayfaları (ders, seviye, /ara, /sozluk)
-content/       TÜM DERS İÇERİĞİ — kod değil, veri (MDX + sozluk.json)
-lib/robotics/  çekirdek matematik: transform, kinematics, collision,
-               planners, safety — saf TypeScript, DOM/React importu yok
-lib/           içerik okuma, ilerleme takibi, arama
+```text
+app/               Next.js routes: lessons, levels, search, glossary
+content/           Turkish MDX lessons and glossary data
+lib/robotics/      UI-independent TypeScript robotics calculations
+lib/               Content loading, progress, and search
 components/
-  scene/       3D sahneler (Three.js) — tembel yüklenir
-  interactive/ derslere gömülen etkileşimli bloklar
-  ui/          düğme, kart, navigasyon, arama kutusu
-scripts/       içerik doğrulama, worker derleme, arama indeksi
-reference-python/  Python + PyBullet: doğruluk kaynağı ve indirilebilir
-                   alıştırma deposu
-docs/          planlama dokümanları
+  scene/           Lazy-loaded Three.js scenes
+  interactive/     Interactive blocks within lessons
+  ui/              Navigation and common components
+scripts/           Content validation, worker builds, search index
+reference-python/  Python/PyBullet reference fixtures
+docs/              Architecture, safety, review, and roadmap records
 ```
 
-`lib/robotics/` bilinçli olarak UI'dan bağımsız tutulur — ileride bir React
-Native portu gerekirse olduğu gibi taşınabilsin diye. Oraya `window`,
-`document` veya React importu girmez.
+The mathematics module `lib/robotics/` intentionally avoids importing `window`, `document`, or React, keeping the core computations separate from the UI.
 
-## Dokümanlar
+## Technical documentation
 
-Projenin kararları koda değil, `docs/` altına yazılır. Katkı yapacaksan
-sırasıyla:
+Internal technical documents are currently **Turkish**; this bilingual landing page does not pretend otherwise.
 
-| Dosya | Ne anlatır |
-|---|---|
-| [`00-vizyon.md`](docs/00-vizyon.md) | Ne yapıyoruz, ne yapmıyoruz; kaynak gizliliği kuralı |
-| [`01-mufredat.md`](docs/01-mufredat.md) | 8 konu hattı, 3 seviye, ders yapısı |
-| [`02-mimari.md`](docs/02-mimari.md) | Teknik kararlar ve değişmez sözleşmeler |
-| [`03-yol-haritasi.md`](docs/03-yol-haritasi.md) | Fazlar ve görev listesi |
-| [`04-icerik-rehberi.md`](docs/04-icerik-rehberi.md) | **Ders nasıl yazılır** — şablon, seviye kalibrasyonu, kanca çeşitliliği |
-| [`05-deneyim-ve-guvenlik.md`](docs/05-deneyim-ve-guvenlik.md) | Eğlence tasarımı, gizlilik, hız hedefleri |
-| [`06-kalite-ve-topluluk.md`](docs/06-kalite-ve-topluluk.md) | Üç katmanlı içerik doğrulaması |
-| [`07-tasarim-sistemi.md`](docs/07-tasarim-sistemi.md) | Görsel kimlik, tipografi, mobil |
-| [`08-guvenlik-sertlestirme.md`](docs/08-guvenlik-sertlestirme.md) | Tedarik zinciri, PR güvenliği, HTTP başlıkları |
-| [`09-ai-muhendisligi.md`](docs/09-ai-muhendisligi.md) | Üretim süreci; dal ve merge kuralı |
-| [`durum-denetim.md`](docs/durum-denetim.md) | Claude Code'un faz faz denetim kaydı — neyin gerçekten doğrulandığı |
-| [`durum-codex.md`](docs/durum-codex.md) | Codex'in ayrı worktree'lerde yürüttüğü paralel iş kaydı |
+| Document | Scope |
+| --- | --- |
+| [Vision](docs/00-vizyon.md) | Goals, scope, privacy rules |
+| [Curriculum](docs/01-mufredat.md) | Levels and tracks |
+| [Architecture](docs/02-mimari.md) | Design invariants |
+| [Roadmap](docs/03-yol-haritasi.md) | Delivery plan |
+| [Content guide](docs/04-icerik-rehberi.md) | Authoring rules |
+| [Experience and safety](docs/05-deneyim-ve-guvenlik.md) | UX, privacy, performance |
+| [Quality](docs/06-kalite-ve-topluluk.md) | Verification strategy |
+| [Design system](docs/07-tasarim-sistemi.md) | UI and accessibility |
+| [Security](docs/08-guvenlik-sertlestirme.md) | Supply-chain and PR safety |
+| [AI engineering](docs/09-ai-muhendisligi.md) | Development rules |
+| [Review record](docs/durum-denetim.md) | Verified review scope |
+| [Codex record](docs/durum-codex.md) | Parallel work logs |
 
-`docs/durum-denetim.md` ve `docs/durum-codex.md` özellikle önemli: bu
-projede "yayında" statüsü tek başına "bir insan bunu satır satır okudu"
-garantisi vermez. Hangi dersin gerçekten okunduğu, hangi ölçümün nasıl
-yapıldığı ve hangi kararın neden alındığı bu iki dosyada kronolojik olarak
-yazar.
+## Quality model
 
-## Kalite
+Lesson content uses AI assistance, which increases development speed but is **not evidence of factual accuracy**. Three layers are distinguished:
 
-Dersler büyük ölçüde yapay zeka yardımıyla yazılıyor. Bu hız kazandırır ama
-doğruluk kanıtı değildir. İki otomatik kapı ve bir opsiyonel inceleme katmanı var
-([`docs/06`](docs/06-kalite-ve-topluluk.md)):
+1. **Numerical testing:** TypeScript implementations are checked against fixtures and unit tests.
+2. **Structural/reference checks:** required source fields and valid content structure are enforced.
+3. **Human review:** an optional, explicitly recorded review associated with a particular lesson version.
 
-1. **Sayısal doğrulama** — matematik iddiaları `reference-python/`
-   fixture'larına ve birim testlerine karşı koşar.
-2. **Kaynak zorunluluğu** — `kaynaklar` alanı boş olan bir ders yayınlanamaz.
-   Bu aynı zamanda bir gizlilik korumasıdır: kaynağı gösterilemeyen bilgi
-   yazılmaz. Bir CI kontrolü ve bir git hook'u bunu otomatik zorlar.
-3. **İnsan gözden geçirmesi** — opsiyoneldir. Yapılırsa güncel ders sürümüne
-   bağlı Review Receipt ile kaydedilir; legacy `incelendi_*` alanları yayın
-   şartı veya güncel inceleme kanıtı değildir.
+Source-field presence does not guarantee that every claim matches a cited source. Reports and corrections follow the project's review process.
 
-Bu ayrım bilinçlidir: otomatik kontroller kaynak alanının doluluğunu ve
-sayısal kodu doğrular, ders metnindeki her iddianın kaynakla uyuştuğunu garanti
-etmez. Hata bildirimleri açık düzeltme akışıyla ele alınır.
+## Contributions
 
-## Katkı
+Contributions to lessons, terminology, components, or corrections are welcome through PRs. See [CONTRIBUTING.md](CONTRIBUTING.md). Report vulnerabilities through [SECURITY.md](SECURITY.md), not public issues.
 
-Ders, terim, bileşen, düzeltme — hepsi PR ile gelebilir. Süreç
-[`CONTRIBUTING.md`](CONTRIBUTING.md)'de. Güvenlik açığı bulduysan issue açma,
-[`SECURITY.md`](SECURITY.md)'ye bak.
+## Licenses
 
-## Lisans
+- **Executable software** (`app/`, `components/`, `lib/`, `scripts/`, `reference-python/`, configuration) — [MIT](LICENSE).
+- **Lessons, prose, and documentation** (`content/`, `docs/`) — [CC BY-SA 4.0](LICENSE-CONTENT).
 
-Depoda iki lisans var:
+Third-party references cited in lessons are not relicensed by this project.
 
-- **Yazılım** (`app/`, `components/`, `lib/`, `scripts/`, `reference-python/`,
-  yapılandırma) — MIT, bkz. [`LICENSE`](LICENSE)
-- **İçerik ve dokümantasyon** (`content/`, `docs/`, düzyazı metinler) —
-  CC BY-SA 4.0, bkz. [`LICENSE-CONTENT`](LICENSE-CONTENT)
-
-Ölçüt: çalıştırılan şey MIT, okunan şey CC BY-SA. Ders içeriğindeki
-AynıLisanslaPaylaş şartı bilinçli — birisi bu dersleri geliştirirse,
-geliştirdiği hâli de aynı lisansla paylaşır; Türkçe kaynak havuzu büyür,
-kapanmaz.
-
-Derslerde atıf yapılan üçüncü taraf materyaller (ders kitapları, standartlar,
-üretici dokümanları) bu lisansların dışındadır.
+**[Türkçe README](README.tr.md) · [English curriculum](LEARNING_PATH.md) · [Türkçe öğrenme yolu](LEARNING_PATH.tr.md)**
