@@ -115,18 +115,18 @@ Internal technical documents are currently **Turkish**; this bilingual landing p
 
 | Document | Scope |
 | --- | --- |
-| [Vision](docs/00-vizyon.md) | Goals, scope, privacy rules |
-| [Curriculum](docs/01-mufredat.md) | Levels and tracks |
-| [Architecture](docs/02-mimari.md) | Design invariants |
-| [Roadmap](docs/03-yol-haritasi.md) | Delivery plan |
-| [Content guide](docs/04-icerik-rehberi.md) | Authoring rules |
-| [Experience and safety](docs/05-deneyim-ve-guvenlik.md) | UX, privacy, performance |
-| [Quality](docs/06-kalite-ve-topluluk.md) | Verification strategy |
-| [Design system](docs/07-tasarim-sistemi.md) | UI and accessibility |
-| [Security](docs/08-guvenlik-sertlestirme.md) | Supply-chain and PR safety |
-| [AI engineering](docs/09-ai-muhendisligi.md) | Development rules |
-| [Review record](docs/durum-denetim.md) | Verified review scope |
-| [Codex record](docs/durum-codex.md) | Parallel work logs |
+| [Vision (TR)](docs/00-vizyon.md) | Goals, scope, privacy rules |
+| [Curriculum (TR)](docs/01-mufredat.md) | Levels and tracks |
+| [Architecture (TR)](docs/02-mimari.md) | Design invariants |
+| [Roadmap (TR)](docs/03-yol-haritasi.md) | Delivery plan |
+| [Content guide (TR)](docs/04-icerik-rehberi.md) | Authoring rules |
+| [Experience and safety (TR)](docs/05-deneyim-ve-guvenlik.md) | UX, privacy, performance |
+| [Quality (TR)](docs/06-kalite-ve-topluluk.md) | Verification strategy |
+| [Design system (TR)](docs/07-tasarim-sistemi.md) | UI and accessibility |
+| [Security (TR)](docs/08-guvenlik-sertlestirme.md) | Supply-chain and PR safety |
+| [AI engineering (TR)](docs/09-ai-muhendisligi.md) | Development rules |
+| [Review record (TR)](docs/durum-denetim.md) | Verified review scope |
+| [Codex record (TR)](docs/durum-codex.md) | Parallel work logs |
 
 ## Quality model
 
@@ -140,7 +140,7 @@ Source-field presence does not guarantee that every claim matches a cited source
 
 ## Contributions
 
-Contributions to lessons, terminology, components, or corrections are welcome through PRs. See [CONTRIBUTING.md](CONTRIBUTING.md). Report vulnerabilities through [SECURITY.md](SECURITY.md), not public issues.
+Contributions to lessons, terminology, components, or corrections are welcome through PRs. See [CONTRIBUTING.md (Turkish)](CONTRIBUTING.md). Report vulnerabilities through [SECURITY.md](SECURITY.md), not public issues.
 
 ## Licenses
 
