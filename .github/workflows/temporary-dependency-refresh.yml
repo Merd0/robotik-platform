@@ -23,6 +23,8 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Pin patched transitive sharp used by Next.js image optimization
+        run: npm pkg set "overrides.sharp=0.35.5"
       - name: Apply verified security patch versions to npm lock
         run: |
           npm install --save-exact --package-lock-only --ignore-scripts --no-audit --no-fund next@16.4.3
