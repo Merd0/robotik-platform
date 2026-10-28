@@ -125,8 +125,11 @@ test("Pyodide cold-load süresi kullanıcı kodu zaman aşımına karışmaz", a
 test("R3F canvas görünmezken durur ve cihaz DPR bütçesini kullanır", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-1440", "Canvas yaşam döngüsü tek gerçek Chromium yüzeyinde yeterli.");
   await page.goto("/ders/b-lise-geometrik-ters-kinematik");
+  // SahneAlani defers mounting R3F until its stable wrapper approaches the viewport.
+  // Scroll to the wrapper first; the canvas locator does not exist before lazy mount.
+  await page.locator(".aspect-square.overflow-hidden").first().scrollIntoViewIfNeeded();
   const scene = page.locator("[data-scene-active]").first();
-  await scene.scrollIntoViewIfNeeded();
+  await expect(scene).toBeVisible();
   await expect(scene).toHaveAttribute("data-scene-active", "true");
   await expect(scene).toHaveAttribute("data-scene-dpr", "1");
 

@@ -77,7 +77,13 @@ const surfaces: SurfaceConfig[] = [
   // büyütebiliyor (bu dosyadaki tekrarlanan "paylaşılan chunk büyümesi"
   // deseniyle aynı kök neden, bu kez sıfır paylı bir bütçeyi aşırdı).
   // 204→205 KiB'e çekildi, gzip zaten yeterliydi.
-  { name: "Ana sayfa", html: "index.html", deferred: "none", initialScriptGzip: 200 * KIB, budget: { gzip: 220 * KIB, brotli: 205 * KIB } },
+  // 2026-10-28: Next.js 16.3.0 -> security-patched 16.4.3 (and npm audit repairs).
+  // Same app/content, verified CI measurements: home transfer 218.7/203.7 ->
+  // 220.5/205.4 KiB (gzip/brotli). This is a vendor-chunk increase of
+  // +1.8/+1.7 KiB, not a new app feature. Raise ONLY home total budgets
+  // by 1 KiB (220/205 -> 221/206); keep the strict 200 KiB initial-JS
+  // limit and all other surface budgets unchanged. Revisit in future upgrades.
+  { name: "Ana sayfa", html: "index.html", deferred: "none", initialScriptGzip: 200 * KIB, budget: { gzip: 221 * KIB, brotli: 206 * KIB } },
   // 255/240 KiB (2026-08-01 kalibrasyonu) 2026-08-15'te 257.0/239.4 KiB'e
   // taştı — kök neden araştırıldı: components/interactive/index.ts, TÜM 19
   // etkileşimli bileşeni statik import ediyor ve next-mdx-remote/rsc'nin
