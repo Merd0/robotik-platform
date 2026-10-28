@@ -1,0 +1,46 @@
+# One-time working-branch utility; remove this file before merging the PR.
+name: Temporary audited dependency lock refresh
+on:
+  push:
+    branches:
+      - fix/lazy-scene-e2e-2026-10-28
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-lockfile:
+    if: github.repository == 'Merd0/robotik-platform' && github.ref == 'refs/heads/fix/lazy-scene-e2e-2026-10-28'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: true
+      - name: Use pinned Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Apply verified security patch versions to npm lock
+        run: |
+          npm install --save-exact --package-lock-only --ignore-scripts --no-audit --no-fund next@16.4.3
+          npm install --save-dev --save-exact --package-lock-only --ignore-scripts --no-audit --no-fund eslint-config-next@16.4.3 vitest@4.1.12
+      - name: Resolve remaining lockfile-level advisories within compatible ranges
+        run: npm audit fix --package-lock-only --ignore-scripts --no-fund
+        continue-on-error: true
+      - name: Commit only npm manifest and lockfile changes to this working branch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- package.json package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "fix(deps): pin patched Next.js/Vitest and refresh audited lockfile"
+            git push origin "HEAD:refs/heads/fix/lazy-scene-e2e-2026-10-28"
+          else
+            echo "No dependency differences generated"
+          fi
+      - name: Audit resulting dependency graph
+        run: npm audit --audit-level=high
