@@ -27,6 +27,8 @@ jobs:
         run: |
           npm install --save-exact --package-lock-only --ignore-scripts --no-audit --no-fund next@16.4.3
           npm install --save-dev --save-exact --package-lock-only --ignore-scripts --no-audit --no-fund eslint-config-next@16.4.3 vitest@4.1.12
+      - name: Refresh vulnerable transitive sharp/libvips to patched release
+        run: npm update sharp --package-lock-only --ignore-scripts --no-audit --no-fund
       - name: Resolve remaining lockfile-level advisories within compatible ranges
         run: npm audit fix --package-lock-only --ignore-scripts --no-fund
         continue-on-error: true
